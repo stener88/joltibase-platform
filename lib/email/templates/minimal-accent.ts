@@ -1,0 +1,158 @@
+/**
+ * Minimal Accent Template
+ * 
+ * Ultra-clean aesthetic with subtle accent lines
+ * Best for: Transactional emails, professional messages, B2B communications
+ */
+
+import type { TemplateRenderInput } from './types';
+import { getFontStack, replaceMergeTags } from './types';
+
+export function renderMinimalAccent(input: TemplateRenderInput): string {
+  const { content, design, brandColors, mergeTags } = input;
+  const fontStack = getFontStack(brandColors.fontStyle);
+  const accentColor = design.accentColor || brandColors.accentColor;
+  const ctaColor = design.ctaColor || brandColors.primaryColor;
+  const backgroundColor = design.backgroundColor || '#f9fafb';
+
+  // Build sections HTML
+  const sectionsHtml = content.sections
+    .map((section) => {
+      switch (section.type) {
+        case 'heading':
+          return `<p style="margin: 32px 0 16px; font-size: 20px; font-weight: 600; color: #111827;">${section.content || ''}</p>`;
+        
+        case 'text':
+          return `<p style="margin: 0 0 20px; font-size: 16px; color: #374151; line-height: 1.6;">${section.content || ''}</p>`;
+        
+        case 'list':
+          const items = (section.items || [])
+            .map(item => `<li style="margin-bottom: 8px;">${item}</li>`)
+            .join('');
+          return `<ul style="margin: 0 0 20px; padding-left: 24px; font-size: 16px; color: #374151; line-height: 1.6;">${items}</ul>`;
+        
+        case 'divider':
+          return `<hr style="margin: 32px 0; border: none; border-top: 1px solid #e5e7eb;" />`;
+        
+        case 'spacer':
+          const height = section.size === 'small' ? '16px' : section.size === 'large' ? '64px' : '40px';
+          return `<div style="height: ${height};"></div>`;
+        
+        default:
+          return '';
+      }
+    })
+    .join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${content.headline}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: ${fontStack}; background-color: ${backgroundColor}; line-height: 1.6;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: ${backgroundColor};">
+    <tr>
+      <td align="center" style="padding: 60px 20px;">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          
+          <!-- Top Accent Line -->
+          <tr>
+            <td style="height: 2px; background-color: ${accentColor};"></td>
+          </tr>
+          
+          <!-- Preheader (hidden) -->
+          ${content.preheader ? `
+          <tr>
+            <td style="display: none; font-size: 1px; color: #ffffff; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
+              ${content.preheader}
+            </td>
+          </tr>
+          ` : ''}
+          
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 64px 48px;">
+              
+              <!-- Headline -->
+              <h1 style="margin: 0 0 24px; font-size: 28px; font-weight: 600; color: #111827; line-height: 1.3;">
+                ${content.headline}
+              </h1>
+              
+              <!-- Subheadline -->
+              ${content.subheadline ? `
+              <p style="margin: 0 0 40px; font-size: 18px; color: #6b7280; line-height: 1.5;">
+                ${content.subheadline}
+              </p>
+              ` : ''}
+              
+              <!-- Body Sections -->
+              ${sectionsHtml}
+              
+              <!-- CTA -->
+              <div style="margin: 48px 0 0;">
+                <a href="${content.cta.url}" style="color: ${ctaColor}; text-decoration: none; font-size: 16px; font-weight: 500; display: inline-flex; align-items: center;">
+                  ${content.cta.text} <span style="margin-left: 8px;">→</span>
+                </a>
+              </div>
+              
+              <!-- Secondary CTA -->
+              ${content.cta.secondary ? `
+              <div style="margin: 20px 0 0;">
+                <a href="${content.cta.secondary.url}" style="color: #6b7280; text-decoration: underline; font-size: 14px;">
+                  ${content.cta.secondary.text}
+                </a>
+              </div>
+              ` : ''}
+              
+            </td>
+          </tr>
+          
+          <!-- Bottom Accent Line -->
+          <tr>
+            <td style="height: 2px; background-color: ${accentColor};"></td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 32px 48px; background-color: #f9fafb;">
+              
+              <!-- Company Info -->
+              ${content.footer?.companyName ? `
+              <p style="margin: 0 0 8px; font-size: 14px; color: #6b7280; text-align: center;">
+                ${content.footer.companyName}
+              </p>
+              ` : ''}
+              
+              ${content.footer?.companyAddress ? `
+              <p style="margin: 0 0 16px; font-size: 13px; color: #9ca3af; text-align: center;">
+                ${content.footer.companyAddress}
+              </p>
+              ` : ''}
+              
+              <!-- Custom Footer Text -->
+              ${content.footer?.customText ? `
+              <p style="margin: 0 0 16px; font-size: 13px; color: #6b7280; text-align: center;">
+                ${content.footer.customText}
+              </p>
+              ` : ''}
+              
+              <!-- Unsubscribe -->
+              <p style="margin: 0; font-size: 13px; color: #9ca3af; text-align: center;">
+                <a href="{{unsubscribe_url}}" style="color: #6b7280; text-decoration: underline;">Unsubscribe</a>
+                · <a href="{{preferences_url}}" style="color: #6b7280; text-decoration: underline;">Preferences</a>
+              </p>
+              
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  return replaceMergeTags(html, mergeTags);
+}
