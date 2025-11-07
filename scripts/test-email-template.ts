@@ -32,28 +32,62 @@ async function testTemplates() {
   // Test all templates
   const templates = ['gradient-hero', 'color-blocks', 'bold-modern', 'minimal-accent', 'text-first'];
 
-  for (const template of templates) {
-    console.log(`📧 Testing: ${template}`);
+  for (let i = 0; i < templates.length; i++) {
+    const template = templates[i];
+    console.log(`📧 Testing ${i + 1}/${templates.length}: ${template}`);
     
     try {
       const sample = generateSampleEmail(template);
       
-      await resend.emails.send({
+      const emailData = {
         from: 'onboarding@resend.dev', // Resend's test domain
         to: testEmail,
         subject: `[TEST] ${template} - ${sample.subject}`,
         html: sample.html,
         text: sample.plainText,
-      });
+      };
+      
+      console.log(`   → To: ${emailData.to}`);
+      console.log(`   → Subject: ${emailData.subject}`);
+      console.log(`   → HTML length: ${emailData.html.length} chars`);
+      console.log(`   → Text length: ${emailData.text.length} chars`);
+      
+      const response = await resend.emails.send(emailData);
+      
+      console.log(`   ✅ API Response:`, JSON.stringify(response, null, 2));
+      
+      if (response.data?.id) {
+        console.log(`   📬 Email ID: ${response.data.id}`);
+      }
+      
+      if (response.error) {
+        console.error(`   ⚠️  API returned an error:`, response.error);
+      }
       
       console.log(`   ✅ Sent ${template}\n`);
+      
+      // Add delay between sends to avoid rate limiting
+      if (i < templates.length - 1) {
+        console.log(`   ⏳ Waiting 2 seconds before next send...\n`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+      
     } catch (error: any) {
-      console.error(`   ❌ Failed to send ${template}:`, error.message);
+      console.error(`   ❌ Failed to send ${template}`);
+      console.error(`   Error message: ${error.message}`);
+      if (error.response) {
+        console.error(`   Response data:`, error.response.data);
+      }
+      if (error.stack) {
+        console.error(`   Stack trace:`, error.stack);
+      }
+      console.log('');
     }
   }
 
-  console.log('✨ All test emails sent!');
+  console.log('✨ All test emails processed!');
   console.log(`📬 Check your inbox: ${testEmail}`);
+  console.log(`🔍 Also check Resend dashboard for delivery status`);
 }
 
 testTemplates().catch((error) => {
