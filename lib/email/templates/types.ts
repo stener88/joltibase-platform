@@ -95,10 +95,52 @@ export interface EmailContent {
 }
 
 export interface ContentSection {
-  type: 'text' | 'heading' | 'list' | 'divider' | 'spacer';
+  type: 'text' | 'heading' | 'list' | 'divider' | 'spacer' 
+       | 'hero' | 'feature-grid' | 'testimonial' | 'stats' 
+       | 'comparison' | 'cta-block';
+  
+  // Basic section fields
   content?: string;             // For text/heading
   items?: string[];             // For lists
   size?: 'small' | 'medium' | 'large'; // For spacers
+  
+  // Hero section (bold opening)
+  headline?: string;            // Main headline
+  subheadline?: string;         // Supporting text
+  
+  // Feature grid (2-3 features side-by-side)
+  features?: Array<{
+    icon?: string;              // Optional emoji or icon
+    title: string;              // Feature name
+    description: string;        // Brief description
+  }>;
+  
+  // Testimonial (social proof)
+  testimonial?: {
+    quote: string;              // Customer quote
+    author: string;             // Person's name
+    role?: string;              // Their position/company
+    avatar?: string;            // Optional avatar URL
+  };
+  
+  // Stats (impressive numbers)
+  stats?: Array<{
+    value: string;              // e.g., "10,000+" or "99.9%"
+    label: string;              // e.g., "Active Users" or "Uptime"
+  }>;
+  
+  // Comparison (before/after transformation)
+  comparison?: {
+    before: string;             // Old way / problem
+    after: string;              // New way / solution
+  };
+  
+  // CTA block (dedicated call-to-action)
+  ctaText?: string;             // Button text
+  ctaUrl?: string;              // Button URL
+  
+  // Layout options
+  layout?: '1-col' | '2-col' | '3-col' | 'centered' | 'alternating';
 }
 
 export interface SocialLink {

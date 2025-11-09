@@ -30,16 +30,54 @@ export type GenerateCampaignInput = z.infer<typeof GenerateCampaignInputSchema>;
 // ============================================================================
 
 /**
- * Email structure from AI
+ * Content section schema (flexible structure)
+ */
+const ContentSectionSchema = z.object({
+  type: z.enum(['text', 'heading', 'list', 'divider', 'spacer', 'hero', 'feature-grid', 'testimonial', 'stats', 'comparison', 'cta-block']),
+  content: z.string().optional(),
+  items: z.array(z.string()).optional(),
+  size: z.enum(['small', 'medium', 'large']).optional(),
+  headline: z.string().optional(),
+  subheadline: z.string().optional(),
+  features: z.array(z.object({
+    icon: z.string().optional(),
+    title: z.string(),
+    description: z.string(),
+  })).optional(),
+  testimonial: z.object({
+    quote: z.string(),
+    author: z.string(),
+    role: z.string().optional(),
+    avatar: z.string().optional(),
+  }).optional(),
+  stats: z.array(z.object({
+    value: z.string(),
+    label: z.string(),
+  })).optional(),
+  comparison: z.object({
+    before: z.string(),
+    after: z.string(),
+  }).optional(),
+  ctaText: z.string().optional(),
+  ctaUrl: z.string().optional(),
+  layout: z.enum(['1-col', '2-col', '3-col', 'centered', 'alternating']).optional(),
+});
+
+/**
+ * Email structure from AI (now with sections instead of HTML)
  */
 const GeneratedEmailSchema = z.object({
   subject: z.string().min(1).max(100),
   previewText: z.string().min(1).max(150),
-  htmlBody: z.string().min(1), // Will be replaced with rendered template
-  plainTextBody: z.string().min(1), // Will be replaced with generated plain text
-  ctaText: z.string().min(1).max(50),
-  ctaUrl: z.string().url().or(z.string().startsWith('{{').endsWith('}}')), // Allow merge tags
+  sections: z.array(ContentSectionSchema).min(1),
+  layoutSuggestion: z.enum(['default', 'centered', 'story-flow']).optional(),
+  emphasisAreas: z.array(z.string()).optional(),
   notes: z.string().optional(),
+  // Legacy fields (for backward compatibility during transition)
+  htmlBody: z.string().optional(),
+  plainTextBody: z.string().optional(),
+  ctaText: z.string().optional(),
+  ctaUrl: z.string().optional(),
 });
 
 /**
@@ -64,6 +102,10 @@ export const GeneratedCampaignSchema = z.object({
   campaignName: z.string().min(1).max(100),
   campaignType: z.enum(['one-time', 'sequence']),
   recommendedSegment: z.string(),
+  strategy: z.object({
+    goal: z.string(),
+    keyMessage: z.string(),
+  }).optional(),
   design: DesignConfigSchema,
   emails: z.array(GeneratedEmailSchema).min(1).max(5),
   segmentationSuggestion: z.string(),

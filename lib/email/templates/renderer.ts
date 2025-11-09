@@ -5,7 +5,7 @@
  * applies brand colors, replaces merge tags, and generates plain text versions
  */
 
-import type { TemplateRenderInput, RenderedEmail, EmailContent } from './types';
+import type { TemplateRenderInput, RenderedEmail, EmailContent, MergeTags } from './types';
 import { renderTextFirst } from './text-first';
 import { renderMinimalAccent } from './minimal-accent';
 import { renderColorBlocks } from './color-blocks';
@@ -68,7 +68,7 @@ export function renderEmail(input: TemplateRenderInput): RenderedEmail {
 /**
  * Generate plain text version of email
  */
-export function generatePlainText(content: EmailContent, mergeTags?: Record<string, string>): string {
+export function generatePlainText(content: EmailContent, mergeTags?: MergeTags): string {
   const lines: string[] = [];
   
   // Headline
@@ -110,6 +110,61 @@ export function generatePlainText(content: EmailContent, mergeTags?: Record<stri
         break;
       
       case 'spacer':
+        lines.push('');
+        break;
+      
+      case 'hero':
+        lines.push('');
+        lines.push(section.headline || '');
+        lines.push('='.repeat((section.headline || '').length));
+        if (section.subheadline) {
+          lines.push(section.subheadline);
+        }
+        lines.push('');
+        break;
+      
+      case 'feature-grid':
+        lines.push('');
+        (section.features || []).forEach(feature => {
+          lines.push(`${feature.icon || '▸'} ${feature.title}`);
+          lines.push(`  ${feature.description}`);
+          lines.push('');
+        });
+        break;
+      
+      case 'testimonial':
+        if (section.testimonial) {
+          lines.push('');
+          lines.push(`"${section.testimonial.quote}"`);
+          lines.push(`— ${section.testimonial.author}${section.testimonial.role ? `, ${section.testimonial.role}` : ''}`);
+          lines.push('');
+        }
+        break;
+      
+      case 'stats':
+        lines.push('');
+        (section.stats || []).forEach(stat => {
+          lines.push(`${stat.value} — ${stat.label}`);
+        });
+        lines.push('');
+        break;
+      
+      case 'comparison':
+        if (section.comparison) {
+          lines.push('');
+          lines.push(`Before: ${section.comparison.before}`);
+          lines.push(`After:  ${section.comparison.after}`);
+          lines.push('');
+        }
+        break;
+      
+      case 'cta-block':
+        lines.push('');
+        if (section.content) {
+          lines.push(section.content);
+        }
+        lines.push(`→ ${section.ctaText || 'Click Here'}`);
+        lines.push(section.ctaUrl || '{{cta_url}}');
         lines.push('');
         break;
     }
@@ -174,7 +229,7 @@ export function renderFromAIGeneration(aiEmail: {
   ctaUrl: string;
 }, design: {
   template: string;
-  headerGradient?: { from: string; to: string; direction?: string };
+  headerGradient?: { from: string; to: string; direction?: 'to-right' | 'to-bottom' | 'to-br' | 'to-tr' };
   ctaColor: string;
   accentColor?: string;
 }, brandColors: {

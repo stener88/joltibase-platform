@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
     
     // 5. Return success response
     console.log('📤 [API] Preparing success response...');
-    const responseData = {
+    const responseData: SuccessResponse = {
       success: true,
       data: {
         id: result.id,

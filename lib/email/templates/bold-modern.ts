@@ -36,6 +36,85 @@ export function renderBoldModern(input: TemplateRenderInput): string {
           const height = section.size === 'small' ? '24px' : section.size === 'large' ? '64px' : '40px';
           return `<div style="height: ${height};"></div>`;
         
+        case 'hero':
+          return `
+            <div style="margin: 0 0 40px; text-align: center;">
+              <h2 style="margin: 0 0 16px; font-size: 42px; font-weight: 900; color: #000000; line-height: 1.1;">${section.headline || ''}</h2>
+              ${section.subheadline ? `<p style="margin: 0; font-size: 20px; color: #1f2937;">${section.subheadline}</p>` : ''}
+            </div>
+          `;
+        
+        case 'feature-grid':
+          const featuresHtml = (section.features || [])
+            .map(feature => `
+              <div style="margin-bottom: 24px;">
+                <p style="margin: 0 0 8px; font-size: 20px; font-weight: 700; color: #000000;">
+                  ${feature.icon ? `${feature.icon} ` : ''}${feature.title}
+                </p>
+                <p style="margin: 0; font-size: 18px; color: #374151;">${feature.description}</p>
+              </div>
+            `)
+            .join('');
+          return `<div style="margin: 0 0 32px;">${featuresHtml}</div>`;
+        
+        case 'testimonial':
+          if (!section.testimonial) return '';
+          return `
+            <div style="margin: 40px 0; padding: 32px; background-color: #f9fafb; border-left: 6px solid ${ctaColor}; border-radius: 4px;">
+              <p style="margin: 0 0 20px; font-size: 20px; color: #000000; font-style: italic; font-weight: 500; line-height: 1.5;">
+                "${section.testimonial.quote}"
+              </p>
+              <p style="margin: 0; font-size: 16px; color: #374151; font-weight: 600;">
+                ${section.testimonial.author}${section.testimonial.role ? `, ${section.testimonial.role}` : ''}
+              </p>
+            </div>
+          `;
+        
+        case 'stats':
+          const statsHtml = (section.stats || [])
+            .map(stat => `
+              <div style="display: inline-block; margin: 0 32px 20px 0; text-align: center;">
+                <p style="margin: 0 0 8px; font-size: 48px; font-weight: 900; color: ${ctaColor};">${stat.value}</p>
+                <p style="margin: 0; font-size: 16px; color: #374151; font-weight: 600; text-transform: uppercase;">${stat.label}</p>
+              </div>
+            `)
+            .join('');
+          return `<div style="margin: 32px 0; text-align: center;">${statsHtml}</div>`;
+        
+        case 'comparison':
+          if (!section.comparison) return '';
+          return `
+            <table cellpadding="0" cellspacing="0" style="width: 100%; margin: 32px 0; border-collapse: collapse;">
+              <tr>
+                <td style="width: 50%; padding: 24px; background-color: #fef2f2; border-radius: 4px; vertical-align: top;">
+                  <p style="margin: 0 0 12px; font-size: 14px; font-weight: 700; color: #dc2626; text-transform: uppercase;">Before</p>
+                  <p style="margin: 0; font-size: 18px; color: #000000;">${section.comparison.before}</p>
+                </td>
+                <td style="width: 24px;"></td>
+                <td style="width: 50%; padding: 24px; background-color: #f0fdf4; border-radius: 4px; vertical-align: top;">
+                  <p style="margin: 0 0 12px; font-size: 14px; font-weight: 700; color: #16a34a; text-transform: uppercase;">After</p>
+                  <p style="margin: 0; font-size: 18px; color: #000000;">${section.comparison.after}</p>
+                </td>
+              </tr>
+            </table>
+          `;
+        
+        case 'cta-block':
+          return `
+            <div style="margin: 48px 0; text-align: center;">
+              ${section.content ? `<p style="margin: 0 0 24px; font-size: 18px; color: #000000; font-weight: 500;">${section.content}</p>` : ''}
+              <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                <tr>
+                  <td align="center" style="border-radius: 6px; background-color: ${ctaColor};">
+                    <a href="${section.ctaUrl || '{{cta_url}}'}" style="display: inline-block; padding: 18px 40px; font-size: 20px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
+                      ${section.ctaText || 'Click Here'}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          `;
+        
         default:
           return '';
       }

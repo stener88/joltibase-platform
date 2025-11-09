@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { EmailPreview } from './EmailPreview';
+import { EmailPreview, type DeviceMode, type ViewMode } from './EmailPreview';
 
 interface Email {
   subject: string;
@@ -52,8 +52,8 @@ interface CampaignResultsProps {
 
 export function CampaignResults({ data, onSave, onEdit, onSendTest, onRegenerate }: CampaignResultsProps) {
   const [selectedEmailIndex, setSelectedEmailIndex] = useState(0);
-  const [viewMode, setViewMode] = useState<'html' | 'text'>('html');
-  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
+  const [viewMode, setViewMode] = useState<ViewMode>('html');
+  const [previewMode, setPreviewMode] = useState<DeviceMode>('desktop');
 
   // Safety check for undefined data
   if (!data || !data.renderedEmails || data.renderedEmails.length === 0) {
@@ -180,68 +180,17 @@ export function CampaignResults({ data, onSave, onEdit, onSendTest, onRegenerate
           </div>
         </div>
 
-        {/* View Controls */}
-        <div className="px-6 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setViewMode('html')}
-              className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
-                viewMode === 'html'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              HTML Preview
-            </button>
-            <button
-              onClick={() => setViewMode('text')}
-              className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
-                viewMode === 'text'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Plain Text
-            </button>
-          </div>
-          {viewMode === 'html' && (
-            <div className="flex gap-2">
-              <button
-                onClick={() => setPreviewMode('desktop')}
-                className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
-                  previewMode === 'desktop'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Desktop
-              </button>
-              <button
-                onClick={() => setPreviewMode('mobile')}
-                className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
-                  previewMode === 'mobile'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Mobile
-              </button>
-            </div>
-          )}
-        </div>
-
         {/* Email Preview */}
         <div className="p-6">
-          {viewMode === 'html' ? (
-            <EmailPreview 
-              html={selectedEmail.html} 
-              mode={previewMode}
-            />
-          ) : (
-            <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono bg-gray-50 p-4 rounded border border-gray-200">
-              {selectedEmail.plainText}
-            </pre>
-          )}
+          <EmailPreview 
+            html={selectedEmail.html}
+            plainText={selectedEmail.plainText}
+            subject={selectedEmail.subject}
+            deviceMode={previewMode}
+            viewMode={viewMode}
+            onDeviceModeChange={setPreviewMode}
+            onViewModeChange={setViewMode}
+          />
         </div>
 
         {/* Email Actions */}

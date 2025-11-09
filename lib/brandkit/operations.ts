@@ -4,6 +4,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import type { BrandKit, CreateBrandKitInput, UpdateBrandKitInput } from './types';
+import { validateCompanyName, sanitizeCompanyName } from './validation';
 
 /**
  * Get user's active brand kit
@@ -35,6 +36,16 @@ export async function createBrandKit(
 ): Promise<BrandKit | null> {
   const supabase = await createClient();
 
+  // Validate company name
+  const validation = validateCompanyName(input.companyName);
+  if (!validation.isValid) {
+    console.warn('Brand kit creation failed:', validation.error);
+    throw new Error(validation.error);
+  }
+
+  // Sanitize company name (trim, capitalize properly)
+  const sanitizedCompanyName = sanitizeCompanyName(input.companyName);
+
   // Deactivate existing brand kits
   await supabase
     .from('brand_kits')
@@ -46,7 +57,7 @@ export async function createBrandKit(
     .from('brand_kits')
     .insert({
       user_id: userId,
-      company_name: input.companyName,
+      company_name: sanitizedCompanyName,
       primary_color: input.primaryColor,
       secondary_color: input.secondaryColor,
       accent_color: input.accentColor,
@@ -74,10 +85,21 @@ export async function updateBrandKit(
 ): Promise<BrandKit | null> {
   const supabase = await createClient();
 
+  // Validate and sanitize company name if provided
+  let sanitizedCompanyName = input.companyName;
+  if (input.companyName) {
+    const validation = validateCompanyName(input.companyName);
+    if (!validation.isValid) {
+      console.warn('Brand kit update failed:', validation.error);
+      throw new Error(validation.error);
+    }
+    sanitizedCompanyName = sanitizeCompanyName(input.companyName);
+  }
+
   const { data, error } = await supabase
     .from('brand_kits')
     .update({
-      company_name: input.companyName,
+      company_name: sanitizedCompanyName,
       primary_color: input.primaryColor,
       secondary_color: input.secondaryColor,
       accent_color: input.accentColor,

@@ -90,7 +90,7 @@ export function CampaignGeneratorForm({ onSubmit, isLoading, error }: CampaignGe
               id="companyName"
               value={formData.companyName}
               onChange={(e) => updateField('companyName', e.target.value)}
-              placeholder="e.g., TaskFlow"
+              placeholder="e.g., YourCompany Inc"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               disabled={isLoading}
             />

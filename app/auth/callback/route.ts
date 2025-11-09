@@ -20,8 +20,36 @@ export async function GET(request: Request) {
 
       console.log('✅ Auth successful, user:', data.user?.email)
       
-      // Redirect to dashboard after successful auth
-      return NextResponse.redirect(`${origin}/dashboard`)
+      // Check if this is a popup window (OAuth flow)
+      // If so, return HTML that closes the popup instead of redirecting
+      const isPopup = requestUrl.searchParams.get('popup') === 'true'
+      
+      if (isPopup) {
+        return new NextResponse(
+          `<!DOCTYPE html>
+          <html>
+            <head><title>Authentication Successful</title></head>
+            <body>
+              <p>Authentication successful! Closing window...</p>
+              <script>
+                if (window.opener && !window.opener.closed) {
+                  window.opener.postMessage({ type: 'auth-success' }, window.location.origin);
+                }
+                window.close();
+                setTimeout(() => window.close(), 100);
+              </script>
+            </body>
+          </html>`,
+          {
+            status: 200,
+            headers: { 'Content-Type': 'text/html' },
+          }
+        )
+      }
+      
+      // Regular flow: redirect to home page (campaign generator)
+      // Form state restoration and auto-generation handled client-side
+      return NextResponse.redirect(`${origin}/`)
     } catch (err) {
       console.error('❌ Callback error:', err)
       return NextResponse.redirect(`${origin}/login?error=callback_failed`)

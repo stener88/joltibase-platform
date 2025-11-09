@@ -13,6 +13,7 @@ import { saveAIGeneration } from './usage-tracker';
 import { getActiveBrandKit, createBrandKit } from '@/lib/brandkit/operations';
 import { renderEmail } from '@/lib/email/templates/renderer';
 import type { TemplateRenderInput, EmailContent, ContentSection } from '@/lib/email/templates/types';
+import { createClient } from '@/lib/supabase/server';
 
 // ============================================================================
 // Generator Input & Output Interfaces
@@ -141,14 +142,14 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
     console.log('📧 [GENERATOR] Rendering emails with templates...');
     const renderedEmails = generatedCampaign.emails.map((email, index) => {
       console.log(`  📝 [GENERATOR] Rendering email ${index + 1}/${generatedCampaign.emails.length}: ${email.subject}`);
-      // Convert AI-generated email to structured content
+      // AI now returns structured sections directly - no HTML parsing needed!
       const content: EmailContent = {
         headline: email.subject,
         preheader: email.previewText,
-        sections: parseEmailBody(email.htmlBody || email.plainTextBody),
+        sections: email.sections || [],
         cta: {
-          text: email.ctaText,
-          url: email.ctaUrl,
+          text: email.ctaText || 'Get Started',
+          url: email.ctaUrl || '{{cta_url}}',
         },
         footer: {
           companyName: validatedInput.companyName || '{{company_name}}',
@@ -183,8 +184,8 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
         previewText: rendered.previewText,
         html: rendered.html,
         plainText: rendered.plainText,
-        ctaText: email.ctaText,
-        ctaUrl: email.ctaUrl,
+        ctaText: email.ctaText || 'Get Started',
+        ctaUrl: email.ctaUrl || '{{cta_url}}',
       };
     });
     
@@ -213,7 +214,41 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
     });
     console.log('✅ [GENERATOR] Saved to database:', { generationId });
     
-    // 10. Return complete result
+    // 10. Create campaign record
+    console.log('📝 [GENERATOR] Creating campaign record...');
+    const supabase = await createClient();
+    
+    const { data: campaign, error: campaignError } = await supabase
+      .from('campaigns')
+      .insert({
+        id: generationId, // Use same ID as ai_generation
+        user_id: validatedInput.userId,
+        name: generatedCampaign.campaignName,
+        type: validatedInput.campaignType || 'one-time',
+        status: 'draft',
+        ai_generated: true,
+        ai_prompt: validatedInput.prompt,
+        subject_line: renderedEmails[0]?.subject || '',
+        preview_text: renderedEmails[0]?.previewText || '',
+        from_name: validatedInput.companyName || 'My Company',
+        from_email: 'noreply@example.com', // TODO: Get from user profile
+        html_content: JSON.stringify(renderedEmails),
+        ai_metadata: {
+          campaign: generatedCampaign,
+          renderedEmails: renderedEmails
+        }
+      })
+      .select()
+      .single();
+    
+    if (campaignError) {
+      console.error('❌ [GENERATOR] Error creating campaign:', campaignError);
+      throw new Error(`Failed to create campaign: ${campaignError.message}`);
+    }
+    
+    console.log('✅ [GENERATOR] Campaign record created:', { campaignId: campaign.id });
+    
+    // 11. Return complete result
     const result = {
       id: generationId,
       campaign: generatedCampaign,
@@ -255,47 +290,6 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
 // Helper Functions
 // ============================================================================
 
-/**
- * Parse AI-generated email body into structured content sections
- * This is a simple parser - in production you might want more sophisticated parsing
- */
-function parseEmailBody(body: string): ContentSection[] {
-  const sections: ContentSection[] = [];
-  
-  // Split by double newlines (paragraphs)
-  const paragraphs = body.split(/\n\n+/).filter(p => p.trim());
-  
-  for (const paragraph of paragraphs) {
-    const trimmed = paragraph.trim();
-    
-    // Check if it's a list (starts with -, •, or *)
-    if (trimmed.match(/^[-•*]\s/m)) {
-      const items = trimmed
-        .split(/\n/)
-        .filter(line => line.match(/^[-•*]\s/))
-        .map(line => line.replace(/^[-•*]\s/, '').trim());
-      
-      sections.push({
-        type: 'list',
-        items,
-      });
-    }
-    // Check if it's a heading (short, might end with :)
-    else if (trimmed.length < 60 && (trimmed.endsWith(':') || trimmed.match(/^#+\s/))) {
-      sections.push({
-        type: 'heading',
-        content: trimmed.replace(/^#+\s/, '').replace(/:$/, ''),
-      });
-    }
-    // Otherwise it's regular text
-    else {
-      sections.push({
-        type: 'text',
-        content: trimmed,
-      });
-    }
-  }
-  
-  return sections;
-}
+// Note: parseEmailBody function removed - AI now returns structured sections directly
+// No need to parse HTML/text since the AI generates ContentSection[] format
 

@@ -54,12 +54,12 @@ export interface RateLimitInfo {
 /**
  * Get user's rate limit tier from database
  * In production, this would check subscription status
- * For now, defaults to FREE tier
+ * For now, defaults to PRO tier for testing
  */
 async function getUserTier(userId: string): Promise<RateLimitTier> {
   // TODO: Query user's subscription tier from database
-  // For MVP, everyone gets FREE tier
-  return 'FREE';
+  // For testing, everyone gets PRO tier (1000 generations/day)
+  return 'PRO';
 }
 
 /**
