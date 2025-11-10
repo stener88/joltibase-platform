@@ -131,6 +131,7 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
     
     // 6. Validate AI response
     console.log('🔍 [GENERATOR] Validating AI response...');
+    console.log('📄 [GENERATOR] AI response preview:', aiResult.content.substring(0, 500));
     const generatedCampaign = parseAndValidateCampaign(aiResult.content);
     console.log('✅ [GENERATOR] Campaign validated:', { 
       name: generatedCampaign.campaignName,

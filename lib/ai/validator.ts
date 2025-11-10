@@ -224,6 +224,7 @@ export function validateAIResponse(response: unknown): GeneratedCampaign {
     return GeneratedCampaignSchema.parse(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error('🔍 [VALIDATOR] Zod validation error:', JSON.stringify(error.errors, null, 2));
       const errors = error.errors?.map(e => {
         const path = e.path && e.path.length > 0 ? e.path.join('.') : 'root';
         return `${path}: ${e.message}`;
