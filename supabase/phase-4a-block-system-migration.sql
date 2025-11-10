@@ -13,11 +13,19 @@
 ALTER TABLE campaigns
 ADD COLUMN IF NOT EXISTS blocks jsonb DEFAULT NULL;
 
+-- Add design_config column (global email settings)
+ALTER TABLE campaigns
+ADD COLUMN IF NOT EXISTS design_config jsonb DEFAULT NULL;
+
 -- Add index for faster block queries
 CREATE INDEX IF NOT EXISTS idx_campaigns_blocks ON campaigns USING GIN (blocks);
 
--- Add comment for documentation
+-- Add index for design_config queries
+CREATE INDEX IF NOT EXISTS idx_campaigns_design_config ON campaigns USING GIN (design_config);
+
+-- Add comments for documentation
 COMMENT ON COLUMN campaigns.blocks IS 'Block-based email structure (Phase 4A). Stores array of EmailBlock objects with granular AI control. NULL = legacy HTML format.';
+COMMENT ON COLUMN campaigns.design_config IS 'Global email design settings (Phase 4A). Stores GlobalEmailSettings: backgroundColor, contentBackgroundColor, maxWidth, fontFamily, mobileBreakpoint.';
 
 -- ============================================
 -- 2. CREATE BLOCK_TEMPLATES TABLE
@@ -167,6 +175,11 @@ ALTER TABLE campaigns
 ADD CONSTRAINT campaigns_blocks_is_array 
   CHECK (blocks IS NULL OR jsonb_typeof(blocks) = 'array');
 
+-- Ensure design_config column is a valid JSON object if not NULL
+ALTER TABLE campaigns
+ADD CONSTRAINT campaigns_design_config_is_object 
+  CHECK (design_config IS NULL OR jsonb_typeof(design_config) = 'object');
+
 -- Ensure block_templates.blocks is a valid array
 ALTER TABLE block_templates
 ADD CONSTRAINT block_templates_blocks_is_array 
@@ -202,10 +215,12 @@ DO $$
 BEGIN
   RAISE NOTICE 'Phase 4A Block System Migration Complete!';
   RAISE NOTICE '✅ Added blocks column to campaigns table';
+  RAISE NOTICE '✅ Added design_config column to campaigns table';
   RAISE NOTICE '✅ Created block_templates table';
-  RAISE NOTICE '✅ Created indexes for performance';
+  RAISE NOTICE '✅ Created indexes for performance (2 for campaigns, 6 for block_templates)';
   RAISE NOTICE '✅ Enabled Row Level Security';
   RAISE NOTICE '✅ Added helper functions';
+  RAISE NOTICE '✅ Added validation constraints';
   RAISE NOTICE '';
   RAISE NOTICE 'Next steps:';
   RAISE NOTICE '1. Test block creation in campaigns';

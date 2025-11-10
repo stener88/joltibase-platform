@@ -2,9 +2,12 @@
  * AI Campaign Generator - Validation Schemas
  * 
  * Zod schemas for type-safe validation of inputs and AI responses
+ * 
+ * Phase 4B: Now supports block-based email generation
  */
 
 import { z } from 'zod';
+import { EmailBlockSchema, GlobalEmailSettingsSchema } from '../email/blocks/schemas';
 
 // ============================================================================
 // Input Validation Schemas
@@ -64,7 +67,7 @@ const ContentSectionSchema = z.object({
 });
 
 /**
- * Email structure from AI (now with sections instead of HTML)
+ * Email structure from AI (legacy section-based format)
  */
 const GeneratedEmailSchema = z.object({
   subject: z.string().min(1).max(100),
@@ -79,6 +82,25 @@ const GeneratedEmailSchema = z.object({
   ctaText: z.string().optional(),
   ctaUrl: z.string().optional(),
 });
+
+/**
+ * Email structure from AI (Phase 4B: block-based format)
+ */
+const GeneratedBlockEmailSchema = z.object({
+  subject: z.string().min(1).max(100),
+  previewText: z.string().min(1).max(150),
+  blocks: z.array(EmailBlockSchema).min(1),
+  globalSettings: GlobalEmailSettingsSchema.optional(),
+  notes: z.string().optional(),
+});
+
+/**
+ * Unified email schema - supports both sections and blocks
+ */
+const UnifiedEmailSchema = z.union([
+  GeneratedEmailSchema,
+  GeneratedBlockEmailSchema,
+]);
 
 /**
  * Design configuration from AI
@@ -131,7 +153,7 @@ const DesignConfigSchema = z.object({
 });
 
 /**
- * Complete AI-generated campaign
+ * Complete AI-generated campaign (supports both section and block-based emails)
  */
 export const GeneratedCampaignSchema = z.object({
   campaignName: z.string().min(1).max(100),
@@ -142,7 +164,7 @@ export const GeneratedCampaignSchema = z.object({
     keyMessage: z.string(),
   }).optional(),
   design: DesignConfigSchema,
-  emails: z.array(GeneratedEmailSchema).min(1).max(5),
+  emails: z.array(UnifiedEmailSchema).min(1).max(5),
   segmentationSuggestion: z.string(),
   sendTimeSuggestion: z.string(),
   successMetrics: z.string(),
@@ -150,7 +172,23 @@ export const GeneratedCampaignSchema = z.object({
 
 export type GeneratedCampaign = z.infer<typeof GeneratedCampaignSchema>;
 export type GeneratedEmail = z.infer<typeof GeneratedEmailSchema>;
+export type GeneratedBlockEmail = z.infer<typeof GeneratedBlockEmailSchema>;
+export type UnifiedEmail = z.infer<typeof UnifiedEmailSchema>;
 export type DesignConfig = z.infer<typeof DesignConfigSchema>;
+
+/**
+ * Type guard to check if email is block-based
+ */
+export function isBlockBasedEmail(email: UnifiedEmail): email is GeneratedBlockEmail {
+  return 'blocks' in email && Array.isArray(email.blocks);
+}
+
+/**
+ * Type guard to check if email is section-based (legacy)
+ */
+export function isSectionBasedEmail(email: UnifiedEmail): email is GeneratedEmail {
+  return 'sections' in email && Array.isArray(email.sections);
+}
 
 // ============================================================================
 // Generation Result Schema

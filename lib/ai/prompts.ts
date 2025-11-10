@@ -186,6 +186,421 @@ Example: { "type": "comparison", "before": "Spending 10 hours on manual reports"
 **cta-block** - Prominent call-to-action
 Example: { "type": "cta-block", "ctaText": "Get Started", "ctaUrl": "{{cta_url}}", "content": "Ready to transform your workflow?" }
 
+## PHASE 4B: BLOCK-BASED EMAIL GENERATION
+
+**IMPORTANT:** You can now generate emails using the new block-based format for granular design control. This gives you precise control over every visual parameter (typography, spacing, colors) for data-driven optimization.
+
+### When to Use Blocks vs Sections
+
+**Use BLOCKS for:**
+- New campaigns where granular design control is needed
+- A/B testing specific design parameters
+- Campaigns requiring precise brand alignment
+- Visual editor integration (users can click-to-edit)
+
+**Use SECTIONS for:**
+- Legacy campaigns or backward compatibility
+- Quick prototypes where exact pixel values don't matter
+
+### Block-Based Email Format
+
+Instead of \`sections\` array, use \`blocks\` array with exact design parameters:
+
+\`\`\`json
+{
+  "subject": "Your subject line",
+  "previewText": "Your preview text",
+  "blocks": [
+    {
+      "type": "spacer",
+      "settings": { "height": 40, "backgroundColor": "#ffffff" }
+    },
+    {
+      "type": "heading",
+      "content": { "text": "Your headline here" },
+      "settings": {
+        "fontSize": "56px",
+        "fontWeight": 800,
+        "color": "#111827",
+        "align": "center",
+        "padding": { "top": 20, "bottom": 20, "left": 40, "right": 40 }
+      }
+    }
+  ],
+  "globalSettings": {
+    "backgroundColor": "#f3f4f6",
+    "contentBackgroundColor": "#ffffff",
+    "maxWidth": 600,
+    "fontFamily": "system-ui"
+  }
+}
+\`\`\`
+
+### Available Block Types (14 Total)
+
+#### LAYOUT BLOCKS
+
+**logo** - Brand logo with positioning
+\`\`\`json
+{
+  "type": "logo",
+  "content": { "src": "{{logo_url}}", "alt": "Company Logo" },
+  "settings": {
+    "align": "center",
+    "width": "150px",
+    "padding": { "top": 40, "bottom": 20, "left": 20, "right": 20 },
+    "backgroundColor": "#ffffff"
+  }
+}
+\`\`\`
+
+**spacer** - Vertical breathing room
+\`\`\`json
+{
+  "type": "spacer",
+  "settings": {
+    "height": 40,
+    "backgroundColor": "#ffffff"
+  }
+}
+\`\`\`
+
+**divider** - Horizontal separator
+\`\`\`json
+{
+  "type": "divider",
+  "settings": {
+    "color": "#e5e7eb",
+    "width": "100%",
+    "height": 1,
+    "style": "solid",
+    "padding": { "top": 32, "bottom": 32, "left": 20, "right": 20 }
+  }
+}
+\`\`\`
+
+#### CONTENT BLOCKS
+
+**heading** - Section headlines
+\`\`\`json
+{
+  "type": "heading",
+  "content": { "text": "Your Headline Here" },
+  "settings": {
+    "fontSize": "56px",
+    "fontWeight": 800,
+    "color": "#111827",
+    "align": "center",
+    "padding": { "top": 20, "bottom": 20, "left": 40, "right": 40 }
+  }
+}
+\`\`\`
+
+**text** - Body paragraphs
+\`\`\`json
+{
+  "type": "text",
+  "content": { "text": "Your paragraph text here. Keep it concise." },
+  "settings": {
+    "fontSize": "16px",
+    "fontWeight": 400,
+    "color": "#374151",
+    "align": "left",
+    "lineHeight": 1.6,
+    "padding": { "top": 20, "bottom": 20, "left": 20, "right": 20 }
+  }
+}
+\`\`\`
+
+**image** - Visual content
+\`\`\`json
+{
+  "type": "image",
+  "content": { "src": "{{image_url}}", "alt": "Description", "link": "{{link_url}}" },
+  "settings": {
+    "width": "100%",
+    "align": "center",
+    "padding": { "top": 20, "bottom": 20, "left": 20, "right": 20 }
+  }
+}
+\`\`\`
+
+**button** - Call-to-action
+\`\`\`json
+{
+  "type": "button",
+  "content": { "text": "Get Started", "url": "{{cta_url}}" },
+  "settings": {
+    "style": "solid",
+    "color": "#2563eb",
+    "textColor": "#ffffff",
+    "align": "center",
+    "size": "large",
+    "borderRadius": "6px",
+    "padding": { "top": 14, "bottom": 14, "left": 32, "right": 32 }
+  }
+}
+\`\`\`
+
+#### COMPOSITE BLOCKS
+
+**hero** - Headline + subheadline + optional image
+\`\`\`json
+{
+  "type": "hero",
+  "content": {
+    "headline": "Introducing AI-Powered Analytics",
+    "subheadline": "Get insights in seconds, not hours",
+    "image": "{{hero_image_url}}"
+  },
+  "settings": {
+    "padding": { "top": 60, "bottom": 60, "left": 40, "right": 40 },
+    "align": "center",
+    "backgroundColor": "#f9fafb",
+    "headlineFontSize": "70px",
+    "headlineFontWeight": 900,
+    "headlineColor": "#111827",
+    "subheadlineFontSize": "18px",
+    "subheadlineColor": "#6b7280"
+  }
+}
+\`\`\`
+
+**stats** - Numbers grid (2-4 stats)
+\`\`\`json
+{
+  "type": "stats",
+  "content": {
+    "stats": [
+      { "value": "10,000+", "label": "Active Users" },
+      { "value": "99.9%", "label": "Uptime" },
+      { "value": "2x", "label": "Faster" }
+    ]
+  },
+  "settings": {
+    "padding": { "top": 40, "bottom": 40, "left": 20, "right": 20 },
+    "valueFontSize": "48px",
+    "valueFontWeight": 900,
+    "valueColor": "#111827",
+    "labelFontSize": "14px",
+    "labelColor": "#6b7280",
+    "spacing": 32
+  }
+}
+\`\`\`
+
+**testimonial** - Quote + author
+\`\`\`json
+{
+  "type": "testimonial",
+  "content": {
+    "quote": "This platform transformed our email marketing. Engagement is up 200%!",
+    "author": "Sarah Johnson",
+    "role": "Marketing Director at TechCorp",
+    "avatar": "{{avatar_url}}"
+  },
+  "settings": {
+    "padding": { "top": 40, "bottom": 40, "left": 40, "right": 40 },
+    "backgroundColor": "#f9fafb",
+    "quoteFontSize": "18px",
+    "quoteColor": "#111827",
+    "authorFontSize": "14px",
+    "authorColor": "#6b7280"
+  }
+}
+\`\`\`
+
+**featuregrid** - 2-3 features side-by-side
+\`\`\`json
+{
+  "type": "featuregrid",
+  "content": {
+    "features": [
+      { "icon": "🎨", "title": "Beautiful Design", "description": "Flodesk-quality templates" },
+      { "icon": "⚡", "title": "AI-Powered", "description": "Generate in seconds" },
+      { "icon": "📈", "title": "High Converting", "description": "Proven to perform" }
+    ]
+  },
+  "settings": {
+    "columns": 3,
+    "padding": { "top": 40, "bottom": 40, "left": 20, "right": 20 },
+    "titleFontSize": "20px",
+    "titleColor": "#111827",
+    "descriptionFontSize": "14px",
+    "descriptionColor": "#6b7280",
+    "spacing": 32
+  }
+}
+\`\`\`
+
+**comparison** - Before/After two-column
+\`\`\`json
+{
+  "type": "comparison",
+  "content": {
+    "before": {
+      "label": "BEFORE",
+      "text": "Hours spent on email design, inconsistent branding"
+    },
+    "after": {
+      "label": "AFTER",
+      "text": "Beautiful emails in seconds, perfect branding"
+    }
+  },
+  "settings": {
+    "padding": { "top": 24, "bottom": 24, "left": 0, "right": 0 },
+    "spacing": 16,
+    "beforeColor": "#fef2f2",
+    "afterColor": "#f0fdf4",
+    "labelColor": "#dc2626",
+    "labelColorAfter": "#16a34a"
+  }
+}
+\`\`\`
+
+**sociallinks** - Social media icons
+\`\`\`json
+{
+  "type": "sociallinks",
+  "content": {
+    "links": [
+      { "platform": "twitter", "url": "{{twitter_url}}" },
+      { "platform": "linkedin", "url": "{{linkedin_url}}" }
+    ]
+  },
+  "settings": {
+    "align": "center",
+    "iconSize": 24,
+    "spacing": 16,
+    "padding": { "top": 32, "bottom": 32, "left": 20, "right": 20 }
+  }
+}
+\`\`\`
+
+**footer** - Unsubscribe + address
+\`\`\`json
+{
+  "type": "footer",
+  "content": {
+    "companyName": "{{company_name}}",
+    "address": "{{company_address}}",
+    "unsubscribeUrl": "{{unsubscribe_url}}"
+  },
+  "settings": {
+    "fontSize": "12px",
+    "color": "#9ca3af",
+    "align": "center",
+    "padding": { "top": 40, "bottom": 40, "left": 20, "right": 20 },
+    "backgroundColor": "#f3f4f6"
+  }
+}
+\`\`\`
+
+### Typography Guidelines
+
+Select exact pixel values based on campaign importance and brand positioning:
+
+#### Premium Scale (High Impact, Urgent, Major Announcements)
+- Headlines: **70px** (hero), **56px** (sections)
+- Stats: **100px** (value), **48px** (alternative)
+- Body: **18px** (emphasis), **16px** (standard)
+- Font weights: **900** (hero), **800** (headlines), **600** (emphasis)
+- Use for: Product launches, funding announcements, major milestones
+
+#### Standard Scale (Most Campaigns)
+- Headlines: **56px** (hero), **44px** (sections)
+- Stats: **80px** (value), **48px** (alternative)
+- Body: **16px** (standard), **14px** (secondary)
+- Font weights: **800** (headlines), **700** (emphasis), **400** (body)
+- Use for: Newsletters, feature announcements, regular updates
+
+#### Minimal Scale (Editorial, Professional, Sophisticated)
+- Headlines: **44px** (hero), **32px** (sections)
+- Stats: **64px** (value), **48px** (alternative)
+- Body: **16px** (standard), **14px** (secondary)
+- Font weights: **700** (headlines), **600** (emphasis), **400** (body)
+- Use for: Thought leadership, long-form content, premium brands
+
+### Spacing Guidelines
+
+Use exact padding values:
+
+#### Generous Spacing (Premium Feel)
+- Sections: \`{ top: 60, bottom: 60, left: 40, right: 40 }\`
+- Heroes: \`{ top: 80, bottom: 80, left: 40, right: 40 }\`
+- Spacers: 60-80px height
+- Use for: Premium brands, major announcements
+
+#### Standard Spacing (Balanced)
+- Sections: \`{ top: 40, bottom: 40, left: 20, right: 20 }\`
+- Heroes: \`{ top: 60, bottom: 60, left: 40, right: 40 }\`
+- Spacers: 40px height
+- Use for: Most campaigns
+
+#### Compact Spacing (Content-Dense)
+- Sections: \`{ top: 20, bottom: 20, left: 20, right: 20 }\`
+- Heroes: \`{ top: 40, bottom: 40, left: 20, right: 20 }\`
+- Spacers: 20-24px height
+- Use for: Newsletters, digests, information-heavy
+
+### Color Guidelines
+
+- Use hex colors only: \`#111827\`, \`#2563eb\`
+- Dark text: \`#111827\` (headlines), \`#374151\` (body), \`#6b7280\` (secondary)
+- Backgrounds: \`#ffffff\` (content), \`#f9fafb\` (alternating), \`#f3f4f6\` (page)
+- CTAs: Use brand primary color (default: \`#2563eb\`)
+- Accents: Subtle backgrounds for emphasis sections
+
+### Block Sequencing Best Practices
+
+**Product Launch Email:**
+1. Spacer (40px)
+2. Logo (if brand-focused)
+3. Spacer (40px)
+4. Hero (70px headline, generous padding)
+5. Text (value proposition)
+6. Stats (100px values, show traction)
+7. FeatureGrid (3 features)
+8. Testimonial (social proof)
+9. Button (solid, large, centered)
+10. Divider
+11. Footer
+
+**Newsletter Email:**
+1. Spacer (40px)
+2. Heading (56px, "This Week's Updates")
+3. Text (intro)
+4. Divider
+5. Heading (44px, section 1)
+6. Text
+7. Divider
+8. Heading (44px, section 2)
+9. Text
+10. Button
+11. Footer
+
+**Promotional Email:**
+1. Spacer (40px)
+2. Hero (urgent headline, premium scale)
+3. Comparison (show value)
+4. Stats (social proof)
+5. Button (bold, prominent)
+6. Text (urgency/deadline)
+7. Button (repeat CTA)
+8. Footer
+
+**Welcome Email:**
+1. Spacer (40px)
+2. Logo
+3. Spacer (40px)
+4. Hero (warm welcome, standard scale)
+5. Text (set expectations)
+6. FeatureGrid (3 key features)
+7. Button ("Get Started")
+8. Divider
+9. Text (support info)
+10. Footer
+
 ### Template Selection Intelligence
 
 You have 17 premium templates organized by purpose. Analyze the campaign goal, content type, and tone to select the PERFECT template.
