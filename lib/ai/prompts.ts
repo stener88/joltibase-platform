@@ -109,34 +109,66 @@ You MUST respond with valid JSON in this exact structure. Do not include any tex
     {
       "subject": "Subject line here (30-50 chars)",
       "previewText": "Preview text here (40-100 chars)",
-      "sections": [
+      "blocks": [
         {
-          "type": "text",
-          "content": "Hi {{first_name}}, welcome to [Product]! We're excited to help you [benefit]."
+          "type": "spacer",
+          "settings": { "height": 40, "backgroundColor": "#ffffff" }
         },
         {
           "type": "heading",
-          "content": "Get Started in 3 Easy Steps"
+          "content": { "text": "Welcome to [Product]!" },
+          "settings": {
+            "fontSize": "56px",
+            "fontWeight": 800,
+            "color": "#111827",
+            "align": "center",
+            "padding": { "top": 20, "bottom": 20, "left": 40, "right": 40 }
+          }
         },
         {
-          "type": "list",
-          "items": ["Complete your profile", "Invite team members", "Create your first project"]
+          "type": "text",
+          "content": { "text": "Hi {{first_name}}, we're excited to help you [benefit]. Let's get started!" },
+          "settings": {
+            "fontSize": "16px",
+            "color": "#374151",
+            "align": "left",
+            "lineHeight": 1.6,
+            "padding": { "top": 20, "bottom": 20, "left": 40, "right": 40 }
+          }
         },
         {
-          "type": "testimonial",
-          "quote": "This tool changed how we work. We're 2x more productive now.",
-          "author": "Sarah Johnson",
-          "role": "Product Manager at Acme"
+          "type": "button",
+          "content": { "text": "Get Started", "url": "{{cta_url}}" },
+          "settings": {
+            "style": "solid",
+            "color": "#2563eb",
+            "textColor": "#ffffff",
+            "align": "center",
+            "size": "large",
+            "borderRadius": "8px",
+            "padding": { "top": 40, "bottom": 40, "left": 40, "right": 40 }
+          }
         },
         {
-          "type": "cta-block",
-          "ctaText": "Get Started",
-          "ctaUrl": "{{cta_url}}",
-          "content": "Ready to transform your workflow? Let's go!"
+          "type": "footer",
+          "content": {
+            "companyName": "{{company_name}}",
+            "address": "123 Main St, City, State 12345",
+            "unsubscribeUrl": "{{unsubscribe_url}}"
+          },
+          "settings": {
+            "fontSize": "12px",
+            "color": "#9ca3af",
+            "padding": { "top": 40, "bottom": 40, "left": 40, "right": 40 }
+          }
         }
       ],
-      "layoutSuggestion": "default",
-      "emphasisAreas": ["testimonial", "cta-block"],
+      "globalSettings": {
+        "backgroundColor": "#f3f4f6",
+        "contentBackgroundColor": "#ffffff",
+        "maxWidth": 600,
+        "fontFamily": "system-ui"
+      },
       "notes": "Internal note about this email's purpose and strategy"
     }
   ],
@@ -145,62 +177,9 @@ You MUST respond with valid JSON in this exact structure. Do not include any tex
   "successMetrics": "What good performance looks like (e.g., 'Open rate >25%, Click rate >3%')"
 }
 
-## Section Type Details:
+## BLOCK-BASED EMAIL GENERATION
 
-Here's how to use each section type effectively:
-
-### Basic Sections
-
-**text** - Standard paragraph
-Example: { "type": "text", "content": "Your paragraph here. Keep it 2-4 sentences." }
-
-**heading** - Section headline
-Example: { "type": "heading", "content": "Your Headline Here" }
-
-**list** - Bulleted items
-Example: { "type": "list", "items": ["First item", "Second item", "Third item"] }
-
-**divider** - Visual separator
-Example: { "type": "divider" }
-
-**spacer** - Add breathing room
-Example: { "type": "spacer", "size": "small|medium|large" }
-
-### Advanced Sections (Use for variety!)
-
-**hero** - Bold opening statement
-Example: { "type": "hero", "headline": "Welcome to the Future", "subheadline": "Everything you need in one place" }
-
-**feature-grid** - Showcase 2-3 features
-Example: { "type": "feature-grid", "features": [{ "title": "Fast Setup", "description": "Get started in minutes" }, { "title": "Easy to Use", "description": "No learning curve" }] }
-
-**testimonial** - Social proof
-Example: { "type": "testimonial", "quote": "This product changed everything for our team.", "author": "Jane Smith", "role": "CEO at TechCorp" }
-
-**stats** - Impressive numbers
-Example: { "type": "stats", "stats": [{ "value": "10,000+", "label": "Active Users" }, { "value": "99.9%", "label": "Uptime" }] }
-
-**comparison** - Show transformation
-Example: { "type": "comparison", "before": "Spending 10 hours on manual reports", "after": "Automated reports in 5 minutes" }
-
-**cta-block** - Prominent call-to-action
-Example: { "type": "cta-block", "ctaText": "Get Started", "ctaUrl": "{{cta_url}}", "content": "Ready to transform your workflow?" }
-
-## PHASE 4B: BLOCK-BASED EMAIL GENERATION
-
-**IMPORTANT:** You can now generate emails using the new block-based format for granular design control. This gives you precise control over every visual parameter (typography, spacing, colors) for data-driven optimization.
-
-### When to Use Blocks vs Sections
-
-**Use BLOCKS for:**
-- New campaigns where granular design control is needed
-- A/B testing specific design parameters
-- Campaigns requiring precise brand alignment
-- Visual editor integration (users can click-to-edit)
-
-**Use SECTIONS for:**
-- Legacy campaigns or backward compatibility
-- Quick prototypes where exact pixel values don't matter
+**IMPORTANT:** You MUST generate all emails using the block-based format. This gives you precise control over every visual parameter (typography, spacing, colors) for data-driven optimization and visual editor compatibility.
 
 ### Block-Based Email Format
 
@@ -231,12 +210,20 @@ Instead of \`sections\` array, use \`blocks\` array with exact design parameters
     "backgroundColor": "#f3f4f6",
     "contentBackgroundColor": "#ffffff",
     "maxWidth": 600,
-    "fontFamily": "system-ui"
+    "fontFamily": "system-ui",
+    "mobileBreakpoint": 480
   }
 }
 \`\`\`
 
 ### Available Block Types (14 Total)
+
+**IMPORTANT:** All blocks must include:
+- \`id\`: Unique string identifier (e.g., "block-1", "block-2")
+- \`type\`: Block type name (see below)
+- \`position\`: Zero-based integer for ordering (0, 1, 2, ...)
+- \`content\`: Block-specific content object
+- \`settings\`: Block-specific design settings
 
 #### LAYOUT BLOCKS
 
@@ -337,7 +324,10 @@ Instead of \`sections\` array, use \`blocks\` array with exact design parameters
     "align": "center",
     "size": "large",
     "borderRadius": "6px",
-    "padding": { "top": 14, "bottom": 14, "left": 32, "right": 32 }
+    "fontSize": "18px",
+    "fontWeight": 700,
+    "padding": { "top": 14, "bottom": 14, "left": 32, "right": 32 },
+    "containerPadding": { "top": 40, "bottom": 40, "left": 40, "right": 40 }
   }
 }
 \`\`\`
