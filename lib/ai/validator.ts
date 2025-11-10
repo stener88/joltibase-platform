@@ -84,7 +84,33 @@ const GeneratedEmailSchema = z.object({
  * Design configuration from AI
  */
 const DesignConfigSchema = z.object({
-  template: z.enum(['gradient-hero', 'color-blocks', 'bold-modern', 'minimal-accent', 'text-first']),
+  template: z.enum([
+    // Legacy templates
+    'gradient-hero', 
+    'color-blocks', 
+    'bold-modern', 
+    'minimal-accent', 
+    'text-first',
+    // Premium templates
+    'premium-hero',
+    'split-hero',
+    'gradient-impact',
+    'minimal-hero',
+    // Content-focused templates
+    'story-teller',
+    'feature-showcase',
+    'newsletter-pro',
+    'text-luxury',
+    // Conversion-focused templates
+    'launch-announcement',
+    'promo-bold',
+    'social-proof',
+    'comparison-hero',
+    // Specialized templates
+    'welcome-warmth',
+    'milestone-celebration',
+    'update-digest',
+  ]),
   headerGradient: z.object({
     from: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color'),
     to: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color'),
@@ -93,6 +119,15 @@ const DesignConfigSchema = z.object({
   ctaColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color'),
   accentColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').optional(),
   visualStyle: z.string().optional(),
+  // AI-powered design customization
+  typographyScale: z.enum(['premium', 'standard', 'minimal']).optional(),
+  layoutVariation: z.object({
+    heroPlacement: z.enum(['top-centered', 'full-bleed', 'split-screen', 'minimal']).optional(),
+    sectionLayout: z.enum(['single-column', 'two-column', 'grid', 'alternating']).optional(),
+    ctaStyle: z.enum(['bold-centered', 'inline', 'floating', 'subtle']).optional(),
+    spacing: z.enum(['generous', 'standard', 'compact']).optional(),
+    visualWeight: z.enum(['balanced', 'text-heavy', 'image-heavy']).optional(),
+  }).optional(),
 });
 
 /**

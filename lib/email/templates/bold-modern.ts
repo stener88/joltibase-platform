@@ -6,12 +6,16 @@
  */
 
 import type { TemplateRenderInput } from './types';
-import { getFontStack, replaceMergeTags } from './types';
+import { getFontStack, replaceMergeTags, getTypography, getSpacing } from './types';
 
 export function renderBoldModern(input: TemplateRenderInput): string {
   const { content, design, brandColors, mergeTags } = input;
   const fontStack = getFontStack(brandColors.fontStyle);
   const ctaColor = design.ctaColor || brandColors.primaryColor;
+  
+  // Design system - Bold Modern defaults to premium scale for maximum impact
+  const typography = getTypography(design.typographyScale || 'premium');
+  const spacing = getSpacing(design.layoutVariation?.spacing || 'generous');
 
   // Build sections HTML
   const sectionsHtml = content.sections
@@ -38,9 +42,9 @@ export function renderBoldModern(input: TemplateRenderInput): string {
         
         case 'hero':
           return `
-            <div style="margin: 0 0 40px; text-align: center;">
-              <h2 style="margin: 0 0 16px; font-size: 42px; font-weight: 900; color: #000000; line-height: 1.1;">${section.headline || ''}</h2>
-              ${section.subheadline ? `<p style="margin: 0; font-size: 20px; color: #1f2937;">${section.subheadline}</p>` : ''}
+            <div style="margin: 0 0 ${spacing.sectionSpacing}; text-align: center;">
+              <h2 style="margin: 0 0 20px; font-size: ${typography.h1}; font-weight: ${typography.weight.headline}; color: #000000; line-height: 1.05; letter-spacing: -0.04em;">${section.headline || ''}</h2>
+              ${section.subheadline ? `<p style="margin: 0; font-size: 24px; color: #1f2937; font-weight: 600; line-height: 1.3;">${section.subheadline}</p>` : ''}
             </div>
           `;
         
@@ -73,13 +77,13 @@ export function renderBoldModern(input: TemplateRenderInput): string {
         case 'stats':
           const statsHtml = (section.stats || [])
             .map(stat => `
-              <div style="display: inline-block; margin: 0 32px 20px 0; text-align: center;">
-                <p style="margin: 0 0 8px; font-size: 48px; font-weight: 900; color: ${ctaColor};">${stat.value}</p>
-                <p style="margin: 0; font-size: 16px; color: #374151; font-weight: 600; text-transform: uppercase;">${stat.label}</p>
+              <div style="display: inline-block; margin: 0 40px ${spacing.elementSpacing} 0; text-align: center;">
+                <p style="margin: 0 0 12px; font-size: ${typography.stats}; font-weight: ${typography.weight.stats}; color: ${ctaColor}; line-height: 0.9; letter-spacing: -0.04em;">${stat.value}</p>
+                <p style="margin: 0; font-size: 18px; color: #374151; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">${stat.label}</p>
               </div>
             `)
             .join('');
-          return `<div style="margin: 32px 0; text-align: center;">${statsHtml}</div>`;
+          return `<div style="margin: ${spacing.sectionSpacing} 0; text-align: center;">${statsHtml}</div>`;
         
         case 'comparison':
           if (!section.comparison) return '';
@@ -145,16 +149,16 @@ export function renderBoldModern(input: TemplateRenderInput): string {
           
           <!-- Main Content -->
           <tr>
-            <td style="padding: 48px 40px;">
+            <td style="padding: ${spacing.outerPadding} 40px;">
               
               <!-- Extra Large Headline -->
-              <h1 style="margin: 0 0 20px; font-size: 40px; font-weight: 800; color: #000000; line-height: 1.1; letter-spacing: -0.02em;">
+              <h1 style="margin: 0 0 24px; font-size: ${typography.h1}; font-weight: ${typography.weight.headline}; color: #000000; line-height: 1.05; letter-spacing: -0.04em;">
                 ${content.headline}
               </h1>
               
               <!-- Subheadline -->
               ${content.subheadline ? `
-              <p style="margin: 0 0 40px; font-size: 20px; color: #000000; line-height: 1.4; font-weight: 500;">
+              <p style="margin: 0 0 ${spacing.sectionSpacing}; font-size: 24px; color: #000000; line-height: 1.3; font-weight: 600;">
                 ${content.subheadline}
               </p>
               ` : ''}
@@ -163,8 +167,8 @@ export function renderBoldModern(input: TemplateRenderInput): string {
               ${sectionsHtml}
               
               <!-- Bold Underlined CTA -->
-              <div style="margin: 48px 0 0;">
-                <a href="${content.cta.url}" style="color: ${ctaColor}; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; font-size: 20px; font-weight: 700;">
+              <div style="margin: ${spacing.sectionSpacing} 0 0;">
+                <a href="${content.cta.url}" style="color: ${ctaColor}; text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; font-size: 24px; font-weight: 800; letter-spacing: -0.01em;">
                   ${content.cta.text} →
                 </a>
               </div>

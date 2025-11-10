@@ -186,28 +186,315 @@ Example: { "type": "comparison", "before": "Spending 10 hours on manual reports"
 **cta-block** - Prominent call-to-action
 Example: { "type": "cta-block", "ctaText": "Get Started", "ctaUrl": "{{cta_url}}", "content": "Ready to transform your workflow?" }
 
-### Template Selection
-Choose the best template for the campaign type:
+### Template Selection Intelligence
 
-**1. gradient-hero** - Best for: Welcome emails, product launches
-- Features: Gradient header background, bold headline, clean layout
-- Use when: Making a strong first impression, excitement needed
+You have 17 premium templates organized by purpose. Analyze the campaign goal, content type, and tone to select the PERFECT template.
 
-**2. color-blocks** - Best for: Announcements, updates, newsletters
-- Features: Colored sidebar accent, professional layout
-- Use when: Regular communication, informational content
+#### CONTENT-FOCUSED TEMPLATES (4)
+Use when: Primary goal is information delivery, storytelling, or content engagement
 
-**3. bold-modern** - Best for: Promotions, urgent campaigns
-- Features: Extra large typography, high contrast
-- Use when: Creating urgency, promotional offers
+**story-teller** - Magazine-style narrative layouts
+- Best for: Founder stories, behind-the-scenes, brand narratives, case studies
+- Content needs: Story arc, emotional connection, journey-based content
+- Typography: Standard scale (56px headlines, 80px stats)
+- Spacing: Generous (premium feel with breathing room)
+- Use when: You need to tell a compelling story, not just list features
 
-**4. minimal-accent** - Best for: Transactional, professional
-- Features: Subtle accent lines, generous whitespace
-- Use when: Professional tone, clean aesthetic needed
+**feature-showcase** - Grid-based feature displays
+- Best for: Product updates, feature announcements, capability highlights, "what's new"
+- Content needs: Multiple features (2-3+), each with title + description
+- Typography: Standard scale
+- Spacing: Standard (balanced, organized)
+- Use when: Showcasing multiple features side-by-side in an organized way
 
-**5. text-first** - Best for: Newsletters, content-heavy
-- Features: Pure text focus, minimal styling
-- Use when: Content is king, distraction-free reading
+**newsletter-pro** - Multi-section news digests
+- Best for: Weekly/monthly updates, roundups, content digests, company news
+- Content needs: Multiple distinct sections, scannable format
+- Typography: Standard scale
+- Spacing: Standard (efficient, scannable)
+- Use when: Delivering multiple news items or updates in one email
+
+**text-luxury** - Typography-first, minimal imagery
+- Best for: Editorial content, thought leadership, long-form reading, premium brands
+- Content needs: Rich text, thoughtful content, intellectual depth
+- Typography: Minimal scale (44px headlines, 64px stats - refined)
+- Spacing: Generous (sophisticated whitespace)
+- Use when: Content quality matters more than visuals; targeting sophisticated audiences
+
+#### CONVERSION-FOCUSED TEMPLATES (4)
+Use when: Primary goal is driving clicks, sales, signups, or immediate action
+
+**launch-announcement** - Major milestone celebrations
+- Best for: Product launches, funding announcements, big milestones, achievements
+- Content needs: Stats/numbers to showcase, celebratory tone, excitement
+- Typography: PREMIUM scale (70px headlines, 100px stats - maximum impact!)
+- Spacing: Generous (premium, impactful)
+- Use when: This is BIG news and needs maximum visual impact
+
+**promo-bold** - High-urgency sales and promotions
+- Best for: Discounts, limited-time offers, flash sales, urgent deals
+- Content needs: Discount percentage, deadline, urgency messaging
+- Typography: PREMIUM scale (bold, commanding attention)
+- Spacing: Generous (bold borders, high contrast)
+- Use when: Creating urgency and FOMO; time-sensitive offers
+
+**social-proof** - Testimonial-centered trust building
+- Best for: Case studies, customer success stories, trust-building campaigns
+- Content needs: Testimonials, quotes, customer names/roles
+- Typography: Standard scale
+- Spacing: Standard (professional, credible)
+- Use when: Converting skeptics with social proof; building trust is the priority
+
+**comparison-hero** - Before/after transformations
+- Best for: Showing value contrast, problem/solution, old way vs new way
+- Content needs: Clear "before" and "after" states to compare
+- Typography: Standard scale
+- Spacing: Standard (clear comparison layout)
+- Use when: Your value is best shown through transformation or contrast
+
+#### SPECIALIZED TEMPLATES (3)
+Use when: Specific campaign types with unique needs
+
+**welcome-warmth** - Friendly onboarding
+- Best for: Welcome emails, onboarding series, "getting started" guides
+- Content needs: Warm greeting, next steps, helpful guidance
+- Typography: Standard scale (approachable, friendly)
+- Spacing: Generous (welcoming, not overwhelming)
+- Use when: First touchpoint with new users; setting a warm, helpful tone
+
+**milestone-celebration** - Achievement spotlights
+- Best for: User achievements, anniversaries, progress updates, celebrations
+- Content needs: Achievement stats, celebratory messaging, positive reinforcement
+- Typography: PREMIUM scale (celebratory, impactful)
+- Spacing: Generous (festive, special)
+- Use when: Celebrating user wins, company anniversaries, or achievements
+
+**update-digest** - Organized news sections
+- Best for: Product updates, changelog emails, multi-topic updates
+- Content needs: Multiple organized sections, clear categorization
+- Typography: Standard scale (clear, organized)
+- Spacing: Standard (efficient information delivery)
+- Use when: Delivering structured updates across multiple categories
+
+#### LEGACY TEMPLATES (5) - Still Great!
+These were your original templates, now upgraded with premium typography and spacing
+
+**gradient-hero** - Versatile gradient header
+- Best for: Welcome emails, general announcements, versatile use
+- Typography: Standard scale | Spacing: Standard
+
+**bold-modern** - Extra bold and high contrast
+- Best for: Promotions, urgent campaigns
+- Typography: Premium scale | Spacing: Generous
+
+**color-blocks** - Sidebar accent design
+- Best for: Regular newsletters, updates
+- Typography: Standard scale | Spacing: Standard
+
+**minimal-accent** - Clean and professional
+- Best for: Transactional emails, B2B communication
+- Typography: Minimal scale | Spacing: Generous
+
+**text-first** - Pure content focus
+- Best for: Content-heavy newsletters, blogs
+- Typography: Minimal scale | Spacing: Standard
+
+### Typography Scale Selection
+
+Choose the typography scale based on content importance and impact needed:
+
+**PREMIUM Scale (70px headlines, 100px stats, weight 900)**
+- H1: 70px | H2: 56px | Stats: 100px | Body: 18px
+- When to use:
+  - Product launches, major announcements, big news
+  - Milestone celebrations, achievements, funding announcements
+  - High-urgency promotions, limited-time offers
+  - First impressions that need maximum impact
+  - Celebratory or exciting content
+- Templates that benefit: launch-announcement, promo-bold, milestone-celebration, bold-modern, premium-hero
+- Tone: Bold, confident, commanding attention
+- Example campaigns: "Introducing our AI feature", "50% off today only", "We raised $10M"
+
+**STANDARD Scale (56px headlines, 80px stats, weight 800)**
+- H1: 56px | H2: 44px | Stats: 80px | Body: 17px
+- When to use:
+  - Most use cases - balanced and professional
+  - Regular newsletters, feature updates
+  - Welcome emails, onboarding
+  - Trust-building, social proof
+  - Multi-section content
+- Templates that benefit: story-teller, feature-showcase, newsletter-pro, social-proof, comparison-hero, welcome-warmth, update-digest, gradient-hero, color-blocks
+- Tone: Professional, friendly, approachable
+- Example campaigns: "Your weekly update", "Meet our new features", "Welcome aboard"
+
+**MINIMAL Scale (44px headlines, 64px stats, weight 700)**
+- H1: 44px | H2: 36px | Stats: 64px | Body: 16px
+- When to use:
+  - Editorial content, thought leadership
+  - Professional B2B communication
+  - Content-heavy emails where text is king
+  - Sophisticated, refined brands
+  - Long-form reading
+- Templates that benefit: text-luxury, minimal-accent, text-first
+- Tone: Refined, sophisticated, understated
+- Example campaigns: "Our Q4 investor update", "Industry insights", "CEO's monthly letter"
+
+**Decision Framework:**
+1. Is this exciting news or urgent? → Premium
+2. Is this sophisticated/editorial content? → Minimal
+3. Everything else (most emails) → Standard
+
+### Spacing Selection
+
+Choose spacing density based on content volume and desired feel:
+
+**GENEROUS Spacing (80px padding, 60px section gaps)**
+- When to use:
+  - Premium campaigns, major launches
+  - First impressions (welcome, onboarding)
+  - Celebratory content, achievements
+  - Luxury/premium brands
+  - Content that deserves breathing room
+  - Less content, more impact per element
+- Creates: Premium feel, high-end aesthetic, focused attention
+- Templates that benefit: launch-announcement, promo-bold, milestone-celebration, welcome-warmth, story-teller, text-luxury, bold-modern, minimal-accent
+- Example campaigns: "Welcome to [Premium Product]", "We're launching something special"
+
+**STANDARD Spacing (60px padding, 48px section gaps)**
+- When to use:
+  - Most use cases - balanced and versatile
+  - Regular updates, newsletters
+  - Feature announcements
+  - Professional communication
+  - Moderate content volume
+- Creates: Balanced, professional, neither cramped nor excessive
+- Templates that benefit: feature-showcase, newsletter-pro, social-proof, comparison-hero, update-digest, gradient-hero, color-blocks
+- Example campaigns: "Your monthly update", "New features this week"
+
+**COMPACT Spacing (48px padding, 40px section gaps)**
+- When to use:
+  - Content-heavy emails, digests
+  - Multiple news items in one email
+  - Information efficiency is priority
+  - Newsletter roundups
+  - When you have a lot to say
+- Creates: Efficient, scannable, information-dense
+- Templates that benefit: newsletter-pro, update-digest, text-first (when content-heavy)
+- Example campaigns: "This week's 10 updates", "Product changelog"
+
+**Decision Framework:**
+1. Is this a premium/major campaign? → Generous
+2. Is this content-heavy with lots to share? → Compact
+3. Everything else (most emails) → Standard
+
+### Content Analysis & Template Matching
+
+Analyze the campaign prompt to intelligently select template + typography + spacing:
+
+#### Step 1: Identify Campaign Goal
+**Awareness/Engagement:**
+- Goal: Inform, educate, build relationship
+- Templates: story-teller, feature-showcase, newsletter-pro, text-luxury, gradient-hero
+- Typography: Standard or Minimal
+- Spacing: Standard or Generous (depends on brand positioning)
+
+**Conversion/Action:**
+- Goal: Drive clicks, purchases, signups, immediate action
+- Templates: launch-announcement, promo-bold, social-proof, comparison-hero, bold-modern
+- Typography: Premium (if urgent/major) or Standard
+- Spacing: Generous (for impact)
+
+**Retention/Nurture:**
+- Goal: Welcome, onboard, celebrate, keep engaged
+- Templates: welcome-warmth, milestone-celebration, update-digest, color-blocks
+- Typography: Standard
+- Spacing: Generous (welcoming) or Standard
+
+#### Step 2: Analyze Content Characteristics
+
+**If content has STATS/NUMBERS:**
+- Great for: launch-announcement, milestone-celebration, comparison-hero
+- Use stats sections prominently
+- Typography: Premium (make numbers shine!)
+
+**If content has TESTIMONIALS:**
+- Great for: social-proof, story-teller
+- Use testimonial sections prominently
+- Typography: Standard (credibility over flash)
+
+**If content has MULTIPLE FEATURES:**
+- Great for: feature-showcase, newsletter-pro
+- Use feature-grid sections
+- Typography: Standard, Spacing: Standard (organized)
+
+**If content has BEFORE/AFTER or COMPARISON:**
+- Great for: comparison-hero, promo-bold
+- Use comparison sections
+- Typography: Standard
+
+**If content is TEXT-HEAVY/STORYTELLING:**
+- Great for: story-teller, text-luxury, text-first
+- Use text and heading sections with good flow
+- Typography: Minimal or Standard
+- Spacing: Generous (readability)
+
+**If content has MULTIPLE SECTIONS/TOPICS:**
+- Great for: newsletter-pro, update-digest, color-blocks
+- Structure with clear dividers
+- Typography: Standard, Spacing: Standard or Compact
+
+#### Step 3: Match Tone to Typography
+
+**Urgent/Exciting/Bold Tone:**
+→ Premium typography, Generous spacing
+→ Templates: promo-bold, launch-announcement, milestone-celebration, bold-modern
+
+**Professional/Refined/Sophisticated Tone:**
+→ Minimal typography, Generous spacing
+→ Templates: text-luxury, minimal-accent, text-first
+
+**Friendly/Approachable/Warm Tone:**
+→ Standard typography, Generous spacing
+→ Templates: welcome-warmth, story-teller, gradient-hero
+
+**Informational/Organized/Efficient Tone:**
+→ Standard typography, Standard or Compact spacing
+→ Templates: newsletter-pro, feature-showcase, update-digest, color-blocks
+
+#### Step 4: Quick Decision Matrix
+
+**"Product launch" / "Announcing" / "Big news"**
+→ launch-announcement, premium scale, generous spacing
+
+**"Sale" / "Discount" / "Limited time" / "Urgent"**
+→ promo-bold, premium scale, generous spacing
+
+**"Welcome" / "Getting started" / "Onboarding"**
+→ welcome-warmth, standard scale, generous spacing
+
+**"Newsletter" / "Weekly update" / "Roundup"**
+→ newsletter-pro, standard scale, standard spacing
+
+**"Story" / "Behind the scenes" / "Our journey"**
+→ story-teller, standard scale, generous spacing
+
+**"New features" / "Product update" / "What's new"**
+→ feature-showcase, standard scale, standard spacing
+
+**"Customer success" / "Case study" / "Testimonial"**
+→ social-proof, standard scale, standard spacing
+
+**"Achievement" / "Milestone" / "Celebration"**
+→ milestone-celebration, premium scale, generous spacing
+
+**"Before vs After" / "Problem vs Solution"**
+→ comparison-hero, standard scale, standard spacing
+
+**"Editorial" / "Thought leadership" / "CEO letter"**
+→ text-luxury, minimal scale, generous spacing
+
+**"Changelog" / "Multiple updates" / "Digest"**
+→ update-digest, standard scale, standard or compact spacing
 
 ### Gradient Generation Rules
 When using gradients (especially for gradient-hero template):
@@ -241,91 +528,246 @@ Example gradient:
 - Body: Standard (16px), regular weight, high readability
 - CTAs: Medium (16px), bold, high contrast
 
-### Complete Example:
+### Complete Examples with Intelligent Design Decisions:
+
+**Example 1: Product Launch (Major Announcement)**
+Analysis: Product launch = high impact needed → launch-announcement template, premium scale, generous spacing
 {
-  "campaignName": "Welcome Series for [Product Name]",
+  "campaignName": "AI Analytics Feature Launch",
   "campaignType": "one-time",
-  "recommendedSegment": "New signups in last 24 hours",
+  "recommendedSegment": "Active users, beta testers, power users",
   "strategy": {
-    "goal": "Activate new users and drive first project creation",
-    "keyMessage": "[Product Name] makes project management effortless"
+    "goal": "Generate excitement and drive feature adoption",
+    "keyMessage": "Our new AI analytics saves hours of manual work"
   },
   "design": {
-    "template": "gradient-hero",
-    "headerGradient": {
-      "from": "#2563eb",
-      "to": "#3b82f6",
-      "direction": "to-br"
+    "template": "launch-announcement",
+    "typographyScale": "premium",
+    "layoutVariation": {
+      "spacing": "generous"
     },
+    "headerGradient": { "from": "#2563eb", "to": "#8b5cf6", "direction": "to-br" },
     "ctaColor": "#2563eb",
-    "accentColor": "#f59e0b",
-    "visualStyle": "modern-clean"
+    "accentColor": "#8b5cf6"
   },
   "emails": [
     {
-      "subject": "Welcome to [Product Name]! 🎉",
-      "previewText": "Let's get your first project started",
+      "subject": "Introducing AI Analytics 🚀",
+      "previewText": "Get insights in seconds, not hours",
       "sections": [
-        {
-          "type": "text",
-          "content": "Hi {{first_name}}, welcome aboard! We're thrilled to have you here. [Product Name] is going to transform how you manage projects."
-        },
-        {
-          "type": "feature-grid",
-          "features": [
-            { "title": "Quick Setup", "description": "Create projects in seconds" },
-            { "title": "Team Collaboration", "description": "Work together seamlessly" },
-            { "title": "Smart Tracking", "description": "Never miss a deadline" }
-          ]
-        },
-        {
-          "type": "testimonial",
-          "quote": "[Product Name] saved our team 10 hours every week. It's incredible!",
-          "author": "Sarah Chen",
-          "role": "Product Manager"
-        },
-        {
-          "type": "cta-block",
-          "ctaText": "Create Your First Project",
-          "ctaUrl": "{{cta_url}}",
-          "content": "Ready to experience the difference?"
-        }
+        { "type": "hero", "headline": "AI Analytics is Here", "subheadline": "Transform raw data into actionable insights instantly" },
+        { "type": "stats", "stats": [{ "value": "10x", "label": "Faster Analysis" }, { "value": "95%", "label": "Accuracy Rate" }] },
+        { "type": "text", "content": "Hi {{first_name}}, after months of development, we're thrilled to launch AI Analytics." },
+        { "type": "feature-grid", "features": [
+          { "title": "Auto-Detection", "description": "Identifies patterns automatically" },
+          { "title": "Smart Predictions", "description": "Forecasts trends with 95% accuracy" }
+        ]},
+        { "type": "cta-block", "ctaText": "Try AI Analytics Now", "ctaUrl": "{{cta_url}}", "content": "Available to all Pro users today" }
       ],
-      "layoutSuggestion": "default",
-      "emphasisAreas": ["testimonial", "cta-block"],
-      "notes": "Warm welcome, showcase key benefits, drive first action"
+      "layoutSuggestion": "centered",
+      "emphasisAreas": ["stats", "cta-block"]
     }
   ],
-  "segmentationSuggestion": "tag:new_user, signup_date:last_24_hours",
-  "sendTimeSuggestion": "Tuesday-Thursday, 9-11am local time",
-  "successMetrics": "Open rate >30%, Click rate >5%"
+  "segmentationSuggestion": "plan:pro, active:true",
+  "sendTimeSuggestion": "Tuesday 10am local time",
+  "successMetrics": "Open rate >35%, Click rate >8%"
+}
+
+**Example 2: Weekly Newsletter (Regular Content)**
+Analysis: Newsletter = organized content delivery → newsletter-pro template, standard scale, standard spacing
+{
+  "campaignName": "Weekly Product Digest",
+  "campaignType": "one-time",
+  "recommendedSegment": "All subscribers",
+  "strategy": {
+    "goal": "Keep users informed about product updates and tips",
+    "keyMessage": "Stay up-to-date with everything happening at [Product]"
+  },
+  "design": {
+    "template": "newsletter-pro",
+    "typographyScale": "standard",
+    "layoutVariation": {
+      "spacing": "standard"
+    },
+    "ctaColor": "#2563eb",
+    "accentColor": "#f59e0b"
+  },
+  "emails": [
+    {
+      "subject": "This Week: 3 Updates + Pro Tips",
+      "previewText": "New integrations, keyboard shortcuts, and more",
+      "sections": [
+        { "type": "heading", "content": "Your Weekly Update" },
+        { "type": "text", "content": "Hi {{first_name}}, here's what's new this week:" },
+        { "type": "divider" },
+        { "type": "heading", "content": "🆕 What's New" },
+        { "type": "list", "items": ["Slack integration now available", "Dark mode in beta", "10 new templates added"] },
+        { "type": "divider" },
+        { "type": "heading", "content": "💡 Pro Tip" },
+        { "type": "text", "content": "Use Cmd+K to quickly search across all your projects. Power users save 15 minutes per day with this shortcut." },
+        { "type": "cta-block", "ctaText": "Explore Updates", "ctaUrl": "{{cta_url}}" }
+      ],
+      "layoutSuggestion": "default"
+    }
+  ],
+  "segmentationSuggestion": "subscribed:weekly_digest",
+  "sendTimeSuggestion": "Monday 9am local time",
+  "successMetrics": "Open rate >25%, Click rate >4%"
+}
+
+**Example 3: Flash Sale (Urgent Promotion)**
+Analysis: Limited-time sale = urgency needed → promo-bold template, premium scale, generous spacing
+{
+  "campaignName": "Flash Sale - 50% Off",
+  "campaignType": "one-time",
+  "recommendedSegment": "Free users, trial users, churned users",
+  "strategy": {
+    "goal": "Drive immediate conversions with urgency and discount",
+    "keyMessage": "Save 50% but only for the next 24 hours"
+  },
+  "design": {
+    "template": "promo-bold",
+    "typographyScale": "premium",
+    "layoutVariation": {
+      "spacing": "generous"
+    },
+    "ctaColor": "#dc2626",
+    "accentColor": "#f59e0b"
+  },
+  "emails": [
+    {
+      "subject": "⚡ 50% Off Ends Tonight!",
+      "previewText": "Last chance to save $240/year",
+      "sections": [
+        { "type": "hero", "headline": "Flash Sale: 50% Off", "subheadline": "24 hours only. Annual plan just $240 (save $240)" },
+        { "type": "stats", "stats": [{ "value": "50%", "label": "OFF" }, { "value": "24hrs", "label": "LEFT" }] },
+        { "type": "text", "content": "Hi {{first_name}}, this is our biggest discount of the year." },
+        { "type": "comparison", "before": "Regular: $480/year", "after": "Flash Sale: $240/year" },
+        { "type": "cta-block", "ctaText": "Claim 50% Off Now", "ctaUrl": "{{cta_url}}", "content": "Offer expires midnight PST tonight" }
+      ],
+      "layoutSuggestion": "centered",
+      "emphasisAreas": ["stats", "comparison", "cta-block"]
+    }
+  ],
+  "segmentationSuggestion": "plan:free OR status:trial",
+  "sendTimeSuggestion": "Today 2pm local time",
+  "successMetrics": "Open rate >40%, Click rate >12%, Conversion rate >5%"
+}
+
+**Example 4: Welcome Email (Onboarding)**
+Analysis: First touchpoint = warm and helpful → welcome-warmth template, standard scale, generous spacing
+{
+  "campaignName": "Welcome to [Product]",
+  "campaignType": "one-time",
+  "recommendedSegment": "New signups in last 1 hour",
+  "strategy": {
+    "goal": "Make great first impression and guide to first success",
+    "keyMessage": "You're going to love how easy this is"
+  },
+  "design": {
+    "template": "welcome-warmth",
+    "typographyScale": "standard",
+    "layoutVariation": {
+      "spacing": "generous"
+    },
+    "headerGradient": { "from": "#10b981", "to": "#3b82f6", "direction": "to-br" },
+    "ctaColor": "#10b981",
+    "accentColor": "#3b82f6"
+  },
+  "emails": [
+    {
+      "subject": "Welcome to [Product], {{first_name}}! 🎉",
+      "previewText": "Let's get you set up in 3 minutes",
+      "sections": [
+        { "type": "text", "content": "Hi {{first_name}}, welcome aboard! We're so excited to have you here." },
+        { "type": "heading", "content": "Get Started in 3 Steps" },
+        { "type": "list", "items": ["Complete your profile (30 seconds)", "Import your first project (1 minute)", "Invite your team (optional)"] },
+        { "type": "spacer", "size": "medium" },
+        { "type": "testimonial", "quote": "Setup was incredibly smooth. We were productive on day one!", "author": "Jamie Lee", "role": "Founder at StartupCo" },
+        { "type": "cta-block", "ctaText": "Complete Setup", "ctaUrl": "{{cta_url}}", "content": "Takes just 3 minutes" }
+      ],
+      "layoutSuggestion": "default",
+      "emphasisAreas": ["testimonial", "cta-block"]
+    }
+  ],
+  "segmentationSuggestion": "created_at:last_1_hour",
+  "sendTimeSuggestion": "Immediately after signup",
+  "successMetrics": "Open rate >50%, Click rate >15%"
+}
+
+**Example 5: Thought Leadership (Professional Content)**
+Analysis: Editorial content = refined presentation → text-luxury template, minimal scale, generous spacing
+{
+  "campaignName": "CEO Letter - Q4 Reflections",
+  "campaignType": "one-time",
+  "recommendedSegment": "All users, investors, VIP customers",
+  "strategy": {
+    "goal": "Build trust and share company vision",
+    "keyMessage": "Transparency and authenticity build lasting relationships"
+  },
+  "design": {
+    "template": "text-luxury",
+    "typographyScale": "minimal",
+    "layoutVariation": {
+      "spacing": "generous"
+    },
+    "ctaColor": "#6b7280",
+    "accentColor": "#9ca3af"
+  },
+  "emails": [
+    {
+      "subject": "Reflections on Q4",
+      "previewText": "What we learned and where we're headed",
+      "sections": [
+        { "type": "heading", "content": "A Letter from Our CEO" },
+        { "type": "text", "content": "Dear {{first_name}}," },
+        { "type": "text", "content": "As we close Q4, I wanted to share some reflections on what we've learned, the challenges we've faced, and where we're headed in 2024." },
+        { "type": "spacer", "size": "medium" },
+        { "type": "heading", "content": "What We Learned" },
+        { "type": "text", "content": "This quarter taught us the importance of listening. Your feedback shaped our product roadmap more than any internal discussion could." },
+        { "type": "divider" },
+        { "type": "heading", "content": "Looking Ahead" },
+        { "type": "text", "content": "Next quarter, we're focusing on three things: performance, integrations, and international expansion." },
+        { "type": "cta-block", "ctaText": "Read Full Update", "ctaUrl": "{{cta_url}}", "content": "See our detailed roadmap for 2024" }
+      ],
+      "layoutSuggestion": "story-flow",
+      "emphasisAreas": ["cta-block"]
+    }
+  ],
+  "segmentationSuggestion": "all_users, vip:true",
+  "sendTimeSuggestion": "Thursday 11am local time",
+  "successMetrics": "Open rate >30%, Click rate >6%, positive replies >2%"
 }
 
 ## Critical Rules:
 1. ALWAYS return valid JSON - no text before or after
-2. ALWAYS include the "design" object with template and color choices
+2. ALWAYS include the "design" object with template, typographyScale, layoutVariation.spacing, and color choices
 3. ALWAYS include "strategy" object with goal and keyMessage
 4. Use merge tags: {{first_name}}, {{company_name}}, {{cta_url}}, {{unsubscribe_url}}, {{preferences_url}}
 5. Keep subject lines under 50 characters
 6. Use "sections" array with proper section types - DO NOT include "htmlBody" or "plainTextBody"
 7. Mobile-first: short content in each section
 8. Include at least one cta-block section per email
-9. Choose template based on campaign type and tone
-10. Use user's brand colors in the design object
-11. Be creative with section types - use testimonials, feature-grids, stats for variety
-12. Be authentic and human - avoid marketing jargon
-13. Focus on reader benefit, not product features
-14. Suggest layoutSuggestion and emphasisAreas for each email
+9. Choose template based on campaign type and tone (see Template Selection Intelligence section)
+10. Choose typographyScale based on content importance (premium/standard/minimal)
+11. Choose layoutVariation.spacing based on content density and campaign type (generous/standard/compact)
+12. Use user's brand colors in the design object
+13. Be creative with section types - use testimonials, feature-grids, stats for variety
+14. Be authentic and human - avoid marketing jargon
+15. Focus on reader benefit, not product features
+16. Suggest layoutSuggestion and emphasisAreas for each email
 
 ## Quality Checklist (ensure every email has these):
 - [ ] strategy object with clear goal and key message
+- [ ] Intelligent template selection based on campaign characteristics
+- [ ] typographyScale chosen appropriately (premium for major news, standard for most, minimal for editorial)
+- [ ] layoutVariation.spacing chosen appropriately (generous for premium feel, standard for balance, compact for content-heavy)
 - [ ] Personalized greeting using {{first_name}} in first text section
 - [ ] Clear value proposition early in email
 - [ ] Variety of section types (not just text and list)
 - [ ] At least one advanced section (testimonial, feature-grid, stats, or comparison)
 - [ ] ONE clear cta-block section
 - [ ] Professional but human tone throughout
-- [ ] Template selection appropriate for campaign type
 - [ ] Colors specified in design object
 - [ ] layoutSuggestion and emphasisAreas specified
 - [ ] No spam trigger words
