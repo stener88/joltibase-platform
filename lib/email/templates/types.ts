@@ -7,7 +7,40 @@
  * 3. Bold Modern
  * 4. Minimal Accent
  * 5. Text First
+ * 
+ * PLUS: Block-based architecture (Phase 4)
+ * - New block types for visual editing
+ * - Maintains backward compatibility with existing templates
  */
+
+// ============================================================================
+// Block System Imports (Phase 4)
+// ============================================================================
+
+// Re-export block types for convenience
+export type {
+  EmailBlock,
+  BlockType,
+  BlockSettings,
+  BlockContent,
+  BlockEmail,
+  GlobalEmailSettings,
+  // Individual block types
+  LogoBlock,
+  SpacerBlock,
+  HeadingBlock,
+  TextBlock,
+  ImageBlock,
+  ButtonBlock,
+  DividerBlock,
+  HeroBlock,
+  StatsBlock,
+  TestimonialBlock,
+  FeatureGridBlock,
+  ComparisonBlock,
+  SocialLinksBlock,
+  FooterBlock,
+} from '../blocks/types';
 
 // ============================================================================
 // Core Template Types
@@ -18,7 +51,26 @@ export type TemplateType =
   | 'color-blocks'
   | 'bold-modern'
   | 'minimal-accent'
-  | 'text-first';
+  | 'text-first'
+  // Premium templates
+  | 'premium-hero'
+  | 'split-hero'
+  | 'gradient-impact'
+  | 'launch-announcement'
+  // Content templates
+  | 'story-teller'
+  | 'feature-showcase'
+  | 'newsletter-pro'
+  | 'text-luxury'
+  | 'minimal-hero'
+  // Conversion templates
+  | 'promo-bold'
+  | 'social-proof'
+  | 'comparison-hero'
+  // Specialized templates
+  | 'welcome-warmth'
+  | 'milestone-celebration'
+  | 'update-digest';
 
 /**
  * Design configuration that AI generates
@@ -33,6 +85,35 @@ export interface DesignConfig {
   ctaColor: string;      // Primary CTA button color
   accentColor?: string;  // Secondary accent color
   backgroundColor?: string; // Email body background (default: #f3f4f6)
+  
+  // NEW: AI-powered customization
+  layoutVariation?: LayoutVariation;
+  typographyScale?: 'premium' | 'standard' | 'minimal';
+  colorScheme?: ColorScheme;
+}
+
+/**
+ * AI-generated layout variations for infinite template customization
+ */
+export interface LayoutVariation {
+  heroPlacement?: 'top-centered' | 'full-bleed' | 'split-screen' | 'minimal';
+  sectionLayout?: 'single-column' | 'two-column' | 'grid' | 'alternating';
+  ctaStyle?: 'bold-centered' | 'inline' | 'floating' | 'subtle';
+  spacing?: 'generous' | 'standard' | 'compact';
+  visualWeight?: 'balanced' | 'text-heavy' | 'image-heavy';
+}
+
+/**
+ * Color scheme customization
+ */
+export interface ColorScheme {
+  primary: string;
+  gradient?: { 
+    from: string; 
+    to: string; 
+    direction?: string;
+  };
+  accentUsage?: 'stats-and-cta' | 'headlines' | 'subtle' | 'bold';
 }
 
 /**
@@ -57,6 +138,100 @@ export interface MergeTags {
   unsubscribe_url?: string;
   preferences_url?: string;
   [key: string]: string | undefined; // Allow custom merge tags
+}
+
+// ============================================================================
+// Design System Constants (Flodesk-quality)
+// ============================================================================
+
+/**
+ * Typography scales for different template styles
+ * Based on Flodesk-level design standards
+ */
+export const TYPOGRAPHY_SCALE = {
+  premium: {
+    h1: '70px',
+    h2: '56px',
+    h3: '44px',
+    stats: '100px',
+    body: '18px',
+    small: '16px',
+    weight: {
+      headline: 900,
+      subheadline: 700,
+      body: 400,
+      stats: 900,
+    },
+  },
+  standard: {
+    h1: '56px',
+    h2: '44px',
+    h3: '36px',
+    stats: '80px',
+    body: '17px',
+    small: '15px',
+    weight: {
+      headline: 800,
+      subheadline: 600,
+      body: 400,
+      stats: 900,
+    },
+  },
+  minimal: {
+    h1: '44px',
+    h2: '36px',
+    h3: '28px',
+    stats: '64px',
+    body: '16px',
+    small: '14px',
+    weight: {
+      headline: 700,
+      subheadline: 600,
+      body: 400,
+      stats: 800,
+    },
+  },
+} as const;
+
+/**
+ * Spacing scales for different layout densities
+ */
+export const SPACING_SCALE = {
+  generous: {
+    outerPadding: '80px',
+    outerPaddingMobile: '40px',
+    sectionSpacing: '60px',
+    elementSpacing: '32px',
+    paragraphSpacing: '24px',
+  },
+  standard: {
+    outerPadding: '60px',
+    outerPaddingMobile: '32px',
+    sectionSpacing: '48px',
+    elementSpacing: '24px',
+    paragraphSpacing: '20px',
+  },
+  compact: {
+    outerPadding: '48px',
+    outerPaddingMobile: '24px',
+    sectionSpacing: '40px',
+    elementSpacing: '20px',
+    paragraphSpacing: '16px',
+  },
+} as const;
+
+/**
+ * Get typography settings based on scale
+ */
+export function getTypography(scale: 'premium' | 'standard' | 'minimal' = 'standard') {
+  return TYPOGRAPHY_SCALE[scale];
+}
+
+/**
+ * Get spacing settings based on density
+ */
+export function getSpacing(density: 'generous' | 'standard' | 'compact' = 'standard') {
+  return SPACING_SCALE[density];
 }
 
 // ============================================================================
@@ -343,4 +518,38 @@ export function ensureAccessibleContrast(
   // Simplified: returns white or black based on background
   // In production, you'd calculate actual contrast ratio
   return getContrastTextColor(backgroundColor);
+}
+
+// ============================================================================
+// Block System Integration (Phase 4)
+// ============================================================================
+
+/**
+ * Type guard to check if content is block-based or section-based
+ */
+export function isBlockEmail(content: any): content is import('../blocks/types').BlockEmail {
+  return content && Array.isArray(content.blocks) && !content.sections;
+}
+
+/**
+ * Type guard to check if content is section-based (legacy)
+ */
+export function isEmailContent(content: any): content is EmailContent {
+  return content && Array.isArray(content.sections) && !content.blocks;
+}
+
+/**
+ * Unified email content type (supports both formats)
+ */
+export type UnifiedEmailContent = EmailContent | import('../blocks/types').BlockEmail;
+
+/**
+ * Extended template render input supporting both formats
+ */
+export interface ExtendedTemplateRenderInput {
+  template: TemplateType;
+  design: DesignConfig;
+  content: UnifiedEmailContent; // Can be blocks or sections
+  brandColors: BrandColors;
+  mergeTags?: MergeTags;
 }
