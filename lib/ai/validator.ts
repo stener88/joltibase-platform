@@ -224,11 +224,12 @@ export function validateAIResponse(response: unknown): GeneratedCampaign {
     return GeneratedCampaignSchema.parse(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error('🔍 [VALIDATOR] Zod validation error:', JSON.stringify(error.errors, null, 2));
-      const errors = error.errors?.map(e => {
+      console.error('🔍 [VALIDATOR] Zod validation error count:', error.errors?.length || 0);
+      console.error('🔍 [VALIDATOR] Zod errors:', error.errors);
+      const errors = error.errors.map(e => {
         const path = e.path && e.path.length > 0 ? e.path.join('.') : 'root';
         return `${path}: ${e.message}`;
-      }).join(', ') || 'Unknown validation error';
+      }).join(', ');
       throw new Error(`Invalid AI response: ${errors}`);
     }
     throw error;
@@ -241,6 +242,13 @@ export function validateAIResponse(response: unknown): GeneratedCampaign {
 export function parseAndValidateCampaign(jsonString: string): GeneratedCampaign {
   try {
     const parsed = JSON.parse(jsonString);
+    console.log('📋 [VALIDATOR] Parsed campaign structure:', {
+      campaignName: parsed?.campaignName,
+      emailCount: parsed?.emails?.length,
+      hasBlocks: parsed?.emails?.[0]?.blocks ? true : false,
+      hasSections: parsed?.emails?.[0]?.sections ? true : false,
+      firstBlockType: parsed?.emails?.[0]?.blocks?.[0]?.type
+    });
     return validateAIResponse(parsed);
   } catch (error) {
     if (error instanceof SyntaxError) {
