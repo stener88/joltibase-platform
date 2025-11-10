@@ -2,9 +2,12 @@
  * AI Campaign Generator - Validation Schemas
  * 
  * Zod schemas for type-safe validation of inputs and AI responses
+ * 
+ * Phase 4B: Now supports block-based email generation
  */
 
 import { z } from 'zod';
+import { EmailBlockSchema, GlobalEmailSettingsSchema } from '../email/blocks/schemas';
 
 // ============================================================================
 // Input Validation Schemas
@@ -64,7 +67,7 @@ const ContentSectionSchema = z.object({
 });
 
 /**
- * Email structure from AI (now with sections instead of HTML)
+ * Email structure from AI (legacy section-based format)
  */
 const GeneratedEmailSchema = z.object({
   subject: z.string().min(1).max(100),
@@ -81,10 +84,55 @@ const GeneratedEmailSchema = z.object({
 });
 
 /**
+ * Email structure from AI (Phase 4B: block-based format)
+ */
+const GeneratedBlockEmailSchema = z.object({
+  subject: z.string().min(1).max(100),
+  previewText: z.string().min(1).max(150),
+  blocks: z.array(EmailBlockSchema).min(1),
+  globalSettings: GlobalEmailSettingsSchema.optional(),
+  notes: z.string().optional(),
+});
+
+/**
+ * Unified email schema - supports both sections and blocks
+ */
+const UnifiedEmailSchema = z.union([
+  GeneratedEmailSchema,
+  GeneratedBlockEmailSchema,
+]);
+
+/**
  * Design configuration from AI
  */
 const DesignConfigSchema = z.object({
-  template: z.enum(['gradient-hero', 'color-blocks', 'bold-modern', 'minimal-accent', 'text-first']),
+  template: z.enum([
+    // Legacy templates
+    'gradient-hero', 
+    'color-blocks', 
+    'bold-modern', 
+    'minimal-accent', 
+    'text-first',
+    // Premium templates
+    'premium-hero',
+    'split-hero',
+    'gradient-impact',
+    'minimal-hero',
+    // Content-focused templates
+    'story-teller',
+    'feature-showcase',
+    'newsletter-pro',
+    'text-luxury',
+    // Conversion-focused templates
+    'launch-announcement',
+    'promo-bold',
+    'social-proof',
+    'comparison-hero',
+    // Specialized templates
+    'welcome-warmth',
+    'milestone-celebration',
+    'update-digest',
+  ]),
   headerGradient: z.object({
     from: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color'),
     to: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color'),
@@ -93,10 +141,19 @@ const DesignConfigSchema = z.object({
   ctaColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color'),
   accentColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').optional(),
   visualStyle: z.string().optional(),
+  // AI-powered design customization
+  typographyScale: z.enum(['premium', 'standard', 'minimal']).optional(),
+  layoutVariation: z.object({
+    heroPlacement: z.enum(['top-centered', 'full-bleed', 'split-screen', 'minimal']).optional(),
+    sectionLayout: z.enum(['single-column', 'two-column', 'grid', 'alternating']).optional(),
+    ctaStyle: z.enum(['bold-centered', 'inline', 'floating', 'subtle']).optional(),
+    spacing: z.enum(['generous', 'standard', 'compact']).optional(),
+    visualWeight: z.enum(['balanced', 'text-heavy', 'image-heavy']).optional(),
+  }).optional(),
 });
 
 /**
- * Complete AI-generated campaign
+ * Complete AI-generated campaign (supports both section and block-based emails)
  */
 export const GeneratedCampaignSchema = z.object({
   campaignName: z.string().min(1).max(100),
@@ -107,7 +164,7 @@ export const GeneratedCampaignSchema = z.object({
     keyMessage: z.string(),
   }).optional(),
   design: DesignConfigSchema,
-  emails: z.array(GeneratedEmailSchema).min(1).max(5),
+  emails: z.array(UnifiedEmailSchema).min(1).max(5),
   segmentationSuggestion: z.string(),
   sendTimeSuggestion: z.string(),
   successMetrics: z.string(),
@@ -115,7 +172,23 @@ export const GeneratedCampaignSchema = z.object({
 
 export type GeneratedCampaign = z.infer<typeof GeneratedCampaignSchema>;
 export type GeneratedEmail = z.infer<typeof GeneratedEmailSchema>;
+export type GeneratedBlockEmail = z.infer<typeof GeneratedBlockEmailSchema>;
+export type UnifiedEmail = z.infer<typeof UnifiedEmailSchema>;
 export type DesignConfig = z.infer<typeof DesignConfigSchema>;
+
+/**
+ * Type guard to check if email is block-based
+ */
+export function isBlockBasedEmail(email: UnifiedEmail): email is GeneratedBlockEmail {
+  return 'blocks' in email && Array.isArray(email.blocks);
+}
+
+/**
+ * Type guard to check if email is section-based (legacy)
+ */
+export function isSectionBasedEmail(email: UnifiedEmail): email is GeneratedEmail {
+  return 'sections' in email && Array.isArray(email.sections);
+}
 
 // ============================================================================
 // Generation Result Schema
