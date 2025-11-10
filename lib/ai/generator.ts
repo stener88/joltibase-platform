@@ -11,8 +11,8 @@ import { validateCampaignInput, parseAndValidateCampaign, type GeneratedCampaign
 import { enforceRateLimit } from './rate-limit';
 import { saveAIGeneration } from './usage-tracker';
 import { getActiveBrandKit, createBrandKit } from '@/lib/brandkit/operations';
-import { renderEmail } from '@/lib/email/templates/renderer';
-import type { TemplateRenderInput, EmailContent, ContentSection } from '@/lib/email/templates/types';
+import { renderBlockEmail } from '@/lib/email/blocks/renderer';
+import type { BlockEmail } from '@/lib/email/blocks/types';
 import { createClient } from '@/lib/supabase/server';
 
 // ============================================================================
@@ -138,54 +138,45 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
       template: generatedCampaign.design.template
     });
     
-    // 7. Render HTML emails using templates
-    console.log('📧 [GENERATOR] Rendering emails with templates...');
+    // 7. Render HTML emails using block renderer
+    console.log('📧 [GENERATOR] Rendering emails with block renderer...');
+    console.log('📦 [GENERATOR] Campaign format: blocks');
     const renderedEmails = generatedCampaign.emails.map((email, index) => {
       console.log(`  📝 [GENERATOR] Rendering email ${index + 1}/${generatedCampaign.emails.length}: ${email.subject}`);
-      // AI now returns structured sections directly - no HTML parsing needed!
-      const content: EmailContent = {
-        headline: email.subject,
-        preheader: email.previewText,
-        sections: email.sections || [],
-        cta: {
-          text: email.ctaText || 'Get Started',
-          url: email.ctaUrl || '{{cta_url}}',
-        },
-        footer: {
-          companyName: validatedInput.companyName || '{{company_name}}',
+      
+      // AI now returns structured blocks with exact design parameters
+      const blockEmail: BlockEmail = {
+        blocks: email.blocks,
+        globalSettings: email.globalSettings || {
+          backgroundColor: '#f3f4f6',
+          contentBackgroundColor: '#ffffff',
+          maxWidth: 600,
+          fontFamily: 'system-ui',
         },
       };
       
-      // Render using the specified template
-      const templateInput: TemplateRenderInput = {
-        template: generatedCampaign.design.template,
-        design: {
-          template: generatedCampaign.design.template,
-          headerGradient: generatedCampaign.design.headerGradient,
-          ctaColor: generatedCampaign.design.ctaColor,
-          accentColor: generatedCampaign.design.accentColor,
-        },
-        content,
-        brandColors: {
-          primaryColor: brandKit!.primaryColor,
-          secondaryColor: brandKit!.secondaryColor,
-          accentColor: brandKit!.accentColor || '#f59e0b',
-          fontStyle: brandKit!.fontStyle || 'modern',
-        },
-        mergeTags: {
-          company_name: validatedInput.companyName || 'Your Company',
-        },
-      };
+      // Render blocks to email-safe HTML
+      const html = renderBlockEmail(blockEmail);
       
-      const rendered = renderEmail(templateInput);
+      // Generate plain text version (simplified)
+      const plainText = email.blocks
+        .filter(block => block.type === 'text' || block.type === 'heading')
+        .map(block => {
+          if (block.type === 'text' || block.type === 'heading') {
+            return block.content.text;
+          }
+          return '';
+        })
+        .filter(text => text)
+        .join('\n\n');
       
       return {
-        subject: rendered.subject,
-        previewText: rendered.previewText,
-        html: rendered.html,
-        plainText: rendered.plainText,
-        ctaText: email.ctaText || 'Get Started',
-        ctaUrl: email.ctaUrl || '{{cta_url}}',
+        subject: email.subject,
+        previewText: email.previewText,
+        html,
+        plainText: plainText || email.subject,
+        ctaText: email.blocks.find(b => b.type === 'button')?.content?.text || 'Get Started',
+        ctaUrl: email.blocks.find(b => b.type === 'button')?.content?.url || '{{cta_url}}',
       };
     });
     
@@ -233,6 +224,8 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
         from_name: validatedInput.companyName || 'My Company',
         from_email: 'noreply@example.com', // TODO: Get from user profile
         html_content: JSON.stringify(renderedEmails),
+        blocks: generatedCampaign.emails[0]?.blocks || [],
+        design_config: generatedCampaign.emails[0]?.globalSettings || null,
         ai_metadata: {
           campaign: generatedCampaign,
           renderedEmails: renderedEmails

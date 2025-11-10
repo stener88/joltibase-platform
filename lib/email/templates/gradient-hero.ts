@@ -6,13 +6,17 @@
  */
 
 import type { TemplateRenderInput } from './types';
-import { getFontStack, replaceMergeTags, getContrastTextColor } from './types';
+import { getFontStack, replaceMergeTags, getContrastTextColor, getTypography, getSpacing } from './types';
 
 export function renderGradientHero(input: TemplateRenderInput): string {
   const { content, design, brandColors, mergeTags } = input;
   const fontStack = getFontStack(brandColors.fontStyle);
   const ctaColor = design.ctaColor || brandColors.primaryColor;
   const backgroundColor = design.backgroundColor || '#f3f4f6';
+  
+  // Design system
+  const typography = getTypography(design.typographyScale || 'standard');
+  const spacing = getSpacing(design.layoutVariation?.spacing || 'standard');
   
   // Gradient configuration
   const gradientFrom = design.headerGradient?.from || brandColors.primaryColor;
@@ -55,9 +59,9 @@ export function renderGradientHero(input: TemplateRenderInput): string {
         
         case 'hero':
           return `
-            <div style="margin: 0 0 32px; text-align: center;">
-              <h2 style="margin: 0 0 12px; font-size: 32px; font-weight: 700; color: #111827; line-height: 1.2;">${section.headline || ''}</h2>
-              ${section.subheadline ? `<p style="margin: 0; font-size: 18px; color: #6b7280;">${section.subheadline}</p>` : ''}
+            <div style="margin: 0 0 ${spacing.sectionSpacing}; text-align: center;">
+              <h2 style="margin: 0 0 16px; font-size: ${typography.h2}; font-weight: ${typography.weight.headline}; color: #111827; line-height: 1.1; letter-spacing: -0.02em;">${section.headline || ''}</h2>
+              ${section.subheadline ? `<p style="margin: 0; font-size: ${typography.body}; color: #6b7280; line-height: 1.5;">${section.subheadline}</p>` : ''}
             </div>
           `;
         
@@ -90,13 +94,13 @@ export function renderGradientHero(input: TemplateRenderInput): string {
         case 'stats':
           const statsHtml = (section.stats || [])
             .map(stat => `
-              <div style="display: inline-block; margin: 0 24px 16px 0; text-align: center;">
-                <p style="margin: 0 0 4px; font-size: 32px; font-weight: 700; color: ${ctaColor};">${stat.value}</p>
-                <p style="margin: 0; font-size: 14px; color: #6b7280;">${stat.label}</p>
+              <div style="display: inline-block; margin: 0 32px ${spacing.elementSpacing} 0; text-align: center;">
+                <p style="margin: 0 0 8px; font-size: ${typography.stats}; font-weight: ${typography.weight.stats}; color: ${ctaColor}; line-height: 1; letter-spacing: -0.03em;">${stat.value}</p>
+                <p style="margin: 0; font-size: ${typography.small}; color: #6b7280; font-weight: 600;">${stat.label}</p>
               </div>
             `)
             .join('');
-          return `<div style="margin: 24px 0; text-align: center;">${statsHtml}</div>`;
+          return `<div style="margin: ${spacing.sectionSpacing} 0; text-align: center;">${statsHtml}</div>`;
         
         case 'comparison':
           if (!section.comparison) return '';
@@ -162,16 +166,16 @@ export function renderGradientHero(input: TemplateRenderInput): string {
           
           <!-- Gradient Header Hero -->
           <tr>
-            <td style="${gradientStyle} padding: 48px 40px; text-align: center;">
+            <td style="${gradientStyle} padding: ${spacing.outerPadding} 40px; text-align: center;">
               
               <!-- Headline on Gradient -->
-              <h1 style="margin: 0 0 16px; font-size: 32px; font-weight: 700; color: ${headerTextColor}; line-height: 1.2;">
+              <h1 style="margin: 0 0 16px; font-size: ${typography.h1}; font-weight: ${typography.weight.headline}; color: ${headerTextColor}; line-height: 1.1; letter-spacing: -0.03em;">
                 ${content.headline}
               </h1>
               
               <!-- Subheadline on Gradient -->
               ${content.subheadline ? `
-              <p style="margin: 0; font-size: 18px; color: ${headerTextColor}; line-height: 1.5; opacity: 0.95;">
+              <p style="margin: 0; font-size: ${typography.body}; color: ${headerTextColor}; line-height: 1.5; opacity: 0.95;">
                 ${content.subheadline}
               </p>
               ` : ''}
@@ -181,16 +185,16 @@ export function renderGradientHero(input: TemplateRenderInput): string {
           
           <!-- Body Content -->
           <tr>
-            <td style="padding: 48px 40px;">
+            <td style="padding: ${spacing.outerPadding} 40px;">
               
               <!-- Body Sections -->
               ${sectionsHtml}
               
               <!-- CTA Button -->
-              <table cellpadding="0" cellspacing="0" style="margin: 32px auto 0;">
+              <table cellpadding="0" cellspacing="0" style="margin: ${spacing.sectionSpacing} auto 0;">
                 <tr>
-                  <td align="center" style="border-radius: 6px; background-color: ${ctaColor};">
-                    <a href="${content.cta.url}" style="display: inline-block; padding: 14px 32px; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 6px;">
+                  <td align="center" style="border-radius: 8px; background-color: ${ctaColor};">
+                    <a href="${content.cta.url}" style="display: inline-block; padding: 18px 48px; font-size: ${typography.body}; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 8px;">
                       ${content.cta.text}
                     </a>
                   </td>

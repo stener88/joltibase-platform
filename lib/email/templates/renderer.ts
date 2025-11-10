@@ -11,6 +11,18 @@ import { renderMinimalAccent } from './minimal-accent';
 import { renderColorBlocks } from './color-blocks';
 import { renderGradientHero } from './gradient-hero';
 import { renderBoldModern } from './bold-modern';
+import { renderPremiumHero } from './premium-hero';
+import { renderStoryTeller } from './story-teller';
+import { renderFeatureShowcase } from './feature-showcase';
+import { renderNewsletterPro } from './newsletter-pro';
+import { renderTextLuxury } from './text-luxury';
+import { renderLaunchAnnouncement } from './launch-announcement';
+import { renderPromoBold } from './promo-bold';
+import { renderSocialProof } from './social-proof';
+import { renderComparisonHero } from './comparison-hero';
+import { renderWelcomeWarmth } from './welcome-warmth';
+import { renderMilestoneCelebration } from './milestone-celebration';
+import { renderUpdateDigest } from './update-digest';
 
 /**
  * Main render function - routes to appropriate template
@@ -38,6 +50,58 @@ export function renderEmail(input: TemplateRenderInput): RenderedEmail {
     
     case 'bold-modern':
       html = renderBoldModern(input);
+      break;
+    
+    // Premium templates
+    case 'premium-hero':
+      html = renderPremiumHero(input);
+      break;
+    
+    // Content-focused templates
+    case 'story-teller':
+      html = renderStoryTeller(input);
+      break;
+    
+    case 'feature-showcase':
+      html = renderFeatureShowcase(input);
+      break;
+    
+    case 'newsletter-pro':
+      html = renderNewsletterPro(input);
+      break;
+    
+    case 'text-luxury':
+      html = renderTextLuxury(input);
+      break;
+    
+    // Conversion-focused templates
+    case 'launch-announcement':
+      html = renderLaunchAnnouncement(input);
+      break;
+    
+    case 'promo-bold':
+      html = renderPromoBold(input);
+      break;
+    
+    case 'social-proof':
+      html = renderSocialProof(input);
+      break;
+    
+    case 'comparison-hero':
+      html = renderComparisonHero(input);
+      break;
+    
+    // Specialized templates
+    case 'welcome-warmth':
+      html = renderWelcomeWarmth(input);
+      break;
+    
+    case 'milestone-celebration':
+      html = renderMilestoneCelebration(input);
+      break;
+    
+    case 'update-digest':
+      html = renderUpdateDigest(input);
       break;
     
     default:

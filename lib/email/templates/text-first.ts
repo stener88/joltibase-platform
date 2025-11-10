@@ -6,12 +6,16 @@
  */
 
 import type { TemplateRenderInput } from './types';
-import { getFontStack, replaceMergeTags } from './types';
+import { getFontStack, replaceMergeTags, getTypography, getSpacing } from './types';
 
 export function renderTextFirst(input: TemplateRenderInput): string {
   const { content, design, brandColors, mergeTags } = input;
   const fontStack = getFontStack(brandColors.fontStyle);
   const ctaColor = design.ctaColor || brandColors.primaryColor;
+  
+  // Design system - Text First uses minimal scale for understated elegance
+  const typography = getTypography(design.typographyScale || 'minimal');
+  const spacing = getSpacing(design.layoutVariation?.spacing || 'standard');
 
   // Build sections HTML
   const sectionsHtml = content.sections
@@ -38,9 +42,9 @@ export function renderTextFirst(input: TemplateRenderInput): string {
         
         case 'hero':
           return `
-            <div style="margin: 0 0 32px; text-align: center;">
-              <h2 style="margin: 0 0 12px; font-size: 32px; font-weight: 700; color: #111827; line-height: 1.2;">${section.headline || ''}</h2>
-              ${section.subheadline ? `<p style="margin: 0; font-size: 18px; color: #6b7280;">${section.subheadline}</p>` : ''}
+            <div style="margin: 0 0 ${spacing.sectionSpacing}; text-align: center;">
+              <h2 style="margin: 0 0 16px; font-size: ${typography.h2}; font-weight: ${typography.weight.headline}; color: #111827; line-height: 1.2;">${section.headline || ''}</h2>
+              ${section.subheadline ? `<p style="margin: 0; font-size: ${typography.body}; color: #6b7280; line-height: 1.5;">${section.subheadline}</p>` : ''}
             </div>
           `;
         
@@ -73,13 +77,13 @@ export function renderTextFirst(input: TemplateRenderInput): string {
         case 'stats':
           const statsHtml = (section.stats || [])
             .map(stat => `
-              <div style="display: inline-block; margin: 0 24px 16px 0; text-align: center;">
-                <p style="margin: 0 0 4px; font-size: 32px; font-weight: 700; color: ${ctaColor};">${stat.value}</p>
-                <p style="margin: 0; font-size: 14px; color: #6b7280;">${stat.label}</p>
+              <div style="display: inline-block; margin: 0 24px ${spacing.elementSpacing} 0; text-align: center;">
+                <p style="margin: 0 0 8px; font-size: ${typography.stats}; font-weight: ${typography.weight.stats}; color: ${ctaColor}; line-height: 1;">${stat.value}</p>
+                <p style="margin: 0; font-size: ${typography.small}; color: #6b7280; font-weight: 600;">${stat.label}</p>
               </div>
             `)
             .join('');
-          return `<div style="margin: 24px 0; text-align: center;">${statsHtml}</div>`;
+          return `<div style="margin: ${spacing.sectionSpacing} 0; text-align: center;">${statsHtml}</div>`;
         
         case 'comparison':
           if (!section.comparison) return '';
@@ -150,16 +154,16 @@ export function renderTextFirst(input: TemplateRenderInput): string {
           
           <!-- Main Content -->
           <tr>
-            <td style="padding: 48px 40px;">
+            <td style="padding: ${spacing.outerPadding} 40px;">
               
               <!-- Headline -->
-              <h1 style="margin: 0 0 24px; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.3;">
+              <h1 style="margin: 0 0 24px; font-size: ${typography.h1}; font-weight: ${typography.weight.headline}; color: #111827; line-height: 1.3;">
                 ${content.headline}
               </h1>
               
               <!-- Subheadline -->
               ${content.subheadline ? `
-              <p style="margin: 0 0 32px; font-size: 18px; color: #6b7280; line-height: 1.5;">
+              <p style="margin: 0 0 ${spacing.sectionSpacing}; font-size: ${typography.body}; color: #6b7280; line-height: 1.5;">
                 ${content.subheadline}
               </p>
               ` : ''}
@@ -168,8 +172,8 @@ export function renderTextFirst(input: TemplateRenderInput): string {
               ${sectionsHtml}
               
               <!-- CTA -->
-              <div style="margin: 32px 0;">
-                <a href="${content.cta.url}" style="color: ${ctaColor}; text-decoration: underline; font-size: 16px; font-weight: 500;">
+              <div style="margin: ${spacing.sectionSpacing} 0;">
+                <a href="${content.cta.url}" style="color: ${ctaColor}; text-decoration: underline; font-size: ${typography.body}; font-weight: 600;">
                   ${content.cta.text} →
                 </a>
               </div>
