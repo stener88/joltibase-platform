@@ -11,7 +11,7 @@ import { validateCampaignInput, parseAndValidateCampaign, type GeneratedCampaign
 import { enforceRateLimit } from './rate-limit';
 import { saveAIGeneration } from './usage-tracker';
 import { getActiveBrandKit, createBrandKit } from '@/lib/brandkit/operations';
-import { renderBlockEmail } from '@/lib/email/blocks/renderer';
+import { renderBlocksToEmail } from '@/lib/email/blocks/renderer';
 import type { BlockEmail } from '@/lib/email/blocks/types';
 import { createClient } from '@/lib/supabase/server';
 
@@ -156,7 +156,7 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
       };
       
       // Render blocks to email-safe HTML
-      const html = renderBlockEmail(blockEmail);
+      const html = renderBlocksToEmail(blockEmail);
       
       // Generate plain text version (simplified)
       const plainText = email.blocks
