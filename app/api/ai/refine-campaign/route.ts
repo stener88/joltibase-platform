@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { generateCompletion } from '@/lib/ai/client';
-import { getBrandGuidelines } from '@/lib/ai/brand-guidelines';
-import { validateEmailHtml, EMAIL_HTML_GUIDELINES } from '@/lib/email/html-validator';
+import { 
+  EmailBlockSchema, 
+  GlobalEmailSettingsSchema,
+  validateBlocks,
+  type EmailBlockType,
+  type GlobalEmailSettingsType 
+} from '@/lib/email/blocks/schemas';
+import { renderBlocksToEmail } from '@/lib/email/blocks/renderer';
 import { z } from 'zod';
 
 /**
@@ -11,9 +17,9 @@ import { z } from 'zod';
  * Iterative refinement of email campaigns using conversational AI
  * 
  * This endpoint allows users to refine their generated campaigns by
- * describing changes in natural language. The AI will update the campaign
- * based on the user's instructions while maintaining consistency with the
- * original design and brand kit.
+ * describing changes in natural language. The AI will update the campaign's
+ * block structure based on the user's instructions while maintaining consistency 
+ * with the original design and brand kit.
  */
 
 // Request validation schema
@@ -23,10 +29,8 @@ const RefineCampaignInputSchema = z.object({
   currentEmail: z.object({
     subject: z.string(),
     previewText: z.string().optional(),
-    html: z.string(), // Full HTML for AI to edit
-    plainText: z.string(),
-    ctaText: z.string(),
-    ctaUrl: z.string(),
+    blocks: z.array(EmailBlockSchema), // Block-based structure
+    globalSettings: GlobalEmailSettingsSchema.partial(), // Allow partial settings
   }),
 });
 
@@ -35,11 +39,10 @@ type RefineCampaignInput = z.infer<typeof RefineCampaignInputSchema>;
 interface RefinedEmail {
   subject: string;
   previewText?: string;
-  html: string; // Updated HTML
-  plainText: string;
-  ctaText: string;
-  ctaUrl: string;
-  changes: string[]; // List of changes made
+  blocks: EmailBlockType[]; // Modified blocks
+  globalSettings: GlobalEmailSettingsType;
+  html: string; // Rendered HTML for display
+  changes: string[];
 }
 
 interface SuccessResponse {
@@ -57,28 +60,51 @@ interface ErrorResponse {
 }
 
 /**
- * Build the refinement prompt for the AI
+ * Validate refined blocks structure
  */
-function buildRefinementPrompt(
-  input: RefineCampaignInput,
-  brandGuidelines: string
-): string {
-  return `You are an expert email designer helping to refine an HTML email campaign.
+function validateRefinedBlocks(blocks: unknown[]): {
+  valid: boolean;
+  errors?: string[];
+} {
+  try {
+    const validation = validateBlocks(blocks);
+    if (!validation.success) {
+      // validation.error can be a ZodError or string
+      const errorMsg = typeof validation.error === 'string' 
+        ? validation.error 
+        : validation.error?.message || 'Validation failed';
+      return {
+        valid: false,
+        errors: [errorMsg],
+      };
+    }
+    return { valid: true };
+  } catch (error) {
+    return {
+      valid: false,
+      errors: [error instanceof Error ? error.message : 'Unknown validation error'],
+    };
+  }
+}
 
-**Current Email:**
+/**
+ * Build the block-based refinement prompt for the AI
+ */
+function buildBlockRefinementPrompt(
+  input: RefineCampaignInput
+): string {
+  return `You are an expert email designer. Refine this email campaign by modifying its block structure.
+
+**Current Email Structure:**
 
 Subject: ${input.currentEmail.subject}
 Preview Text: ${input.currentEmail.previewText || 'N/A'}
-CTA Text: ${input.currentEmail.ctaText}
-CTA URL: ${input.currentEmail.ctaUrl}
 
-**Current HTML:**
-\`\`\`html
-${input.currentEmail.html}
-\`\`\`
+**Current Blocks (JSON):**
+${JSON.stringify(input.currentEmail.blocks, null, 2)}
 
-**Plain Text Version:**
-${input.currentEmail.plainText}
+**Global Settings:**
+${JSON.stringify(input.currentEmail.globalSettings, null, 2)}
 
 ---
 
@@ -87,108 +113,119 @@ ${input.currentEmail.plainText}
 
 ---
 
-${brandGuidelines}
+**CRITICAL: Block-Based Refinement Rules**
 
----
+1. **MODIFY BLOCKS, NOT HTML**
+   - Change block content, settings, or add/remove blocks
+   - DO NOT generate HTML directly
+   - Follow the same block structure as shown above
+   - Return COMPLETE blocks array (not excerpts)
 
-${EMAIL_HTML_GUIDELINES}
+2. **SURGICAL CHANGES ONLY**
+   - Change ONLY what the user explicitly requested
+   - Preserve all other blocks, settings, and content EXACTLY
+   - If changing text, ONLY change the specific text requested
+   - If changing colors, ONLY change the specific color requested
+   - Maintain positions sequential (0, 1, 2...) after any add/remove
 
----
+3. **COMMON REFINEMENT PATTERNS:**
 
-**🚨 CRITICAL: SURGICAL CHANGES ONLY 🚨**
-
-You MUST follow these rules STRICTLY:
-
-1. **EXTRACT EXACT VALUES FROM USER REQUEST**
-   Step 1: Parse the user's request to find the EXACT new value
-   Example: "change company name to Acme Corp" → Extract "Acme Corp" (exactly as written)
-   Example: "make CTA say Start Free Trial" → Extract "Start Free Trial" (exactly as written)
+   **a) Change text content:**
+      - Find the text/heading block with matching content
+      - Update ONLY the "content.text" field
+      - Preserve ALL settings exactly as they are
+      Example: User says "change headline to Welcome Back"
+      → Find heading block, change content.text to "Welcome Back"
    
-   Step 2: Find ALL occurrences of what needs to change (everywhere: subject, body, footer)
-   Step 3: Replace ALL of them with the extracted value (not just the first one)
-   Step 4: Count how many replacements you made
+   **b) Change button text/URL:**
+      - Find the button block
+      - Update "content.text" or "content.url" ONLY
+      - Preserve ALL other settings
+      Example: User says "make button say Get Started"
+      → Find button block, change content.text to "Get Started"
    
-   **WARNING:** Do NOT use example values from this prompt (like "TaskFlow" or "Acme"). 
-   ONLY use the EXACT value the user specified in their request.
+   **c) Change colors:**
+      - Find the specific block mentioned
+      - Update ONLY "settings.color" or "settings.backgroundColor"
+      - Use hex colors (#rrggbb format)
+      Example: User says "make CTA button green"
+      → Find button block, change settings.color to "#16a34a"
+   
+   **d) Add a block:**
+      - Insert new block with proper structure: id, type, position, content, settings
+      - ALL fields must be present and valid
+      - Renumber positions of blocks after insertion point
+      - Use unique ID (e.g., "new-block-1", "testimonial-added")
+   
+   **e) Remove a block:**
+      - Remove the specified block from array
+      - Renumber positions of all remaining blocks to be sequential
+   
+   **f) Change spacing:**
+      - For spacer blocks: update "settings.height" (number)
+      - For other blocks: update "settings.padding" (object with top/bottom/left/right)
 
-2. **CHANGE ONLY WHAT WAS EXPLICITLY REQUESTED**
-   - If user says "change company name to Acme" → Change ALL company name occurrences to "Acme"
-   - If user says "make button say Get Started" → Change ONLY button text to "Get Started"
-   - If user says "add a testimonial" → Add ONLY the testimonial, nothing else
+4. **VALIDATION REQUIREMENTS (CRITICAL):**
+   - Every block MUST have: id (string), type (string), position (number), content (object), settings (object)
+   - Positions MUST be sequential integers starting at 0 (0, 1, 2, 3...)
+   - **ALL blocks (except spacer) MUST have "padding" in settings**: OBJECT with { top: number, bottom: number, left: number, right: number }
+   - lineHeight = STRING (e.g., "1.6", not 1.6)
+   - fontWeight = NUMBER (e.g., 700, not "700")
+   - align = STRING ("left", "center", or "right")
+   
+   **Special Requirements by Block Type:**
+   - **stats**: Must have "layout" ("2-col", "3-col", "4-col") and "labelFontWeight" (number)
+   - **testimonial**: Must have in content: "quote" (string) and "author" (string, person's name); optional: "role", "company", "avatarUrl". Must have in settings: "quoteFontSize" (string like "20px"), "quoteColor" (hex), "quoteFontStyle" ("normal" or "italic"), "authorFontSize" (string like "15px"), "authorColor" (hex), and "authorFontWeight" (number)
+   - **featuregrid**: Must have "layout" ("2-col", "3-col", "single-col") and "iconSize" (string)
+   - **image/logo/hero**: Must have "imageUrl" and "altText" in content
+   - **button**: Must have "containerPadding" in settings
+   - **footer**: Always keep at end with position = last
 
-3. **DO NOT MAKE UNREQUESTED CHANGES**
-   - DO NOT improve copy unless asked
-   - DO NOT adjust colors unless asked
-   - DO NOT change spacing/padding unless asked
-   - DO NOT rewrite content unless asked
-   - DO NOT reorganize sections unless asked
-   - DO NOT change fonts or styles unless asked
+5. **VALIDATION CHECK (Before responding):**
+   - Did I change ONLY what was requested?
+   - Are all required fields present for each block?
+   - Are positions sequential (0, 1, 2...)?
+   - Are data types correct (lineHeight=STRING, fontWeight=NUMBER)?
+   - Did I preserve everything else exactly?
 
-4. **PRESERVE EVERYTHING ELSE EXACTLY**
-   - All styles stay identical
-   - All colors stay identical
-   - All spacing stays identical
-   - All other content stays identical
-   - All structure stays identical
+**Examples of CORRECT Refinements:**
 
-5. **VALIDATION CHECK (Ask yourself before each change):**
-   - "Did the user explicitly request THIS specific change?"
-   - "Did I extract the EXACT value they specified?"
-   - "Did I replace ALL occurrences (not just one)?"
-   - If NO to any → Don't change it
-   - If MAYBE → Don't change it
-   - If YES to all → Make the change
+User: "make the headline bigger"
+Response: Find heading block → change fontSize from "32px" to "44px" → keep everything else identical
 
-**Examples of CORRECT behavior:**
+User: "change button to say Start Free Trial"
+Response: Find button block → change content.text to "Start Free Trial" → keep everything else identical
 
-User: "change company name to Acme Corp"
-Step 1: Extract "Acme Corp" (exactly as written)
-Step 2: Find ALL occurrences: subject line (1), body text (2), footer (1) = 4 total
-Step 3: Replace ALL 4 with "Acme Corp"
-✅ CORRECT: Changed company name to "Acme Corp" in 4 places (subject, body x2, footer)
-❌ WRONG: Changed to "TaskFlow" instead, or only changed 1 of 4 occurrences
+User: "add more spacing after hero"
+Response: Find spacer after hero block → increase settings.height from 40 to 60 → keep everything else identical
 
-User: "make CTA say Start Your Free Trial"
-Step 1: Extract "Start Your Free Trial" (exactly as written)
-Step 2: Find CTA button text (1 occurrence)
-Step 3: Replace with "Start Your Free Trial"
-✅ CORRECT: Changed CTA text to "Start Your Free Trial" (1 occurrence)
-❌ WRONG: Also changed button color, padding, or surrounding text
+User: "make CTA button purple"
+Response: Find button block → change settings.color to "#7c3aed" → keep everything else identical
 
-User: "make CTA button blue"
-Step 1: Understand "blue" means change background-color
-Step 2: Find CTA button style (1 occurrence)
-Step 3: Change background-color to blue (#2563eb or similar)
-✅ CORRECT: Changed CTA button background-color to blue
-❌ WRONG: Also changed CTA text, button size, or other colors
+User: "add a testimonial after the features"
+Response: Insert new testimonial block after features → renumber subsequent positions → include ALL required fields
 
-**Important Technical Rules:**
-- Edit the ACTUAL HTML structure and content
-- ALL styles must be INLINE (style="...")
-- Use tables for layout, not divs with flexbox/grid
-- Keep images as absolute HTTPS URLs
-- Maintain responsive design (max-width: 600px)
-- Preserve merge tags like {{firstName}}, {{companyName}}, {{ctaUrl}}
-- Update plain text version to match HTML changes
-
-**Respond with valid JSON:**
-\`\`\`json
+**Respond with valid JSON ONLY:**
 {
-  "subject": "ONLY change if user explicitly requested subject change, otherwise use current: ${input.currentEmail.subject}",
-  "previewText": "ONLY change if user explicitly requested preview change, otherwise use current: ${input.currentEmail.previewText || 'N/A'}",
-  "html": "complete refined HTML email (FULL HTML with ONLY the requested changes)",
-  "plainText": "complete plain text version (with ONLY the requested changes)",
-  "ctaText": "ONLY change if user explicitly requested CTA text change, otherwise use current: ${input.currentEmail.ctaText}",
-  "ctaUrl": "ONLY change if user explicitly requested URL change, otherwise use current: ${input.currentEmail.ctaUrl}",
-  "changes": ["List ONLY the specific changes you made. Include: what changed, to what value, and how many occurrences. Example: 'Changed company name to Acme Corp in 4 places (subject, body x2, footer)'"]
+  "subject": "Updated subject (or keep current: ${input.currentEmail.subject})",
+  "previewText": "Updated preview (or keep current: ${input.currentEmail.previewText || ''})",
+  "blocks": [
+    /* COMPLETE array of ALL blocks with changes applied */
+  ],
+  "globalSettings": {
+    /* COMPLETE globalSettings object (usually unchanged) */
+  },
+  "changes": [
+    "List specific changes made. Be precise: 'Changed button text from X to Y', 'Increased hero padding from 60px to 80px'"
+  ]
 }
-\`\`\`
 
-**Final Check Before Responding:**
-- Review the user's request one more time
-- Verify you changed ONLY what was requested
-- Confirm you didn't "improve" unrequested areas
-- Return COMPLETE HTML, not excerpts`;
+**Final Reminder:**
+- Return COMPLETE blocks array (not partial)
+- Change ONLY what was requested
+- Maintain all required fields
+- Sequential positions (0, 1, 2...)
+- Correct data types (STRING lineHeight, NUMBER fontWeight, OBJECT padding)`;
 }
 
 export async function POST(request: NextRequest) {
@@ -229,7 +266,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json<ErrorResponse>(
         {
           success: false,
-          error: 'Invalid request data',
+          error: 'Invalid request data. Ensure you are sending blocks array and globalSettings.',
           code: 'VALIDATION_ERROR',
         },
         { status: 400 }
@@ -270,20 +307,15 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ [REFINE-API] Campaign ownership verified');
 
-    // 4. Get brand guidelines
-    console.log('🎨 [REFINE-API] Fetching brand guidelines...');
-    const brandGuidelines = await getBrandGuidelines(user.id);
-    console.log('✅ [REFINE-API] Brand guidelines retrieved:', brandGuidelines.companyName);
-
-    // 5. Call AI to refine the email
-    console.log('🤖 [REFINE-API] Calling AI for refinement...');
-    const prompt = buildRefinementPrompt(validatedInput, brandGuidelines.formattedGuidelines);
+    // 4. Call AI to refine the blocks
+    console.log('🤖 [REFINE-API] Calling AI for block-based refinement...');
+    const prompt = buildBlockRefinementPrompt(validatedInput);
     
     const aiResult = await generateCompletion(
       [
         {
           role: 'system',
-          content: 'You are an expert email designer. You edit HTML emails based on user requests. Always respond with valid JSON only, no additional text. Return the COMPLETE HTML, not excerpts.',
+          content: 'You are an expert email designer. You modify email block structures based on user requests. Always respond with valid JSON only, no additional text. Return COMPLETE blocks array with ALL required fields.',
         },
         {
           role: 'user',
@@ -292,7 +324,7 @@ export async function POST(request: NextRequest) {
       ],
       {
         temperature: 0.7,
-        maxTokens: 4000, // Increased to handle full HTML
+        maxTokens: 4000,
         jsonMode: true,
       }
     );
@@ -303,19 +335,17 @@ export async function POST(request: NextRequest) {
       contentLength: aiResult.content.length,
     });
 
-    // 6. Parse and validate AI response
-    let refinedEmail: RefinedEmail;
+    // 6. Parse AI response
+    let aiResponse: {
+      subject: string;
+      previewText?: string;
+      blocks: unknown[];
+      globalSettings: unknown;
+      changes: string[];
+    };
+
     try {
-      const parsed = JSON.parse(aiResult.content);
-      refinedEmail = {
-        subject: parsed.subject || validatedInput.currentEmail.subject,
-        previewText: parsed.previewText || validatedInput.currentEmail.previewText,
-        html: parsed.html || validatedInput.currentEmail.html, // Full HTML
-        plainText: parsed.plainText || validatedInput.currentEmail.plainText,
-        ctaText: parsed.ctaText || validatedInput.currentEmail.ctaText,
-        ctaUrl: parsed.ctaUrl || validatedInput.currentEmail.ctaUrl,
-        changes: Array.isArray(parsed.changes) ? parsed.changes : ['Email refined based on your request'],
-      };
+      aiResponse = JSON.parse(aiResult.content);
       console.log('✅ [REFINE-API] AI response parsed successfully');
     } catch (error) {
       console.error('❌ [REFINE-API] Failed to parse AI response:', error);
@@ -329,23 +359,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 7. Validate and sanitize HTML
-    console.log('🔍 [REFINE-API] Validating HTML...');
-    const validation = validateEmailHtml(refinedEmail.html);
+    // 7. Validate blocks with Zod
+    console.log('🔍 [REFINE-API] Validating refined blocks...');
+    const blockValidation = validateRefinedBlocks(aiResponse.blocks);
     
-    if (!validation.isValid) {
-      console.warn('⚠️  [REFINE-API] HTML validation found issues:', validation.errors);
-      // Use sanitized version if validation failed
-      refinedEmail.html = validation.sanitizedHtml || refinedEmail.html;
+    if (!blockValidation.valid) {
+      console.error('❌ [REFINE-API] Block validation failed:', blockValidation.errors);
+      return NextResponse.json<ErrorResponse>(
+        {
+          success: false,
+          error: 'Invalid block structure returned by AI: ' + (blockValidation.errors?.join(', ') || 'Unknown error'),
+          code: 'BLOCK_VALIDATION_ERROR',
+        },
+        { status: 400 }
+      );
     }
-    
-    if (validation.warnings.length > 0) {
-      console.warn('⚠️  [REFINE-API] HTML validation warnings:', validation.warnings);
-    }
-    
-    console.log('✅ [REFINE-API] HTML validated and sanitized');
 
-    // 8. Track usage (optional, for monitoring)
+    console.log('✅ [REFINE-API] Blocks validated successfully');
+
+    // 8. Render blocks to HTML
+    console.log('📧 [REFINE-API] Rendering blocks to HTML...');
+    const renderedHtml = renderBlocksToEmail(
+      aiResponse.blocks as EmailBlockType[],
+      aiResponse.globalSettings as GlobalEmailSettingsType
+    );
+
+    console.log('✅ [REFINE-API] Blocks rendered to HTML');
+
+    // 9. Construct refined email response
+    const refinedEmail: RefinedEmail = {
+      subject: aiResponse.subject || validatedInput.currentEmail.subject,
+      previewText: aiResponse.previewText || validatedInput.currentEmail.previewText,
+      blocks: aiResponse.blocks as EmailBlockType[],
+      globalSettings: aiResponse.globalSettings as GlobalEmailSettingsType,
+      html: renderedHtml,
+      changes: Array.isArray(aiResponse.changes) ? aiResponse.changes : ['Email refined based on your request'],
+    };
+
+    // 10. Track usage
     console.log('📊 [REFINE-API] Tracking AI usage...');
     try {
       await supabase.from('ai_usage').insert({
@@ -356,10 +407,10 @@ export async function POST(request: NextRequest) {
       });
       console.log('✅ [REFINE-API] Usage tracked');
     } catch (error) {
-      console.error('⚠️ [REFINE-API] Failed to track usage (non-critical):', error);
+      console.error('⚠️  [REFINE-API] Failed to track usage (non-critical):', error);
     }
 
-    // 9. Return refined email
+    // 11. Return refined email
     const responseData: SuccessResponse = {
       success: true,
       data: {
@@ -368,7 +419,7 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    console.log('✅ [REFINE-API] Returning success response\n');
+    console.log('✅ [REFINE-API] Returning success response');
     return NextResponse.json(responseData, { status: 200 });
   } catch (error: any) {
     console.error('❌ [REFINE-API] Unhandled error:', error);
@@ -382,4 +433,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

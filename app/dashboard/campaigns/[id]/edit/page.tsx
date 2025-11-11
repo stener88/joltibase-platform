@@ -8,7 +8,7 @@ import { SplitScreenLayout } from '@/components/campaigns/SplitScreenLayout';
 import { ChatInterface, type ChatMessage } from '@/components/campaigns/ChatInterface';
 import { DirectEditor } from '@/components/campaigns/DirectEditor';
 import { EmailPreview, type DeviceMode, type ViewMode } from '@/components/campaigns/EmailPreview';
-import { MessageSquare, Edit3, Edit2, Save, RotateCcw, Send, Monitor, Tablet, Smartphone, Code, Eye, Copy } from 'lucide-react';
+import { MessageSquare, Edit3, Edit2, Save, RotateCcw, Monitor, Smartphone } from 'lucide-react';
 
 interface CampaignData {
   id: string;
@@ -35,7 +35,12 @@ interface CampaignData {
     plainText: string;
     ctaText: string;
     ctaUrl: string;
+    blocks?: any[]; // Block structure
+    globalSettings?: any; // Email settings
   }>;
+  // Database fields (from campaigns table)
+  blocks?: any[]; // Block structure from DB
+  design_config?: any; // globalSettings from DB
   metadata: {
     model: string;
     tokensUsed: number;
@@ -111,6 +116,8 @@ export default function DashboardCampaignEditorPage() {
                 successMetrics: ''
               },
               renderedEmails: aiMetadata.renderedEmails || [],
+              blocks: rawCampaign.blocks || [],
+              design_config: rawCampaign.design_config || null,
               metadata: {
                 model: rawCampaign.ai_model || 'gpt-4-turbo-preview',
                 tokensUsed: 0,
@@ -134,6 +141,8 @@ export default function DashboardCampaignEditorPage() {
                 successMetrics: ''
               },
               renderedEmails: rawCampaign.html_content ? JSON.parse(rawCampaign.html_content) : [],
+              blocks: rawCampaign.blocks || [],
+              design_config: rawCampaign.design_config || null,
               metadata: {
                 model: 'manual',
                 tokensUsed: 0,
@@ -149,14 +158,26 @@ export default function DashboardCampaignEditorPage() {
           setCampaignData(transformedData);
           setEditedEmails(transformedData.renderedEmails);
           
-          // Set initial chat message
-          setChatHistory([
-            {
-              role: 'assistant',
-              content: `I've loaded your campaign: "${transformedData.campaign.campaignName}". How would you like to refine it?`,
-              timestamp: new Date(),
-            },
-          ]);
+          // Set initial chat messages
+          const initialMessages: ChatMessage[] = [];
+          
+          // Add original prompt as first user message (if AI-generated)
+          if (rawCampaign.ai_prompt) {
+            initialMessages.push({
+              role: 'user',
+              content: rawCampaign.ai_prompt,
+              timestamp: new Date(rawCampaign.created_at),
+            });
+          }
+          
+          // Add assistant greeting
+          initialMessages.push({
+            role: 'assistant',
+            content: `I've loaded your campaign: "${transformedData.campaign.campaignName}". How would you like to refine it?`,
+            timestamp: new Date(),
+          });
+          
+          setChatHistory(initialMessages);
         } else {
           throw new Error('Invalid campaign data received');
         }
@@ -199,10 +220,8 @@ export default function DashboardCampaignEditorPage() {
           currentEmail: {
             subject: editedEmails[selectedEmailIndex].subject,
             previewText: editedEmails[selectedEmailIndex].previewText,
-            html: editedEmails[selectedEmailIndex].html,
-            plainText: editedEmails[selectedEmailIndex].plainText,
-            ctaText: editedEmails[selectedEmailIndex].ctaText,
-            ctaUrl: editedEmails[selectedEmailIndex].ctaUrl,
+            blocks: editedEmails[selectedEmailIndex].blocks || campaignData.blocks || [],
+            globalSettings: editedEmails[selectedEmailIndex].globalSettings || campaignData.design_config || {},
           },
         }),
       });
@@ -229,6 +248,8 @@ export default function DashboardCampaignEditorPage() {
             ...newEmails[selectedEmailIndex],
             subject: refined.subject,
             previewText: refined.previewText || '',
+            blocks: refined.blocks,
+            globalSettings: refined.globalSettings,
             html: refined.html,
             plainText: refined.plainText,
             ctaText: refined.ctaText,
@@ -278,10 +299,6 @@ export default function DashboardCampaignEditorPage() {
 
   const handleSave = async () => {
     alert('Save functionality coming soon!');
-  };
-
-  const handleSendTest = async () => {
-    alert('Send test functionality coming soon!');
   };
 
   const handleSaveCampaignName = async () => {
@@ -422,127 +439,83 @@ export default function DashboardCampaignEditorPage() {
   // Show split-screen editor
   const currentEmail = editedEmails[selectedEmailIndex];
   
+  // Create editor actions component for the header
+  const editorActions = (
+    <>
+      {/* Mode Toggle */}
+      <button
+        onClick={() => setEditorMode(editorMode === 'chat' ? 'edit' : 'chat')}
+        className="px-3 py-1.5 text-sm rounded-lg flex items-center gap-1.5 transition-all bg-gray-100 hover:bg-gray-200 text-gray-700"
+      >
+        {editorMode === 'chat' ? (
+          <>
+            <Edit3 className="w-4 h-4" />
+            Edit
+          </>
+        ) : (
+          <>
+            <MessageSquare className="w-4 h-4" />
+            Chat
+          </>
+        )}
+      </button>
+
+      <div className="h-6 w-px bg-gray-200 mx-1" />
+
+      {/* Device toggle */}
+      <button
+        onClick={() => {
+          const modes: DeviceMode[] = ['desktop', 'mobile'];
+          const currentIndex = modes.indexOf(deviceMode);
+          const nextIndex = (currentIndex + 1) % modes.length;
+          setDeviceMode(modes[nextIndex]);
+        }}
+        className="p-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all"
+        title={`${deviceMode.charAt(0).toUpperCase() + deviceMode.slice(1)} view`}
+      >
+        {deviceMode === 'mobile' && <Smartphone className="w-4 h-4 text-gray-600" />}
+        {deviceMode === 'desktop' && <Monitor className="w-4 h-4 text-gray-600" />}
+      </button>
+
+      <div className="h-6 w-px bg-gray-200 mx-1" />
+
+      {/* Action Buttons */}
+      <button
+        onClick={handleRegenerate}
+        className="px-3 py-1.5 text-sm bg-white border border-gray-200 text-black rounded-lg hover:border-gray-300 transition-all flex items-center gap-1.5"
+      >
+        <RotateCcw className="w-4 h-4" />
+        New
+      </button>
+      <button
+        onClick={handleSave}
+        className="px-3 py-1.5 text-sm bg-[#1a1aff] text-white rounded-lg hover:bg-[#3333ff] transition-all flex items-center gap-1.5"
+      >
+        <Save className="w-4 h-4" />
+        Save
+      </button>
+    </>
+  );
+  
   return (
-    <DashboardLayout>
-      <div className="flex flex-col" style={{ height: 'calc(100vh - 48px)' }}>
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            {/* Inline Editable Campaign Name */}
-            <div className="relative group flex-1 max-w-2xl">
-              {isEditingName ? (
-                <input
-                  ref={nameInputRef}
-                  type="text"
-                  value={editedCampaignName}
-                  onChange={(e) => setEditedCampaignName(e.target.value)}
-                  onBlur={handleSaveCampaignName}
-                  onKeyDown={handleNameKeyDown}
-                  className="text-2xl font-bold text-gray-900 border border-transparent hover:border-gray-200 focus:border-gray-400 rounded-lg px-3 py-1 w-full focus:outline-none transition-colors"
-                />
-              ) : (
-                <button
-                  onClick={() => {
-                    setEditedCampaignName(campaignData.campaign.campaignName);
-                    setIsEditingName(true);
-                  }}
-                  className="text-2xl font-bold text-gray-900 hover:text-gray-700 transition-colors text-left px-3 py-1 rounded-lg hover:bg-gray-50 flex items-center gap-2 group"
-                >
-                  <span>{campaignData.campaign.campaignName}</span>
-                  <Edit2 className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400" />
-                </button>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              {/* Mode Toggle */}
-              <button
-                onClick={() => setEditorMode(editorMode === 'chat' ? 'edit' : 'chat')}
-                className="px-4 py-2 text-sm rounded-lg flex items-center gap-2 transition-all bg-gray-100 hover:bg-gray-200 text-gray-700"
-              >
-                {editorMode === 'chat' ? (
-                  <>
-                    <Edit3 className="w-4 h-4" />
-                    Edit
-                  </>
-                ) : (
-                  <>
-                    <MessageSquare className="w-4 h-4" />
-                    Chat
-                  </>
-                )}
-              </button>
-
-              <div className="h-6 w-px bg-gray-200 mx-1" />
-
-              {/* Preview Controls */}
-              <div className="flex items-center gap-2">
-                {/* Device toggle */}
-                <button
-                  onClick={() => {
-                    const modes: DeviceMode[] = ['desktop', 'tablet', 'mobile'];
-                    const currentIndex = modes.indexOf(deviceMode);
-                    const nextIndex = (currentIndex + 1) % modes.length;
-                    setDeviceMode(modes[nextIndex]);
-                  }}
-                  className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all"
-                  title={`${deviceMode.charAt(0).toUpperCase() + deviceMode.slice(1)} view`}
-                >
-                  {deviceMode === 'mobile' && <Smartphone className="w-5 h-5 text-gray-600" />}
-                  {deviceMode === 'tablet' && <Tablet className="w-5 h-5 text-gray-600" />}
-                  {deviceMode === 'desktop' && <Monitor className="w-5 h-5 text-gray-600" />}
-                </button>
-
-                {/* View toggle */}
-                <button
-                  onClick={() => setViewMode(viewMode === 'html' ? 'text' : 'html')}
-                  className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all"
-                  title={viewMode === 'html' ? 'Switch to plain text' : 'Switch to HTML'}
-                >
-                  {viewMode === 'html' ? <Code className="w-5 h-5 text-gray-600" /> : <Eye className="w-5 h-5 text-gray-600" />}
-                </button>
-
-                {/* Copy button */}
-                <button
-                  onClick={() => {
-                    const content = viewMode === 'html' ? currentEmail.html : currentEmail.plainText;
-                    navigator.clipboard.writeText(content);
-                  }}
-                  className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all"
-                  title="Copy to clipboard"
-                >
-                  <Copy className="w-5 h-5 text-gray-600" />
-                </button>
-              </div>
-
-              <div className="h-6 w-px bg-gray-200 mx-1" />
-
-              {/* Action Buttons */}
-              <button
-                onClick={handleSendTest}
-                className="px-4 py-2 text-sm bg-white border border-gray-200 text-black rounded-lg hover:border-gray-300 transition-all flex items-center gap-2"
-              >
-                <Send className="w-4 h-4" />
-                Test
-              </button>
-              <button
-                onClick={handleRegenerate}
-                className="px-4 py-2 text-sm bg-white border border-gray-200 text-black rounded-lg hover:border-gray-300 transition-all flex items-center gap-2"
-              >
-                <RotateCcw className="w-4 h-4" />
-                New
-              </button>
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 text-sm bg-[#1a1aff] text-white rounded-lg hover:bg-[#3333ff] transition-all flex items-center gap-2"
-              >
-                <Save className="w-4 h-4" />
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-
+    <DashboardLayout
+      campaignEditor={{
+        campaignName: campaignData.campaign.campaignName,
+        isEditingName,
+        editedCampaignName,
+        onStartEditName: () => {
+          setEditedCampaignName(campaignData.campaign.campaignName);
+          setIsEditingName(true);
+        },
+        onCancelEditName: handleCancelNameEdit,
+        onSaveEditName: handleSaveCampaignName,
+        onNameChange: setEditedCampaignName,
+        onNameKeyDown: handleNameKeyDown,
+        nameInputRef,
+        editorActions,
+      }}
+    >
+      <div className="flex flex-col h-full">
         {/* Split Screen Layout */}
         <div className="flex-1 overflow-hidden">
           <SplitScreenLayout

@@ -126,7 +126,8 @@ export default function AnalyticsPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto px-8 py-8">
+      <div className="h-full overflow-y-auto">
+        <div className="max-w-7xl mx-auto px-8 py-8">
         {/* Controls */}
         <div className="mb-8">
           <div className="flex items-center justify-end gap-3 flex-wrap">
@@ -346,6 +347,7 @@ export default function AnalyticsPage() {
             </p>
           </div>
         )}
+        </div>
       </div>
     </DashboardLayout>
   );

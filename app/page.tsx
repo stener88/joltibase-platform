@@ -205,7 +205,7 @@ export default function HomePage() {
                 onChange={setPrompt}
                 onSubmit={handleGenerate}
                 isLoading={isLoading}
-                placeholder="e.g., Create a welcome email for new trial users, introducing our AI features..."
+                placeholder="Ask Jolti..."
               />
 
               {/* Error Display */}

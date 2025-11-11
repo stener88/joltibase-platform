@@ -24,6 +24,19 @@ const HexColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
 
 const PixelValueSchema = z.string().regex(/^\d+px$/);
 
+// URL that accepts valid URLs or merge tag placeholders
+const UrlOrMergeTagSchema = z.string().refine(
+  (val) => {
+    // Allow merge tag pattern: {{anything}}
+    if (/^\{\{.+\}\}$/.test(val)) {
+      return true;
+    }
+    // Otherwise validate as proper URL
+    return z.string().url().safeParse(val).success;
+  },
+  { message: "Must be a valid URL or merge tag placeholder like {{image_url}}" }
+);
+
 // ============================================================================
 // 1. Logo Block
 // ============================================================================
@@ -37,9 +50,9 @@ export const LogoBlockSettingsSchema = z.object({
 });
 
 export const LogoBlockContentSchema = z.object({
-  imageUrl: z.string().url(),
+  imageUrl: UrlOrMergeTagSchema,
   altText: z.string().min(1).max(200),
-  linkUrl: z.string().url().optional(),
+  linkUrl: UrlOrMergeTagSchema.optional(),
 });
 
 export const LogoBlockSchema = z.object({
@@ -135,9 +148,9 @@ export const ImageBlockSettingsSchema = z.object({
 });
 
 export const ImageBlockContentSchema = z.object({
-  imageUrl: z.string().url(),
+  imageUrl: UrlOrMergeTagSchema,
   altText: z.string().min(1).max(200),
-  linkUrl: z.string().url().optional(),
+  linkUrl: UrlOrMergeTagSchema.optional(),
   caption: z.string().max(500).optional(),
 });
 
@@ -168,7 +181,7 @@ export const ButtonBlockSettingsSchema = z.object({
 
 export const ButtonBlockContentSchema = z.object({
   text: z.string().min(1).max(100),
-  url: z.string().min(1).max(2000), // Allow merge tags
+  url: UrlOrMergeTagSchema,
 });
 
 export const ButtonBlockSchema = z.object({
@@ -227,7 +240,7 @@ export const HeroBlockSettingsSchema = z.object({
 export const HeroBlockContentSchema = z.object({
   headline: z.string().min(1).max(200),
   subheadline: z.string().max(500).optional(),
-  imageUrl: z.string().url().optional(),
+  imageUrl: UrlOrMergeTagSchema.optional(),
 });
 
 export const HeroBlockSchema = z.object({
@@ -293,7 +306,7 @@ export const TestimonialBlockContentSchema = z.object({
   author: z.string().min(1).max(100),
   role: z.string().max(100).optional(),
   company: z.string().max(100).optional(),
-  avatarUrl: z.string().url().optional(),
+  avatarUrl: UrlOrMergeTagSchema.optional(),
 });
 
 export const TestimonialBlockSchema = z.object({
@@ -544,7 +557,7 @@ export function validateBlockEmail(email: unknown): {
  * Get validation errors as readable strings
  */
 export function getValidationErrors(error: z.ZodError): string[] {
-  return error.errors.map(err => {
+  return error.issues.map((err) => {
     const path = err.path.join('.');
     return `${path}: ${err.message}`;
   });

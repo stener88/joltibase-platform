@@ -10,7 +10,7 @@ import { CAMPAIGN_GENERATOR_SYSTEM_PROMPT, buildCampaignPrompt } from './prompts
 import { validateCampaignInput, parseAndValidateCampaign, type GeneratedCampaign } from './validator';
 import { enforceRateLimit } from './rate-limit';
 import { saveAIGeneration } from './usage-tracker';
-import { getActiveBrandKit, createBrandKit } from '@/lib/brandkit/operations';
+
 import { renderBlocksToEmail } from '@/lib/email/blocks/renderer';
 import type { BlockEmail } from '@/lib/email/blocks/types';
 import { createClient } from '@/lib/supabase/server';
@@ -75,23 +75,7 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
     await enforceRateLimit(validatedInput.userId);
     console.log('✅ [GENERATOR] Rate limit check passed');
     
-    // 3. Get or create user's brand kit
-    console.log('🎨 [GENERATOR] Retrieving brand kit...');
-    let brandKit = await getActiveBrandKit(validatedInput.userId);
-    if (!brandKit) {
-      console.log('📝 [GENERATOR] No brand kit found, creating default...');
-      // Create default brand kit if user doesn't have one
-      brandKit = await createBrandKit(validatedInput.userId, {
-        companyName: validatedInput.companyName || 'My Company',
-        primaryColor: '#2563eb',
-        secondaryColor: '#3b82f6',
-        accentColor: '#f59e0b',
-        fontStyle: 'modern',
-      });
-    }
-    console.log('✅ [GENERATOR] Brand kit ready:', { colors: brandKit!.primaryColor });
-    
-    // 4. Build prompts with brand context
+    // 3. Build prompts
     const systemPrompt = CAMPAIGN_GENERATOR_SYSTEM_PROMPT;
     const userPrompt = buildCampaignPrompt({
       prompt: validatedInput.prompt,
@@ -100,12 +84,7 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
       targetAudience: validatedInput.targetAudience,
       tone: validatedInput.tone,
       campaignType: validatedInput.campaignType,
-      brandKit: {
-        primaryColor: brandKit!.primaryColor,
-        secondaryColor: brandKit!.secondaryColor,
-        accentColor: brandKit!.accentColor || '#f59e0b',
-        fontStyle: brandKit!.fontStyle || 'modern',
-      },
+      
     });
     
     // 5. Call OpenAI API
@@ -116,9 +95,9 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
         { role: 'user', content: userPrompt },
       ],
       {
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-4o',
         temperature: 0.7,
-        maxTokens: 2000,
+        maxTokens: 4000,
         jsonMode: true,
         retries: 3,
       }
@@ -145,19 +124,17 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
     const renderedEmails = generatedCampaign.emails.map((email, index) => {
       console.log(`  📝 [GENERATOR] Rendering email ${index + 1}/${generatedCampaign.emails.length}: ${email.subject}`);
       
-      // AI now returns structured blocks with exact design parameters
-      const blockEmail: BlockEmail = {
-        blocks: email.blocks,
-        globalSettings: email.globalSettings || {
-          backgroundColor: '#f3f4f6',
-          contentBackgroundColor: '#ffffff',
-          maxWidth: 600,
-          fontFamily: 'system-ui',
-        },
+      // Prepare globalSettings with defaults
+      const globalSettings = email.globalSettings || {
+        backgroundColor: '#f3f4f6',
+        contentBackgroundColor: '#ffffff',
+        maxWidth: 600,
+        fontFamily: 'system-ui',
+        mobileBreakpoint: 480,
       };
       
-      // Render blocks to email-safe HTML
-      const html = renderBlocksToEmail(blockEmail);
+      // Render blocks to email-safe HTML (pass as separate parameters)
+      const html = renderBlocksToEmail(email.blocks, globalSettings);
       
       // Generate plain text version (simplified)
       const plainText = email.blocks

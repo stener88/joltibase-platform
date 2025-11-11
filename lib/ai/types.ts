@@ -4,7 +4,7 @@
 
 export type ToneType = 'professional' | 'friendly' | 'casual';
 export type CampaignType = 'one-time' | 'sequence';
-export type AIModel = 'gpt-4-turbo-preview' | 'gpt-4' | 'gemini-flash-2.5';
+export type AIModel = 'gpt-4o' | 'gpt-4-turbo-preview' | 'gpt-4' | 'gemini-flash-2.5';
 export type TemplateType = 'gradient-hero' | 'color-blocks' | 'bold-modern' | 'minimal-accent' | 'text-first';
 export type GradientDirection = 'to-right' | 'to-bottom' | 'to-br';
 

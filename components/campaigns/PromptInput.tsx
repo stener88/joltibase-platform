@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, MessageSquare } from 'lucide-react';
 import { useTypingAnimation } from '@/hooks/useTypingAnimation';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface PromptInputProps {
   value: string;
@@ -12,6 +13,8 @@ interface PromptInputProps {
   placeholder?: string;
   compact?: boolean;
   disableAnimation?: boolean;
+  chatOnly?: boolean;
+  onChatOnlyToggle?: () => void;
 }
 
 const TYPING_EXAMPLES = [
@@ -31,13 +34,16 @@ export function PromptInput({
   placeholder = "Describe your email campaign...",
   compact = false,
   disableAnimation = false,
+  chatOnly = false,
+  onChatOnlyToggle,
 }: PromptInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
   
   // Animated typing effect - only active when input is empty and animation is enabled
   const animatedText = useTypingAnimation(TYPING_EXAMPLES, value === '' && !disableAnimation);
-  const dynamicPlaceholder = !disableAnimation && value === '' ? `Ask Jolti to create ${animatedText}` : placeholder;
+  const basePlaceholder = chatOnly ? "💬 Chat mode: Ask questions without modifying..." : placeholder;
+  const dynamicPlaceholder = !disableAnimation && value === '' && !chatOnly ? `Ask Jolti to create ${animatedText}` : basePlaceholder;
 
   // Auto-resize textarea
   useEffect(() => {
@@ -87,16 +93,45 @@ export function PromptInput({
             style={{ 
               lineHeight: '1.6',
               fontFamily: 'system-ui, -apple-system, sans-serif',
-              caretColor: 'black'
+              caretColor: 'black',
+              paddingRight: compact ? (onChatOnlyToggle ? '88px' : '48px') : '72px',
+              paddingBottom: compact ? '40px' : '48px'
             }}
           />
+
+          {/* Chat mode toggle button (only in compact mode with toggle handler) */}
+          {compact && onChatOnlyToggle && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onChatOnlyToggle}
+                  disabled={isLoading}
+                  className={`
+                    absolute right-11 bottom-2 w-7 h-7
+                    rounded-full
+                    flex items-center justify-center
+                    transition-all duration-300
+                    disabled:opacity-40 disabled:cursor-not-allowed
+                    hover:scale-110
+                    active:scale-95
+                    ${chatOnly ? 'bg-[#1a1aff] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}
+                  `}
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>Chat mode - Ask questions without modifying your campaign</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           {/* Send button */}
           <button
             onClick={handleSubmitClick}
             disabled={!value.trim() || isLoading}
             className={`
-              absolute ${compact ? 'right-3 bottom-3 w-10 h-10' : 'right-4 bottom-4 w-12 h-12'}
+              absolute ${compact ? 'right-2 bottom-2 w-7 h-7' : 'right-4 bottom-4 w-12 h-12'}
               rounded-full
               text-white
               flex items-center justify-center
@@ -112,9 +147,9 @@ export function PromptInput({
             }}
           >
             {isLoading ? (
-              <div className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} border-2 border-white border-t-transparent rounded-full animate-spin`} />
+              <div className={`${compact ? 'w-3 h-3' : 'w-4 h-4'} border-2 border-white border-t-transparent rounded-full animate-spin`} />
             ) : (
-              <ArrowUp className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} group-hover:-translate-y-0.5 transition-transform duration-300`} />
+              <ArrowUp className={`${compact ? 'w-3 h-3' : 'w-4 h-4'} group-hover:-translate-y-0.5 transition-transform duration-300`} />
             )}
           </button>
         </div>

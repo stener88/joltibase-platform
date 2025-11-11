@@ -132,7 +132,8 @@ export default function CampaignsPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto px-8 py-8">
+      <div className="h-full overflow-y-auto">
+        <div className="max-w-7xl mx-auto px-8 py-8">
         {/* Action Buttons */}
         <div className="mb-4">
           <div className="flex items-center justify-end gap-3">
@@ -269,6 +270,7 @@ export default function CampaignsPage() {
             )}
           </>
         )}
+        </div>
       </div>
 
       {/* Delete Confirmation Dialog */}

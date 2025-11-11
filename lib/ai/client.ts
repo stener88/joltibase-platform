@@ -23,6 +23,10 @@ function getClient(): OpenAI {
  * Pricing per 1M tokens (as of Nov 2025)
  */
 const PRICING = {
+  'gpt-4o': {
+    input: 0.0025, // $2.50 per 1M tokens
+    output: 0.01,  // $10 per 1M tokens
+  },
   'gpt-4-turbo-preview': {
     input: 0.01, // $10 per 1M tokens
     output: 0.03, // $30 per 1M tokens
@@ -53,7 +57,7 @@ export function calculateCost(
 export async function generateCompletion(
   messages: ChatCompletionMessageParam[],
   options: {
-    model?: 'gpt-4-turbo-preview' | 'gpt-4';
+    model?: 'gpt-4o' | 'gpt-4-turbo-preview' | 'gpt-4';
     temperature?: number;
     maxTokens?: number;
     jsonMode?: boolean;
@@ -61,7 +65,7 @@ export async function generateCompletion(
   } = {}
 ) {
   const {
-    model = 'gpt-4-turbo-preview',
+    model = 'gpt-4o',
     temperature = 0.7,
     maxTokens = 2000,
     jsonMode = true,

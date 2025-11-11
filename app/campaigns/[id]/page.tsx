@@ -38,7 +38,11 @@ interface CampaignData {
     plainText: string;
     ctaText: string;
     ctaUrl: string;
+    blocks?: any[];
+    globalSettings?: any;
   }>;
+  blocks?: any[];
+  design_config?: any;
   metadata: {
     model: string;
     tokensUsed: number;
@@ -124,6 +128,8 @@ export default function CampaignEditorPage() {
                 successMetrics: ''
               },
               renderedEmails: aiMetadata.renderedEmails || [],
+              blocks: rawCampaign.blocks || [],
+              design_config: rawCampaign.design_config || null,
               metadata: {
                 model: rawCampaign.ai_model || 'gpt-4-turbo-preview',
                 tokensUsed: 0,
@@ -147,6 +153,8 @@ export default function CampaignEditorPage() {
                 successMetrics: ''
               },
               renderedEmails: rawCampaign.html_content ? JSON.parse(rawCampaign.html_content) : [],
+              blocks: rawCampaign.blocks || [],
+              design_config: rawCampaign.design_config || null,
               metadata: {
                 model: 'manual',
                 tokensUsed: 0,
@@ -212,10 +220,8 @@ export default function CampaignEditorPage() {
           currentEmail: {
             subject: editedEmails[selectedEmailIndex].subject,
             previewText: editedEmails[selectedEmailIndex].previewText,
-            html: editedEmails[selectedEmailIndex].html,
-            plainText: editedEmails[selectedEmailIndex].plainText,
-            ctaText: editedEmails[selectedEmailIndex].ctaText,
-            ctaUrl: editedEmails[selectedEmailIndex].ctaUrl,
+            blocks: editedEmails[selectedEmailIndex].blocks || campaignData.blocks || [],
+            globalSettings: editedEmails[selectedEmailIndex].globalSettings || campaignData.design_config || {},
           },
         }),
       });
@@ -242,6 +248,8 @@ export default function CampaignEditorPage() {
             ...newEmails[selectedEmailIndex],
             subject: refined.subject,
             previewText: refined.previewText || '',
+            blocks: refined.blocks,
+            globalSettings: refined.globalSettings,
             html: refined.html,
             plainText: refined.plainText,
             ctaText: refined.ctaText,

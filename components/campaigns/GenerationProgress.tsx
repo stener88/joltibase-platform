@@ -34,9 +34,7 @@ export function GenerationProgress({ prompt }: GenerationProgressProps) {
         <h2 className="text-2xl font-bold text-black mb-2">
           Creating your campaign
         </h2>
-        <p className="text-gray-600 text-sm">
-          AI is working its magic...
-        </p>
+       
       </div>
 
       {/* Your prompt card */}
