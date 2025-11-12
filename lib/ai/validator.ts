@@ -8,6 +8,7 @@
 
 import { z } from 'zod';
 import { EmailBlockSchema, GlobalEmailSettingsSchema } from '../email/blocks/schemas';
+import { sanitizeBlocks } from './blocks/sanitizer';
 
 // ============================================================================
 // Input Validation Schemas
@@ -249,6 +250,23 @@ export function parseAndValidateCampaign(jsonString: string): GeneratedCampaign 
       hasSections: parsed?.emails?.[0]?.sections ? true : false,
       firstBlockType: parsed?.emails?.[0]?.blocks?.[0]?.type
     });
+    
+    // Sanitize blocks in all emails before validation
+    if (parsed?.emails && Array.isArray(parsed.emails)) {
+      console.log('🧹 [VALIDATOR] Sanitizing blocks in generated emails...');
+      parsed.emails = parsed.emails.map((email: any, index: number) => {
+        if (email?.blocks && Array.isArray(email.blocks)) {
+          console.log(`  🧹 [VALIDATOR] Sanitizing email ${index + 1} (${email.blocks.length} blocks)`);
+          return {
+            ...email,
+            blocks: sanitizeBlocks(email.blocks)
+          };
+        }
+        return email;
+      });
+      console.log('✅ [VALIDATOR] All blocks sanitized');
+    }
+    
     return validateAIResponse(parsed);
   } catch (error) {
     if (error instanceof SyntaxError) {

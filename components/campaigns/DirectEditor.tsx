@@ -144,35 +144,6 @@ export function DirectEditor({
           </p>
         </div>
 
-        {/* Campaign Details (Read-only) */}
-        <div className="border-t border-gray-200 pt-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">
-            Campaign Details
-          </h4>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Campaign Name:</span>
-              <span className="text-gray-900 font-medium">
-                {campaign.campaignName}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Template:</span>
-              <span className="text-gray-900 font-medium">
-                {campaign.design.template}
-              </span>
-            </div>
-            {campaign.design.tone && (
-              <div className="flex justify-between">
-                <span className="text-gray-600">Tone:</span>
-                <span className="text-gray-900 font-medium">
-                  {campaign.design.tone}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* AI Enhancement Tip */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-start gap-3">

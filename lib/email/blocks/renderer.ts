@@ -25,6 +25,34 @@ import type {
 } from './types';
 
 // ============================================================================
+// Image Placeholder Helpers
+// ============================================================================
+
+/**
+ * Generate placeholder image data URI for visual editor
+ */
+function getPlaceholderImage(type: 'logo' | 'image' | 'hero', width: number = 400, height: number = 300): string {
+  const text = type === 'logo' ? 'Add your logo' : 'Add image';
+  return `data:image/svg+xml,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+      <rect fill="#f3f4f6" width="${width}" height="${height}"/>
+      <text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="#9ca3af" font-family="system-ui, sans-serif" font-size="16">${text}</text>
+    </svg>
+  `)}`;
+}
+
+/**
+ * Replace merge tag URLs with placeholders for visual editor
+ */
+function processImageUrl(url: string, type: 'logo' | 'image' | 'hero' = 'image'): string {
+  // Check if URL is a merge tag placeholder
+  if (/^\{\{.+\}\}$/.test(url)) {
+    return getPlaceholderImage(type);
+  }
+  return url;
+}
+
+// ============================================================================
 // Main Renderer
 // ============================================================================
 
@@ -104,7 +132,10 @@ function renderLogoBlock(block: LogoBlock, context: RenderContext): string {
   const { settings, content } = block;
   const { align, width, height, backgroundColor, padding } = settings;
   
-  const imgHtml = `<img src="${escapeHtml(content.imageUrl)}" alt="${escapeHtml(content.altText)}" width="${width}" ${height ? `height="${height}"` : ''} style="display: block; max-width: 100%; height: ${height || 'auto'}; border: none;" />`;
+  const processedUrl = processImageUrl(content.imageUrl, 'logo');
+  const isPlaceholder = /^\{\{.+\}\}$/.test(content.imageUrl);
+  const minHeight = isPlaceholder ? ' min-height: 80px;' : '';
+  const imgHtml = `<img src="${escapeHtml(processedUrl)}" alt="${escapeHtml(content.altText)}" width="${width}" ${height ? `height="${height}"` : ''} style="display: block; max-width: 100%; height: ${height || 'auto'}; border: none;${minHeight}" />`;
   
   const imageContent = content.linkUrl
     ? `<a href="${escapeHtml(content.linkUrl)}" style="text-decoration: none;">${imgHtml}</a>`
@@ -180,8 +211,11 @@ function renderImageBlock(block: ImageBlock): string {
   const { settings, content } = block;
   const { align, width, height, borderRadius, padding } = settings;
   
-  const imgStyle = `display: block; max-width: 100%; width: ${width}; height: ${height || 'auto'}; border: none;${borderRadius ? ` border-radius: ${borderRadius};` : ''}`;
-  const imgHtml = `<img src="${escapeHtml(content.imageUrl)}" alt="${escapeHtml(content.altText)}" style="${imgStyle}" />`;
+  const processedUrl = processImageUrl(content.imageUrl, 'image');
+  const isPlaceholder = /^\{\{.+\}\}$/.test(content.imageUrl);
+  const minHeight = isPlaceholder ? ' min-height: 200px;' : '';
+  const imgStyle = `display: block; max-width: 100%; width: ${width}; height: ${height || 'auto'}; border: none;${minHeight}${borderRadius ? ` border-radius: ${borderRadius};` : ''}`;
+  const imgHtml = `<img src="${escapeHtml(processedUrl)}" alt="${escapeHtml(content.altText)}" style="${imgStyle}" />`;
   
   const imageContent = content.linkUrl
     ? `<a href="${escapeHtml(content.linkUrl)}" style="text-decoration: none; display: inline-block;">${imgHtml}</a>`
@@ -318,6 +352,21 @@ function renderHeroBlock(block: HeroBlock): string {
   const { settings, content } = block;
   const { backgroundColor, backgroundGradient, padding, align, headlineFontSize, headlineFontWeight, headlineColor, subheadlineFontSize, subheadlineColor } = settings;
   
+  // Mobile-first padding (cap at 20px for mobile safety)
+  const mobilePadding = {
+    top: Math.min(padding.top, 40),
+    right: Math.min(padding.right, 20),
+    bottom: Math.min(padding.bottom, 40),
+    left: Math.min(padding.left, 20),
+  };
+  
+  // Mobile-first font sizes (cap large headlines for mobile)
+  const headlineSizeNum = parseInt(headlineFontSize);
+  const mobileFontSize = headlineSizeNum > 48 ? '40px' : headlineFontSize;
+  
+  const subheadlineSizeNum = parseInt(subheadlineFontSize);
+  const mobileSubheadlineSize = subheadlineSizeNum > 20 ? '18px' : subheadlineFontSize;
+  
   let bgStyle = '';
   if (backgroundGradient) {
     const { from, to, direction } = backgroundGradient;
@@ -332,17 +381,17 @@ function renderHeroBlock(block: HeroBlock): string {
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td align="${align}" style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px; ${bgStyle}">
-          <h1 style="margin: 0 0 ${content.subheadline ? '16px' : '0'}; font-size: ${headlineFontSize}; font-weight: ${headlineFontWeight}; color: ${headlineColor}; line-height: 1.1; text-align: ${align}; letter-spacing: -0.03em;">
+        <td align="${align}" style="padding: ${mobilePadding.top}px ${mobilePadding.right}px ${mobilePadding.bottom}px ${mobilePadding.left}px; ${bgStyle}">
+          <h1 style="margin: 0 0 ${content.subheadline ? '16px' : '0'}; font-size: ${mobileFontSize}; font-weight: ${headlineFontWeight}; color: ${headlineColor}; line-height: 1.1; text-align: ${align}; letter-spacing: -0.03em;">
             ${escapeHtml(content.headline)}
           </h1>
           ${content.subheadline ? `
-          <p style="margin: 0; font-size: ${subheadlineFontSize}; color: ${subheadlineColor}; line-height: 1.5; text-align: ${align};">
+          <p style="margin: 0; font-size: ${mobileSubheadlineSize}; color: ${subheadlineColor}; line-height: 1.5; text-align: ${align};">
             ${escapeHtml(content.subheadline)}
           </p>` : ''}
           ${content.imageUrl ? `
           <div style="margin-top: 24px;">
-            <img src="${escapeHtml(content.imageUrl)}" alt="" style="display: block; max-width: 100%; height: auto; margin: 0 auto;" />
+            <img src="${escapeHtml(processImageUrl(content.imageUrl, 'hero'))}" alt="" style="display: block; max-width: 100%; height: auto; margin: 0 auto;${/^\{\{.+\}\}$/.test(content.imageUrl) ? ' min-height: 200px;' : ''}" />
           </div>` : ''}
         </td>
       </tr>
@@ -356,31 +405,35 @@ function renderStatsBlock(block: StatsBlock): string {
   const { settings, content } = block;
   const { layout, align, valueFontSize, valueFontWeight, valueColor, labelFontSize, labelFontWeight, labelColor, padding, spacing } = settings;
   
+  // Mobile-first padding
+  const mobilePadding = {
+    top: Math.min(padding.top, 30),
+    right: Math.min(padding.right, 20),
+    bottom: Math.min(padding.bottom, 30),
+    left: Math.min(padding.left, 20),
+  };
+  
   const colCount = layout === '2-col' ? 2 : layout === '3-col' ? 3 : 4;
-  const statsPerRow = Math.ceil(content.stats.length / colCount);
+  const maxWidth = layout === '2-col' ? '240px' : layout === '3-col' ? '180px' : '140px';
+  const minWidth = layout === '2-col' ? '200px' : layout === '3-col' ? '140px' : '100px';
   
   const statsHtml = content.stats.map((stat, index) => {
-    const isLast = (index + 1) % colCount === 0 || index === content.stats.length - 1;
     return `
-      <td align="${align}" style="padding-right: ${isLast ? 0 : spacing}px; vertical-align: top;">
+      <div style="display: inline-block; width: 100%; max-width: ${maxWidth}; min-width: ${minWidth}; vertical-align: top; margin: 0 8px 16px; text-align: ${align};">
         <p style="margin: 0 0 8px; font-size: ${valueFontSize}; font-weight: ${valueFontWeight}; color: ${valueColor}; line-height: 1; letter-spacing: -0.03em;">
           ${escapeHtml(stat.value)}
         </p>
         <p style="margin: 0; font-size: ${labelFontSize}; font-weight: ${labelFontWeight}; color: ${labelColor}; text-transform: uppercase; letter-spacing: 0.05em;">
           ${escapeHtml(stat.label)}
         </p>
-      </td>`;
+      </div>`;
   }).join('');
   
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td align="${align}" style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;">
-          <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
-            <tr>
-              ${statsHtml}
-            </tr>
-          </table>
+        <td align="${align}" style="padding: ${mobilePadding.top}px ${mobilePadding.right}px ${mobilePadding.bottom}px ${mobilePadding.left}px; text-align: ${align};">
+          ${statsHtml}
         </td>
       </tr>
     </table>`;
@@ -421,6 +474,14 @@ function renderFeatureGridBlock(block: FeatureGridBlock): string {
   const { settings, content } = block;
   const { layout, align, iconSize, titleFontSize, titleFontWeight, titleColor, descriptionFontSize, descriptionColor, padding, spacing } = settings;
   
+  // Mobile-first padding
+  const mobilePadding = {
+    top: Math.min(padding.top, 30),
+    right: Math.min(padding.right, 20),
+    bottom: Math.min(padding.bottom, 30),
+    left: Math.min(padding.left, 20),
+  };
+  
   if (layout === 'single-col') {
     const featuresHtml = content.features.map((feature, index) => `
       ${feature.icon ? `
@@ -438,19 +499,21 @@ function renderFeatureGridBlock(block: FeatureGridBlock): string {
     return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td align="${align}" style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;">
+        <td align="${align}" style="padding: ${mobilePadding.top}px ${mobilePadding.right}px ${mobilePadding.bottom}px ${mobilePadding.left}px;">
           ${featuresHtml}
         </td>
       </tr>
     </table>`;
   }
   
-  // Multi-column layout
+  // Multi-column layout with natural stacking
   const colCount = layout === '2-col' ? 2 : 3;
+  const maxWidth = layout === '2-col' ? '280px' : '180px';
+  const minWidth = layout === '2-col' ? '240px' : '160px';
+  
   const featuresHtml = content.features.map((feature, index) => {
-    const isLast = (index + 1) % colCount === 0 || index === content.features.length - 1;
     return `
-      <td align="center" style="padding-right: ${isLast ? 0 : spacing}px; vertical-align: top;">
+      <div style="display: inline-block; width: 100%; max-width: ${maxWidth}; min-width: ${minWidth}; vertical-align: top; margin: 0 8px 16px; text-align: center;">
         ${feature.icon ? `
         <p style="margin: 0 0 12px; font-size: ${iconSize}; line-height: 1;">
           ${escapeHtml(feature.icon)}
@@ -461,18 +524,14 @@ function renderFeatureGridBlock(block: FeatureGridBlock): string {
         <p style="margin: 0; font-size: ${descriptionFontSize}; color: ${descriptionColor}; line-height: 1.6;">
           ${escapeHtml(feature.description)}
         </p>
-      </td>`;
+      </div>`;
   }).join('');
   
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-              ${featuresHtml}
-            </tr>
-          </table>
+        <td style="padding: ${mobilePadding.top}px ${mobilePadding.right}px ${mobilePadding.bottom}px ${mobilePadding.left}px; text-align: ${align};">
+          ${featuresHtml}
         </td>
       </tr>
     </table>`;
@@ -485,31 +544,34 @@ function renderComparisonBlock(block: ComparisonBlock): string {
   const { settings, content } = block;
   const { beforeBackgroundColor, afterBackgroundColor, beforeLabelColor, afterLabelColor, labelFontSize, labelFontWeight, contentFontSize, contentColor, borderRadius, padding, cellPadding } = settings;
   
+  // Mobile-first padding
+  const mobilePadding = {
+    top: Math.min(padding.top, 24),
+    right: Math.min(padding.right, 20),
+    bottom: Math.min(padding.bottom, 24),
+    left: Math.min(padding.left, 20),
+  };
+  
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-              <td style="width: 50%; padding: ${cellPadding}px; background-color: ${beforeBackgroundColor};${borderRadius ? ` border-radius: ${borderRadius};` : ''} vertical-align: top;">
-                <p style="margin: 0 0 8px; font-size: ${labelFontSize}; font-weight: ${labelFontWeight}; color: ${beforeLabelColor}; text-transform: uppercase; letter-spacing: 0.05em;">
-                  ${escapeHtml(content.before.label || 'BEFORE')}
-                </p>
-                <p style="margin: 0; font-size: ${contentFontSize}; color: ${contentColor}; line-height: 1.6;">
-                  ${escapeHtml(content.before.text)}
-                </p>
-              </td>
-              <td style="width: 16px;"></td>
-              <td style="width: 50%; padding: ${cellPadding}px; background-color: ${afterBackgroundColor};${borderRadius ? ` border-radius: ${borderRadius};` : ''} vertical-align: top;">
-                <p style="margin: 0 0 8px; font-size: ${labelFontSize}; font-weight: ${labelFontWeight}; color: ${afterLabelColor}; text-transform: uppercase; letter-spacing: 0.05em;">
-                  ${escapeHtml(content.after.label || 'AFTER')}
-                </p>
-                <p style="margin: 0; font-size: ${contentFontSize}; color: ${contentColor}; line-height: 1.6;">
-                  ${escapeHtml(content.after.text)}
-                </p>
-              </td>
-            </tr>
-          </table>
+        <td style="padding: ${mobilePadding.top}px ${mobilePadding.right}px ${mobilePadding.bottom}px ${mobilePadding.left}px; text-align: center;">
+          <div style="display: inline-block; width: 100%; max-width: 260px; min-width: 240px; vertical-align: top; margin: 0 4px 12px; padding: ${cellPadding}px; background-color: ${beforeBackgroundColor};${borderRadius ? ` border-radius: ${borderRadius};` : ''} text-align: left;">
+            <p style="margin: 0 0 8px; font-size: ${labelFontSize}; font-weight: ${labelFontWeight}; color: ${beforeLabelColor}; text-transform: uppercase; letter-spacing: 0.05em;">
+              ${escapeHtml(content.before.label || 'BEFORE')}
+            </p>
+            <p style="margin: 0; font-size: ${contentFontSize}; color: ${contentColor}; line-height: 1.6;">
+              ${escapeHtml(content.before.text)}
+            </p>
+          </div>
+          <div style="display: inline-block; width: 100%; max-width: 260px; min-width: 240px; vertical-align: top; margin: 0 4px 12px; padding: ${cellPadding}px; background-color: ${afterBackgroundColor};${borderRadius ? ` border-radius: ${borderRadius};` : ''} text-align: left;">
+            <p style="margin: 0 0 8px; font-size: ${labelFontSize}; font-weight: ${labelFontWeight}; color: ${afterLabelColor}; text-transform: uppercase; letter-spacing: 0.05em;">
+              ${escapeHtml(content.after.label || 'AFTER')}
+            </p>
+            <p style="margin: 0; font-size: ${contentFontSize}; color: ${contentColor}; line-height: 1.6;">
+              ${escapeHtml(content.after.text)}
+            </p>
+          </div>
         </td>
       </tr>
     </table>`;
@@ -649,14 +711,42 @@ function wrapInEmailStructure(blocksHtml: string, globalSettings: GlobalEmailSet
     </o:OfficeDocumentSettings>
   </xml>
   <![endif]-->
+  <style type="text/css">
+    /* Desktop Enhancement - Progressive Enhancement Only */
+    /* Emails work perfectly without these styles! */
+    @media only screen and (min-width: 600px) {
+      .desktop-padding {
+        padding: 40px 20px !important;
+      }
+      
+      /* Enhance column widths on desktop for better layout */
+      .feature-column-2 {
+        max-width: 280px !important;
+      }
+      
+      .feature-column-3 {
+        max-width: 180px !important;
+      }
+      
+      .stat-column {
+        max-width: 200px !important;
+      }
+    }
+  </style>
 </head>
 <body style="margin: 0; padding: 0; font-family: ${fontFamily}; background-color: ${backgroundColor};">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: ${backgroundColor};">
     <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" width="${maxWidth}" cellpadding="0" cellspacing="0" style="max-width: ${maxWidth}px; width: 100%; background-color: ${contentBackgroundColor};">
+      <td align="center" class="desktop-padding" style="padding: 20px;">
+        <!--[if mso]>
+        <table align="center" width="${maxWidth}" cellpadding="0" cellspacing="0"><tr><td>
+        <![endif]-->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: ${maxWidth}px; background-color: ${contentBackgroundColor};">
           ${blocksHtml}
         </table>
+        <!--[if mso]>
+        </td></tr></table>
+        <![endif]-->
       </td>
     </tr>
   </table>

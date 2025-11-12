@@ -9,6 +9,7 @@ import {
   type GlobalEmailSettingsType 
 } from '@/lib/email/blocks/schemas';
 import { renderBlocksToEmail } from '@/lib/email/blocks/renderer';
+import { sanitizeBlocks } from '@/lib/ai/blocks/sanitizer';
 import { z } from 'zod';
 
 /**
@@ -176,7 +177,7 @@ ${JSON.stringify(input.currentEmail.globalSettings, null, 2)}
    **Special Requirements by Block Type:**
    - **stats**: Must have "layout" ("2-col", "3-col", "4-col") and "labelFontWeight" (number)
    - **testimonial**: Must have in content: "quote" (string) and "author" (string, person's name); optional: "role", "company", "avatarUrl". Must have in settings: "quoteFontSize" (string like "20px"), "quoteColor" (hex), "quoteFontStyle" ("normal" or "italic"), "authorFontSize" (string like "15px"), "authorColor" (hex), and "authorFontWeight" (number)
-   - **featuregrid**: Must have "layout" ("2-col", "3-col", "single-col") and "iconSize" (string)
+   - **feature-grid**: Must have in settings: "layout" ("2-col", "3-col", "single-col"), "align" ("left", "center", "right"), "iconSize" (string like "48px"), "titleFontSize" (string like "19px"), "titleFontWeight" (number like 700), "titleColor" (hex), "descriptionFontSize" (string like "15px"), "descriptionColor" (hex), "padding" (object), "spacing" (number). Must have in content: "features" (array of objects with icon (single emoji character, optional), title, description)
    - **image/logo/hero**: Must have "imageUrl" and "altText" in content
    - **button**: Must have "containerPadding" in settings
    - **footer**: Always keep at end with position = last
@@ -359,9 +360,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 7. Validate blocks with Zod
+    // 7. Sanitize blocks (add missing required fields with sensible defaults)
+    console.log('🧹 [REFINE-API] Sanitizing refined blocks...');
+    const sanitizedBlocks = sanitizeBlocks(aiResponse.blocks);
+    console.log('✅ [REFINE-API] Blocks sanitized');
+
+    // 8. Validate blocks with Zod
     console.log('🔍 [REFINE-API] Validating refined blocks...');
-    const blockValidation = validateRefinedBlocks(aiResponse.blocks);
+    const blockValidation = validateRefinedBlocks(sanitizedBlocks);
     
     if (!blockValidation.valid) {
       console.error('❌ [REFINE-API] Block validation failed:', blockValidation.errors);
@@ -377,26 +383,26 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ [REFINE-API] Blocks validated successfully');
 
-    // 8. Render blocks to HTML
+    // 9. Render blocks to HTML (use sanitized blocks)
     console.log('📧 [REFINE-API] Rendering blocks to HTML...');
     const renderedHtml = renderBlocksToEmail(
-      aiResponse.blocks as EmailBlockType[],
+      sanitizedBlocks as EmailBlockType[],
       aiResponse.globalSettings as GlobalEmailSettingsType
     );
 
     console.log('✅ [REFINE-API] Blocks rendered to HTML');
 
-    // 9. Construct refined email response
+    // 10. Construct refined email response
     const refinedEmail: RefinedEmail = {
       subject: aiResponse.subject || validatedInput.currentEmail.subject,
       previewText: aiResponse.previewText || validatedInput.currentEmail.previewText,
-      blocks: aiResponse.blocks as EmailBlockType[],
+      blocks: sanitizedBlocks as EmailBlockType[],
       globalSettings: aiResponse.globalSettings as GlobalEmailSettingsType,
       html: renderedHtml,
       changes: Array.isArray(aiResponse.changes) ? aiResponse.changes : ['Email refined based on your request'],
     };
 
-    // 10. Track usage
+    // 11. Track usage
     console.log('📊 [REFINE-API] Tracking AI usage...');
     try {
       await supabase.from('ai_usage').insert({
@@ -410,7 +416,7 @@ export async function POST(request: NextRequest) {
       console.error('⚠️  [REFINE-API] Failed to track usage (non-critical):', error);
     }
 
-    // 11. Return refined email
+    // 12. Return refined email
     const responseData: SuccessResponse = {
       success: true,
       data: {

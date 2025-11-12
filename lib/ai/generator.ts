@@ -12,7 +12,6 @@ import { enforceRateLimit } from './rate-limit';
 import { saveAIGeneration } from './usage-tracker';
 
 import { renderBlocksToEmail } from '@/lib/email/blocks/renderer';
-import type { BlockEmail } from '@/lib/email/blocks/types';
 import { createClient } from '@/lib/supabase/server';
 
 // ============================================================================

@@ -5,7 +5,7 @@
  * to help AI generate optimal block-based emails.
  */
 
-import { BlockType, EmailBlock } from '../../email/blocks/types';
+import { BlockType } from '../../email/blocks/types';
 
 // ============================================================================
 // Campaign Analysis Types
@@ -135,7 +135,7 @@ export const BLOCK_PATTERNS = {
       'hero',
       'text',
       'stats',
-      'featuregrid',
+      'feature-grid',
       'testimonial',
       'button',
       'divider',
@@ -182,7 +182,7 @@ export const BLOCK_PATTERNS = {
       'spacer',
       'hero',
       'text',
-      'featuregrid',
+      'feature-grid',
       'button',
       'divider',
       'text',
@@ -211,7 +211,7 @@ export const BLOCK_PATTERNS = {
       'spacer',
       'heading',
       'text',
-      'featuregrid',
+      'feature-grid',
       'button',
       'footer',
     ] as BlockType[],

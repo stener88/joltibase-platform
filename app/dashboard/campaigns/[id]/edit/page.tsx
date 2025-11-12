@@ -1,201 +1,123 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { useCampaignQuery, useCampaignMutation, useCampaignRefineMutation } from '@/hooks/use-campaign-query';
+import { useEditorHistory } from '@/hooks/use-editor-history';
+import { renderBlocksToEmail } from '@/lib/email/blocks/renderer';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import type { CampaignEditorControls } from '@/components/dashboard/DashboardHeader';
 import { SplitScreenLayout } from '@/components/campaigns/SplitScreenLayout';
 import { ChatInterface, type ChatMessage } from '@/components/campaigns/ChatInterface';
 import { DirectEditor } from '@/components/campaigns/DirectEditor';
 import { EmailPreview, type DeviceMode, type ViewMode } from '@/components/campaigns/EmailPreview';
-import { MessageSquare, Edit3, Edit2, Save, RotateCcw, Monitor, Smartphone } from 'lucide-react';
+import { VisualBlockEditor } from '@/components/email-editor/VisualBlockEditor';
+import type { EmailBlock, GlobalEmailSettings } from '@/lib/email/blocks/types';
+import { MessageSquare, Edit3, Edit2, Save, RotateCcw, Monitor, Smartphone, Layers } from 'lucide-react';
 
-interface CampaignData {
-  id: string;
-  campaign: {
-    campaignName: string;
-    campaignType: string;
-    design: {
-      template: string;
-      ctaColor?: string;
-      accentColor?: string;
-      headerGradient?: {
-        from: string;
-        to: string;
-      };
-    };
-    recommendedSegment: string;
-    sendTimeSuggestion: string;
-    successMetrics: string;
-  };
-  renderedEmails: Array<{
-    subject: string;
-    previewText: string;
-    html: string;
-    plainText: string;
-    ctaText: string;
-    ctaUrl: string;
-    blocks?: any[]; // Block structure
-    globalSettings?: any; // Email settings
-  }>;
-  // Database fields (from campaigns table)
-  blocks?: any[]; // Block structure from DB
-  design_config?: any; // globalSettings from DB
-  metadata: {
-    model: string;
-    tokensUsed: number;
-    promptTokens: number;
-    completionTokens: number;
-    costUsd: number;
-    generationTimeMs: number;
-    generatedAt: Date;
-  };
-}
-
-type EditorMode = 'chat' | 'edit';
+type EditorMode = 'chat' | 'edit' | 'visual';
 
 export default function DashboardCampaignEditorPage() {
   const router = useRouter();
   const params = useParams();
   const campaignId = params.id as string;
   
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [campaignData, setCampaignData] = useState<CampaignData | null>(null);
+  // Server state (React Query)
+  const { data: campaign, isLoading, error: queryError } = useCampaignQuery(campaignId);
+  const saveMutation = useCampaignMutation(campaignId);
+  const refineMutation = useCampaignRefineMutation(campaignId);
   
-  // Split-screen editor state
+  // UI state
   const [editorMode, setEditorMode] = useState<EditorMode>('chat');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
-  const [isRefining, setIsRefining] = useState(false);
+  const [chatVersions, setChatVersions] = useState<any[]>([]);
+  const [chatVersionIndex, setChatVersionIndex] = useState(0);
   const [selectedEmailIndex, setSelectedEmailIndex] = useState(0);
   const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
   const [viewMode, setViewMode] = useState<ViewMode>('html');
-  
-  // Local editable campaign state (for direct editing)
-  const [editedEmails, setEditedEmails] = useState<CampaignData['renderedEmails']>([]);
-
-  // Inline campaign name editing state
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedCampaignName, setEditedCampaignName] = useState('');
   const nameInputRef = useRef<HTMLInputElement>(null);
-
-  // Load campaign (authentication is handled by DashboardLayout)
+  
+  // Undo/redo history (for visual & text modes)
+  const editorHistory = useEditorHistory((state) => {
+    // Auto-save callback
+    saveMutation.mutate({
+      blocks: state.blocks,
+      design_config: state.globalSettings,
+    });
+  });
+  
+  // Initialize history when campaign loads
   useEffect(() => {
-    const loadCampaign = async () => {
-      try {
-        // Fetch campaign data
-        const response = await fetch(`/api/campaigns/${campaignId}`);
-        
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error('Campaign not found');
-          } else if (response.status === 403) {
-            throw new Error('You do not have access to this campaign');
-          } else {
-            throw new Error('Failed to load campaign');
-          }
+    if (campaign && !editorHistory.state) {
+      const blocks = campaign.blocks || [];
+      const globalSettings = campaign.design_config || {};
+      
+      editorHistory.initialize({
+        blocks,
+        globalSettings,
+      });
+      
+      // Initialize chat versions
+      setChatVersions([{
+        blocks,
+        globalSettings,
+        timestamp: new Date(),
+      }]);
+      
+      // Set initial chat messages
+      const initialMessages: ChatMessage[] = [];
+      
+      // Add assistant greeting
+      initialMessages.push({
+        role: 'assistant',
+        content: `I've loaded your campaign: "${campaign.campaign?.campaignName || 'Untitled'}". How would you like to refine it?`,
+        timestamp: new Date(),
+      });
+      
+      setChatHistory(initialMessages);
+    }
+  }, [campaign]);
+  
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + Z (Undo)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        if (editorMode !== 'chat') {
+          editorHistory.undo();
         }
-
-        const result = await response.json();
-        
-        if (result.success && result.data) {
-          const rawCampaign = result.data;
-          
-          // Transform raw database structure to editor format
-          let transformedData: CampaignData;
-          if (rawCampaign.ai_generated && rawCampaign.ai_metadata) {
-            const aiMetadata = rawCampaign.ai_metadata as any;
-            transformedData = {
-              id: rawCampaign.id,
-              campaign: aiMetadata.campaign || {
-                campaignName: rawCampaign.name,
-                campaignType: rawCampaign.type,
-                design: { template: 'modern' },
-                recommendedSegment: '',
-                sendTimeSuggestion: '',
-                successMetrics: ''
-              },
-              renderedEmails: aiMetadata.renderedEmails || [],
-              blocks: rawCampaign.blocks || [],
-              design_config: rawCampaign.design_config || null,
-              metadata: {
-                model: rawCampaign.ai_model || 'gpt-4-turbo-preview',
-                tokensUsed: 0,
-                promptTokens: 0,
-                completionTokens: 0,
-                costUsd: 0,
-                generationTimeMs: 0,
-                generatedAt: new Date(rawCampaign.created_at)
-              }
-            };
-          } else {
-            // For manually created campaigns, construct a compatible structure
-            transformedData = {
-              id: rawCampaign.id,
-              campaign: {
-                campaignName: rawCampaign.name,
-                campaignType: rawCampaign.type,
-                design: { template: 'modern' },
-                recommendedSegment: '',
-                sendTimeSuggestion: '',
-                successMetrics: ''
-              },
-              renderedEmails: rawCampaign.html_content ? JSON.parse(rawCampaign.html_content) : [],
-              blocks: rawCampaign.blocks || [],
-              design_config: rawCampaign.design_config || null,
-              metadata: {
-                model: 'manual',
-                tokensUsed: 0,
-                promptTokens: 0,
-                completionTokens: 0,
-                costUsd: 0,
-                generationTimeMs: 0,
-                generatedAt: new Date(rawCampaign.created_at)
-              }
-            };
-          }
-          
-          setCampaignData(transformedData);
-          setEditedEmails(transformedData.renderedEmails);
-          
-          // Set initial chat messages
-          const initialMessages: ChatMessage[] = [];
-          
-          // Add original prompt as first user message (if AI-generated)
-          if (rawCampaign.ai_prompt) {
-            initialMessages.push({
-              role: 'user',
-              content: rawCampaign.ai_prompt,
-              timestamp: new Date(rawCampaign.created_at),
-            });
-          }
-          
-          // Add assistant greeting
-          initialMessages.push({
-            role: 'assistant',
-            content: `I've loaded your campaign: "${transformedData.campaign.campaignName}". How would you like to refine it?`,
-            timestamp: new Date(),
+      }
+      
+      // Cmd/Ctrl + Shift + Z (Redo)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) {
+        e.preventDefault();
+        if (editorMode !== 'chat') {
+          editorHistory.redo();
+        }
+      }
+      
+      // Cmd/Ctrl + S (Save)
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        if (editorHistory.state) {
+          saveMutation.mutate({
+            blocks: editorHistory.state.blocks,
+            design_config: editorHistory.state.globalSettings,
           });
-          
-          setChatHistory(initialMessages);
-        } else {
-          throw new Error('Invalid campaign data received');
         }
-      } catch (err: any) {
-        console.error('Failed to load campaign:', err);
-        setError(err.message || 'An error occurred while loading the campaign');
-      } finally {
-        setIsLoading(false);
       }
     };
-
-    if (campaignId) {
-      loadCampaign();
-    }
-  }, [campaignId]);
-
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [editorMode, editorHistory, saveMutation]);
+  
+  // Handle refinement from chat
   const handleRefine = async (message: string) => {
-    if (!campaignData) return;
+    if (!editorHistory.state) return;
     
     const userMessage: ChatMessage = {
       role: 'user',
@@ -204,354 +126,375 @@ export default function DashboardCampaignEditorPage() {
     };
     setChatHistory((prev) => [...prev, userMessage]);
     
-    setIsRefining(true);
-    
     try {
-      console.log('🔄 [FRONTEND] Sending refinement request...');
-      
-      const response = await fetch('/api/ai/refine-campaign', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const result = await refineMutation.mutateAsync({
+        message,
+        currentEmail: {
+          blocks: editorHistory.state.blocks,
+          globalSettings: editorHistory.state.globalSettings,
+          subject: campaign?.subject_line || '',
+          previewText: campaign?.preview_text || '',
         },
-        body: JSON.stringify({
-          campaignId: campaignData.id,
-          message,
-          currentEmail: {
-            subject: editedEmails[selectedEmailIndex].subject,
-            previewText: editedEmails[selectedEmailIndex].previewText,
-            blocks: editedEmails[selectedEmailIndex].blocks || campaignData.blocks || [],
-            globalSettings: editedEmails[selectedEmailIndex].globalSettings || campaignData.design_config || {},
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to refine campaign');
-      }
-
-      const result = await response.json();
-      console.log('✅ [FRONTEND] Refinement response received:', {
-        hasRefinedEmail: !!result.data?.refinedEmail,
-        changes: result.data?.refinedEmail?.changes?.length || 0,
       });
       
-      if (result.success && result.data.refinedEmail) {
-        const refined = result.data.refinedEmail;
-        
-        console.log('🔄 [FRONTEND] Updating email state with refined content...');
-        
-        setEditedEmails((prev) => {
-          const newEmails = [...prev];
-          newEmails[selectedEmailIndex] = {
-            ...newEmails[selectedEmailIndex],
-            subject: refined.subject,
-            previewText: refined.previewText || '',
-            blocks: refined.blocks,
-            globalSettings: refined.globalSettings,
-            html: refined.html,
-            plainText: refined.plainText,
-            ctaText: refined.ctaText,
-            ctaUrl: refined.ctaUrl,
-          };
-          console.log('✅ [FRONTEND] Email state updated, preview should refresh');
-          return newEmails;
-        });
-        
-        const aiMessage: ChatMessage = {
-          role: 'assistant',
-          content: result.data.message,
-          timestamp: new Date(),
-        };
-        setChatHistory((prev) => [...prev, aiMessage]);
-      }
+      // Add to chat versions
+      const newVersion = {
+        blocks: result.data.refinedEmail.blocks,
+        globalSettings: result.data.refinedEmail.globalSettings,
+        timestamp: new Date(),
+      };
+      
+      setChatVersions([...chatVersions, newVersion]);
+      setChatVersionIndex(chatVersions.length);
+      
+      // Update history
+      editorHistory.update({
+        blocks: result.data.refinedEmail.blocks,
+        globalSettings: result.data.refinedEmail.globalSettings,
+      });
+      
+      const aiMessage: ChatMessage = {
+        role: 'assistant',
+        content: result.data.message || 'I\'ve updated your campaign.',
+        timestamp: new Date(),
+      };
+      setChatHistory((prev) => [...prev, aiMessage]);
     } catch (err: any) {
-      console.error('❌ [FRONTEND] Refinement error:', err);
+      console.error('❌ Refinement error:', err);
       const errorMessage: ChatMessage = {
         role: 'assistant',
         content: `Sorry, I encountered an error: ${err.message}. Please try again.`,
         timestamp: new Date(),
       };
       setChatHistory((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsRefining(false);
     }
   };
-
-  const handleEmailUpdate = (updates: Partial<CampaignData['renderedEmails'][0]>) => {
-    console.log('📝 [FRONTEND] Direct edit update:', Object.keys(updates));
-    setEditedEmails((prev) => {
-      const newEmails = [...prev];
-      newEmails[selectedEmailIndex] = {
-        ...newEmails[selectedEmailIndex],
-        ...updates,
-      };
-      return newEmails;
-    });
+  
+  // Handle visual editor updates
+  const handleVisualUpdate = async (blocks: EmailBlock[], globalSettings: GlobalEmailSettings) => {
+    editorHistory.update({ blocks, globalSettings });
   };
-
+  
+  // Handle direct editor updates
+  const handleEmailUpdate = (updates: Partial<{ blocks: EmailBlock[]; globalSettings: GlobalEmailSettings; subject: string; previewText: string; html: string; plainText: string }>) => {
+    if (updates.blocks || updates.globalSettings) {
+      editorHistory.update({
+        blocks: updates.blocks || editorHistory.state!.blocks,
+        globalSettings: updates.globalSettings || editorHistory.state!.globalSettings,
+      });
+    }
+  };
+  
+  // Chat version navigation
+  const goToPreviousChatVersion = () => {
+    if (chatVersionIndex > 0) {
+      const newIndex = chatVersionIndex - 1;
+      const version = chatVersions[newIndex];
+      setChatVersionIndex(newIndex);
+      editorHistory.update({
+        blocks: version.blocks,
+        globalSettings: version.globalSettings,
+      });
+    }
+  };
+  
+  const goToNextChatVersion = () => {
+    if (chatVersionIndex < chatVersions.length - 1) {
+      const newIndex = chatVersionIndex + 1;
+      const version = chatVersions[newIndex];
+      setChatVersionIndex(newIndex);
+      editorHistory.update({
+        blocks: version.blocks,
+        globalSettings: version.globalSettings,
+      });
+    }
+  };
+  
   const handleRegenerate = () => {
     if (confirm('Start over with a new campaign? This will take you to the campaign generator.')) {
       router.push('/dashboard/campaigns/generate');
     }
   };
-
-  const handleSave = async () => {
-    alert('Save functionality coming soon!');
-  };
-
-  const handleSaveCampaignName = async () => {
-    const trimmedName = editedCampaignName.trim();
+  
+  // Generate HTML from blocks in real-time
+  const currentEmail = useMemo(() => {
+    if (!editorHistory.state) return null;
     
-    // Validation: don't allow empty names
-    if (!trimmedName) {
-      setEditedCampaignName(campaignData?.campaign.campaignName || '');
-      setIsEditingName(false);
-      return;
-    }
+    // Generate fresh HTML from current blocks
+    const html = renderBlocksToEmail(
+      editorHistory.state.blocks,
+      editorHistory.state.globalSettings
+    );
+    
+    // Generate plain text from text blocks
+    const plainText = editorHistory.state.blocks
+      .filter(block => block.type === 'text' || block.type === 'heading')
+      .map(block => {
+        if ((block.type === 'text' || block.type === 'heading') && 'text' in block.content) {
+          return block.content.text;
+        }
+        return '';
+      })
+      .filter(text => text)
+      .join('\n\n');
+    
+    return {
+      subject: campaign?.subject_line || '',
+      previewText: campaign?.preview_text || '',
+      html,
+      plainText: plainText || campaign?.subject_line || '',
+      ctaText: '',
+      ctaUrl: '',
+      blocks: editorHistory.state.blocks,
+      globalSettings: editorHistory.state.globalSettings,
+    };
+  }, [editorHistory.state, campaign?.subject_line, campaign?.preview_text]);
 
-    // No change, just exit
-    if (trimmedName === campaignData?.campaign.campaignName) {
-      setIsEditingName(false);
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/campaigns/${campaignId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: trimmedName }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update campaign name');
-      }
-
-      // Update local state
-      if (campaignData) {
-        setCampaignData({
-          ...campaignData,
-          campaign: {
-            ...campaignData.campaign,
-            campaignName: trimmedName,
-          },
-        });
-      }
-
-      setIsEditingName(false);
-    } catch (error) {
-      console.error('Error updating campaign name:', error);
-      // Revert to original name on error
-      setEditedCampaignName(campaignData?.campaign.campaignName || '');
-      setIsEditingName(false);
-      alert('Failed to update campaign name. Please try again.');
-    }
-  };
-
-  const handleCancelNameEdit = () => {
-    setEditedCampaignName(campaignData?.campaign.campaignName || '');
-    setIsEditingName(false);
-  };
-
-  const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSaveCampaignName();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      handleCancelNameEdit();
-    }
-  };
-
-  // Auto-focus input when entering edit mode
-  useEffect(() => {
-    if (isEditingName && nameInputRef.current) {
-      nameInputRef.current.focus();
-      nameInputRef.current.select();
-    }
-  }, [isEditingName]);
-
-  // Show loading state
-  if (isLoading) {
+  if (isLoading || !editorHistory.state || !currentEmail) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-full">
+        <div className="flex items-center justify-center h-screen">
           <div className="text-center">
-            <svg
-              className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading campaign...</p>
           </div>
         </div>
       </DashboardLayout>
     );
   }
-
-  // Show error state
-  if (error || !campaignData) {
+  
+  if (queryError) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center max-w-md mx-auto px-4">
-            <div className="text-6xl mb-4">😞</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {error || 'Campaign not found'}
-            </h1>
-            <p className="text-gray-600 mb-6">
-              {error === 'Campaign not found' 
-                ? "This campaign doesn't exist or has been deleted."
-                : error === 'You do not have access to this campaign'
-                ? "You don't have permission to view this campaign."
-                : "Something went wrong while loading the campaign."}
-            </p>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Failed to load campaign</p>
             <button
-              onClick={() => router.push('/dashboard/campaigns/generate')}
-              className="px-6 py-3 bg-[#1a1aff] text-white rounded-lg hover:bg-[#0000cc] transition-colors"
+              onClick={() => router.push('/dashboard/campaigns')}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
-              Create New Campaign
+              Back to Campaigns
             </button>
           </div>
         </div>
       </DashboardLayout>
     );
   }
-
-  // Show split-screen editor
-  const currentEmail = editedEmails[selectedEmailIndex];
   
-  // Create editor actions component for the header
-  const editorActions = (
-    <>
-      {/* Mode Toggle */}
-      <button
-        onClick={() => setEditorMode(editorMode === 'chat' ? 'edit' : 'chat')}
-        className="px-3 py-1.5 text-sm rounded-lg flex items-center gap-1.5 transition-all bg-gray-100 hover:bg-gray-200 text-gray-700"
-      >
-        {editorMode === 'chat' ? (
-          <>
-            <Edit3 className="w-4 h-4" />
-            Edit
-          </>
-        ) : (
-          <>
+  // Build campaign editor controls for global header
+  const campaignEditorControls: CampaignEditorControls = {
+    campaignName: campaign?.campaign?.campaignName || 'Untitled Campaign',
+    isEditingName,
+    editedCampaignName,
+    onStartEditName: () => {
+      setEditedCampaignName(campaign?.campaign?.campaignName || 'Untitled');
+      setIsEditingName(true);
+    },
+    onCancelEditName: () => setIsEditingName(false),
+    onSaveEditName: () => {
+      setIsEditingName(false);
+      // TODO: Save campaign name to database
+    },
+    onNameChange: (value) => setEditedCampaignName(value),
+    onNameKeyDown: (e) => {
+      if (e.key === 'Enter') {
+        setIsEditingName(false);
+      }
+    },
+    nameInputRef,
+    editorActions: (
+      <>
+        {/* Editor Mode Toggle */}
+        <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+          <button
+            onClick={() => setEditorMode('chat')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
+              editorMode === 'chat'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
             <MessageSquare className="w-4 h-4" />
             Chat
-          </>
+          </button>
+          <button
+            onClick={() => setEditorMode('visual')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
+              editorMode === 'visual'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <Layers className="w-4 h-4" />
+            Visual
+          </button>
+          <button
+            onClick={() => setEditorMode('edit')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
+              editorMode === 'edit'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <Edit3 className="w-4 h-4" />
+            Text
+          </button>
+        </div>
+
+        {/* Device Mode Toggle */}
+        <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+          <button
+            onClick={() => setDeviceMode('desktop')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
+              deviceMode === 'desktop'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+            title="Desktop view"
+          >
+            <Monitor className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setDeviceMode('mobile')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
+              deviceMode === 'mobile'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+            title="Mobile view"
+          >
+            <Smartphone className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Undo/Redo (Visual & Text modes) */}
+        {(editorMode === 'visual' || editorMode === 'edit') && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={editorHistory.undo}
+              disabled={!editorHistory.canUndo}
+              className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Undo (Cmd+Z)"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+            <button
+              onClick={editorHistory.redo}
+              disabled={!editorHistory.canRedo}
+              className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Redo (Cmd+Shift+Z)"
+            >
+              <RotateCcw className="w-4 h-4 scale-x-[-1]" />
+            </button>
+          </div>
         )}
-      </button>
 
-      <div className="h-6 w-px bg-gray-200 mx-1" />
+        {/* Version Navigation (Chat mode) */}
+        {editorMode === 'chat' && chatVersions.length > 1 && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={goToPreviousChatVersion}
+              disabled={chatVersionIndex === 0}
+              className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+            <span className="text-xs text-gray-600">
+              {chatVersionIndex + 1}/{chatVersions.length}
+            </span>
+            <button
+              onClick={goToNextChatVersion}
+              disabled={chatVersionIndex === chatVersions.length - 1}
+              className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50"
+            >
+              <RotateCcw className="w-4 h-4 scale-x-[-1]" />
+            </button>
+          </div>
+        )}
 
-      {/* Device toggle */}
-      <button
-        onClick={() => {
-          const modes: DeviceMode[] = ['desktop', 'mobile'];
-          const currentIndex = modes.indexOf(deviceMode);
-          const nextIndex = (currentIndex + 1) % modes.length;
-          setDeviceMode(modes[nextIndex]);
-        }}
-        className="p-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all"
-        title={`${deviceMode.charAt(0).toUpperCase() + deviceMode.slice(1)} view`}
-      >
-        {deviceMode === 'mobile' && <Smartphone className="w-4 h-4 text-gray-600" />}
-        {deviceMode === 'desktop' && <Monitor className="w-4 h-4 text-gray-600" />}
-      </button>
-
-      <div className="h-6 w-px bg-gray-200 mx-1" />
-
-      {/* Action Buttons */}
-      <button
-        onClick={handleRegenerate}
-        className="px-3 py-1.5 text-sm bg-white border border-gray-200 text-black rounded-lg hover:border-gray-300 transition-all flex items-center gap-1.5"
-      >
-        <RotateCcw className="w-4 h-4" />
-        New
-      </button>
-      <button
-        onClick={handleSave}
-        className="px-3 py-1.5 text-sm bg-[#1a1aff] text-white rounded-lg hover:bg-[#3333ff] transition-all flex items-center gap-1.5"
-      >
-        <Save className="w-4 h-4" />
-        Save
-      </button>
-    </>
-  );
+        {/* Save Status */}
+        <div className="flex items-center gap-2 px-2 py-1 rounded bg-gray-100">
+          {saveMutation.isPending && (
+            <>
+              <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
+              <span className="text-xs text-gray-600">Saving...</span>
+            </>
+          )}
+          {saveMutation.isSuccess && !saveMutation.isPending && (
+            <>
+              <div className="w-2 h-2 bg-green-500 rounded-full" />
+              <span className="text-xs text-gray-600">Saved</span>
+            </>
+          )}
+          {saveMutation.isError && (
+            <>
+              <div className="w-2 h-2 bg-red-500 rounded-full" />
+              <span className="text-xs text-gray-600">Error</span>
+            </>
+          )}
+        </div>
+      </>
+    ),
+  };
   
   return (
-    <DashboardLayout
-      campaignEditor={{
-        campaignName: campaignData.campaign.campaignName,
-        isEditingName,
-        editedCampaignName,
-        onStartEditName: () => {
-          setEditedCampaignName(campaignData.campaign.campaignName);
-          setIsEditingName(true);
-        },
-        onCancelEditName: handleCancelNameEdit,
-        onSaveEditName: handleSaveCampaignName,
-        onNameChange: setEditedCampaignName,
-        onNameKeyDown: handleNameKeyDown,
-        nameInputRef,
-        editorActions,
-      }}
-    >
+    <DashboardLayout campaignEditor={campaignEditorControls}>
       <div className="flex flex-col h-full">
-        {/* Split Screen Layout */}
-        <div className="flex-1 overflow-hidden">
-          <SplitScreenLayout
-            leftPanel={
-              editorMode === 'chat' ? (
-                <ChatInterface
-                  campaignId={campaignData.id}
-                  onRefine={handleRefine}
-                  isRefining={isRefining}
-                  chatHistory={chatHistory}
+        {/* Editor content */}
+        {editorMode === 'visual' ? (
+          <div className="flex-1 overflow-hidden">
+            <VisualBlockEditor
+              initialBlocks={editorHistory.state.blocks}
+              initialDesignConfig={editorHistory.state.globalSettings}
+              campaignId={campaignId}
+              deviceMode={deviceMode}
+              onSave={handleVisualUpdate}
+            />
+          </div>
+        ) : (
+          <div className="flex-1 overflow-hidden">
+            <SplitScreenLayout
+              leftPanel={
+                editorMode === 'chat' ? (
+                  <ChatInterface
+                    campaignId={campaignId}
+                    onRefine={handleRefine}
+                    isRefining={refineMutation.isPending}
+                    chatHistory={chatHistory}
+                  />
+                ) : (
+                  <DirectEditor
+                    campaign={campaign?.campaign || {
+                      campaignName: 'Untitled',
+                      campaignType: 'one-time',
+                      design: { template: 'modern' },
+                      recommendedSegment: '',
+                      sendTimeSuggestion: '',
+                      successMetrics: ''
+                    }}
+                    renderedEmails={[currentEmail]}
+                    selectedEmailIndex={0}
+                    onUpdate={handleEmailUpdate}
+                    onSelectEmail={setSelectedEmailIndex}
+                  />
+                )
+              }
+              rightPanel={
+                <EmailPreview
+                  blocks={editorHistory.state.blocks}
+                  designConfig={editorHistory.state.globalSettings}
+                  plainText={currentEmail.plainText}
+                  subject={currentEmail.subject}
+                  deviceMode={deviceMode}
+                  viewMode={viewMode}
+                  onDeviceModeChange={setDeviceMode}
+                  onViewModeChange={setViewMode}
                 />
-              ) : (
-                <DirectEditor
-                  campaign={campaignData.campaign}
-                  renderedEmails={editedEmails}
-                  selectedEmailIndex={selectedEmailIndex}
-                  onUpdate={handleEmailUpdate}
-                  onSelectEmail={setSelectedEmailIndex}
-                />
-              )
-            }
-            rightPanel={
-              <EmailPreview
-                html={currentEmail.html}
-                plainText={currentEmail.plainText}
-                subject={currentEmail.subject}
-                deviceMode={deviceMode}
-                viewMode={viewMode}
-                onDeviceModeChange={setDeviceMode}
-                onViewModeChange={setViewMode}
-              />
-            }
-          />
-        </div>
+              }
+            />
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
 }
-

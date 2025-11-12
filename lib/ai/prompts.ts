@@ -29,7 +29,9 @@ Use EXACTLY ONE of these template names (copy exactly, no variations):
 - "globalSettings.mobileBreakpoint": NUMBER (480)
 - "settings.lineHeight": STRING ("1.6" not 1.6)
 - "settings.fontWeight": NUMBER (700 not "700")
-- "settings.width": STRING ("140px" not 140)
+- "settings.width": STRING - MUST be either:
+  * Pixel value: "140px", "600px" (digits + "px")
+  * For dividers/images ONLY: "100%" (no other percentages allowed)
 - "settings.iconSize": STRING ("48px" not 48)
 - "settings.fontSize": STRING ("18px" not 18)
 - "settings.padding": OBJECT { top, bottom, left, right }
@@ -65,7 +67,7 @@ CTAs: #7c3aed (purple), #2563eb (blue), #16a34a (green), #dc2626 (red)
 - Footer: 13px, weight 400, line-height 1.6
 
 **4. Visual Impact Blocks**
-Prioritize: hero → stats → testimonial → featuregrid → comparison → button
+Prioritize: hero → stats → testimonial → feature-grid → comparison → button
 
 ## Block Types Reference
 
@@ -91,12 +93,13 @@ Prioritize: hero → stats → testimonial → featuregrid → comparison → bu
     "quoteFontSize": "20px", "quoteColor": "#1f2937", "quoteFontStyle": "italic",
     "authorFontSize": "15px", "authorColor": "#6b7280", "authorFontWeight": 600, "align": "center" } }
 
-**featuregrid** - Multiple features (layout: "2-col" | "3-col" | "single-col")
-{ "id": "features-1", "type": "featuregrid", "position": 3,
+**feature-grid** - Multiple features (layout: "2-col" | "3-col" | "single-col")
+{ "id": "features-1", "type": "feature-grid", "position": 3,
   "content": { "features": [{ "icon": "🎨", "title": "Title", "description": "Description" }] },
   "settings": { "layout": "3-col", "align": "center", "iconSize": "48px", "titleFontSize": "19px", "titleFontWeight": 700,
     "titleColor": "#111827", "descriptionFontSize": "15px", "descriptionColor": "#6b7280",
     "padding": {"top": 48, "bottom": 48, "left": 32, "right": 32}, "spacing": 40 } }
+Note: icon must be a single emoji character (e.g., 🎨, 🚀, ⚡)
 
 **comparison** - Before/After contrast
 { "id": "comparison-1", "type": "comparison", "position": 4,
@@ -139,7 +142,7 @@ Prioritize: hero → stats → testimonial → featuregrid → comparison → bu
 **divider** - Visual separation
 { "id": "divider-1", "type": "divider", "position": 10,
   "content": {},
-  "settings": { "color": "#e5e7eb", "width": "80%", "height": 1, "style": "solid",
+  "settings": { "color": "#e5e7eb", "width": "100%", "height": 1, "style": "solid",
     "padding": {"top": 40, "bottom": 40, "left": 20, "right": 20} } }
 
 **footer** - Legal info (REQUIRED: Always end with this)
@@ -180,7 +183,7 @@ Prioritize: hero → stats → testimonial → featuregrid → comparison → bu
       { "id": "spacer-2", "type": "spacer", "position": 3, "content": {}, "settings": {"height": 32, "backgroundColor": "#ffffff"} },
       { "id": "text-1", "type": "text", "position": 4, "content": {"text": "Hi {{first_name}},\\n\\nAfter 8 months, we're launching our AI Platform."}, "settings": {"fontSize": "18px", "fontWeight": 400, "color": "#374151", "align": "left", "lineHeight": "1.7", "padding": {"top": 20, "bottom": 24, "left": 40, "right": 40}} },
       { "id": "stats-1", "type": "stats", "position": 5, "content": {"stats": [{"value": "10hrs", "label": "Saved/week"}, {"value": "3x", "label": "Faster"}, {"value": "500+", "label": "Beta users"}]}, "settings": {"layout": "3-col", "align": "center", "valueFontSize": "52px", "valueFontWeight": 900, "valueColor": "#7c3aed", "labelFontSize": "14px", "labelFontWeight": 400, "labelColor": "#6b7280", "padding": {"top": 56, "bottom": 56, "left": 24, "right": 24}, "spacing": 48} },
-      { "id": "features-1", "type": "featuregrid", "position": 6, "content": {"features": [{"icon": "🤖", "title": "Smart Automation", "description": "Set once, runs forever"}, {"icon": "💬", "title": "Natural Language", "description": "Just describe what you want"}, {"icon": "⚡", "title": "Lightning Fast", "description": "Results in seconds"}]}, "settings": {"layout": "3-col", "align": "center", "iconSize": "48px", "titleFontSize": "19px", "titleFontWeight": 700, "titleColor": "#111827", "descriptionFontSize": "15px", "descriptionColor": "#6b7280", "padding": {"top": 48, "bottom": 48, "left": 32, "right": 32}, "spacing": 40} },
+      { "id": "features-1", "type": "feature-grid", "position": 6, "content": {"features": [{"icon": "🤖", "title": "Smart Automation", "description": "Set once, runs forever"}, {"icon": "💬", "title": "Natural Language", "description": "Just describe what you want"}, {"icon": "⚡", "title": "Lightning Fast", "description": "Results in seconds"}]}, "settings": {"layout": "3-col", "align": "center", "iconSize": "48px", "titleFontSize": "19px", "titleFontWeight": 700, "titleColor": "#111827", "descriptionFontSize": "15px", "descriptionColor": "#6b7280", "padding": {"top": 48, "bottom": 48, "left": 32, "right": 32}, "spacing": 40} },
       { "id": "cta-1", "type": "button", "position": 7, "content": {"text": "Start Free Trial", "url": "{{cta_url}}"}, "settings": {"style": "solid", "color": "#7c3aed", "textColor": "#ffffff", "align": "center", "size": "large", "borderRadius": "8px", "fontSize": "19px", "fontWeight": 700, "padding": {"top": 20, "bottom": 20, "left": 56, "right": 56}, "containerPadding": {"top": 40, "bottom": 40, "left": 40, "right": 40}} },
       { "id": "testimonial-1", "type": "testimonial", "position": 8, "content": {"quote": "Changed how we operate. Shipping 3x faster.", "author": "Alex Rivera", "role": "Engineering Lead", "avatarUrl": "{{avatar_url}}"}, "settings": {"padding": {"top": 48, "bottom": 48, "left": 48, "right": 48}, "backgroundColor": "#f9fafb", "quoteFontSize": "20px", "quoteColor": "#1f2937", "quoteFontStyle": "italic", "authorFontSize": "15px", "authorColor": "#6b7280", "authorFontWeight": 600, "align": "center"} },
       { "id": "footer-1", "type": "footer", "position": 9, "content": {"companyName": "{{company_name}}", "companyAddress": "{{company_address}}", "unsubscribeUrl": "{{unsubscribe_url}}"}, "settings": {"fontSize": "13px", "textColor": "#9ca3af", "align": "center", "lineHeight": "1.6", "padding": {"top": 40, "bottom": 40, "left": 32, "right": 32}, "backgroundColor": "#f9fafb"} }
@@ -212,7 +215,7 @@ logo → spacer → heading → text → image → text → button → divider �
 heading → testimonial → spacer → stats → testimonial → button → footer
 
 **Approach D: Feature Showcase** (Grid-focused)
-logo → spacer → hero → featuregrid → spacer → button → footer
+logo → spacer → hero → feature-grid → spacer → button → footer
 
 **Approach E: Minimal Elegance** (Sparse)
 spacer → logo → spacer → heading → text → spacer → button → spacer → footer
