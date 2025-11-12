@@ -15,6 +15,8 @@ interface EmailPreviewProps {
   viewMode?: ViewMode;
   onDeviceModeChange?: (mode: DeviceMode) => void;
   onViewModeChange?: (mode: ViewMode) => void;
+  chatMode?: boolean;
+  onBlockClick?: (blockId: string, blockType: string, blockName: string) => void;
 }
 
 /**
@@ -33,6 +35,8 @@ export function EmailPreview({
   viewMode = 'html',
   onDeviceModeChange,
   onViewModeChange,
+  chatMode = false,
+  onBlockClick,
 }: EmailPreviewProps) {
   return (
     <div className="flex flex-col h-full">
@@ -42,6 +46,8 @@ export function EmailPreview({
           designConfig={designConfig}
           deviceMode={deviceMode}
           interactive={false}
+          chatMode={chatMode}
+          onBlockClick={onBlockClick}
         />
       ) : (
         <div className="flex-1 overflow-y-auto bg-gray-100 p-8">

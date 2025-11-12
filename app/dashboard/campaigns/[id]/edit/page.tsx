@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useCampaignQuery, useCampaignMutation, useCampaignRefineMutation } from '@/hooks/use-campaign-query';
 import { useEditorHistory } from '@/hooks/use-editor-history';
@@ -8,7 +8,7 @@ import { renderBlocksToEmail } from '@/lib/email/blocks/renderer';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import type { CampaignEditorControls } from '@/components/dashboard/DashboardHeader';
 import { SplitScreenLayout } from '@/components/campaigns/SplitScreenLayout';
-import { ChatInterface, type ChatMessage } from '@/components/campaigns/ChatInterface';
+import { ChatInterface, type ChatMessage, type ChatInterfaceRef } from '@/components/campaigns/ChatInterface';
 import { DirectEditor } from '@/components/campaigns/DirectEditor';
 import { EmailPreview, type DeviceMode, type ViewMode } from '@/components/campaigns/EmailPreview';
 import { VisualBlockEditor } from '@/components/email-editor/VisualBlockEditor';
@@ -76,6 +76,7 @@ export default function DashboardCampaignEditorPage() {
   const [selectedEmailIndex, setSelectedEmailIndex] = useState(0);
   const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
   const [viewMode, setViewMode] = useState<ViewMode>('html');
+  const chatInterfaceRef = useRef<ChatInterfaceRef>(null);
   
   // Undo/redo history (for visual & text modes)
   const editorHistory = useEditorHistory((state) => {
@@ -511,6 +512,7 @@ export default function DashboardCampaignEditorPage() {
               leftPanel={
                 editorMode === 'chat' ? (
                   <ChatInterface
+                    ref={chatInterfaceRef}
                     campaignId={campaignId}
                     onRefine={handleRefine}
                     isRefining={refineMutation.isPending}
@@ -543,6 +545,13 @@ export default function DashboardCampaignEditorPage() {
                   viewMode={viewMode}
                   onDeviceModeChange={setDeviceMode}
                   onViewModeChange={setViewMode}
+                  chatMode={editorMode === 'chat'}
+                  onBlockClick={(blockId, blockType, blockName) => {
+                    if (chatInterfaceRef.current) {
+                      const reference = `the ${blockName.toLowerCase()} block`;
+                      chatInterfaceRef.current.insertText(reference);
+                    }
+                  }}
                 />
               }
             />

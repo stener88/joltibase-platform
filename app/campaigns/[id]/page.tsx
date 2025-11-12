@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Header } from '@/components/layout/Header';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { GradientBackground } from '@/components/campaigns/GradientBackground';
 import { SplitScreenLayout } from '@/components/campaigns/SplitScreenLayout';
-import { ChatInterface, type ChatMessage } from '@/components/campaigns/ChatInterface';
+import { ChatInterface, type ChatMessage, type ChatInterfaceRef } from '@/components/campaigns/ChatInterface';
 import { DirectEditor } from '@/components/campaigns/DirectEditor';
 import { EmailPreview, type DeviceMode, type ViewMode } from '@/components/campaigns/EmailPreview';
 import { MessageSquare, Edit3, Save, RotateCcw, Send, ChevronLeft, ChevronRight, Monitor, Tablet, Smartphone, Code, Eye, Copy, PanelLeftClose, PanelRightOpen } from 'lucide-react';
@@ -130,6 +130,7 @@ export default function CampaignEditorPage() {
   const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
   const [viewMode, setViewMode] = useState<ViewMode>('html');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const chatInterfaceRef = useRef<ChatInterfaceRef>(null);
   
   // Local editable campaign state (for direct editing)
   const [editedEmails, setEditedEmails] = useState<CampaignData['renderedEmails']>([]);
@@ -530,7 +531,7 @@ export default function CampaignEditorPage() {
               {/* Device toggle - cycles through modes */}
               <button
                 onClick={() => {
-                  const modes: DeviceMode[] = ['desktop', 'tablet', 'mobile'];
+                  const modes: DeviceMode[] = ['desktop', 'mobile'];
                   const currentIndex = modes.indexOf(deviceMode);
                   const nextIndex = (currentIndex + 1) % modes.length;
                   setDeviceMode(modes[nextIndex]);
@@ -539,7 +540,7 @@ export default function CampaignEditorPage() {
                 title={`${deviceMode.charAt(0).toUpperCase() + deviceMode.slice(1)} view - Click to cycle`}
               >
                 {deviceMode === 'mobile' && <Smartphone className="w-5 h-5 text-gray-600" />}
-                {deviceMode === 'tablet' && <Tablet className="w-5 h-5 text-gray-600" />}
+              
                 {deviceMode === 'desktop' && <Monitor className="w-5 h-5 text-gray-600" />}
               </button>
 
@@ -602,6 +603,7 @@ export default function CampaignEditorPage() {
           leftPanel={
             editorMode === 'chat' ? (
               <ChatInterface
+                ref={chatInterfaceRef}
                 campaignId={campaignData.id}
                 onRefine={handleRefine}
                 isRefining={isRefining}
@@ -619,13 +621,21 @@ export default function CampaignEditorPage() {
           }
           rightPanel={
             <EmailPreview
-              html={currentEmail.html}
+              blocks={currentEmail.blocks || campaignData.blocks || []}
+              designConfig={currentEmail.globalSettings || campaignData.design_config || {}}
               plainText={currentEmail.plainText}
               subject={currentEmail.subject}
               deviceMode={deviceMode}
               viewMode={viewMode}
               onDeviceModeChange={setDeviceMode}
               onViewModeChange={setViewMode}
+              chatMode={editorMode === 'chat'}
+              onBlockClick={(blockId, blockType, blockName) => {
+                if (chatInterfaceRef.current) {
+                  const reference = `the ${blockName.toLowerCase()} block`;
+                  chatInterfaceRef.current.insertText(reference);
+                }
+              }}
             />
           }
         />

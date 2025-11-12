@@ -308,6 +308,8 @@ ${requestType === 'major' ? `2. **MAJOR REDESIGN EXECUTION** (for major requests
    - **stats**: Must have "layout" ("2-col", "3-col", "4-col") and "labelFontWeight" (number)
    - **testimonial**: Must have in content: "quote" (string) and "author" (string, person's name); optional: "role", "company", "avatarUrl". Must have in settings: "quoteFontSize" (string like "20px"), "quoteColor" (hex), "quoteFontStyle" ("normal" or "italic"), "authorFontSize" (string like "15px"), "authorColor" (hex), and "authorFontWeight" (number)
    - **feature-grid**: Must have in settings: "layout" ("2-col", "3-col", "single-col"), "align" ("left", "center", "right"), "iconSize" (string like "48px"), "titleFontSize" (string like "19px"), "titleFontWeight" (number like 700), "titleColor" (hex), "descriptionFontSize" (string like "15px"), "descriptionColor" (hex), "padding" (object), "spacing" (number). Must have in content: "features" (array of objects with icon (single emoji character, optional), title, description)
+     Example: "content": {"features": [{"icon": "⚡", "title": "Fast", "description": "Lightning fast performance"}, {"icon": "🔒", "title": "Secure", "description": "Bank-level security"}]}
+     ❌ WRONG: Do NOT create "icon-url-1", "icon-url-2", "icon-url-3" at block level - icons belong in the features array
    - **image/logo/hero**: Must have "imageUrl" and "altText" in content
    - **button**: Must have "containerPadding" in settings
    - **footer**: Always keep at end with position = last

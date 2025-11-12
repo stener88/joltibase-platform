@@ -15,6 +15,7 @@ interface PromptInputProps {
   disableAnimation?: boolean;
   chatOnly?: boolean;
   onChatOnlyToggle?: () => void;
+  inputRef?: React.RefObject<HTMLTextAreaElement | null>;
 }
 
 const TYPING_EXAMPLES = [
@@ -36,8 +37,10 @@ export function PromptInput({
   disableAnimation = false,
   chatOnly = false,
   onChatOnlyToggle,
+  inputRef,
 }: PromptInputProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const internalTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = inputRef || internalTextareaRef;
   const [isFocused, setIsFocused] = useState(false);
   
   // Animated typing effect - only active when input is empty and animation is enabled

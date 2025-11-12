@@ -52,6 +52,46 @@ function processImageUrl(url: string, type: 'logo' | 'image' | 'hero' = 'image')
   return url;
 }
 
+/**
+ * Get placeholder avatar image (circular SVG)
+ */
+function getPlaceholderAvatar(): string {
+  return `data:image/svg+xml,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
+      <circle cx="32" cy="32" r="32" fill="#e5e7eb"/>
+      <circle cx="32" cy="28" r="10" fill="#9ca3af"/>
+      <path d="M16 50 Q32 40 48 50" stroke="#9ca3af" stroke-width="2" fill="none"/>
+    </svg>
+  `)}`;
+}
+
+/**
+ * Validate and process avatar URL - returns placeholder if invalid
+ */
+function processAvatarUrl(url: string | null | undefined): string {
+  if (!url) {
+    return getPlaceholderAvatar();
+  }
+  
+  // Check if URL is a merge tag placeholder
+  if (/^\{\{.+\}\}$/.test(url)) {
+    return getPlaceholderAvatar();
+  }
+  
+  // Check if URL looks invalid (contains "fake", not a valid URL format)
+  const lowerUrl = url.toLowerCase();
+  if (lowerUrl.includes('fake') || lowerUrl.includes('placeholder') || lowerUrl === 'url' || lowerUrl === 'avatar') {
+    return getPlaceholderAvatar();
+  }
+  
+  // Basic URL validation - must start with http:// or https:// or data:
+  if (!/^(https?:\/\/|data:)/i.test(url)) {
+    return getPlaceholderAvatar();
+  }
+  
+  return url;
+}
+
 // ============================================================================
 // Main Renderer
 // ============================================================================
@@ -454,7 +494,7 @@ function renderTestimonialBlock(block: TestimonialBlock): string {
         <td style="${containerStyle}">
           ${content.avatarUrl ? `
           <div style="margin-bottom: 16px; text-align: center;">
-            <img src="${escapeHtml(content.avatarUrl)}" alt="${escapeHtml(content.author)}" style="width: 64px; height: 64px; border-radius: 50%; display: inline-block;" />
+            <img src="${escapeHtml(processAvatarUrl(content.avatarUrl))}" alt="${escapeHtml(content.author)}" style="width: 64px; height: 64px; border-radius: 50%; display: inline-block; object-fit: cover;" onerror="this.onerror=null; this.src='${escapeHtml(getPlaceholderAvatar())}'" />
           </div>` : ''}
           <p style="margin: 0 0 16px; font-size: ${quoteFontSize}; color: ${quoteColor}; font-style: ${quoteFontStyle}; line-height: 1.6;">
             "${escapeHtml(content.quote)}"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { Sparkles, Send, Loader2 } from 'lucide-react';
 import { PromptInput } from './PromptInput';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -11,23 +11,48 @@ export interface ChatMessage {
   timestamp: Date;
 }
 
+export interface ChatInterfaceRef {
+  insertText: (text: string) => void;
+}
+
 interface ChatInterfaceProps {
   campaignId: string;
   onRefine: (message: string) => Promise<void>;
   isRefining: boolean;
   chatHistory: ChatMessage[];
+  chatInterfaceRef?: React.RefObject<ChatInterfaceRef>;
 }
 
-export function ChatInterface({
+export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
   campaignId,
   onRefine,
   isRefining,
   chatHistory,
-}: ChatInterfaceProps) {
+}, ref) => {
   const [message, setMessage] = useState('');
   const [chatOnly, setChatOnly] = useState(false);
   const [showChips, setShowChips] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  
+  // Expose method to insert block reference
+  useImperativeHandle(ref, () => ({
+    insertText: (text: string) => {
+      setMessage((prev) => {
+        const separator = prev.trim() && !prev.trim().endsWith(',') ? ', ' : '';
+        return prev + separator + text;
+      });
+      // Focus input after a short delay to ensure state update
+      setTimeout(() => {
+        inputRef.current?.focus();
+        // Move cursor to end
+        if (inputRef.current) {
+          const length = inputRef.current.value.length;
+          inputRef.current.setSelectionRange(length, length);
+        }
+      }, 0);
+    },
+  }));
 
   const suggestionChips = [
     { 
@@ -187,9 +212,12 @@ export function ChatInterface({
           disableAnimation
           chatOnly={chatOnly}
           onChatOnlyToggle={() => setChatOnly(!chatOnly)}
+          inputRef={inputRef}
         />
       </div>
     </div>
   );
-}
+});
+
+ChatInterface.displayName = 'ChatInterface';
 
