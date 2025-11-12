@@ -45,8 +45,11 @@ export function EmailFrame({
 
   return (
     <div className={`h-full flex flex-col ${className}`}>
-      {/* Canvas with gray background (matches visual editor) */}
-      <div className="flex-1 overflow-y-auto bg-gray-100 p-8">
+      {/* Canvas with background color from design config */}
+      <div 
+        className="flex-1 overflow-y-auto p-8"
+        style={{ backgroundColor: config.backgroundColor }}
+      >
         <div
           className="mx-auto transition-all duration-300"
           style={{

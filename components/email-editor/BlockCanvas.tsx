@@ -54,9 +54,20 @@ export function BlockCanvas({
       `}</style>
       
       {/* Canvas - Using same styling as EmailFrame */}
-      <div className="flex-1 overflow-y-auto bg-gray-100 p-8">
+      <div 
+        className="flex-1 overflow-y-auto p-8"
+        style={{ backgroundColor: designConfig.backgroundColor }}
+        onClick={(e) => {
+          // Click on gray background (not on email container or blocks) deselects
+          const emailContainer = (e.target as HTMLElement).closest('[data-email-container]');
+          if (!emailContainer) {
+            onBlockSelect(null);
+          }
+        }}
+      >
         <div
           className="mx-auto transition-all duration-300"
+          data-email-container
           style={{
             width: canvasWidth,
             maxWidth: '100%',
@@ -69,12 +80,6 @@ export function BlockCanvas({
             style={{
               backgroundColor: designConfig.contentBackgroundColor,
               fontFamily: designConfig.fontFamily,
-            }}
-            onClick={(e) => {
-              // Click on canvas background (not a block) deselects
-              if (e.target === e.currentTarget) {
-                onBlockSelect(null);
-              }
             }}
           >
             {sortedBlocks.length === 0 ? (

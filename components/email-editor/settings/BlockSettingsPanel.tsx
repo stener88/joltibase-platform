@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { EmailBlock, GlobalEmailSettings } from '@/lib/email/blocks/types';
 import { SettingsTabs } from '../shared/SettingsTabs';
 import { GlobalSettingsPanel } from './GlobalSettingsPanel';
@@ -9,6 +9,8 @@ import { TextBlockSettings } from './blocks/TextBlockSettings';
 import { ButtonBlockSettings } from './blocks/ButtonBlockSettings';
 import { ImageBlockSettings } from './blocks/ImageBlockSettings';
 import { LogoBlockSettings } from './blocks/LogoBlockSettings';
+import { LogoContentSettings } from './blocks/LogoContentSettings';
+import { ImageContentSettings } from './blocks/ImageContentSettings';
 import { SpacerBlockSettings } from './blocks/SpacerBlockSettings';
 import { DividerBlockSettings } from './blocks/DividerBlockSettings';
 import { HeroBlockSettings } from './blocks/HeroBlockSettings';
@@ -24,6 +26,7 @@ interface BlockSettingsPanelProps {
   designConfig: GlobalEmailSettings;
   onUpdateBlock: (blockId: string, updates: Partial<EmailBlock>) => void;
   onUpdateDesignConfig: (updates: Partial<GlobalEmailSettings>) => void;
+  campaignId?: string;
 }
 
 export function BlockSettingsPanel({
@@ -31,8 +34,24 @@ export function BlockSettingsPanel({
   designConfig,
   onUpdateBlock,
   onUpdateDesignConfig,
+  campaignId,
 }: BlockSettingsPanelProps) {
-  const [activeTab, setActiveTab] = useState('block');
+  // Set default tab based on block type
+  const getDefaultTab = () => {
+    if (!selectedBlock) return 'block';
+    if (selectedBlock.type === 'logo') return 'logo';
+    if (selectedBlock.type === 'image') return 'image';
+    return 'block';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getDefaultTab());
+  
+  // Reset tab when selected block changes
+  useEffect(() => {
+    if (selectedBlock) {
+      setActiveTab(getDefaultTab());
+    }
+  }, [selectedBlock?.id, selectedBlock?.type]);
 
   // No block selected - show global settings
   if (!selectedBlock) {
@@ -80,36 +99,79 @@ export function BlockSettingsPanel({
     }
   };
 
-  const tabs = [
-    {
-      id: 'block',
-      label: 'Block',
-      content: renderBlockSettings(),
-    },
-    {
-      id: 'layout',
-      label: 'Layout',
-      content: (
-        <div className="p-6 space-y-4">
-          <p className="text-sm text-gray-500">Layout settings coming soon</p>
-        </div>
-      ),
-    },
-    {
-      id: 'link',
-      label: 'Link',
-      content: (
-        <div className="p-6 space-y-4">
-          <p className="text-sm text-gray-500">Link settings coming soon</p>
-        </div>
-      ),
-    },
-  ];
+  // Determine tabs based on block type
+  let tabs;
+  
+  if (selectedBlock.type === 'spacer') {
+    // Spacer blocks only have Block tab
+    tabs = [
+      {
+        id: 'block',
+        label: 'Block',
+        content: renderBlockSettings(),
+      },
+    ];
+  } else if (selectedBlock.type === 'logo') {
+    // Logo blocks have Logo and Block tabs
+    tabs = [
+      {
+        id: 'logo',
+        label: 'Logo',
+        content: <LogoContentSettings block={selectedBlock as any} onUpdate={onUpdateBlock} campaignId={campaignId} />,
+      },
+      {
+        id: 'block',
+        label: 'Block',
+        content: renderBlockSettings(),
+      },
+    ];
+  } else if (selectedBlock.type === 'image') {
+    // Image blocks have Image and Block tabs
+    tabs = [
+      {
+        id: 'image',
+        label: 'Image',
+        content: <ImageContentSettings block={selectedBlock as any} onUpdate={onUpdateBlock} campaignId={campaignId} />,
+      },
+      {
+        id: 'block',
+        label: 'Block',
+        content: renderBlockSettings(),
+      },
+    ];
+  } else {
+    // Other blocks have Block, Layout, and Link tabs
+    tabs = [
+      {
+        id: 'block',
+        label: 'Block',
+        content: renderBlockSettings(),
+      },
+      {
+        id: 'layout',
+        label: 'Layout',
+        content: (
+          <div className="p-6 space-y-4">
+            <p className="text-sm text-gray-500">Layout settings coming soon</p>
+          </div>
+        ),
+      },
+      {
+        id: 'link',
+        label: 'Link',
+        content: (
+          <div className="p-6 space-y-4">
+            <p className="text-sm text-gray-500">Link settings coming soon</p>
+          </div>
+        ),
+      },
+    ];
+  }
 
   return (
     <div className="flex flex-col h-full">
       <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-sm font-semibold text-gray-900 capitalize">
+        <h3 className="text-sm font-semibold text-gray-900 capitalize text-center">
           {selectedBlock.type} Block
         </h3>
       </div>

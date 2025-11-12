@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useCampaignQuery, useCampaignMutation, useCampaignRefineMutation } from '@/hooks/use-campaign-query';
 import { useEditorHistory } from '@/hooks/use-editor-history';
@@ -35,9 +35,6 @@ export default function DashboardCampaignEditorPage() {
   const [selectedEmailIndex, setSelectedEmailIndex] = useState(0);
   const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
   const [viewMode, setViewMode] = useState<ViewMode>('html');
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [editedCampaignName, setEditedCampaignName] = useState('');
-  const nameInputRef = useRef<HTMLInputElement>(null);
   
   // Undo/redo history (for visual & text modes)
   const editorHistory = useEditorHistory((state) => {
@@ -283,64 +280,45 @@ export default function DashboardCampaignEditorPage() {
   
   // Build campaign editor controls for global header
   const campaignEditorControls: CampaignEditorControls = {
-    campaignName: campaign?.campaign?.campaignName || 'Untitled Campaign',
-    isEditingName,
-    editedCampaignName,
-    onStartEditName: () => {
-      setEditedCampaignName(campaign?.campaign?.campaignName || 'Untitled');
-      setIsEditingName(true);
-    },
-    onCancelEditName: () => setIsEditingName(false),
-    onSaveEditName: () => {
-      setIsEditingName(false);
-      // TODO: Save campaign name to database
-    },
-    onNameChange: (value) => setEditedCampaignName(value),
-    onNameKeyDown: (e) => {
-      if (e.key === 'Enter') {
-        setIsEditingName(false);
-      }
-    },
-    nameInputRef,
+    modeSelector: (
+      <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+        <button
+          onClick={() => setEditorMode('chat')}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
+            editorMode === 'chat'
+              ? 'bg-blue-600 text-white font-semibold ring-2 ring-blue-300 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <MessageSquare className={`w-4 h-4 ${editorMode === 'chat' ? 'text-white' : ''}`} />
+          Chat
+        </button>
+        <button
+          onClick={() => setEditorMode('visual')}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
+            editorMode === 'visual'
+              ? 'bg-blue-600 text-white font-semibold ring-2 ring-blue-300 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <Layers className={`w-4 h-4 ${editorMode === 'visual' ? 'text-white' : ''}`} />
+          Visual Editor
+        </button>
+        <button
+          onClick={() => setEditorMode('edit')}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
+            editorMode === 'edit'
+              ? 'bg-blue-600 text-white font-semibold ring-2 ring-blue-300 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <Edit3 className={`w-4 h-4 ${editorMode === 'edit' ? 'text-white' : ''}`} />
+          Code Editor
+        </button>
+      </div>
+    ),
     editorActions: (
       <>
-        {/* Editor Mode Toggle */}
-        <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
-          <button
-            onClick={() => setEditorMode('chat')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
-              editorMode === 'chat'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <MessageSquare className="w-4 h-4" />
-            Chat
-          </button>
-          <button
-            onClick={() => setEditorMode('visual')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
-              editorMode === 'visual'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Layers className="w-4 h-4" />
-            Visual
-          </button>
-          <button
-            onClick={() => setEditorMode('edit')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
-              editorMode === 'edit'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Edit3 className="w-4 h-4" />
-            Text
-          </button>
-        </div>
-
         {/* Device Mode Toggle */}
         <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
           <button

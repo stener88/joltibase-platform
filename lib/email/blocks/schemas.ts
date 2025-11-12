@@ -27,6 +27,10 @@ const PixelValueSchema = z.string().regex(/^\d+px$/);
 // URL that accepts valid URLs or merge tag placeholders
 const UrlOrMergeTagSchema = z.string().refine(
   (val) => {
+    // Allow empty string (for deleted/not set images)
+    if (val === '') {
+      return true;
+    }
     // Allow merge tag pattern: {{anything}}
     if (/^\{\{.+\}\}$/.test(val)) {
       return true;

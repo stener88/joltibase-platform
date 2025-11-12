@@ -93,8 +93,11 @@ export function sanitizeBlock(block: any): any {
       break;
       
     case 'logo':
+      sanitized.settings = sanitizeLogoBlock(sanitized.settings);
+      break;
+      
     case 'image':
-      sanitized.settings = sanitizeImageLikeBlock(sanitized.settings);
+      sanitized.settings = sanitizeImageBlock(sanitized.settings);
       break;
       
     case 'spacer':
@@ -320,11 +323,25 @@ function sanitizeDividerBlock(settings: any): any {
 }
 
 /**
- * Sanitize image/logo block settings
+ * Sanitize logo block settings
  */
-function sanitizeImageLikeBlock(settings: any): any {
+function sanitizeLogoBlock(settings: any): any {
   return {
     ...settings,
+    align: settings.align ?? 'center',
+    width: settings.width ?? '150px',
+    padding: settings.padding ?? DEFAULTS.padding,
+  };
+}
+
+/**
+ * Sanitize image block settings
+ */
+function sanitizeImageBlock(settings: any): any {
+  return {
+    ...settings,
+    align: settings.align ?? 'center',
+    width: settings.width ?? '100%',
     padding: settings.padding ?? DEFAULTS.padding,
   };
 }

@@ -222,6 +222,7 @@ export function VisualBlockEditor({
           designConfig={designConfig}
           onUpdateBlock={updateBlock}
           onUpdateDesignConfig={updateDesignConfig}
+          campaignId={campaignId}
         />
         
         {/* Save Status */}

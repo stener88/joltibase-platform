@@ -1,9 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CampaignStatusBadge } from './CampaignStatusBadge';
-import { Mail, Users, TrendingUp, Calendar, MoreVertical, Edit, Trash2 } from 'lucide-react';
+import { Mail, Users, TrendingUp, Calendar, MoreVertical, Edit, Trash2, Pencil, X } from 'lucide-react';
 import type { Campaign } from '@/lib/types/campaign';
 import {
   DropdownMenu,
@@ -13,14 +14,25 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface CampaignCardProps {
   campaign: Campaign;
   onDelete?: (campaign: Campaign) => void;
+  onRename?: (campaignId: string, newName: string) => Promise<void>;
 }
 
-export function CampaignCard({ campaign, onDelete }: CampaignCardProps) {
+export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps) {
   const router = useRouter();
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
+  const [newName, setNewName] = useState(campaign.name);
+  const [isRenaming, setIsRenaming] = useState(false);
+
+  // Update newName when campaign.name changes
+  useEffect(() => {
+    setNewName(campaign.name);
+  }, [campaign.name]);
+  
   const stats = campaign.stats || { sent: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0 };
   
   const openRate = stats.delivered > 0 ? ((stats.opened / stats.delivered) * 100).toFixed(1) : '0';
@@ -30,6 +42,56 @@ export function CampaignCard({ campaign, onDelete }: CampaignCardProps) {
     e.preventDefault();
     e.stopPropagation();
     router.push(`/dashboard/campaigns/${campaign.id}/edit`);
+  };
+
+  const handleRename = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setNewName(campaign.name);
+    setIsRenameDialogOpen(true);
+  };
+
+  const handleRenameSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!newName.trim()) {
+      toast.error('Campaign name cannot be empty');
+      return;
+    }
+
+    if (newName.trim() === campaign.name) {
+      setIsRenameDialogOpen(false);
+      return;
+    }
+
+    setIsRenaming(true);
+    try {
+      if (onRename) {
+        await onRename(campaign.id, newName.trim());
+      } else {
+        // Fallback: call API directly
+        const response = await fetch(`/api/campaigns/${campaign.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newName.trim() }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update campaign name');
+        }
+
+        toast.success('Campaign renamed successfully');
+        // Reload the page to reflect the change
+        window.location.reload();
+      }
+      setIsRenameDialogOpen(false);
+    } catch (error: any) {
+      console.error('Error renaming campaign:', error);
+      toast.error(error.message || 'Failed to rename campaign');
+    } finally {
+      setIsRenaming(false);
+    }
   };
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -43,8 +105,9 @@ export function CampaignCard({ campaign, onDelete }: CampaignCardProps) {
   const canDelete = campaign.status !== 'sending';
 
   return (
-    <Link href={`/dashboard/campaigns/${campaign.id}/analytics`}>
-      <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-all cursor-pointer">
+    <>
+      <Link href={`/dashboard/campaigns/${campaign.id}/analytics`}>
+        <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-all cursor-pointer">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1 min-w-0">
@@ -78,6 +141,10 @@ export function CampaignCard({ campaign, onDelete }: CampaignCardProps) {
                 <DropdownMenuItem onClick={handleEdit}>
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleRename}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Rename
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -155,7 +222,89 @@ export function CampaignCard({ campaign, onDelete }: CampaignCardProps) {
           </div>
         </div>
       </div>
-    </Link>
+      </Link>
+
+      {/* Rename Dialog */}
+      {isRenameDialogOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsRenameDialogOpen(false);
+          }}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Rename Campaign</h3>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsRenameDialogOpen(false);
+                }}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <form onSubmit={handleRenameSubmit}>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label htmlFor="campaign-name" className="block text-sm font-medium text-gray-700 mb-2">
+                    Campaign Name
+                  </label>
+                  <input
+                    id="campaign-name"
+                    type="text"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        setIsRenameDialogOpen(false);
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter campaign name"
+                    autoFocus
+                    disabled={isRenaming}
+                  />
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsRenameDialogOpen(false);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  disabled={isRenaming}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isRenaming || !newName.trim()}
+                >
+                  {isRenaming ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

@@ -11,46 +11,12 @@ interface LogoBlockSettingsProps {
 }
 
 export function LogoBlockSettings({ block, onUpdate }: LogoBlockSettingsProps) {
-  const updateContent = (updates: Partial<typeof block.content>) => {
-    onUpdate(block.id, { content: { ...block.content, ...updates } });
-  };
-
   const updateSettings = (updates: Partial<typeof block.settings>) => {
     onUpdate(block.id, { settings: { ...block.settings, ...updates } });
   };
 
   return (
     <div className="p-6 space-y-6">
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">Logo Image URL</label>
-        <input
-          type="text"
-          value={block.content.imageUrl}
-          onChange={(e) => updateContent({ imageUrl: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">Alt Text</label>
-        <input
-          type="text"
-          value={block.content.altText}
-          onChange={(e) => updateContent({ altText: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">Link URL (Optional)</label>
-        <input
-          type="text"
-          value={block.content.linkUrl || ''}
-          onChange={(e) => updateContent({ linkUrl: e.target.value || undefined })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
-        />
-      </div>
-
       <AlignmentPicker
         label="Alignment"
         value={block.settings.align}

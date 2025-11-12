@@ -18,7 +18,7 @@ export function SettingsTabs({ tabs, activeTab, onTabChange }: SettingsTabsProps
   return (
     <div className="flex flex-col h-full">
       {/* Tab Headers */}
-      <div className="flex border-b border-gray-200 px-6 pt-4">
+      <div className="flex justify-center border-b border-gray-200 px-6 pt-4">
         {tabs.map((tab) => (
           <button
             key={tab.id}

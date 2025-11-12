@@ -89,20 +89,3 @@ export {
   FooterBlockSchema,
 } from './schemas';
 
-// Migration
-export {
-  sectionToBlock,
-  contentToBlocks,
-  blockToSection,
-  blocksToContent,
-  testSectionRoundTrip,
-  testContentRoundTrip,
-} from './migration';
-
-// Testing utilities
-export {
-  testUtils,
-  runAllBlockTests,
-  generateSampleBlockEmail,
-} from './test-blocks';
-
