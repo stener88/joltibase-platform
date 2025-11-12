@@ -3,7 +3,31 @@
  * 
  * Block-based architecture for visual email editing with AI generation.
  * Uses hardcoded pixel values for granular AI control and data-driven optimization.
+ * 
+ * NOTE: Types are derived from Zod schemas to ensure consistency.
+ * Optional fields use `| null` to match `.nullish()` schemas for OpenAI compatibility.
  */
+
+import type {
+  LogoBlockSchema,
+  SpacerBlockSchema,
+  HeadingBlockSchema,
+  TextBlockSchema,
+  ImageBlockSchema,
+  ButtonBlockSchema,
+  DividerBlockSchema,
+  HeroBlockSchema,
+  StatsBlockSchema,
+  TestimonialBlockSchema,
+  FeatureGridBlockSchema,
+  ComparisonBlockSchema,
+  SocialLinksBlockSchema,
+  FooterBlockSchema,
+  EmailBlockSchema,
+  BlockEmailSchema,
+  GlobalEmailSettingsSchema,
+} from './schemas';
+import type { z } from 'zod';
 
 // ============================================================================
 // Core Block Types
@@ -100,15 +124,15 @@ export interface LogoBlock extends EmailBlock {
 export interface LogoBlockSettings {
   align: Alignment;
   width: string; // '120px', '150px', '200px'
-  height?: string; // 'auto' or specific height
-  backgroundColor?: string;
+  height?: string | null; // 'auto' or specific height (nullish for OpenAI compatibility)
+  backgroundColor?: string | null; // nullish for OpenAI compatibility
   padding: Padding;
 }
 
 export interface LogoBlockContent {
   imageUrl: string;
   altText: string;
-  linkUrl?: string;
+  linkUrl?: string | null; // nullish for OpenAI compatibility
 }
 
 // ============================================================================
@@ -123,7 +147,7 @@ export interface SpacerBlock extends EmailBlock {
 
 export interface SpacerBlockSettings {
   height: number; // 20, 40, 60, 80
-  backgroundColor?: string;
+  backgroundColor?: string | null; // nullish for OpenAI compatibility
 }
 
 export interface SpacerBlockContent {
@@ -145,10 +169,10 @@ export interface HeadingBlockSettings {
   fontWeight: number; // 700, 800, 900
   color: string; // '#111827', '#2563eb'
   align: Alignment;
-  backgroundColor?: string;
+  backgroundColor?: string | null; // nullish for OpenAI compatibility
   padding: Padding;
   lineHeight: string; // '1.1', '1.2', '1.3'
-  letterSpacing?: string; // '-0.02em', '-0.03em'
+  letterSpacing?: string | null; // '-0.02em', '-0.03em' (nullish for OpenAI compatibility)
 }
 
 export interface HeadingBlockContent {
@@ -170,7 +194,7 @@ export interface TextBlockSettings {
   fontWeight: number; // 400, 500, 600
   color: string;
   align: Alignment;
-  backgroundColor?: string;
+  backgroundColor?: string | null; // nullish for OpenAI compatibility
   padding: Padding;
   lineHeight: string; // '1.5', '1.6', '1.8'
 }
@@ -192,16 +216,16 @@ export interface ImageBlock extends EmailBlock {
 export interface ImageBlockSettings {
   align: Alignment;
   width: string; // '100%', '300px', '400px'
-  height?: string; // 'auto' or specific
-  borderRadius?: string; // '0px', '4px', '8px'
+  height?: string | null; // 'auto' or specific (nullish for OpenAI compatibility)
+  borderRadius?: string | null; // '0px', '4px', '8px' (nullish for OpenAI compatibility)
   padding: Padding;
 }
 
 export interface ImageBlockContent {
   imageUrl: string;
   altText: string;
-  linkUrl?: string;
-  caption?: string;
+  linkUrl?: string | null; // nullish for OpenAI compatibility
+  caption?: string | null; // nullish for OpenAI compatibility
 }
 
 // ============================================================================
@@ -244,15 +268,15 @@ export interface DividerBlock extends EmailBlock {
 
 export interface DividerBlockSettings {
   style: 'solid' | 'dashed' | 'dotted' | 'decorative';
-  color?: string; // For line styles
-  thickness?: number; // 1, 2, 3 (pixels)
-  width?: string; // '100%', '60px' for decorative
+  color?: string | null; // For line styles (nullish for OpenAI compatibility)
+  thickness?: number | null; // 1, 2, 3 (pixels) (nullish for OpenAI compatibility)
+  width?: string | null; // '100%', '60px' for decorative (nullish for OpenAI compatibility)
   padding: Padding;
-  align?: Alignment; // For decorative dividers
+  align?: Alignment | null; // For decorative dividers (nullish for OpenAI compatibility)
 }
 
 export interface DividerBlockContent {
-  decorativeElement?: string; // Emoji or symbol for decorative style
+  decorativeElement?: string | null; // Emoji or symbol for decorative style (nullish for OpenAI compatibility)
 }
 
 // ============================================================================
@@ -266,12 +290,12 @@ export interface HeroBlock extends EmailBlock {
 }
 
 export interface HeroBlockSettings {
-  backgroundColor?: string;
+  backgroundColor?: string | null; // nullish for OpenAI compatibility
   backgroundGradient?: {
     from: string;
     to: string;
     direction: 'to-right' | 'to-bottom' | 'to-br' | 'to-tr';
-  };
+  } | null; // nullish for OpenAI compatibility
   padding: Padding;
   align: Alignment;
   headlineFontSize: string; // '56px', '70px', '100px'
@@ -283,8 +307,8 @@ export interface HeroBlockSettings {
 
 export interface HeroBlockContent {
   headline: string;
-  subheadline?: string;
-  imageUrl?: string;
+  subheadline?: string | null; // nullish for OpenAI compatibility
+  imageUrl?: string | null; // nullish for OpenAI compatibility
 }
 
 // ============================================================================
@@ -328,10 +352,10 @@ export interface TestimonialBlock extends EmailBlock {
 }
 
 export interface TestimonialBlockSettings {
-  backgroundColor?: string;
-  borderColor?: string;
-  borderWidth?: number; // 0, 2, 4
-  borderRadius?: string; // '4px', '8px'
+  backgroundColor?: string | null; // nullish for OpenAI compatibility
+  borderColor?: string | null; // nullish for OpenAI compatibility
+  borderWidth?: number | null; // 0, 2, 4 (nullish for OpenAI compatibility)
+  borderRadius?: string | null; // '4px', '8px' (nullish for OpenAI compatibility)
   padding: Padding;
   quoteFontSize: string; // '16px', '18px', '20px'
   quoteColor: string;
@@ -344,9 +368,9 @@ export interface TestimonialBlockSettings {
 export interface TestimonialBlockContent {
   quote: string;
   author: string;
-  role?: string;
-  company?: string;
-  avatarUrl?: string;
+  role?: string | null; // nullish for OpenAI compatibility
+  company?: string | null; // nullish for OpenAI compatibility
+  avatarUrl?: string | null; // nullish for OpenAI compatibility
 }
 
 // ============================================================================
@@ -374,7 +398,7 @@ export interface FeatureGridBlockSettings {
 
 export interface FeatureGridBlockContent {
   features: Array<{
-    icon?: string; // Emoji or icon character
+    icon?: string | null; // Emoji or icon character (nullish for OpenAI compatibility)
     title: string;
     description: string;
   }>;
@@ -399,18 +423,18 @@ export interface ComparisonBlockSettings {
   labelFontWeight: number; // 600, 700
   contentFontSize: string; // '14px', '16px'
   contentColor: string;
-  borderRadius?: string; // '4px', '8px'
+  borderRadius?: string | null; // '4px', '8px' (nullish for OpenAI compatibility)
   padding: Padding;
   cellPadding: number; // Inner cell padding (16, 20, 24)
 }
 
 export interface ComparisonBlockContent {
   before: {
-    label?: string; // Default: 'Before'
+    label?: string | null; // Default: 'Before' (nullish for OpenAI compatibility)
     text: string;
   };
   after: {
-    label?: string; // Default: 'After'
+    label?: string | null; // Default: 'After' (nullish for OpenAI compatibility)
     text: string;
   };
 }
@@ -430,7 +454,7 @@ export interface SocialLinksBlockSettings {
   iconSize: string; // '24px', '32px', '40px'
   spacing: number; // Gap between icons (12, 16, 24)
   iconStyle: 'color' | 'monochrome' | 'outline';
-  iconColor?: string; // For monochrome style
+  iconColor?: string | null; // For monochrome style (nullish for OpenAI compatibility)
   padding: Padding;
 }
 
@@ -452,21 +476,21 @@ export interface FooterBlock extends EmailBlock {
 }
 
 export interface FooterBlockSettings {
-  backgroundColor?: string;
+  backgroundColor?: string | null; // nullish for OpenAI compatibility
   textColor: string;
   fontSize: string; // '12px', '14px'
   align: Alignment;
   padding: Padding;
   lineHeight: string; // '1.5', '1.6'
-  linkColor?: string;
+  linkColor?: string | null; // nullish for OpenAI compatibility
 }
 
 export interface FooterBlockContent {
   companyName: string;
-  companyAddress?: string;
-  customText?: string;
+  companyAddress?: string | null; // nullish for OpenAI compatibility
+  customText?: string | null; // nullish for OpenAI compatibility
   unsubscribeUrl: string; // '{{unsubscribe_url}}'
-  preferencesUrl?: string; // '{{preferences_url}}'
+  preferencesUrl?: string | null; // '{{preferences_url}}' (nullish for OpenAI compatibility)
 }
 
 // ============================================================================

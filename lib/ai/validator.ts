@@ -6,9 +6,8 @@
  * Phase 4B: Now supports block-based email generation
  */
 
-import { z } from 'zod';
+import { z, toJSONSchema } from 'zod';
 import { EmailBlockSchema, GlobalEmailSettingsSchema } from '../email/blocks/schemas';
-import { sanitizeBlocks } from './blocks/sanitizer';
 
 // ============================================================================
 // Input Validation Schemas
@@ -91,8 +90,8 @@ const GeneratedBlockEmailSchema = z.object({
   subject: z.string().min(1).max(100),
   previewText: z.string().min(1).max(150),
   blocks: z.array(EmailBlockSchema).min(1),
-  globalSettings: GlobalEmailSettingsSchema.optional(),
-  notes: z.string().optional(),
+  globalSettings: GlobalEmailSettingsSchema.nullish(), // nullish for OpenAI compatibility
+  notes: z.string().nullish(), // nullish for OpenAI compatibility
 });
 
 /**
@@ -129,20 +128,20 @@ const DesignConfigSchema = z.object({
   headerGradient: z.object({
     from: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color'),
     to: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color'),
-    direction: z.enum(['to-right', 'to-bottom', 'to-br', 'to-tr']).optional(),
-  }).optional(),
+    direction: z.enum(['to-right', 'to-bottom', 'to-br', 'to-tr']).nullish(), // nullish for OpenAI compatibility
+  }).nullish(), // nullish for OpenAI compatibility
   ctaColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color'),
-  accentColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').optional(),
-  visualStyle: z.string().optional(),
+  accentColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').nullish(), // nullish for OpenAI compatibility
+  visualStyle: z.string().nullish(), // nullish for OpenAI compatibility
   // AI-powered design customization
-  typographyScale: z.enum(['premium', 'standard', 'minimal']).optional(),
+  typographyScale: z.enum(['premium', 'standard', 'minimal']).nullish(), // nullish for OpenAI compatibility
   layoutVariation: z.object({
-    heroPlacement: z.enum(['top-centered', 'full-bleed', 'split-screen', 'minimal']).optional(),
-    sectionLayout: z.enum(['single-column', 'two-column', 'grid', 'alternating']).optional(),
-    ctaStyle: z.enum(['bold-centered', 'inline', 'floating', 'subtle']).optional(),
-    spacing: z.enum(['generous', 'standard', 'compact']).optional(),
-    visualWeight: z.enum(['balanced', 'text-heavy', 'image-heavy']).optional(),
-  }).optional(),
+    heroPlacement: z.enum(['top-centered', 'full-bleed', 'split-screen', 'minimal']).nullish(), // nullish for OpenAI compatibility
+    sectionLayout: z.enum(['single-column', 'two-column', 'grid', 'alternating']).nullish(), // nullish for OpenAI compatibility
+    ctaStyle: z.enum(['bold-centered', 'inline', 'floating', 'subtle']).nullish(), // nullish for OpenAI compatibility
+    spacing: z.enum(['generous', 'standard', 'compact']).nullish(), // nullish for OpenAI compatibility
+    visualWeight: z.enum(['balanced', 'text-heavy', 'image-heavy']).nullish(), // nullish for OpenAI compatibility
+  }).nullish(), // nullish for OpenAI compatibility
 });
 
 /**
@@ -155,7 +154,7 @@ export const GeneratedCampaignSchema = z.object({
   strategy: z.object({
     goal: z.string(),
     keyMessage: z.string(),
-  }).optional(),
+  }).nullish(), // nullish for OpenAI compatibility
   design: DesignConfigSchema,
   emails: z.array(GeneratedBlockEmailSchema).min(1).max(5),
   segmentationSuggestion: z.string(),
@@ -167,6 +166,95 @@ export type GeneratedCampaign = z.infer<typeof GeneratedCampaignSchema>;
 export type GeneratedEmail = z.infer<typeof GeneratedEmailSchema>;
 export type GeneratedBlockEmail = z.infer<typeof GeneratedBlockEmailSchema>;
 export type DesignConfig = z.infer<typeof DesignConfigSchema>;
+
+/**
+ * Post-process JSON Schema to fix OpenAI Structured Outputs strict mode compatibility
+ * 
+ * NOTE: This transforms the SCHEMA for OpenAI API compatibility, NOT the AI output.
+ * Structured Outputs guarantees the AI output matches the schema - we just need to
+ * make our Zod-generated schema compatible with OpenAI's strict mode requirements.
+ * 
+ * Fixes:
+ * 1. Remove unsupported formats (uri, email) - validation still happens in Zod
+ * 2. Convert optional properties to nullable (anyOf with null)
+ * 3. Ensure all properties are in required array (OpenAI strict mode requirement)
+ */
+export function fixSchemaForStrictMode(schema: Record<string, any>): Record<string, any> {
+  if (typeof schema !== 'object' || schema === null) {
+    return schema;
+  }
+
+  // Recursively process the schema
+  const processed = { ...schema };
+
+  // Remove unsupported format constraints (OpenAI doesn't support uri, email, etc.)
+  // Validation still happens in Zod after we get the response
+  if (processed.format && ['uri', 'email', 'url'].includes(processed.format)) {
+    delete processed.format;
+  }
+
+  // If this is an object schema with properties
+  if (processed.type === 'object' && processed.properties) {
+    const allPropertyKeys = Object.keys(processed.properties);
+    const requiredKeys = processed.required || [];
+    
+    // For each property, recursively fix it first
+    const fixedProperties: Record<string, any> = {};
+    
+    for (const [key, value] of Object.entries(processed.properties)) {
+      const propValue = fixSchemaForStrictMode(value as Record<string, any>);
+      const isRequired = requiredKeys.includes(key);
+      
+      // If property is not in required array (optional), make it nullable
+      // OpenAI strict mode requires all properties to be in required array
+      // By making optional properties nullable, they can be included in required
+      if (!isRequired && propValue.type && propValue.type !== 'null' && !propValue.anyOf) {
+        // Convert optional property to nullable using anyOf
+        fixedProperties[key] = {
+          anyOf: [
+            propValue,
+            { type: 'null' }
+          ]
+        };
+      } else {
+        fixedProperties[key] = propValue;
+      }
+    }
+    processed.properties = fixedProperties;
+
+    // OpenAI strict mode: ALL properties must be in required array
+    // Since we made optional properties nullable, we include them all
+    processed.required = allPropertyKeys;
+  }
+
+  // Process arrays
+  if (processed.type === 'array' && processed.items) {
+    processed.items = fixSchemaForStrictMode(processed.items as Record<string, any>);
+  }
+
+  // Process anyOf, oneOf, allOf
+  if (processed.anyOf) {
+    processed.anyOf = processed.anyOf.map((item: any) => fixSchemaForStrictMode(item));
+  }
+  if (processed.oneOf) {
+    processed.oneOf = processed.oneOf.map((item: any) => fixSchemaForStrictMode(item));
+  }
+  if (processed.allOf) {
+    processed.allOf = processed.allOf.map((item: any) => fixSchemaForStrictMode(item));
+  }
+
+  return processed;
+}
+
+/**
+ * Convert GeneratedCampaignSchema to JSON Schema for OpenAI Structured Outputs
+ * This guarantees schema compliance - OpenAI will enforce the structure
+ */
+export function getCampaignJSONSchema(): Record<string, any> {
+  const schema = toJSONSchema(GeneratedCampaignSchema);
+  // Fix schema for OpenAI's strict mode requirements
+  return fixSchemaForStrictMode(schema);
+}
 
 /**
  * Type guard to check if email is block-based (all emails are now block-based)
@@ -239,6 +327,8 @@ export function validateAIResponse(response: unknown): GeneratedCampaign {
 
 /**
  * Safely parse JSON with validation
+ * NOTE: When using Structured Outputs, this is mainly for type checking
+ * as OpenAI guarantees schema compliance
  */
 export function parseAndValidateCampaign(jsonString: string): GeneratedCampaign {
   try {
@@ -247,26 +337,11 @@ export function parseAndValidateCampaign(jsonString: string): GeneratedCampaign 
       campaignName: parsed?.campaignName,
       emailCount: parsed?.emails?.length,
       hasBlocks: parsed?.emails?.[0]?.blocks ? true : false,
-      hasSections: parsed?.emails?.[0]?.sections ? true : false,
       firstBlockType: parsed?.emails?.[0]?.blocks?.[0]?.type
     });
     
-    // Sanitize blocks in all emails before validation
-    if (parsed?.emails && Array.isArray(parsed.emails)) {
-      console.log('🧹 [VALIDATOR] Sanitizing blocks in generated emails...');
-      parsed.emails = parsed.emails.map((email: any, index: number) => {
-        if (email?.blocks && Array.isArray(email.blocks)) {
-          console.log(`  🧹 [VALIDATOR] Sanitizing email ${index + 1} (${email.blocks.length} blocks)`);
-          return {
-            ...email,
-            blocks: sanitizeBlocks(email.blocks)
-          };
-        }
-        return email;
-      });
-      console.log('✅ [VALIDATOR] All blocks sanitized');
-    }
-    
+    // With Structured Outputs, OpenAI guarantees schema compliance
+    // So we can trust the structure and just do type checking
     return validateAIResponse(parsed);
   } catch (error) {
     if (error instanceof SyntaxError) {
@@ -274,5 +349,19 @@ export function parseAndValidateCampaign(jsonString: string): GeneratedCampaign 
     }
     throw error;
   }
+}
+
+/**
+ * Parse structured output directly (no JSON parsing needed)
+ * Used when OpenAI Structured Outputs returns typed object
+ */
+export function parseStructuredCampaign(data: unknown): GeneratedCampaign {
+  // Structured Outputs guarantees schema compliance, so this is mainly type checking
+  console.log('📋 [VALIDATOR] Parsing structured campaign:', {
+    campaignName: (data as any)?.campaignName,
+    emailCount: (data as any)?.emails?.length,
+  });
+  
+  return validateAIResponse(data);
 }
 

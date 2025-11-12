@@ -7,7 +7,7 @@
 
 import { generateCompletion } from './client';
 import { CAMPAIGN_GENERATOR_SYSTEM_PROMPT, buildCampaignPrompt } from './prompts';
-import { validateCampaignInput, parseAndValidateCampaign, type GeneratedCampaign } from './validator';
+import { validateCampaignInput, parseStructuredCampaign, getCampaignJSONSchema, type GeneratedCampaign } from './validator';
 import { enforceRateLimit } from './rate-limit';
 import { saveAIGeneration } from './usage-tracker';
 
@@ -86,8 +86,12 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
       
     });
     
-    // 5. Call OpenAI API
-    console.log('🤖 [GENERATOR] Calling OpenAI API...');
+    // 5. Get JSON Schema for Structured Outputs
+    const jsonSchema = getCampaignJSONSchema();
+    console.log('📐 [GENERATOR] Using Structured Outputs with JSON Schema');
+    
+    // 6. Call OpenAI API with Structured Outputs
+    console.log('🤖 [GENERATOR] Calling OpenAI API with Structured Outputs...');
     const aiResult = await generateCompletion(
       [
         { role: 'system', content: systemPrompt },
@@ -97,7 +101,7 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
         model: 'gpt-4o',
         temperature: 0.7,
         maxTokens: 4000,
-        jsonMode: true,
+        jsonSchema, // Use Structured Outputs - guarantees schema compliance
         retries: 3,
       }
     );
@@ -107,62 +111,66 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
       contentLength: aiResult.content.length 
     });
     
-    // 6. Validate AI response
-    console.log('🔍 [GENERATOR] Validating AI response...');
-    console.log('📄 [GENERATOR] AI response preview:', aiResult.content.substring(0, 500));
-    const generatedCampaign = parseAndValidateCampaign(aiResult.content);
+    // 7. Parse structured response (OpenAI guarantees schema compliance)
+    console.log('🔍 [GENERATOR] Parsing structured response...');
+    const parsedContent = JSON.parse(aiResult.content);
+    const generatedCampaign = parseStructuredCampaign(parsedContent);
     console.log('✅ [GENERATOR] Campaign validated:', { 
       name: generatedCampaign.campaignName,
       emailCount: generatedCampaign.emails.length,
       template: generatedCampaign.design.template
     });
     
-    // 7. Render HTML emails using block renderer
-    console.log('📧 [GENERATOR] Rendering emails with block renderer...');
+    // 8. Render HTML emails using block renderer (parallelized)
+    console.log('📧 [GENERATOR] Rendering emails with block renderer (parallel)...');
     console.log('📦 [GENERATOR] Campaign format: blocks');
-    const renderedEmails = generatedCampaign.emails.map((email, index) => {
-      console.log(`  📝 [GENERATOR] Rendering email ${index + 1}/${generatedCampaign.emails.length}: ${email.subject}`);
-      
-      // Prepare globalSettings with defaults
-      const globalSettings = email.globalSettings || {
-        backgroundColor: '#f3f4f6',
-        contentBackgroundColor: '#ffffff',
-        maxWidth: 600,
-        fontFamily: 'system-ui',
-        mobileBreakpoint: 480,
-      };
-      
-      // Render blocks to email-safe HTML (pass as separate parameters)
-      const html = renderBlocksToEmail(email.blocks, globalSettings);
-      
-      // Generate plain text version (simplified)
-      const plainText = email.blocks
-        .filter(block => block.type === 'text' || block.type === 'heading')
-        .map(block => {
-          if (block.type === 'text' || block.type === 'heading') {
-            return block.content.text;
-          }
-          return '';
-        })
-        .filter(text => text)
-        .join('\n\n');
-      
-      return {
-        subject: email.subject,
-        previewText: email.previewText,
-        html,
-        plainText: plainText || email.subject,
-        ctaText: email.blocks.find(b => b.type === 'button')?.content?.text || 'Get Started',
-        ctaUrl: email.blocks.find(b => b.type === 'button')?.content?.url || '{{cta_url}}',
-      };
-    });
+    
+    // Parallelize email rendering for better performance
+    const renderedEmails = await Promise.all(
+      generatedCampaign.emails.map(async (email, index) => {
+        console.log(`  📝 [GENERATOR] Rendering email ${index + 1}/${generatedCampaign.emails.length}: ${email.subject}`);
+        
+        // Prepare globalSettings with defaults
+        const globalSettings = email.globalSettings || {
+          backgroundColor: '#f3f4f6',
+          contentBackgroundColor: '#ffffff',
+          maxWidth: 600,
+          fontFamily: 'system-ui',
+          mobileBreakpoint: 480,
+        };
+        
+        // Render blocks to email-safe HTML (synchronous but wrapped for future async support)
+        const html = renderBlocksToEmail(email.blocks, globalSettings);
+        
+        // Generate plain text version (simplified)
+        const plainText = email.blocks
+          .filter(block => block.type === 'text' || block.type === 'heading')
+          .map(block => {
+            if (block.type === 'text' || block.type === 'heading') {
+              return block.content.text;
+            }
+            return '';
+          })
+          .filter(text => text)
+          .join('\n\n');
+        
+        return {
+          subject: email.subject,
+          previewText: email.previewText,
+          html,
+          plainText: plainText || email.subject,
+          ctaText: email.blocks.find(b => b.type === 'button')?.content?.text || 'Get Started',
+          ctaUrl: email.blocks.find(b => b.type === 'button')?.content?.url || '{{cta_url}}',
+        };
+      })
+    );
     
     console.log('✅ [GENERATOR] All emails rendered successfully:', { count: renderedEmails.length });
     
-    // 8. Calculate total generation time
+    // 9. Calculate total generation time
     const generationTimeMs = Date.now() - startTime;
     
-    // 9. Save to database
+    // 10. Save to database
     console.log('💾 [GENERATOR] Saving to database...');
     const generationId = await saveAIGeneration({
       userId: validatedInput.userId,
@@ -182,7 +190,7 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
     });
     console.log('✅ [GENERATOR] Saved to database:', { generationId });
     
-    // 10. Create campaign record
+    // 11. Create campaign record
     console.log('📝 [GENERATOR] Creating campaign record...');
     const supabase = await createClient();
     
@@ -218,7 +226,7 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
     
     console.log('✅ [GENERATOR] Campaign record created:', { campaignId: campaign.id });
     
-    // 11. Return complete result
+    // 12. Return complete result
     const result = {
       id: generationId,
       campaign: generatedCampaign,

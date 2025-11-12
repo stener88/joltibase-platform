@@ -112,7 +112,7 @@ export function ChatInterface({
                       : 'bg-gray-50 text-black'
                   }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                  <p className="text-base whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                   <span className="text-xs opacity-70 mt-1 block">
                     {msg.timestamp.toLocaleTimeString([], {
                       hour: '2-digit',

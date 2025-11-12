@@ -48,15 +48,15 @@ const UrlOrMergeTagSchema = z.string().refine(
 export const LogoBlockSettingsSchema = z.object({
   align: AlignmentSchema,
   width: PixelValueSchema,
-  height: z.union([z.literal('auto'), PixelValueSchema]).optional(),
-  backgroundColor: HexColorSchema.optional(),
+  height: z.union([z.literal('auto'), PixelValueSchema]).nullish(), // nullish for OpenAI compatibility
+  backgroundColor: HexColorSchema.nullish(), // nullish for OpenAI compatibility
   padding: PaddingSchema,
 });
 
 export const LogoBlockContentSchema = z.object({
   imageUrl: UrlOrMergeTagSchema,
   altText: z.string().min(1).max(200),
-  linkUrl: UrlOrMergeTagSchema.optional(),
+  linkUrl: UrlOrMergeTagSchema.nullish(), // nullish for OpenAI compatibility
 });
 
 export const LogoBlockSchema = z.object({
@@ -73,7 +73,7 @@ export const LogoBlockSchema = z.object({
 
 export const SpacerBlockSettingsSchema = z.object({
   height: z.number().int().min(0).max(200),
-  backgroundColor: HexColorSchema.optional(),
+  backgroundColor: HexColorSchema.nullish(), // nullish for OpenAI compatibility
 });
 
 export const SpacerBlockContentSchema = z.object({});
@@ -95,10 +95,10 @@ export const HeadingBlockSettingsSchema = z.object({
   fontWeight: z.number().int().min(100).max(900),
   color: HexColorSchema,
   align: AlignmentSchema,
-  backgroundColor: HexColorSchema.optional(),
+  backgroundColor: HexColorSchema.nullish(), // nullish for OpenAI compatibility
   padding: PaddingSchema,
   lineHeight: z.string().regex(/^\d+(\.\d+)?$/),
-  letterSpacing: z.string().regex(/^-?\d+(\.\d+)?em$/).optional(),
+  letterSpacing: z.string().regex(/^-?\d+(\.\d+)?em$/).nullish(), // nullish for OpenAI compatibility
 });
 
 export const HeadingBlockContentSchema = z.object({
@@ -122,7 +122,7 @@ export const TextBlockSettingsSchema = z.object({
   fontWeight: z.number().int().min(100).max(900),
   color: HexColorSchema,
   align: AlignmentSchema,
-  backgroundColor: HexColorSchema.optional(),
+  backgroundColor: HexColorSchema.nullish(), // nullish for OpenAI compatibility
   padding: PaddingSchema,
   lineHeight: z.string().regex(/^\d+(\.\d+)?$/),
 });
@@ -146,16 +146,16 @@ export const TextBlockSchema = z.object({
 export const ImageBlockSettingsSchema = z.object({
   align: AlignmentSchema,
   width: PixelValueSchema.or(z.literal('100%')),
-  height: z.union([z.literal('auto'), PixelValueSchema]).optional(),
-  borderRadius: PixelValueSchema.optional(),
+  height: z.union([z.literal('auto'), PixelValueSchema]).nullish(), // nullish for OpenAI compatibility
+  borderRadius: PixelValueSchema.nullish(), // nullish for OpenAI compatibility
   padding: PaddingSchema,
 });
 
 export const ImageBlockContentSchema = z.object({
   imageUrl: UrlOrMergeTagSchema,
   altText: z.string().min(1).max(200),
-  linkUrl: UrlOrMergeTagSchema.optional(),
-  caption: z.string().max(500).optional(),
+  linkUrl: UrlOrMergeTagSchema.nullish(), // nullish for OpenAI compatibility
+  caption: z.string().max(500).nullish(), // nullish for OpenAI compatibility
 });
 
 export const ImageBlockSchema = z.object({
@@ -202,15 +202,15 @@ export const ButtonBlockSchema = z.object({
 
 export const DividerBlockSettingsSchema = z.object({
   style: z.enum(['solid', 'dashed', 'dotted', 'decorative']),
-  color: HexColorSchema.optional(),
-  thickness: z.number().int().min(1).max(10).optional(),
-  width: PixelValueSchema.or(z.literal('100%')).optional(),
+  color: HexColorSchema.nullish(), // nullish for OpenAI compatibility
+  thickness: z.number().int().min(1).max(10).nullish(), // nullish for OpenAI compatibility
+  width: PixelValueSchema.or(z.literal('100%')).nullish(), // nullish for OpenAI compatibility
   padding: PaddingSchema,
-  align: AlignmentSchema.optional(),
+  align: AlignmentSchema.nullish(), // nullish for OpenAI compatibility
 });
 
 export const DividerBlockContentSchema = z.object({
-  decorativeElement: z.string().max(10).optional(),
+  decorativeElement: z.string().max(10).nullish(), // nullish for OpenAI compatibility
 });
 
 export const DividerBlockSchema = z.object({
@@ -226,12 +226,12 @@ export const DividerBlockSchema = z.object({
 // ============================================================================
 
 export const HeroBlockSettingsSchema = z.object({
-  backgroundColor: HexColorSchema.optional(),
+  backgroundColor: HexColorSchema.nullish(), // nullish for OpenAI compatibility
   backgroundGradient: z.object({
     from: HexColorSchema,
     to: HexColorSchema,
     direction: z.enum(['to-right', 'to-bottom', 'to-br', 'to-tr']),
-  }).optional(),
+  }).nullish(), // nullish for OpenAI compatibility
   padding: PaddingSchema,
   align: AlignmentSchema,
   headlineFontSize: PixelValueSchema,
@@ -243,8 +243,8 @@ export const HeroBlockSettingsSchema = z.object({
 
 export const HeroBlockContentSchema = z.object({
   headline: z.string().min(1).max(200),
-  subheadline: z.string().max(500).optional(),
-  imageUrl: UrlOrMergeTagSchema.optional(),
+  subheadline: z.string().max(500).nullish(), // nullish for OpenAI compatibility
+  imageUrl: UrlOrMergeTagSchema.nullish(), // nullish for OpenAI compatibility
 });
 
 export const HeroBlockSchema = z.object({
@@ -292,10 +292,10 @@ export const StatsBlockSchema = z.object({
 // ============================================================================
 
 export const TestimonialBlockSettingsSchema = z.object({
-  backgroundColor: HexColorSchema.optional(),
-  borderColor: HexColorSchema.optional(),
-  borderWidth: z.number().int().min(0).max(10).optional(),
-  borderRadius: PixelValueSchema.optional(),
+  backgroundColor: HexColorSchema.nullish(), // nullish for OpenAI compatibility
+  borderColor: HexColorSchema.nullish(), // nullish for OpenAI compatibility
+  borderWidth: z.number().int().min(0).max(10).nullish(), // nullish for OpenAI compatibility
+  borderRadius: PixelValueSchema.nullish(), // nullish for OpenAI compatibility
   padding: PaddingSchema,
   quoteFontSize: PixelValueSchema,
   quoteColor: HexColorSchema,
@@ -308,9 +308,9 @@ export const TestimonialBlockSettingsSchema = z.object({
 export const TestimonialBlockContentSchema = z.object({
   quote: z.string().min(1).max(1000),
   author: z.string().min(1).max(100),
-  role: z.string().max(100).optional(),
-  company: z.string().max(100).optional(),
-  avatarUrl: UrlOrMergeTagSchema.optional(),
+  role: z.string().max(100).nullish(), // nullish for OpenAI compatibility
+  company: z.string().max(100).nullish(), // nullish for OpenAI compatibility
+  avatarUrl: UrlOrMergeTagSchema.nullish(), // nullish for OpenAI compatibility
 });
 
 export const TestimonialBlockSchema = z.object({
@@ -340,7 +340,7 @@ export const FeatureGridBlockSettingsSchema = z.object({
 
 export const FeatureGridBlockContentSchema = z.object({
   features: z.array(z.object({
-    icon: z.string().max(10).optional(),
+    icon: z.string().max(10).nullish(), // nullish for OpenAI compatibility
     title: z.string().min(1).max(100),
     description: z.string().min(1).max(500),
   })).min(1).max(6),
@@ -367,18 +367,18 @@ export const ComparisonBlockSettingsSchema = z.object({
   labelFontWeight: z.number().int().min(100).max(900),
   contentFontSize: PixelValueSchema,
   contentColor: HexColorSchema,
-  borderRadius: PixelValueSchema.optional(),
+  borderRadius: PixelValueSchema.nullish(), // nullish for OpenAI compatibility
   padding: PaddingSchema,
   cellPadding: z.number().int().min(0).max(100),
 });
 
 export const ComparisonBlockContentSchema = z.object({
   before: z.object({
-    label: z.string().max(50).optional(),
+    label: z.string().max(50).nullish(), // nullish for OpenAI compatibility
     text: z.string().min(1).max(500),
   }),
   after: z.object({
-    label: z.string().max(50).optional(),
+    label: z.string().max(50).nullish(), // nullish for OpenAI compatibility
     text: z.string().min(1).max(500),
   }),
 });
@@ -400,7 +400,7 @@ export const SocialLinksBlockSettingsSchema = z.object({
   iconSize: PixelValueSchema,
   spacing: z.number().int().min(0).max(100),
   iconStyle: z.enum(['color', 'monochrome', 'outline']),
-  iconColor: HexColorSchema.optional(),
+  iconColor: HexColorSchema.nullish(), // nullish for OpenAI compatibility
   padding: PaddingSchema,
 });
 
@@ -424,21 +424,21 @@ export const SocialLinksBlockSchema = z.object({
 // ============================================================================
 
 export const FooterBlockSettingsSchema = z.object({
-  backgroundColor: HexColorSchema.optional(),
+  backgroundColor: HexColorSchema.nullish(), // nullish for OpenAI compatibility
   textColor: HexColorSchema,
   fontSize: PixelValueSchema,
   align: AlignmentSchema,
   padding: PaddingSchema,
   lineHeight: z.string().regex(/^\d+(\.\d+)?$/),
-  linkColor: HexColorSchema.optional(),
+  linkColor: HexColorSchema.nullish(), // nullish for OpenAI compatibility
 });
 
 export const FooterBlockContentSchema = z.object({
   companyName: z.string().min(1).max(200),
-  companyAddress: z.string().max(500).optional(),
-  customText: z.string().max(1000).optional(),
+  companyAddress: z.string().max(500).nullish(), // nullish for OpenAI compatibility
+  customText: z.string().max(1000).nullish(), // nullish for OpenAI compatibility
   unsubscribeUrl: z.string().min(1).max(2000),
-  preferencesUrl: z.string().max(2000).optional(),
+  preferencesUrl: z.string().max(2000).nullish(), // nullish for OpenAI compatibility
 });
 
 export const FooterBlockSchema = z.object({

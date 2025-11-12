@@ -56,6 +56,53 @@ interface CampaignData {
 
 type EditorMode = 'chat' | 'edit';
 
+/**
+ * Generate a meaningful placeholder name from campaign content
+ */
+function getCampaignPlaceholderName(campaignData: CampaignData): string {
+  // Try subject line from first email (most descriptive)
+  if (campaignData.renderedEmails && campaignData.renderedEmails.length > 0) {
+    const firstEmail = campaignData.renderedEmails[0];
+    if (firstEmail.subject) {
+      const subject = firstEmail.subject.trim();
+      // Limit to 50 chars and remove trailing punctuation
+      return subject.length > 50 ? subject.substring(0, 47) + '...' : subject.replace(/[.!?]+$/, '');
+    }
+  }
+  
+  // Try first heading block text
+  if (campaignData.blocks && Array.isArray(campaignData.blocks)) {
+    const headingBlock = campaignData.blocks.find((block: any) => 
+      block.type === 'heading' || block.type === 'text'
+    );
+    if (headingBlock?.content?.text) {
+      const text = headingBlock.content.text.trim();
+      return text.length > 50 ? text.substring(0, 47) + '...' : text.replace(/[.!?]+$/, '');
+    }
+  }
+  
+  // Try preview text from first email
+  if (campaignData.renderedEmails && campaignData.renderedEmails.length > 0) {
+    const firstEmail = campaignData.renderedEmails[0];
+    if (firstEmail.previewText) {
+      const preview = firstEmail.previewText.trim();
+      const words = preview.split(/\s+/).slice(0, 6).join(' ');
+      return words.length > 50 ? words.substring(0, 47) + '...' : words;
+    }
+  }
+  
+  // Try campaign type as fallback
+  if (campaignData.campaign?.campaignType) {
+    const type = campaignData.campaign.campaignType;
+    return type === 'one-time' ? 'One-time Campaign' : 
+           type === 'sequence' ? 'Email Sequence' : 
+           type === 'automation' ? 'Automated Campaign' : 'Campaign';
+  }
+  
+  // Last resort
+  return 'Campaign';
+}
+
 export default function CampaignEditorPage() {
   const router = useRouter();
   const params = useParams();
@@ -71,6 +118,14 @@ export default function CampaignEditorPage() {
   const [editorMode, setEditorMode] = useState<EditorMode>('chat');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isRefining, setIsRefining] = useState(false);
+
+  // Save chat history to localStorage whenever it changes
+  useEffect(() => {
+    if (campaignId && chatHistory.length > 0) {
+      const storageKey = `chat-history-${campaignId}`;
+      localStorage.setItem(storageKey, JSON.stringify(chatHistory));
+    }
+  }, [chatHistory, campaignId]);
   const [selectedEmailIndex, setSelectedEmailIndex] = useState(0);
   const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
   const [viewMode, setViewMode] = useState<ViewMode>('html');
@@ -170,14 +225,41 @@ export default function CampaignEditorPage() {
           setCampaignData(transformedData);
           setEditedEmails(transformedData.renderedEmails);
           
-          // Set initial chat message
-          setChatHistory([
-            {
-              role: 'assistant',
-              content: `I've loaded your campaign: "${transformedData.campaign.campaignName}". How would you like to refine it?`,
-              timestamp: new Date(),
-            },
-          ]);
+          // Restore chat history from localStorage, or set initial message
+          const storageKey = `chat-history-${campaignId}`;
+          const savedHistory = localStorage.getItem(storageKey);
+          if (savedHistory) {
+            try {
+              const parsed = JSON.parse(savedHistory);
+              // Convert timestamp strings back to Date objects
+              const restoredHistory: ChatMessage[] = parsed.map((msg: any) => ({
+                ...msg,
+                timestamp: new Date(msg.timestamp),
+              }));
+              setChatHistory(restoredHistory);
+            } catch (error) {
+              console.error('Failed to restore chat history:', error);
+              // Fallback to initial message
+              const placeholderName = transformedData.campaign.campaignName || getCampaignPlaceholderName(transformedData);
+              setChatHistory([
+                {
+                  role: 'assistant',
+                  content: `I've loaded your campaign: "${placeholderName}". How would you like to refine it?`,
+                  timestamp: new Date(),
+                },
+              ]);
+            }
+          } else {
+            // Set initial chat message
+            const placeholderName = transformedData.campaign.campaignName || getCampaignPlaceholderName(transformedData);
+            setChatHistory([
+              {
+                role: 'assistant',
+                content: `I've loaded your campaign: "${placeholderName}". How would you like to refine it?`,
+                timestamp: new Date(),
+              },
+            ]);
+          }
         } else {
           throw new Error('Invalid campaign data received');
         }

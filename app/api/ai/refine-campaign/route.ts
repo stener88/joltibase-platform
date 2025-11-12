@@ -9,8 +9,8 @@ import {
   type GlobalEmailSettingsType 
 } from '@/lib/email/blocks/schemas';
 import { renderBlocksToEmail } from '@/lib/email/blocks/renderer';
-import { sanitizeBlocks } from '@/lib/ai/blocks/sanitizer';
-import { z } from 'zod';
+import { z, toJSONSchema } from 'zod';
+import { fixSchemaForStrictMode } from '@/lib/ai/validator';
 
 /**
  * API Route: POST /api/ai/refine-campaign
@@ -36,6 +36,29 @@ const RefineCampaignInputSchema = z.object({
 });
 
 type RefineCampaignInput = z.infer<typeof RefineCampaignInputSchema>;
+
+/**
+ * Schema for AI refine response
+ */
+const RefineResponseSchema = z.object({
+  subject: z.string().min(1).max(100),
+  previewText: z.string().max(150).nullish(), // nullish for OpenAI compatibility
+  blocks: z.array(EmailBlockSchema).min(1),
+  globalSettings: GlobalEmailSettingsSchema.nullish(), // nullish for OpenAI compatibility
+  changes: z.array(z.string()).nullish(), // nullish for OpenAI compatibility - technical tracking
+  conversationalMessage: z.string().min(20).max(500), // Natural, colleague-like response for chat UI
+});
+
+type RefineResponse = z.infer<typeof RefineResponseSchema>;
+
+/**
+ * Get JSON Schema for refine response (for Structured Outputs)
+ */
+function getRefineJSONSchema(): Record<string, any> {
+  const schema = toJSONSchema(RefineResponseSchema);
+  // Fix schema for OpenAI's strict mode requirements
+  return fixSchemaForStrictMode(schema);
+}
 
 interface RefinedEmail {
   subject: string;
@@ -89,11 +112,109 @@ function validateRefinedBlocks(blocks: unknown[]): {
 }
 
 /**
+ * Detect if a user request is a major redesign vs minor refinement
+ */
+function detectRequestType(message: string): 'major' | 'minor' | 'ambiguous' {
+  const lowerMessage = message.toLowerCase();
+  
+  // Major redesign keywords
+  const majorKeywords = [
+    'remake',
+    'redesign',
+    'completely',
+    'start over',
+    'rebuild',
+    'whole',
+    'entire',
+    'from scratch',
+    'new design',
+    'completely new',
+    'totally',
+    'entirely',
+  ];
+  
+  // Check for major keywords
+  const hasMajorKeyword = majorKeywords.some(keyword => lowerMessage.includes(keyword));
+  
+  // Check for explicit major requests
+  const explicitMajorPatterns = [
+    /remake\s+(the\s+)?(whole|entire)/i,
+    /redesign\s+(the\s+)?(whole|entire)/i,
+    /completely\s+(remake|redesign|rebuild)/i,
+    /start\s+over/i,
+    /from\s+scratch/i,
+  ];
+  
+  const hasExplicitMajor = explicitMajorPatterns.some(pattern => pattern.test(message));
+  
+  if (hasMajorKeyword || hasExplicitMajor) {
+    return 'major';
+  }
+  
+  // Ambiguous requests (questions, vague statements)
+  const ambiguousPatterns = [
+    /^(what|how|can you|could you|would you)/i,
+    /^(maybe|perhaps|i think|i feel)/i,
+    /\?$/,
+  ];
+  
+  const isAmbiguous = ambiguousPatterns.some(pattern => pattern.test(message.trim()));
+  
+  if (isAmbiguous && !hasMajorKeyword) {
+    return 'ambiguous';
+  }
+  
+  // Default to minor refinement
+  return 'minor';
+}
+
+/**
  * Build the block-based refinement prompt for the AI
  */
 function buildBlockRefinementPrompt(
   input: RefineCampaignInput
 ): string {
+  const requestType = detectRequestType(input.message);
+  
+  // Build request-specific instructions
+  let requestTypeInstructions = '';
+  
+  if (requestType === 'major') {
+    requestTypeInstructions = `
+**🚨 MAJOR REDESIGN REQUEST DETECTED**
+
+The user has requested a major redesign (keywords: "remake", "redesign", "completely", "whole", etc.).
+
+**CRITICAL INSTRUCTIONS FOR MAJOR REQUESTS:**
+1. **EXECUTE THE FULL REDESIGN FIRST** - Don't just suggest improvements, actually remake/redesign the email as requested
+2. **Create a fresh structure** - You can significantly change the block layout, add/remove blocks, reorganize content
+3. **Maintain email best practices** - Keep footer, ensure proper spacing, maintain readability
+4. **After executing the redesign**, you can suggest additional improvements in your conversational message
+5. **DO NOT** keep the structure "largely intact" - that's for minor requests only
+
+Example: User says "remake the whole newsletter"
+✅ CORRECT: Create a completely new newsletter structure with different blocks, layout, and content flow
+❌ WRONG: Keep existing structure and just suggest improvements
+
+**Remember**: For major requests, EXECUTION comes first, suggestions come second.`;
+  } else if (requestType === 'ambiguous') {
+    requestTypeInstructions = `
+**❓ AMBIGUOUS REQUEST DETECTED**
+
+The user's request is unclear or asks a question. 
+
+**INSTRUCTIONS FOR AMBIGUOUS REQUESTS:**
+1. **Ask clarifying questions** in your conversational message before making changes
+2. **Suggest what you think they might want** and ask for confirmation
+3. **Only make changes** if you're confident about the intent
+4. **If unsure**, ask: "I'd love to help! Could you clarify what you'd like me to change? For example, are you looking to [suggestion 1] or [suggestion 2]?"`;
+  } else {
+    requestTypeInstructions = `
+**✅ MINOR REFINEMENT REQUEST DETECTED**
+
+This is a specific, surgical change request. Follow the surgical refinement rules below.`;
+  }
+  
   return `You are an expert email designer. Refine this email campaign by modifying its block structure.
 
 **Current Email Structure:**
@@ -114,6 +235,8 @@ ${JSON.stringify(input.currentEmail.globalSettings, null, 2)}
 
 ---
 
+${requestTypeInstructions}
+
 **CRITICAL: Block-Based Refinement Rules**
 
 1. **MODIFY BLOCKS, NOT HTML**
@@ -122,12 +245,19 @@ ${JSON.stringify(input.currentEmail.globalSettings, null, 2)}
    - Follow the same block structure as shown above
    - Return COMPLETE blocks array (not excerpts)
 
-2. **SURGICAL CHANGES ONLY**
+${requestType === 'major' ? '' : `2. **SURGICAL CHANGES ONLY** (for minor requests)
    - Change ONLY what the user explicitly requested
    - Preserve all other blocks, settings, and content EXACTLY
    - If changing text, ONLY change the specific text requested
    - If changing colors, ONLY change the specific color requested
-   - Maintain positions sequential (0, 1, 2...) after any add/remove
+   - Maintain positions sequential (0, 1, 2...) after any add/remove`}
+
+${requestType === 'major' ? `2. **MAJOR REDESIGN EXECUTION** (for major requests)
+   - Execute the full redesign as requested
+   - You can significantly change block structure, layout, and content
+   - Create a fresh, improved version based on the user's request
+   - Maintain email best practices (footer, spacing, readability)
+   - After executing, suggest additional improvements in conversational message` : ''}
 
 3. **COMMON REFINEMENT PATTERNS:**
 
@@ -183,11 +313,11 @@ ${JSON.stringify(input.currentEmail.globalSettings, null, 2)}
    - **footer**: Always keep at end with position = last
 
 5. **VALIDATION CHECK (Before responding):**
-   - Did I change ONLY what was requested?
+   ${requestType === 'major' ? '- Did I execute the full redesign as requested?' : '- Did I change ONLY what was requested?'}
    - Are all required fields present for each block?
    - Are positions sequential (0, 1, 2...)?
    - Are data types correct (lineHeight=STRING, fontWeight=NUMBER)?
-   - Did I preserve everything else exactly?
+   ${requestType === 'major' ? '' : '- Did I preserve everything else exactly?'}
 
 **Examples of CORRECT Refinements:**
 
@@ -206,6 +336,26 @@ Response: Find button block → change settings.color to "#7c3aed" → keep ever
 User: "add a testimonial after the features"
 Response: Insert new testimonial block after features → renumber subsequent positions → include ALL required fields
 
+${requestType === 'major' ? `User: "remake the whole newsletter"
+Response: Create a completely new newsletter structure with different blocks, layout, and content flow. Execute the full redesign, don't just suggest improvements.` : ''}
+
+**CONVERSATIONAL MESSAGE (Required):**
+Write a natural, colleague-like message (20-500 characters) that:
+${requestType === 'major' ? `- Explains what you redesigned and why ("I've completely remade the newsletter with a fresh structure because...")
+- After executing the redesign, suggest 1-2 additional improvements ("Now that we've redesigned it, we could also...")
+- Ask if they want any adjustments ("Want me to tweak anything else?")` : requestType === 'ambiguous' ? `- Ask clarifying questions if the request is unclear
+- Suggest what you think they might want and ask for confirmation
+- Only make changes if you're confident about the intent` : `- Explains what you changed and why ("I updated the headline to be more action-oriented because...")
+- Proactively suggests 1-2 related improvements ("While we're at it, we could also...")
+- Asks a clarifying question or invites iteration ("Want me to adjust the spacing too?")`}
+- Feels enthusiastic and collaborative, not robotic
+
+Examples of good conversational messages:
+${requestType === 'major' ? `- "Perfect! I've completely remade the newsletter with a fresh, modern layout. The new structure flows much better. Want me to add a stats section to boost credibility?"
+- "Done! I've redesigned the whole newsletter from scratch - new blocks, better spacing, and a more engaging flow. What do you think? Should we add more visual elements?"` : `- "Perfect! I've made the headline bigger and bolder - it'll really grab attention. I also noticed the CTA button could use a bit more contrast. Want me to tweak that too?"
+- "Done! Changed the button text to 'Start Free Trial' and made it more prominent. I'm thinking we could add a bit more urgency with a limited-time offer. Should I add that?"
+- "Great idea! I've added the testimonial section after the features. It flows nicely now. What do you think about adding a stats section too?"`}
+
 **Respond with valid JSON ONLY:**
 {
   "subject": "Updated subject (or keep current: ${input.currentEmail.subject})",
@@ -218,12 +368,13 @@ Response: Insert new testimonial block after features → renumber subsequent po
   },
   "changes": [
     "List specific changes made. Be precise: 'Changed button text from X to Y', 'Increased hero padding from 60px to 80px'"
-  ]
+  ],
+  "conversationalMessage": "Your natural, colleague-like response here (20-500 chars)"
 }
 
 **Final Reminder:**
 - Return COMPLETE blocks array (not partial)
-- Change ONLY what was requested
+${requestType === 'major' ? '- Execute the full redesign as requested' : '- Change ONLY what was requested'}
 - Maintain all required fields
 - Sequential positions (0, 1, 2...)
 - Correct data types (STRING lineHeight, NUMBER fontWeight, OBJECT padding)`;
@@ -308,7 +459,11 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ [REFINE-API] Campaign ownership verified');
 
-    // 4. Call AI to refine the blocks
+    // 4. Get JSON Schema for Structured Outputs
+    const jsonSchema = getRefineJSONSchema();
+    console.log('📐 [REFINE-API] Using Structured Outputs with JSON Schema');
+    
+    // 5. Call AI to refine the blocks
     console.log('🤖 [REFINE-API] Calling AI for block-based refinement...');
     const prompt = buildBlockRefinementPrompt(validatedInput);
     
@@ -316,7 +471,15 @@ export async function POST(request: NextRequest) {
       [
         {
           role: 'system',
-          content: 'You are an expert email designer. You modify email block structures based on user requests. Always respond with valid JSON only, no additional text. Return COMPLETE blocks array with ALL required fields.',
+          content: `You're a creative email design partner - think of yourself as a colleague who's genuinely excited about crafting amazing emails. You're collaborative, proactive, and always looking for ways to optimize.
+
+When refining emails:
+- Explain your reasoning ("I changed X because...")
+- Proactively suggest improvements ("While we're at it, consider...")
+- Ask clarifying questions ("Should we also...?")
+- Share ideas enthusiastically ("What if we tried...?")
+
+Be conversational, enthusiastic, and helpful - like you're brainstorming with a teammate. Return COMPLETE blocks array with ALL required fields.`,
         },
         {
           role: 'user',
@@ -326,7 +489,7 @@ export async function POST(request: NextRequest) {
       {
         temperature: 0.7,
         maxTokens: 4000,
-        jsonMode: true,
+        jsonSchema, // Use Structured Outputs - guarantees schema compliance
       }
     );
 
@@ -336,18 +499,14 @@ export async function POST(request: NextRequest) {
       contentLength: aiResult.content.length,
     });
 
-    // 6. Parse AI response
-    let aiResponse: {
-      subject: string;
-      previewText?: string;
-      blocks: unknown[];
-      globalSettings: unknown;
-      changes: string[];
-    };
+    // 6. Parse structured response (OpenAI guarantees schema compliance)
+    let aiResponse: RefineResponse;
 
     try {
-      aiResponse = JSON.parse(aiResult.content);
-      console.log('✅ [REFINE-API] AI response parsed successfully');
+      const parsed = JSON.parse(aiResult.content);
+      // Validate with Zod (mainly for type checking since Structured Outputs guarantees compliance)
+      aiResponse = RefineResponseSchema.parse(parsed);
+      console.log('✅ [REFINE-API] Structured response parsed and validated');
     } catch (error) {
       console.error('❌ [REFINE-API] Failed to parse AI response:', error);
       return NextResponse.json<ErrorResponse>(
@@ -360,14 +519,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 7. Sanitize blocks (add missing required fields with sensible defaults)
-    console.log('🧹 [REFINE-API] Sanitizing refined blocks...');
-    const sanitizedBlocks = sanitizeBlocks(aiResponse.blocks);
-    console.log('✅ [REFINE-API] Blocks sanitized');
-
-    // 8. Validate blocks with Zod
+    // 7. Validate blocks structure (Structured Outputs guarantees compliance, but double-check)
     console.log('🔍 [REFINE-API] Validating refined blocks...');
-    const blockValidation = validateRefinedBlocks(sanitizedBlocks);
+    const blockValidation = validateRefinedBlocks(aiResponse.blocks);
     
     if (!blockValidation.valid) {
       console.error('❌ [REFINE-API] Block validation failed:', blockValidation.errors);
@@ -383,26 +537,27 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ [REFINE-API] Blocks validated successfully');
 
-    // 9. Render blocks to HTML (use sanitized blocks)
+    // 8. Render blocks to HTML
     console.log('📧 [REFINE-API] Rendering blocks to HTML...');
+    const globalSettings = aiResponse.globalSettings || validatedInput.currentEmail.globalSettings as GlobalEmailSettingsType;
     const renderedHtml = renderBlocksToEmail(
-      sanitizedBlocks as EmailBlockType[],
-      aiResponse.globalSettings as GlobalEmailSettingsType
+      aiResponse.blocks as EmailBlockType[],
+      globalSettings
     );
 
     console.log('✅ [REFINE-API] Blocks rendered to HTML');
 
-    // 10. Construct refined email response
+    // 9. Construct refined email response
     const refinedEmail: RefinedEmail = {
       subject: aiResponse.subject || validatedInput.currentEmail.subject,
       previewText: aiResponse.previewText || validatedInput.currentEmail.previewText,
-      blocks: sanitizedBlocks as EmailBlockType[],
-      globalSettings: aiResponse.globalSettings as GlobalEmailSettingsType,
+      blocks: aiResponse.blocks as EmailBlockType[],
+      globalSettings: globalSettings,
       html: renderedHtml,
       changes: Array.isArray(aiResponse.changes) ? aiResponse.changes : ['Email refined based on your request'],
     };
 
-    // 11. Track usage
+    // 10. Track usage
     console.log('📊 [REFINE-API] Tracking AI usage...');
     try {
       await supabase.from('ai_usage').insert({
@@ -416,12 +571,12 @@ export async function POST(request: NextRequest) {
       console.error('⚠️  [REFINE-API] Failed to track usage (non-critical):', error);
     }
 
-    // 12. Return refined email
+    // 11. Return refined email
     const responseData: SuccessResponse = {
       success: true,
       data: {
         refinedEmail,
-        message: `I've made ${refinedEmail.changes.length} change${refinedEmail.changes.length !== 1 ? 's' : ''} to your email: ${refinedEmail.changes.join(', ')}`,
+        message: aiResponse.conversationalMessage || `I've made ${refinedEmail.changes.length} change${refinedEmail.changes.length !== 1 ? 's' : ''} to your email: ${refinedEmail.changes.join(', ')}`,
       },
     };
 

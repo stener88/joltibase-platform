@@ -89,7 +89,7 @@ export function PromptInput({
             onKeyDown={handleKeyDown}
             placeholder={dynamicPlaceholder}
             disabled={isLoading}
-            className={`w-full ${compact ? 'min-h-[80px] max-h-[200px] px-4 py-3 text-sm' : 'min-h-[140px] max-h-[300px] px-6 py-6 text-lg'} font-normal text-black placeholder-black bg-transparent border-none outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed`}
+            className={`w-full ${compact ? 'min-h-[80px] max-h-[200px] px-4 py-3 text-base' : 'min-h-[140px] max-h-[300px] px-6 py-6 text-lg'} font-normal text-black placeholder-black bg-transparent border-none outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed`}
             style={{ 
               lineHeight: '1.6',
               fontFamily: 'system-ui, -apple-system, sans-serif',

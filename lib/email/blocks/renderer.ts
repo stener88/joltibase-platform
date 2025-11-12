@@ -686,7 +686,7 @@ function getOutlookArcsize(borderRadius: string): string {
  * Get social media icon URL
  * In production, these would be hosted on your CDN
  */
-function getSocialIconUrl(platform: string, style: string, color?: string): string {
+function getSocialIconUrl(platform: string, style: string, color?: string | null): string {
   // Placeholder - in production, replace with actual CDN URLs
   return `https://via.placeholder.com/32/${color?.replace('#', '') || '000000'}/FFFFFF?text=${platform[0].toUpperCase()}`;
 }

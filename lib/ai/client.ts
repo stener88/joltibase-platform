@@ -61,6 +61,7 @@ export async function generateCompletion(
     temperature?: number;
     maxTokens?: number;
     jsonMode?: boolean;
+    jsonSchema?: Record<string, any>; // JSON Schema for Structured Outputs
     retries?: number;
   } = {}
 ) {
@@ -69,6 +70,7 @@ export async function generateCompletion(
     temperature = 0.7,
     maxTokens = 2000,
     jsonMode = true,
+    jsonSchema,
     retries = 3,
   } = options;
 
@@ -78,12 +80,27 @@ export async function generateCompletion(
   // Retry logic
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
+      // Use Structured Outputs if JSON Schema provided, otherwise fall back to json_mode
+      const responseFormat = jsonSchema
+        ? {
+            type: 'json_schema' as const,
+            json_schema: {
+              name: 'campaign_response',
+              description: 'Generated email campaign with blocks structure',
+              schema: jsonSchema,
+              strict: true, // Enforce strict schema compliance
+            },
+          }
+        : jsonMode
+        ? { type: 'json_object' as const }
+        : undefined;
+
       const completion = await getClient().chat.completions.create({
         model,
         messages,
         temperature,
         max_tokens: maxTokens,
-        response_format: jsonMode ? { type: 'json_object' } : undefined,
+        response_format: responseFormat,
       });
 
       const generationTimeMs = Date.now() - startTime;

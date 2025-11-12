@@ -72,9 +72,7 @@ export function BlockToolbar({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            if (confirm('Delete this block?')) {
-              onDelete(blockId);
-            }
+            onDelete(blockId);
           }}
           className="p-2 rounded hover:bg-red-50 text-red-600 transition-colors"
           title="Delete"

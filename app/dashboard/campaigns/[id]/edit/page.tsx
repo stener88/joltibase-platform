@@ -17,6 +17,47 @@ import { MessageSquare, Edit3, Edit2, Save, RotateCcw, Monitor, Smartphone, Laye
 
 type EditorMode = 'chat' | 'edit' | 'visual';
 
+/**
+ * Generate a meaningful placeholder name from campaign content
+ */
+function getCampaignPlaceholderName(campaign: any): string {
+  // Try subject line first (most descriptive)
+  if (campaign?.subject_line) {
+    const subject = campaign.subject_line.trim();
+    // Limit to 50 chars and remove trailing punctuation
+    return subject.length > 50 ? subject.substring(0, 47) + '...' : subject.replace(/[.!?]+$/, '');
+  }
+  
+  // Try first heading block text
+  if (campaign?.blocks && Array.isArray(campaign.blocks)) {
+    const headingBlock = campaign.blocks.find((block: any) => 
+      block.type === 'heading' || block.type === 'text'
+    );
+    if (headingBlock?.content?.text) {
+      const text = headingBlock.content.text.trim();
+      return text.length > 50 ? text.substring(0, 47) + '...' : text.replace(/[.!?]+$/, '');
+    }
+  }
+  
+  // Try preview text (first few words)
+  if (campaign?.preview_text) {
+    const preview = campaign.preview_text.trim();
+    const words = preview.split(/\s+/).slice(0, 6).join(' ');
+    return words.length > 50 ? words.substring(0, 47) + '...' : words;
+  }
+  
+  // Try campaign type as fallback
+  if (campaign?.campaign?.campaignType) {
+    const type = campaign.campaign.campaignType;
+    return type === 'one-time' ? 'One-time Campaign' : 
+           type === 'sequence' ? 'Email Sequence' : 
+           type === 'automation' ? 'Automated Campaign' : 'Campaign';
+  }
+  
+  // Last resort
+  return 'Campaign';
+}
+
 export default function DashboardCampaignEditorPage() {
   const router = useRouter();
   const params = useParams();
@@ -45,6 +86,35 @@ export default function DashboardCampaignEditorPage() {
     });
   });
   
+  // Restore chat history from localStorage on mount
+  useEffect(() => {
+    if (campaignId) {
+      const storageKey = `chat-history-${campaignId}`;
+      const savedHistory = localStorage.getItem(storageKey);
+      if (savedHistory) {
+        try {
+          const parsed = JSON.parse(savedHistory);
+          // Convert timestamp strings back to Date objects
+          const restoredHistory: ChatMessage[] = parsed.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+          }));
+          setChatHistory(restoredHistory);
+        } catch (error) {
+          console.error('Failed to restore chat history:', error);
+        }
+      }
+    }
+  }, [campaignId]);
+
+  // Save chat history to localStorage whenever it changes
+  useEffect(() => {
+    if (campaignId && chatHistory.length > 0) {
+      const storageKey = `chat-history-${campaignId}`;
+      localStorage.setItem(storageKey, JSON.stringify(chatHistory));
+    }
+  }, [chatHistory, campaignId]);
+
   // Initialize history when campaign loads
   useEffect(() => {
     if (campaign && !editorHistory.state) {
@@ -63,19 +133,25 @@ export default function DashboardCampaignEditorPage() {
         timestamp: new Date(),
       }]);
       
-      // Set initial chat messages
-      const initialMessages: ChatMessage[] = [];
-      
-      // Add assistant greeting
-      initialMessages.push({
-        role: 'assistant',
-        content: `I've loaded your campaign: "${campaign.campaign?.campaignName || 'Untitled'}". How would you like to refine it?`,
-        timestamp: new Date(),
-      });
-      
-      setChatHistory(initialMessages);
+      // Only set initial greeting if no saved chat history exists
+      const storageKey = `chat-history-${campaignId}`;
+      const savedHistory = localStorage.getItem(storageKey);
+      if (!savedHistory) {
+        // Set initial chat messages
+        const initialMessages: ChatMessage[] = [];
+        
+        // Add assistant greeting
+        const placeholderName = campaign.campaign?.campaignName || getCampaignPlaceholderName(campaign);
+        initialMessages.push({
+          role: 'assistant',
+          content: `I've loaded your campaign: "${placeholderName}". How would you like to refine it?`,
+          timestamp: new Date(),
+        });
+        
+        setChatHistory(initialMessages);
+      }
     }
-  }, [campaign]);
+  }, [campaign, campaignId, editorHistory]);
   
   // Keyboard shortcuts
   useEffect(() => {
@@ -443,7 +519,7 @@ export default function DashboardCampaignEditorPage() {
                 ) : (
                   <DirectEditor
                     campaign={campaign?.campaign || {
-                      campaignName: 'Untitled',
+                      campaignName: campaign ? getCampaignPlaceholderName(campaign) : 'Campaign',
                       campaignType: 'one-time',
                       design: { template: 'modern' },
                       recommendedSegment: '',
