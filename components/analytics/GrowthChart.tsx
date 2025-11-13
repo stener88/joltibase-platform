@@ -61,7 +61,7 @@ export function GrowthChart({ data, height = 300 }: GrowthChartProps) {
           <Line 
             type="monotone" 
             dataKey="total" 
-            stroke="#3b82f6" 
+            stroke="#e9a589" 
             strokeWidth={2}
             name="Total Subscribers"
             dot={false}
@@ -69,7 +69,7 @@ export function GrowthChart({ data, height = 300 }: GrowthChartProps) {
           <Line 
             type="monotone" 
             dataKey="subscribes" 
-            stroke="#10b981" 
+            stroke="#e9a589" 
             strokeWidth={2}
             name="New"
             dot={false}
@@ -77,7 +77,7 @@ export function GrowthChart({ data, height = 300 }: GrowthChartProps) {
           <Line 
             type="monotone" 
             dataKey="unsubscribes" 
-            stroke="#ef4444" 
+            stroke="#ea7a76" 
             strokeWidth={2}
             name="Unsubscribed"
             dot={false}

@@ -63,20 +63,20 @@ export function DashboardHeader({ campaignEditor }: DashboardHeaderProps) {
   const breadcrumbs = generateBreadcrumbs();
 
   return (
-    <header className="sticky top-0 z-10 grid grid-cols-3 h-12 items-center gap-4 bg-gray-50 border-b border-gray-200 px-6">
+    <header className="sticky top-0 z-10 grid grid-cols-3 h-12 items-center gap-4 bg-[#f5f4ed] border-b border-[#e8e7e5] px-6">
       {/* Left: Sidebar toggle and breadcrumbs */}
       <div className="flex items-center gap-4 min-w-0">
         <Button
           variant="ghost"
           size="icon"
           onClick={toggleSidebar}
-          className="h-8 w-8 flex-shrink-0"
+          className="h-8 w-8 flex-shrink-0 text-[#3d3d3a] hover:text-[#3d3d3a] hover:bg-black/[0.07]"
         >
           <PanelLeft className="h-5 w-5" />
           <span className="sr-only">Toggle sidebar</span>
         </Button>
 
-        <div className="h-6 w-px bg-gray-300 flex-shrink-0" />
+        <div className="h-6 w-px bg-[#e8e7e5] flex-shrink-0" />
 
         <nav className="flex items-center gap-2 text-sm min-w-0">
           {breadcrumbs.map((crumb, index) => {
@@ -91,16 +91,16 @@ export function DashboardHeader({ campaignEditor }: DashboardHeaderProps) {
             return (
               <div key={crumb.href} className="flex items-center gap-2">
                 {isLast || isUUID ? (
-                  <span className="font-medium text-gray-900">{crumb.label}</span>
+                  <span className="font-medium text-[#3d3d3a]">{crumb.label}</span>
                 ) : (
                   <>
                     <Link
                       href={crumb.href}
-                      className="text-gray-600 hover:text-gray-900 transition-colors"
+                      className="text-[#6b6b6b] hover:text-[#3d3d3a] transition-colors"
                     >
                       {crumb.label}
                     </Link>
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
+                    <ChevronRight className="h-4 w-4 text-[#6b6b6b]" />
                   </>
                 )}
               </div>

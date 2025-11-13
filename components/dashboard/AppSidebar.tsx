@@ -49,17 +49,17 @@ export function AppSidebar() {
   } : null;
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-gray-200">
+    <Sidebar collapsible="icon" className="border-r border-[#e8e7e5]">
       {/* Logo Header */}
-      <SidebarHeader className="h-12 border-b border-gray-200">
+      <SidebarHeader className="h-12 border-b border-[#e8e7e5] shrink-0">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Joltibase">
-              <Link href="/dashboard">
-                <div className="w-5 h-5 bg-[#1a1aff] rounded flex items-center justify-center shrink-0">
-                  <span className="text-white font-bold text-xs">J</span>
+            <SidebarMenuButton asChild tooltip="Joltibase" className="hover:!bg-black/[0.07]">
+              <Link href="/dashboard" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
+                <div className="w-8 h-8 bg-transparent flex items-center justify-center shrink-0 transition-none">
+                  <span className="text-[#6b6b6b] font-bold text-base">J</span>
                 </div>
-                <span className="text-xl font-medium text-gray-900">joltibase</span>
+                <span className="text-xl font-medium text-[#3d3d3a] group-data-[collapsible=icon]:hidden">joltibase</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -67,13 +67,10 @@ export function AppSidebar() {
       </SidebarHeader>
 
       {/* Navigation Content */}
-      <SidebarContent>
+      <SidebarContent className="pt-4">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            Overview
-          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {navigation.map((item) => {
                 // Dashboard should only be active on exact match, others can use startsWith
                 const isActive = item.href === '/dashboard' 
@@ -87,10 +84,11 @@ export function AppSidebar() {
                       asChild 
                       isActive={isActive}
                       tooltip={item.name}
+                      className={isActive ? "!bg-black/[0.07] hover:!bg-black/[0.07]" : "hover:!bg-black/[0.07]"}
                     >
-                      <Link href={item.href}>
-                        <Icon />
-                        <span>{item.name}</span>
+                      <Link href={item.href} className="flex items-center gap-2">
+                        <Icon className="text-[#6b6b6b]" />
+                        <span className={isActive ? "text-[#3d3d3a] font-medium" : "text-[#6b6b6b]"}>{item.name}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -102,7 +100,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       {/* User Profile Footer */}
-      <SidebarFooter className="border-t border-gray-200">
+      <SidebarFooter className="border-t border-[#e8e7e5]">
         {userData && <NavUser user={userData} />}
       </SidebarFooter>
     </Sidebar>

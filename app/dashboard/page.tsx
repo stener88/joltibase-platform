@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { DashboardCard } from '@/components/dashboard/DashboardCard';
-import { Users, Mail, TrendingUp, Plus, Upload } from 'lucide-react';
+import { Users, Mail, MailOpen, MousePointerClick, Plus, Upload, Reply } from 'lucide-react';
 
 interface DashboardStats {
   totalContacts: number;
@@ -138,7 +138,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <svg
-              className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4"
+              className="animate-spin h-12 w-12 text-[#e9a589] mx-auto mb-4"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -168,7 +168,7 @@ export default function DashboardPage() {
     <DashboardLayout>
       <div className="max-w-7xl mx-auto px-8 py-8">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <StatsCard
             title="Total Contacts"
             value={stats.totalContacts}
@@ -182,15 +182,21 @@ export default function DashboardPage() {
             subtitle={`${stats.activeCampaigns} active`}
           />
           <StatsCard
+            title="Reply Rate"
+            value="0%"
+            icon={Reply}
+            subtitle="Coming soon"
+          />
+          <StatsCard
             title="Open Rate"
             value="0%"
-            icon={TrendingUp}
+            icon={MailOpen}
             subtitle="Coming soon"
           />
           <StatsCard
             title="Click Rate"
             value="0%"
-            icon={TrendingUp}
+            icon={MousePointerClick}
             subtitle="Coming soon"
           />
         </div>
@@ -198,37 +204,37 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Quick Actions */}
           <DashboardCard title="Quick Actions">
-            <div className="space-y-3">
+            <div className="space-y-2">
               <button
                 onClick={() => router.push('/dashboard/campaigns/generate')}
-                className="w-full flex items-center gap-3 p-4 bg-[#1a1aff] text-white rounded-lg hover:bg-[#0000cc] transition-colors"
+                className="group w-full flex items-center gap-3 p-3 bg-transparent border border-gray-200 text-gray-700 rounded-lg hover:bg-[#e9a589]/10 hover:border-[#e9a589] transition-colors"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4 text-gray-500 group-hover:text-[#e9a589] transition-colors" />
                 <div className="text-left">
-                  <div className="font-semibold">Create Campaign</div>
-                  <div className="text-sm text-blue-100">Start a new email campaign with AI</div>
+                  <div className="text-sm font-semibold text-gray-900">Create Campaign</div>
+                  <div className="text-sm font-normal text-gray-500">Start a new email campaign with AI</div>
                 </div>
               </button>
               
               <button
                 onClick={() => router.push('/dashboard/contacts/new')}
-                className="w-full flex items-center gap-3 p-4 bg-white border-2 border-gray-200 text-gray-900 rounded-lg hover:border-[#1a1aff] hover:text-[#1a1aff] transition-colors"
+                className="group w-full flex items-center gap-3 p-3 bg-transparent border border-gray-200 text-gray-700 rounded-lg hover:bg-[#e9a589]/10 hover:border-[#e9a589] transition-colors"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4 text-gray-500 group-hover:text-[#e9a589] transition-colors" />
                 <div className="text-left">
-                  <div className="font-semibold">Add Contact</div>
-                  <div className="text-sm text-gray-600">Manually add a new contact</div>
+                  <div className="text-sm font-semibold text-gray-900">Add Contact</div>
+                  <div className="text-sm font-normal text-gray-500">Manually add a new contact</div>
                 </div>
               </button>
               
               <button
                 onClick={() => router.push('/dashboard/contacts/import')}
-                className="w-full flex items-center gap-3 p-4 bg-white border-2 border-gray-200 text-gray-900 rounded-lg hover:border-[#1a1aff] hover:text-[#1a1aff] transition-colors"
+                className="group w-full flex items-center gap-3 p-3 bg-transparent border border-gray-200 text-gray-700 rounded-lg hover:bg-[#e9a589]/10 hover:border-[#e9a589] transition-colors"
               >
-                <Upload className="w-5 h-5" />
+                <Upload className="w-4 h-4 text-gray-500 group-hover:text-[#e9a589] transition-colors" />
                 <div className="text-left">
-                  <div className="font-semibold">Import Contacts</div>
-                  <div className="text-sm text-gray-600">Upload contacts from CSV</div>
+                  <div className="text-sm font-semibold text-gray-900">Import Contacts</div>
+                  <div className="text-sm font-normal text-gray-500">Upload contacts from CSV</div>
                 </div>
               </button>
             </div>
@@ -251,13 +257,11 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 {recentActivity.map((activity) => (
                   <div key={activity.id} className="flex items-start gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      activity.type === 'contact' ? 'bg-blue-50' : 'bg-purple-50'
-                    }`}>
+                    <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center shrink-0">
                       {activity.type === 'contact' ? (
-                        <Users className="w-4 h-4 text-[#1a1aff]" />
+                        <Users className="w-4 h-4 text-black" />
                       ) : (
-                        <Mail className="w-4 h-4 text-purple-600" />
+                        <Mail className="w-4 h-4 text-black" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">

@@ -107,7 +107,7 @@ export default function DashboardGeneratePage() {
                 <h1 className="text-5xl md:text-6xl font-bold text-black mb-4 leading-tight">
                   Generate your
                   <br />
-                  <span className="text-[#1a1aff]">
+                  <span className="text-[#e9a589]">
                     next campaign
                   </span>
                 </h1>

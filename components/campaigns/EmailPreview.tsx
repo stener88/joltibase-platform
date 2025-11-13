@@ -50,7 +50,7 @@ export function EmailPreview({
           onBlockClick={onBlockClick}
         />
       ) : (
-        <div className="flex-1 overflow-y-auto bg-gray-100 p-8">
+        <div className="flex-1 overflow-y-auto bg-[#f9fafb] p-8">
           <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-sm">
             <pre className="whitespace-pre-wrap text-sm text-gray-800 font-sans leading-relaxed">
               {plainText || 'No plain text version available'}

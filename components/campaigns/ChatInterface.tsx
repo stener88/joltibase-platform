@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
-import { Sparkles, Send, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2 } from 'lucide-react';
 import { PromptInput } from './PromptInput';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -111,13 +110,13 @@ export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-[#faf9f5]">
       {/* Chat Messages */}
       <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6 space-y-4">
         {chatHistory.length === 0 ? (
           <div className="text-center py-8">
-            <Sparkles className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-            <p className="text-gray-600">
+            <Sparkles className="w-12 h-12 text-[#e8e7e5] mx-auto mb-4" />
+            <p className="text-[#6b6b6b]">
               Start a conversation to refine your campaign
             </p>
           </div>
@@ -131,14 +130,14 @@ export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
                 }`}
               >
                 <div
-                  className={`max-w-[80%] rounded-lg px-4 py-3 ${
+                  className={`max-w-[80%] rounded-xl px-5 py-3 ${
                     msg.role === 'user'
-                      ? 'bg-[#1a1aff] text-white'
-                      : 'bg-gray-50 text-black'
+                      ? 'bg-[#f0eee8] text-[#3d3d3a] border border-[#e8e7e5]'
+                      : 'bg-white text-[#3d3d3a] border border-[#e8e7e5] shadow-sm'
                   }`}
                 >
-                  <p className="text-base whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                  <span className="text-xs opacity-70 mt-1 block">
+                  <p className="whitespace-pre-wrap leading-relaxed" style={{ fontSize: '15px' }}>{msg.content}</p>
+                  <span className="text-xs text-[#6b6b6b] mt-1.5 block">
                     {msg.timestamp.toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit',
@@ -153,10 +152,10 @@ export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
 
         {isRefining && (
           <div className="flex justify-start">
-            <div className="bg-gray-50 text-black rounded-lg px-4 py-3">
+            <div className="bg-white text-[#3d3d3a] border border-[#e8e7e5] shadow-sm rounded-xl px-5 py-3">
               <div className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-[#1a1aff]" />
-                
+                <Loader2 className="w-4 h-4 animate-spin text-[#e9a589]" />
+                <span className="text-[#6b6b6b]">Thinking...</span>
               </div>
             </div>
           </div>
@@ -167,7 +166,7 @@ export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
       <div className="relative flex-shrink-0 px-6 py-4">
         {/* Quick Prompts Popover */}
         {showChips && (
-          <div className="absolute bottom-full left-6 right-6 mb-2 p-3 bg-white rounded-xl shadow-lg border border-gray-200 flex flex-wrap gap-2 z-10">
+          <div className="absolute bottom-full left-6 right-6 mb-2 p-3 bg-white rounded-xl shadow-lg border border-[#e8e7e5] flex flex-wrap gap-2 z-10">
             {suggestionChips.map((chip, index) => (
               <button
                 key={index}
@@ -176,31 +175,13 @@ export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
                   setShowChips(false);
                 }}
                 disabled={isRefining}
-                className="px-3 py-1.5 text-sm bg-gray-50 hover:bg-[#1a1aff] hover:text-white rounded-full text-gray-700 transition-all disabled:opacity-50 font-medium"
+                className="px-3 py-1.5 text-sm bg-[#f5f4ed] hover:bg-[#e9a589] hover:text-white rounded-full text-[#3d3d3a] transition-all disabled:opacity-50 font-medium border border-[#e8e7e5]"
               >
                 {chip.label}
               </button>
             ))}
           </div>
         )}
-        
-        {/* Lightning Icon Button */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => setShowChips(!showChips)}
-              disabled={isRefining}
-              className="absolute left-8 bottom-6 w-7 h-7 rounded-full bg-gray-50 border border-gray-200 hover:border-[#1a1aff] hover:bg-gray-100 flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed z-10"
-            >
-              <svg className="w-3.5 h-3.5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            <p>Quick prompts - Get instant suggestions for your campaign</p>
-          </TooltipContent>
-        </Tooltip>
         
         <PromptInput
           value={message}
@@ -212,6 +193,8 @@ export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
           disableAnimation
           chatOnly={chatOnly}
           onChatOnlyToggle={() => setChatOnly(!chatOnly)}
+          onLightningToggle={() => setShowChips(!showChips)}
+          showLightningChips={showChips}
           inputRef={inputRef}
         />
       </div>

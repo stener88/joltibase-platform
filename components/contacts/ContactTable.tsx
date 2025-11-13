@@ -34,10 +34,10 @@ export function ContactTable({
 
   if (contacts.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+      <div className="bg-white rounded-lg border border-[#e8e7e5] p-12 text-center">
         <div className="text-6xl mb-4">📭</div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">No contacts found</h3>
-        <p className="text-gray-600 mb-6">
+        <h3 className="text-xl font-semibold text-[#3d3d3a] mb-2">No contacts found</h3>
+        <p className="text-[#6b6b6b] mb-6">
           Get started by adding your first contact or importing from CSV
         </p>
       </div>
@@ -45,10 +45,10 @@ export function ContactTable({
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-lg border border-[#e8e7e5] overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-[#e8e7e5]">
+          <thead className="bg-[#f5f4ed]">
             <tr>
               <th scope="col" className="px-6 py-3 text-left">
                 <input
@@ -60,33 +60,33 @@ export function ContactTable({
                     }
                   }}
                   onChange={(e) => onSelectAll(e.target.checked)}
-                  className="w-4 h-4 text-[#1a1aff] border-gray-300 rounded focus:ring-[#1a1aff]"
+                  className="w-4 h-4 text-[#e9a589] border-[#e8e7e5] rounded focus:ring-[#e9a589]"
                 />
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[#6b6b6b] uppercase tracking-wider">
                 Email
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[#6b6b6b] uppercase tracking-wider">
                 Name
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[#6b6b6b] uppercase tracking-wider">
                 Status
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[#6b6b6b] uppercase tracking-wider">
                 Tags
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[#6b6b6b] uppercase tracking-wider">
                 Lists
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[#6b6b6b] uppercase tracking-wider">
                 Added
               </th>
-              <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-[#6b6b6b] uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white divide-y divide-[#e8e7e5]">
             {contacts.map((contact) => (
               <ContactRow
                 key={contact.id}
@@ -101,24 +101,24 @@ export function ContactTable({
       </div>
 
       {/* Pagination */}
-      <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-        <div className="text-sm text-gray-700">
-          Showing page <span className="font-medium">{pagination.page}</span> of{' '}
-          <span className="font-medium">{pagination.totalPages}</span>
+      <div className="px-6 py-4 border-t border-[#e8e7e5] flex items-center justify-between">
+        <div className="text-sm text-[#6b6b6b]">
+          Showing page <span className="font-medium text-[#3d3d3a]">{pagination.page}</span> of{' '}
+          <span className="font-medium text-[#3d3d3a]">{pagination.totalPages}</span>
           {' '}({pagination.total} total contacts)
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => onPageChange(pagination.page - 1)}
             disabled={pagination.page === 1}
-            className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="p-2 rounded-lg border border-[#e8e7e5] hover:bg-[#f5f4ed] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-[#3d3d3a]"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             onClick={() => onPageChange(pagination.page + 1)}
             disabled={pagination.page >= pagination.totalPages}
-            className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="p-2 rounded-lg border border-[#e8e7e5] hover:bg-[#f5f4ed] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-[#3d3d3a]"
           >
             <ChevronRight className="w-5 h-5" />
           </button>

@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { CampaignStatusBadge } from '@/components/campaigns/CampaignStatusBadge';
-import { ArrowLeft, Mail, Eye, MousePointerClick, XCircle, TrendingUp, Users, Edit3 } from 'lucide-react';
+import { StatsCard } from '@/components/dashboard/StatsCard';
+import { Mail, Eye, MousePointerClick, XCircle, TrendingUp, Users, Edit3 } from 'lucide-react';
 import type { Campaign } from '@/lib/types/campaign';
 import { format } from 'date-fns';
 
@@ -40,7 +41,7 @@ export default function CampaignAnalyticsPage() {
         <div className="max-w-7xl mx-auto px-8 py-8">
           <div className="text-center py-12">
             <svg
-              className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4"
+              className="animate-spin h-12 w-12 text-[#e9a589] mx-auto mb-4"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -74,7 +75,7 @@ export default function CampaignAnalyticsPage() {
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Campaign not found</h2>
             <button
               onClick={() => router.push('/dashboard/campaigns')}
-              className="text-[#1a1aff] hover:text-[#0000cc]"
+              className="text-[#e9a589] hover:text-[#e9a589]/80"
             >
               Back to campaigns
             </button>
@@ -92,17 +93,10 @@ export default function CampaignAnalyticsPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto px-8 py-8">
+      <div className="h-full overflow-y-auto">
+        <div className="max-w-7xl mx-auto px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={() => router.push('/dashboard/campaigns')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back to Campaigns
-          </button>
-          
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
@@ -122,9 +116,9 @@ export default function CampaignAnalyticsPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => router.push(`/dashboard/campaigns/${campaignId}/edit`)}
-                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+                className="group px-3 py-2 bg-transparent border border-gray-200 text-gray-900 rounded-lg hover:bg-[#e9a589]/10 hover:border-[#e9a589] transition-colors flex items-center gap-2 text-sm font-semibold"
               >
-                <Edit3 className="w-4 h-4" />
+                <Edit3 className="w-4 h-4 text-gray-500 group-hover:text-[#e9a589] transition-colors" />
                 Edit Campaign
               </button>
             </div>
@@ -133,48 +127,29 @@ export default function CampaignAnalyticsPage() {
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                <Mail className="w-5 h-5 text-blue-600" />
-              </div>
-              <p className="text-sm font-medium text-gray-600">Sent</p>
-            </div>
-            <p className="text-3xl font-bold text-gray-900">{stats.sent.toLocaleString()}</p>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-                <Eye className="w-5 h-5 text-green-600" />
-              </div>
-              <p className="text-sm font-medium text-gray-600">Open Rate</p>
-            </div>
-            <p className="text-3xl font-bold text-gray-900">{openRate}%</p>
-            <p className="text-sm text-gray-500 mt-1">{stats.opened} opens</p>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
-                <MousePointerClick className="w-5 h-5 text-purple-600" />
-              </div>
-              <p className="text-sm font-medium text-gray-600">Click Rate</p>
-            </div>
-            <p className="text-3xl font-bold text-gray-900">{clickRate}%</p>
-            <p className="text-sm text-gray-500 mt-1">{stats.clicked} clicks</p>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
-                <XCircle className="w-5 h-5 text-red-600" />
-              </div>
-              <p className="text-sm font-medium text-gray-600">Bounce Rate</p>
-            </div>
-            <p className="text-3xl font-bold text-gray-900">{bounceRate}%</p>
-            <p className="text-sm text-gray-500 mt-1">{stats.bounced} bounces</p>
-          </div>
+          <StatsCard
+            title="Sent"
+            value={stats.sent.toLocaleString()}
+            icon={Mail}
+          />
+          <StatsCard
+            title="Open Rate"
+            value={`${openRate}%`}
+            icon={Eye}
+            subtitle={`${stats.opened} opens`}
+          />
+          <StatsCard
+            title="Click Rate"
+            value={`${clickRate}%`}
+            icon={MousePointerClick}
+            subtitle={`${stats.clicked} clicks`}
+          />
+          <StatsCard
+            title="Bounce Rate"
+            value={`${bounceRate}%`}
+            icon={XCircle}
+            subtitle={`${stats.bounced} bounces`}
+          />
         </div>
 
         {/* Additional Stats */}
@@ -187,7 +162,7 @@ export default function CampaignAnalyticsPage() {
                 <div className="flex items-center gap-2">
                   <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-blue-600 rounded-full"
+                      className="h-full bg-[#e9a589] rounded-full"
                       style={{ width: `${deliveryRate}%` }}
                     />
                   </div>
@@ -199,7 +174,7 @@ export default function CampaignAnalyticsPage() {
                 <div className="flex items-center gap-2">
                   <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-green-600 rounded-full"
+                      className="h-full bg-[#e9a589] rounded-full"
                       style={{ width: `${openRate}%` }}
                     />
                   </div>
@@ -211,7 +186,7 @@ export default function CampaignAnalyticsPage() {
                 <div className="flex items-center gap-2">
                   <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-purple-600 rounded-full"
+                      className="h-full bg-[#e9a589] rounded-full"
                       style={{ width: `${clickRate}%` }}
                     />
                   </div>
@@ -266,6 +241,7 @@ export default function CampaignAnalyticsPage() {
               dangerouslySetInnerHTML={{ __html: campaign.html_content || 'No content' }}
             />
           </div>
+        </div>
         </div>
       </div>
     </DashboardLayout>

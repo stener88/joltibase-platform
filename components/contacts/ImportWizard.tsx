@@ -125,8 +125,8 @@ export function ImportWizard({ onComplete }: ImportWizardProps) {
               <div className="flex flex-col items-center flex-1">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
                   step.completed || currentStep === step.key
-                    ? 'bg-[#1a1aff] border-[#1a1aff] text-white'
-                    : 'bg-white border-gray-300 text-gray-400'
+                    ? 'bg-[#141413] border-[#141413] text-white'
+                    : 'bg-white border-[#e8e7e5] text-[#6b6b6b]'
                 }`}>
                   {step.completed ? (
                     <CheckCircle className="w-5 h-5" />
@@ -135,14 +135,14 @@ export function ImportWizard({ onComplete }: ImportWizardProps) {
                   )}
                 </div>
                 <span className={`text-sm mt-2 font-medium ${
-                  currentStep === step.key ? 'text-gray-900' : 'text-gray-500'
+                  currentStep === step.key ? 'text-[#3d3d3a]' : 'text-[#6b6b6b]'
                 }`}>
                   {step.label}
                 </span>
               </div>
               {idx < steps.length - 1 && (
                 <div className={`h-0.5 flex-1 -mt-8 ${
-                  step.completed ? 'bg-[#1a1aff]' : 'bg-gray-300'
+                  step.completed ? 'bg-[#141413]' : 'bg-[#e8e7e5]'
                 }`} />
               )}
             </div>
@@ -151,11 +151,11 @@ export function ImportWizard({ onComplete }: ImportWizardProps) {
       </div>
 
       {/* Step Content */}
-      <div className="bg-white rounded-lg border border-gray-200 p-8">
+      <div className="bg-white rounded-lg border border-[#e8e7e5] p-8">
         {currentStep === 'upload' && (
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Upload CSV File</h2>
-            <p className="text-gray-600 mb-6">
+            <h2 className="text-2xl font-bold text-[#3d3d3a] mb-4">Upload CSV File</h2>
+            <p className="text-[#6b6b6b] mb-6">
               Upload a CSV file containing your contacts. The file should include at least an email column.
             </p>
             <CSVUploader onFileLoad={handleFileLoad} />
@@ -171,17 +171,17 @@ export function ImportWizard({ onComplete }: ImportWizardProps) {
               onMappingChange={setMapping}
             />
             
-            <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
+            <div className="flex items-center justify-between mt-8 pt-6 border-t border-[#e8e7e5]">
               <button
                 onClick={() => setCurrentStep('upload')}
-                className="px-6 py-2.5 bg-white border-2 border-gray-200 text-gray-900 rounded-lg hover:border-gray-300 transition-colors"
+                className="px-6 py-2.5 bg-white border-2 border-[#e8e7e5] text-[#3d3d3a] rounded-lg hover:border-[#3d3d3a] transition-colors"
               >
                 Back
               </button>
               <button
                 onClick={handleImport}
                 disabled={!mapping.email}
-                className="px-6 py-2.5 bg-[#1a1aff] text-white rounded-lg hover:bg-[#0000cc] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-6 py-2.5 bg-[#141413] text-white rounded-lg hover:bg-[#3d3d3a] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Import {csvData.length - 1} Contacts
               </button>
@@ -197,7 +197,7 @@ export function ImportWizard({ onComplete }: ImportWizardProps) {
               <div className="flex justify-center">
                 <button
                   onClick={onComplete}
-                  className="px-8 py-3 bg-[#1a1aff] text-white rounded-lg hover:bg-[#0000cc] transition-colors"
+                  className="px-8 py-3 bg-[#141413] text-white rounded-lg hover:bg-[#3d3d3a] transition-colors"
                 >
                   View Contacts
                 </button>

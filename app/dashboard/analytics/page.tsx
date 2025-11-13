@@ -183,7 +183,7 @@ export default function AnalyticsPage() {
         {isLoading && !overviewData ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <RefreshCw className="w-12 h-12 text-blue-600 mx-auto mb-4 animate-spin" />
+              <RefreshCw className="w-12 h-12 text-[#e9a589] mx-auto mb-4 animate-spin" />
               <p className="text-gray-600">Loading analytics...</p>
             </div>
           </div>
@@ -195,32 +195,24 @@ export default function AnalyticsPage() {
                 title="Total Sent"
                 value={overviewData.overview.totalSent}
                 icon={Mail}
-                iconColor="text-blue-600"
-                iconBgColor="bg-blue-50"
               />
               <MetricCard
                 title="Open Rate"
                 value={overviewData.overview.openRate.toFixed(1)}
                 suffix="%"
                 icon={Eye}
-                iconColor="text-green-600"
-                iconBgColor="bg-green-50"
               />
               <MetricCard
                 title="Click Rate"
                 value={overviewData.overview.clickRate.toFixed(1)}
                 suffix="%"
                 icon={MousePointerClick}
-                iconColor="text-purple-600"
-                iconBgColor="bg-purple-50"
               />
               <MetricCard
                 title="Bounce Rate"
                 value={overviewData.overview.bounceRate.toFixed(1)}
                 suffix="%"
                 icon={XCircle}
-                iconColor="text-red-600"
-                iconBgColor="bg-red-50"
               />
             </div>
 
@@ -269,30 +261,22 @@ export default function AnalyticsPage() {
                     title="Total Contacts"
                     value={contactData.summary.totalContacts}
                     icon={Users}
-                    iconColor="text-blue-600"
-                    iconBgColor="bg-blue-50"
                   />
                   <MetricCard
                     title="Active Contacts"
                     value={contactData.summary.activePercentage.toFixed(1)}
                     suffix="%"
                     icon={TrendingUp}
-                    iconColor="text-green-600"
-                    iconBgColor="bg-green-50"
                   />
                   <MetricCard
                     title="New This Month"
                     value={contactData.summary.newThisMonth}
                     icon={UserPlus}
-                    iconColor="text-purple-600"
-                    iconBgColor="bg-purple-50"
                   />
                   <MetricCard
                     title="Churned This Month"
                     value={contactData.summary.churnedThisMonth}
                     icon={UserMinus}
-                    iconColor="text-red-600"
-                    iconBgColor="bg-red-50"
                   />
                 </div>
 

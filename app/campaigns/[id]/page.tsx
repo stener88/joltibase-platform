@@ -410,7 +410,7 @@ export default function CampaignEditorPage() {
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <svg
-              className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4"
+              className="animate-spin h-12 w-12 text-[#e9a589] mx-auto mb-4"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"

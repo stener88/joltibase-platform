@@ -58,11 +58,10 @@ export function NavUser({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="transition-colors data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="transition-colors hover:!bg-black/[0.07] data-[state=open]:!bg-black/[0.07]"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg bg-[#1a1aff] text-white font-semibold">
+                <AvatarFallback className="rounded-lg !bg-transparent !text-[#6b6b6b] font-semibold">
                   {user.name.slice(0, 1).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -82,8 +81,7 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-2 py-2 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg bg-[#1a1aff] text-white font-semibold">
+                  <AvatarFallback className="rounded-lg !bg-transparent !text-[#6b6b6b] font-semibold">
                     {user.name.slice(0, 1).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>

@@ -4,7 +4,7 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { DashboardHeader, type CampaignEditorControls } from './DashboardHeader';
 import { AuthModal } from '@/components/auth/AuthModal';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSidebarStore } from '@/hooks/use-sidebar-store';
 
 interface DashboardLayoutProps {
@@ -14,16 +14,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, campaignEditor }: DashboardLayoutProps) {
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const { isOpen, setOpen } = useSidebarStore();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
 
   return (
     <>
@@ -36,7 +27,7 @@ export function DashboardLayout({ children, campaignEditor }: DashboardLayoutPro
         <AppSidebar />
         <SidebarInset>
           <DashboardHeader campaignEditor={campaignEditor} />
-          <main className="flex-1 bg-gray-50 overflow-hidden">
+          <main className="flex-1 bg-[#faf9f5] overflow-y-auto">
             {children}
           </main>
         </SidebarInset>

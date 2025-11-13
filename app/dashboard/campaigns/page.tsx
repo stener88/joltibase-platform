@@ -135,14 +135,14 @@ export default function CampaignsPage() {
       <div className="h-full overflow-y-auto">
         <div className="max-w-7xl mx-auto px-8 py-8">
         {/* Action Buttons */}
-        <div className="mb-4">
+        <div className="mb-6">
           <div className="flex items-center justify-end gap-3">
             <div className="relative">
               <button
                 onClick={() => setShowCreateMenu(!showCreateMenu)}
-                className="px-4 py-2.5 bg-[#1a1aff] text-white rounded-lg hover:bg-[#0000cc] transition-colors flex items-center gap-2"
+                className="group px-3 py-2 bg-transparent border border-gray-200 text-gray-900 rounded-lg hover:bg-[#e9a589]/10 hover:border-[#e9a589] transition-colors flex items-center gap-2 text-sm font-semibold"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4 text-gray-500 group-hover:text-[#e9a589] transition-colors" />
                 Create Campaign
               </button>
               
@@ -150,10 +150,10 @@ export default function CampaignsPage() {
                 <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-10">
                   <button
                     onClick={() => router.push('/dashboard/campaigns/generate')}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#e9a589]/10 transition-colors text-left"
                   >
-                    <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
-                      <Sparkles className="w-5 h-5 text-purple-600" />
+                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 text-black" />
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">Generate with AI</p>
@@ -162,10 +162,10 @@ export default function CampaignsPage() {
                   </button>
                   <button
                     onClick={() => router.push('/dashboard/campaigns/new')}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#e9a589]/10 transition-colors text-left"
                   >
-                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                      <Plus className="w-5 h-5 text-blue-600" />
+                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <Plus className="w-5 h-5 text-black" />
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">Create Manually</p>
@@ -194,7 +194,7 @@ export default function CampaignsPage() {
         {isLoading && campaigns.length === 0 ? (
           <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
             <svg
-              className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4"
+              className="animate-spin h-12 w-12 text-[#e9a589] mx-auto mb-4"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -224,9 +224,9 @@ export default function CampaignsPage() {
             </p>
             <button
               onClick={() => setShowCreateMenu(true)}
-              className="px-6 py-3 bg-[#1a1aff] text-white rounded-lg hover:bg-[#0000cc] transition-colors inline-flex items-center gap-2"
+              className="group px-3 py-2 bg-transparent border border-gray-200 text-gray-900 rounded-lg hover:bg-[#e9a589]/10 hover:border-[#e9a589] transition-colors inline-flex items-center gap-2 text-sm font-semibold"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-4 h-4 text-gray-500 group-hover:text-[#e9a589] transition-colors" />
               Create Campaign
             </button>
           </div>
@@ -254,14 +254,14 @@ export default function CampaignsPage() {
                   <button
                     onClick={() => setPage(page - 1)}
                     disabled={page === 1}
-                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 rounded-lg border border-gray-200 hover:bg-[#e9a589]/10 hover:border-[#e9a589] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => setPage(page + 1)}
                     disabled={page >= totalPages}
-                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 rounded-lg border border-gray-200 hover:bg-[#e9a589]/10 hover:border-[#e9a589] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <ChevronRight className="w-5 h-5" />
                   </button>
@@ -289,7 +289,7 @@ export default function CampaignsPage() {
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              className="bg-[#ea7a76] hover:bg-[#ea7a76]/90 focus:ring-[#ea7a76]"
             >
               {isDeleting ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>

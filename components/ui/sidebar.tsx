@@ -80,10 +80,10 @@ function SidebarProvider({
         setOpenProp(openState)
       } else {
         _setOpen(openState)
+        // Only set cookie when NOT in controlled mode (when setOpenProp is not provided)
+        // This prevents conflicts with external state management (e.g., Zustand)
+        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
       }
-
-      // This sets the cookie to keep the sidebar state.
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
     },
     [setOpenProp, open]
   )

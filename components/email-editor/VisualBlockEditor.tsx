@@ -214,9 +214,9 @@ export function VisualBlockEditor({
   );
 
   return (
-    <div className="flex h-full bg-gray-50">
-      {/* Left: Settings Panel */}
-      <div className="w-96 border-r border-gray-200 bg-white overflow-hidden flex flex-col">
+    <div className="flex h-full bg-[#f9fafb]">
+      {/* Left: Settings Panel (35% width) */}
+      <div className="flex-[0.35] border-r border-gray-200 bg-white overflow-hidden flex flex-col">
         <BlockSettingsPanel
           selectedBlock={selectedBlock}
           designConfig={designConfig}
@@ -245,8 +245,8 @@ export function VisualBlockEditor({
         </div>
       </div>
 
-      {/* Right: Canvas */}
-      <div className="flex-1 overflow-hidden">
+      {/* Right: Canvas (65% width) */}
+      <div className="flex-[0.65] overflow-hidden">
         <BlockCanvas
           blocks={blocks}
           designConfig={designConfig}

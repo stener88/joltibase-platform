@@ -116,10 +116,10 @@ export function Header({ onLoginClick, campaignMode }: HeaderProps = {}) {
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex items-center gap-2 hover:opacity-80 transition-all"
               >
-                <div className="w-8 h-8 rounded-full bg-[#1a1aff] text-white flex items-center justify-center font-medium text-sm">
+                <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center font-medium text-sm">
                   {getUserInitial()}
                 </div>
-                <ChevronDown className="w-3 h-3 text-gray-600" />
+                <ChevronDown className="w-3 h-3 text-white" />
               </button>
               
               {showUserMenu && (

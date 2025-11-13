@@ -21,7 +21,7 @@ export function TopCampaignsChart({ data, height = 300 }: TopCampaignsChartProps
   }));
 
   // Colors for bars
-  const colors = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'];
+  const colors = ['#ea7a76', '#e9a589', '#e9a589', '#fcd093'];
 
   return (
     <div className="w-full" style={{ height }}>

@@ -18,7 +18,7 @@ export function ImportProgress({ isImporting, result }: ImportProgressProps) {
     return (
       <div className="text-center py-12">
         <svg
-          className="animate-spin h-16 w-16 text-[#1a1aff] mx-auto mb-6"
+          className="animate-spin h-16 w-16 text-[#e9a589] mx-auto mb-6"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"

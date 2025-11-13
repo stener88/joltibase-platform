@@ -42,7 +42,7 @@ export function ContactRow({ contact, isSelected, onSelect, onDelete }: ContactR
           type="checkbox"
           checked={isSelected}
           onChange={(e) => onSelect(contact.id, e.target.checked)}
-          className="w-4 h-4 text-[#1a1aff] border-gray-300 rounded focus:ring-[#1a1aff]"
+          className="w-4 h-4 text-[#e9a589] border-gray-300 rounded focus:ring-[#e9a589]"
         />
       </td>
 
@@ -50,7 +50,7 @@ export function ContactRow({ contact, isSelected, onSelect, onDelete }: ContactR
       <td className="px-6 py-4 whitespace-nowrap">
         <Link 
           href={`/dashboard/contacts/${contact.id}`}
-          className="text-sm font-medium text-[#1a1aff] hover:text-[#0000cc]"
+          className="text-sm font-medium text-[#e9a589] hover:text-[#e9a589]/80"
         >
           {contact.email}
         </Link>

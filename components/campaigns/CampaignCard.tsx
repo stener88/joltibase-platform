@@ -107,16 +107,16 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
   return (
     <>
       <Link href={`/dashboard/campaigns/${campaign.id}/analytics`}>
-        <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-all cursor-pointer">
+        <div className="bg-white rounded-lg border border-[#e8e7e5] p-6 hover:shadow-lg transition-all cursor-pointer">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate">
+            <h3 className="text-lg font-semibold text-[#3d3d3a] mb-1 truncate">
               {campaign.name}
             </h3>
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="flex items-center gap-2 text-sm text-[#6b6b6b]">
               {campaign.ai_generated && (
-                <span className="inline-flex items-center gap-1 text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 text-xs bg-[#e9a589]/10 text-[#e9a589] px-2 py-0.5 rounded-full border border-[#e9a589]/20">
                   ✨ AI Generated
                 </span>
               )}
@@ -164,8 +164,8 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
 
         {/* Subject Line */}
         {campaign.subject_line && (
-          <div className="mb-4 pb-4 border-b border-gray-100">
-            <p className="text-sm text-gray-600 line-clamp-2">
+          <div className="mb-4 pb-4 border-b border-[#e8e7e5]">
+            <p className="text-sm text-[#6b6b6b] line-clamp-2">
               {campaign.subject_line}
             </p>
           </div>
@@ -175,39 +175,39 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
         {campaign.status !== 'draft' && stats.sent > 0 && (
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="flex items-center gap-2">
-              <Mail className="w-4 h-4 text-gray-400" />
+              <Mail className="w-4 h-4 text-[#6b6b6b]" />
               <div>
-                <p className="text-xs text-gray-500">Sent</p>
-                <p className="text-sm font-semibold text-gray-900">{stats.sent.toLocaleString()}</p>
+                <p className="text-xs text-[#6b6b6b]">Sent</p>
+                <p className="text-sm font-semibold text-[#3d3d3a]">{stats.sent.toLocaleString()}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-gray-400" />
+              <Users className="w-4 h-4 text-[#6b6b6b]" />
               <div>
-                <p className="text-xs text-gray-500">Delivered</p>
-                <p className="text-sm font-semibold text-gray-900">{stats.delivered.toLocaleString()}</p>
+                <p className="text-xs text-[#6b6b6b]">Delivered</p>
+                <p className="text-sm font-semibold text-[#3d3d3a]">{stats.delivered.toLocaleString()}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-gray-400" />
+              <TrendingUp className="w-4 h-4 text-[#6b6b6b]" />
               <div>
-                <p className="text-xs text-gray-500">Open Rate</p>
-                <p className="text-sm font-semibold text-gray-900">{openRate}%</p>
+                <p className="text-xs text-[#6b6b6b]">Open Rate</p>
+                <p className="text-sm font-semibold text-[#3d3d3a]">{openRate}%</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-gray-400" />
+              <TrendingUp className="w-4 h-4 text-[#6b6b6b]" />
               <div>
-                <p className="text-xs text-gray-500">Click Rate</p>
-                <p className="text-sm font-semibold text-gray-900">{clickRate}%</p>
+                <p className="text-xs text-[#6b6b6b]">Click Rate</p>
+                <p className="text-sm font-semibold text-[#3d3d3a]">{clickRate}%</p>
               </div>
             </div>
           </div>
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+        <div className="flex items-center justify-between pt-4 border-t border-[#e8e7e5]">
+          <div className="flex items-center gap-2 text-xs text-[#6b6b6b]">
             <Calendar className="w-3.5 h-3.5" />
             {campaign.sent_at ? (
               <span>Sent {new Date(campaign.sent_at).toLocaleDateString()}</span>
@@ -217,7 +217,7 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
               <span>Created {new Date(campaign.created_at).toLocaleDateString()}</span>
             )}
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-[#6b6b6b]">
             {campaign.list_ids?.length || 0} list{campaign.list_ids?.length !== 1 ? 's' : ''}
           </div>
         </div>
@@ -239,17 +239,17 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Rename Campaign</h3>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8e7e5]">
+              <h3 className="text-lg font-semibold text-[#3d3d3a]">Rename Campaign</h3>
               <button
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   setIsRenameDialogOpen(false);
                 }}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg hover:bg-[#f5f4ed] transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5 text-[#6b6b6b]" />
               </button>
             </div>
 
@@ -257,7 +257,7 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
             <form onSubmit={handleRenameSubmit}>
               <div className="p-6 space-y-4">
                 <div>
-                  <label htmlFor="campaign-name" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="campaign-name" className="block text-sm font-medium text-[#3d3d3a] mb-2">
                     Campaign Name
                   </label>
                   <input
@@ -270,7 +270,7 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
                         setIsRenameDialogOpen(false);
                       }
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[#e8e7e5] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589] focus:border-transparent"
                     placeholder="Enter campaign name"
                     autoFocus
                     disabled={isRenaming}
@@ -279,7 +279,7 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200">
+              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e8e7e5]">
                 <button
                   type="button"
                   onClick={(e) => {
@@ -287,14 +287,14 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
                     e.stopPropagation();
                     setIsRenameDialogOpen(false);
                   }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-[#3d3d3a] bg-white border border-[#e8e7e5] rounded-lg hover:bg-[#f5f4ed] transition-colors"
                   disabled={isRenaming}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 text-sm font-medium text-white bg-[#141413] rounded-lg hover:bg-[#3d3d3a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isRenaming || !newName.trim()}
                 >
                   {isRenaming ? 'Saving...' : 'Save'}

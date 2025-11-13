@@ -36,7 +36,7 @@ export function EngagementDistributionChart({ data, height = 250 }: EngagementDi
             }}
             formatter={(value: any) => [value.toLocaleString(), 'Contacts']}
           />
-          <Bar dataKey="count" fill="#8b5cf6" radius={[8, 8, 0, 0]} />
+          <Bar dataKey="count" fill="#e9a589" radius={[8, 8, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

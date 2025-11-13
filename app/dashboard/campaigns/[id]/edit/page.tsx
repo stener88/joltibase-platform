@@ -340,7 +340,7 @@ export default function DashboardCampaignEditorPage() {
       <DashboardLayout>
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e9a589] mx-auto mb-4"></div>
             <p className="text-gray-600">Loading campaign...</p>
           </div>
         </div>
@@ -356,7 +356,7 @@ export default function DashboardCampaignEditorPage() {
             <p className="text-red-600 mb-4">Failed to load campaign</p>
             <button
               onClick={() => router.push('/dashboard/campaigns')}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="px-4 py-2 bg-[#e9a589] text-white rounded hover:bg-[#e9a589]/90"
             >
               Back to Campaigns
             </button>
@@ -369,38 +369,38 @@ export default function DashboardCampaignEditorPage() {
   // Build campaign editor controls for global header
   const campaignEditorControls: CampaignEditorControls = {
     modeSelector: (
-      <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+      <div className="flex items-center gap-1">
         <button
           onClick={() => setEditorMode('chat')}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
             editorMode === 'chat'
-              ? 'bg-blue-600 text-white font-semibold ring-2 ring-blue-300 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'bg-[#e9a589]/10 text-[#e9a589] font-medium'
+              : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          <MessageSquare className={`w-4 h-4 ${editorMode === 'chat' ? 'text-white' : ''}`} />
+          <MessageSquare className="w-4 h-4" />
           Chat
         </button>
         <button
           onClick={() => setEditorMode('visual')}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
             editorMode === 'visual'
-              ? 'bg-blue-600 text-white font-semibold ring-2 ring-blue-300 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'bg-[#e9a589]/10 text-[#e9a589] font-medium'
+              : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          <Layers className={`w-4 h-4 ${editorMode === 'visual' ? 'text-white' : ''}`} />
+          <Layers className="w-4 h-4" />
           Visual Editor
         </button>
         <button
           onClick={() => setEditorMode('edit')}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
             editorMode === 'edit'
-              ? 'bg-blue-600 text-white font-semibold ring-2 ring-blue-300 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'bg-[#e9a589]/10 text-[#e9a589] font-medium'
+              : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          <Edit3 className={`w-4 h-4 ${editorMode === 'edit' ? 'text-white' : ''}`} />
+          <Edit3 className="w-4 h-4" />
           Code Editor
         </button>
       </div>
@@ -413,7 +413,7 @@ export default function DashboardCampaignEditorPage() {
             onClick={() => setDeviceMode('desktop')}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
               deviceMode === 'desktop'
-                ? 'bg-white text-blue-600 shadow-sm'
+                ? 'bg-white text-[#e9a589] shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
             title="Desktop view"
@@ -424,7 +424,7 @@ export default function DashboardCampaignEditorPage() {
             onClick={() => setDeviceMode('mobile')}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
               deviceMode === 'mobile'
-                ? 'bg-white text-blue-600 shadow-sm'
+                ? 'bg-white text-[#e9a589] shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
             title="Mobile view"

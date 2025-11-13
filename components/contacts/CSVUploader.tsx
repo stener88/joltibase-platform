@@ -116,19 +116,19 @@ export function CSVUploader({ onFileLoad }: CSVUploaderProps) {
           onDragLeave={handleDragLeave}
           className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
             isDragging
-              ? 'border-[#1a1aff] bg-blue-50'
-              : 'border-gray-300 hover:border-gray-400'
+              ? 'border-[#e9a589] bg-[#e9a589]/5'
+              : 'border-[#e8e7e5] hover:border-[#3d3d3a]'
           }`}
         >
           <div className="flex flex-col items-center">
-            <Upload className={`w-12 h-12 mb-4 ${isDragging ? 'text-[#1a1aff]' : 'text-gray-400'}`} />
-            <p className="text-lg font-medium text-gray-900 mb-2">
+            <Upload className={`w-12 h-12 mb-4 ${isDragging ? 'text-[#e9a589]' : 'text-[#6b6b6b]'}`} />
+            <p className="text-lg font-medium text-[#3d3d3a] mb-2">
               Drop your CSV file here
             </p>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-[#6b6b6b] mb-4">
               or click to browse
             </p>
-            <label className="px-6 py-2.5 bg-[#1a1aff] text-white rounded-lg hover:bg-[#0000cc] cursor-pointer transition-colors">
+            <label className="px-6 py-2.5 bg-[#141413] text-white rounded-lg hover:bg-[#3d3d3a] cursor-pointer transition-colors">
               Choose File
               <input
                 type="file"
@@ -137,7 +137,7 @@ export function CSVUploader({ onFileLoad }: CSVUploaderProps) {
                 className="hidden"
               />
             </label>
-            <p className="text-xs text-gray-500 mt-4">
+            <p className="text-xs text-[#6b6b6b] mt-4">
               Maximum file size: 10MB
             </p>
           </div>
@@ -148,15 +148,15 @@ export function CSVUploader({ onFileLoad }: CSVUploaderProps) {
             <div className="flex items-center gap-3">
               <FileText className="w-8 h-8 text-green-600" />
               <div>
-                <p className="font-medium text-gray-900">{file.name}</p>
-                <p className="text-sm text-gray-600">
+                <p className="font-medium text-[#3d3d3a]">{file.name}</p>
+                <p className="text-sm text-[#6b6b6b]">
                   {(file.size / 1024).toFixed(2)} KB
                 </p>
               </div>
             </div>
             <button
               onClick={handleRemove}
-              className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="p-2 text-[#6b6b6b] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
