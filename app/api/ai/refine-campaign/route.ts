@@ -312,6 +312,7 @@ ${requestType === 'major' ? `2. **MAJOR REDESIGN EXECUTION** (for major requests
      ❌ WRONG: Do NOT create "icon-url-1", "icon-url-2", "icon-url-3" at block level - icons belong in the features array
    - **image/logo/hero**: Must have "imageUrl" and "altText" in content
    - **button**: Must have "containerPadding" in settings
+   - **social-links**: Must have in content: "links" (array of objects with "platform" and "url"). Platform must be one of: "twitter", "linkedin", "facebook", "instagram", "youtube", "github", "tiktok". URLs must be valid (e.g., "https://twitter.com/company") or merge tag placeholders (e.g., "{{twitter_url}}")
    - **footer**: Always keep at end with position = last
 
 5. **VALIDATION CHECK (Before responding):**
@@ -337,6 +338,9 @@ Response: Find button block → change settings.color to "#7c3aed" → keep ever
 
 User: "add a testimonial after the features"
 Response: Insert new testimonial block after features → renumber subsequent positions → include ALL required fields
+
+User: "add social media icons to the footer"
+Response: Insert new social-links block before footer → include links array with platform and valid URLs (e.g., [{"platform": "twitter", "url": "https://twitter.com/company"}, {"platform": "linkedin", "url": "https://linkedin.com/company/company"}]) → include ALL required settings fields
 
 ${requestType === 'major' ? `User: "remake the whole newsletter"
 Response: Create a completely new newsletter structure with different blocks, layout, and content flow. Execute the full redesign, don't just suggest improvements.` : ''}
@@ -427,10 +431,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Verify campaign ownership
+    // 3. Verify campaign ownership (check campaigns table for both AI-generated and manually created campaigns)
     console.log('🔍 [REFINE-API] Verifying campaign ownership...');
     const { data: campaign, error: campaignError } = await supabase
-      .from('ai_generations')
+      .from('campaigns')
       .select('user_id')
       .eq('id', validatedInput.campaignId)
       .single();

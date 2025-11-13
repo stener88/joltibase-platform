@@ -407,7 +407,7 @@ export const SocialLinksBlockSettingsSchema = z.object({
 export const SocialLinksBlockContentSchema = z.object({
   links: z.array(z.object({
     platform: z.enum(['twitter', 'linkedin', 'facebook', 'instagram', 'youtube', 'github', 'tiktok']),
-    url: z.string().url(),
+    url: UrlOrMergeTagSchema,
   })).min(1).max(10),
 });
 

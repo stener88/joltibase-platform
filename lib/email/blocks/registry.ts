@@ -452,7 +452,7 @@ export function getDefaultBlockContent(type: BlockType): any {
   switch (type) {
     case 'logo':
       return {
-        imageUrl: 'https://via.placeholder.com/150x50',
+        imageUrl: '{{logo_url}}',
         altText: 'Company Logo',
       };
     
@@ -471,7 +471,7 @@ export function getDefaultBlockContent(type: BlockType): any {
     
     case 'image':
       return {
-        imageUrl: 'https://via.placeholder.com/600x400',
+        imageUrl: '{{image_url}}',
         altText: 'Image',
       };
     

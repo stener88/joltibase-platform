@@ -43,12 +43,30 @@ function getPlaceholderImage(type: 'logo' | 'image' | 'hero', width: number = 40
 
 /**
  * Replace merge tag URLs with placeholders for visual editor
+ * Also handles invalid/broken URLs (like example.com) to prevent flickering
  */
 function processImageUrl(url: string, type: 'logo' | 'image' | 'hero' = 'image'): string {
   // Check if URL is a merge tag placeholder
   if (/^\{\{.+\}\}$/.test(url)) {
     return getPlaceholderImage(type);
   }
+  
+  // Check for invalid/broken URLs that should be replaced with placeholders
+  // This prevents flickering from broken image links
+  if (url && typeof url === 'string') {
+    const lowerUrl = url.toLowerCase();
+    // Detect example.com URLs and other obviously invalid patterns
+    if (
+      lowerUrl.includes('example.com') ||
+      lowerUrl.includes('placeholder.com') ||
+      lowerUrl === 'url' ||
+      lowerUrl === 'image' ||
+      lowerUrl === 'logo'
+    ) {
+      return getPlaceholderImage(type);
+    }
+  }
+  
   return url;
 }
 

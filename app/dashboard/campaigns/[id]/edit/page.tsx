@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useCampaignQuery, useCampaignMutation, useCampaignRefineMutation } from '@/hooks/use-campaign-query';
 import { useEditorHistory } from '@/hooks/use-editor-history';
 import { renderBlocksToEmail } from '@/lib/email/blocks/renderer';
@@ -61,6 +61,7 @@ function getCampaignPlaceholderName(campaign: any): string {
 export default function DashboardCampaignEditorPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const campaignId = params.id as string;
   
   // Server state (React Query)
@@ -68,8 +69,11 @@ export default function DashboardCampaignEditorPage() {
   const saveMutation = useCampaignMutation(campaignId);
   const refineMutation = useCampaignRefineMutation(campaignId);
   
-  // UI state
-  const [editorMode, setEditorMode] = useState<EditorMode>('chat');
+  // Check for initial mode from query params
+  const initialMode = searchParams.get('mode') as EditorMode | null;
+  const [editorMode, setEditorMode] = useState<EditorMode>(
+    initialMode === 'visual' || initialMode === 'edit' ? initialMode : 'chat'
+  );
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [chatVersions, setChatVersions] = useState<any[]>([]);
   const [chatVersionIndex, setChatVersionIndex] = useState(0);
@@ -120,7 +124,14 @@ export default function DashboardCampaignEditorPage() {
   useEffect(() => {
     if (campaign && !editorHistory.state) {
       const blocks = campaign.blocks || [];
-      const globalSettings = campaign.design_config || {};
+      // Use default design config if none exists
+      const globalSettings = campaign.design_config || {
+        backgroundColor: '#f3f4f6',
+        contentBackgroundColor: '#ffffff',
+        maxWidth: 600,
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        mobileBreakpoint: 480,
+      };
       
       editorHistory.initialize({
         blocks,

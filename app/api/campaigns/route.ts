@@ -17,6 +17,8 @@ const CreateCampaignSchema = z.object({
   html_content: z.string().optional(),
   plain_text: z.string().optional(),
   list_ids: z.array(z.string()).default([]),
+  blocks: z.array(z.any()).optional(),
+  design_config: z.any().optional(), // Use z.any() to avoid nested validation issues
 });
 
 // ============================================
@@ -155,6 +157,8 @@ export async function POST(request: Request) {
         html_content: data.html_content || null,
         plain_text: data.plain_text || null,
         list_ids: data.list_ids,
+        blocks: data.blocks || [],
+        design_config: data.design_config || null,
         send_config: {},
         stats: {
           sent: 0,

@@ -1,174 +1,104 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { ArrowLeft, CheckCircle } from 'lucide-react';
-import { CampaignDetailsStep } from '@/components/campaigns/wizard/CampaignDetailsStep';
-import { EmailContentStep } from '@/components/campaigns/wizard/EmailContentStep';
-import { AudienceStep } from '@/components/campaigns/wizard/AudienceStep';
-import { ReviewStep } from '@/components/campaigns/wizard/ReviewStep';
+import type { GlobalEmailSettings } from '@/lib/email/blocks/types';
 
-type Step = 'details' | 'content' | 'audience' | 'review';
-
-interface CampaignData {
-  name: string;
-  type: 'one-time' | 'sequence' | 'automation';
-  from_name: string;
-  from_email: string;
-  reply_to_email: string;
-  subject_line: string;
-  preview_text: string;
-  html_content: string;
-  plain_text: string;
-  list_ids: string[];
-}
+const DEFAULT_DESIGN_CONFIG: GlobalEmailSettings = {
+  backgroundColor: '#f3f4f6',
+  contentBackgroundColor: '#ffffff',
+  maxWidth: 600,
+  fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  mobileBreakpoint: 480,
+};
 
 export default function NewCampaignPage() {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState<Step>('details');
-  const [campaignData, setCampaignData] = useState<CampaignData>({
-    name: '',
-    type: 'one-time',
-    from_name: '',
-    from_email: '',
-    reply_to_email: '',
-    subject_line: '',
-    preview_text: '',
-    html_content: '',
-    plain_text: '',
-    list_ids: [],
-  });
+  const [isCreating, setIsCreating] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const steps: { key: Step; label: string; completed: boolean }[] = [
-    { key: 'details', label: 'Campaign Details', completed: currentStep !== 'details' },
-    { key: 'content', label: 'Email Content', completed: ['audience', 'review'].includes(currentStep) },
-    { key: 'audience', label: 'Audience', completed: currentStep === 'review' },
-    { key: 'review', label: 'Review & Schedule', completed: false },
-  ];
+  useEffect(() => {
+    const createCampaign = async () => {
+      try {
+        // Get user email
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user?.email) {
+          throw new Error('Please sign in to create a campaign');
+        }
 
-  const updateCampaignData = (updates: Partial<CampaignData>) => {
-    setCampaignData(prev => ({ ...prev, ...updates }));
-  };
+        // Generate campaign name
+        const timestamp = new Date().toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        const campaignName = `Untitled Campaign - ${timestamp}`;
+        const fromName = user.email.split('@')[0].charAt(0).toUpperCase() + user.email.split('@')[0].slice(1);
 
-  const handleNext = () => {
-    if (currentStep === 'details') setCurrentStep('content');
-    else if (currentStep === 'content') setCurrentStep('audience');
-    else if (currentStep === 'audience') setCurrentStep('review');
-  };
+        // Create campaign with empty blocks and default design config
+        const response = await fetch('/api/campaigns', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: campaignName,
+            type: 'one-time',
+            from_name: fromName,
+            from_email: user.email,
+            blocks: [],
+            design_config: DEFAULT_DESIGN_CONFIG,
+          }),
+        });
 
-  const handleBack = () => {
-    if (currentStep === 'content') setCurrentStep('details');
-    else if (currentStep === 'audience') setCurrentStep('content');
-    else if (currentStep === 'review') setCurrentStep('audience');
-  };
+        const result = await response.json();
 
-  const handleSaveDraft = async () => {
-    try {
-      const response = await fetch('/api/campaigns', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(campaignData),
-      });
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || 'Failed to create campaign');
+        }
 
-      const result = await response.json();
-      if (result.success) {
-        router.push('/dashboard/campaigns');
+        // Redirect to edit page with visual mode
+        router.push(`/dashboard/campaigns/${result.data.id}/edit?mode=visual`);
+      } catch (err: any) {
+        console.error('Failed to create campaign:', err);
+        setError(err.message || 'Failed to create campaign');
+        setIsCreating(false);
       }
-    } catch (error) {
-      console.error('Failed to save draft:', error);
-    }
-  };
+    };
+
+    createCampaign();
+  }, [router]);
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center max-w-md">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Failed to Create Campaign</h2>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <button
+              onClick={() => router.push('/dashboard/campaigns')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Back to Campaigns
+            </button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
-      <div className="max-w-6xl mx-auto px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back
-          </button>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Campaign</h1>
-          <p className="text-gray-600">Create a new email campaign step by step</p>
-        </div>
-
-        {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between max-w-3xl mx-auto">
-            {steps.map((step, idx) => (
-              <div key={step.key} className="flex items-center flex-1">
-                <div className="flex flex-col items-center flex-1">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
-                    step.completed
-                      ? 'bg-[#1a1aff] border-[#1a1aff] text-white'
-                      : currentStep === step.key
-                      ? 'bg-[#1a1aff] border-[#1a1aff] text-white'
-                      : 'bg-white border-gray-300 text-gray-400'
-                  }`}>
-                    {step.completed ? (
-                      <CheckCircle className="w-5 h-5" />
-                    ) : (
-                      <span className="text-sm font-semibold">{idx + 1}</span>
-                    )}
-                  </div>
-                  <span className={`text-sm mt-2 font-medium text-center ${
-                    currentStep === step.key ? 'text-gray-900' : 'text-gray-500'
-                  }`}>
-                    {step.label}
-                  </span>
-                </div>
-                {idx < steps.length - 1 && (
-                  <div className={`h-0.5 flex-1 -mt-8 ${
-                    step.completed ? 'bg-[#1a1aff]' : 'bg-gray-300'
-                  }`} />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Step Content */}
-        <div className="bg-white rounded-lg border border-gray-200 p-8">
-          {currentStep === 'details' && (
-            <CampaignDetailsStep
-              data={campaignData}
-              onUpdate={updateCampaignData}
-              onNext={handleNext}
-              onSaveDraft={handleSaveDraft}
-            />
-          )}
-          {currentStep === 'content' && (
-            <EmailContentStep
-              data={campaignData}
-              onUpdate={updateCampaignData}
-              onNext={handleNext}
-              onBack={handleBack}
-              onSaveDraft={handleSaveDraft}
-            />
-          )}
-          {currentStep === 'audience' && (
-            <AudienceStep
-              data={campaignData}
-              onUpdate={updateCampaignData}
-              onNext={handleNext}
-              onBack={handleBack}
-              onSaveDraft={handleSaveDraft}
-            />
-          )}
-          {currentStep === 'review' && (
-            <ReviewStep
-              data={campaignData}
-              onBack={handleBack}
-              onSaveDraft={handleSaveDraft}
-            />
-          )}
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Creating your campaign...</p>
         </div>
       </div>
     </DashboardLayout>
   );
 }
-
