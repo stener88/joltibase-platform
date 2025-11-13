@@ -70,14 +70,74 @@ export function PromptInput({
     }
   };
 
+  // For non-compact mode (landing page), use dark style
+  if (!compact) {
+    return (
+      <div className="w-full max-w-3xl mx-auto">
+        <div
+          className="relative bg-gray-800 rounded-2xl border border-gray-600"
+          style={{
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
+          }}
+        >
+          {/* Input container */}
+          <div className="relative flex items-start">
+            {/* Textarea */}
+            <textarea
+              ref={textareaRef}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              onKeyDown={handleKeyDown}
+              placeholder={dynamicPlaceholder || "Build SaaS Dashboard..."}
+              disabled={isLoading}
+              className="w-full min-h-[180px] max-h-[300px] pl-6 pr-20 py-6 text-lg font-normal text-white placeholder-gray-400 bg-transparent border-none outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ 
+                lineHeight: '1.6',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                caretColor: 'white',
+                paddingBottom: '56px'
+              }}
+            />
+
+            {/* Send button - blue square with arrow */}
+            <button
+              onClick={handleSubmitClick}
+              disabled={!value.trim() || isLoading}
+              className="absolute right-4 bottom-4 w-12 h-12 text-white rounded-lg flex items-center justify-center transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed group"
+              style={{
+                backgroundColor: '#B7B3B3',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                if (!isLoading && value.trim()) {
+                  e.currentTarget.style.backgroundColor = '#a9b4c3';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#B7B3B3';
+              }}
+            >
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <ArrowUp className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform duration-300" />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Compact mode (chat interface) - keep original style
   return (
-    <div className={compact ? "w-full" : "w-full max-w-4xl mx-auto"}>
+    <div className="w-full">
       <div
-        className={`relative bg-white ${compact ? 'rounded-xl border-2' : 'rounded-2xl border-[3px]'} border-[#1a1aff]`}
+        className={`relative bg-white rounded-xl border-2 border-[#1a1aff]`}
         style={{
-          boxShadow: compact 
-            ? '0 2px 4px rgba(0, 0, 0, 0.1)' 
-            : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
         }}
       >
         {/* Input container */}
@@ -92,18 +152,18 @@ export function PromptInput({
             onKeyDown={handleKeyDown}
             placeholder={dynamicPlaceholder}
             disabled={isLoading}
-            className={`w-full ${compact ? 'min-h-[80px] max-h-[200px] px-4 py-3 text-base' : 'min-h-[140px] max-h-[300px] px-6 py-6 text-lg'} font-normal text-black placeholder-black bg-transparent border-none outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed`}
+            className={`w-full min-h-[80px] max-h-[200px] px-4 py-3 text-base font-normal text-black placeholder-black bg-transparent border-none outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed`}
             style={{ 
               lineHeight: '1.6',
               fontFamily: 'system-ui, -apple-system, sans-serif',
               caretColor: 'black',
-              paddingRight: compact ? (onChatOnlyToggle ? '88px' : '48px') : '72px',
-              paddingBottom: compact ? '40px' : '48px'
+              paddingRight: onChatOnlyToggle ? '88px' : '48px',
+              paddingBottom: '40px'
             }}
           />
 
           {/* Chat mode toggle button (only in compact mode with toggle handler) */}
-          {compact && onChatOnlyToggle && (
+          {onChatOnlyToggle && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -134,7 +194,7 @@ export function PromptInput({
             onClick={handleSubmitClick}
             disabled={!value.trim() || isLoading}
             className={`
-              absolute ${compact ? 'right-2 bottom-2 w-7 h-7' : 'right-4 bottom-4 w-12 h-12'}
+              absolute right-2 bottom-2 w-7 h-7
               rounded-full
               text-white
               flex items-center justify-center
@@ -150,9 +210,9 @@ export function PromptInput({
             }}
           >
             {isLoading ? (
-              <div className={`${compact ? 'w-3 h-3' : 'w-4 h-4'} border-2 border-white border-t-transparent rounded-full animate-spin`} />
+              <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
-              <ArrowUp className={`${compact ? 'w-3 h-3' : 'w-4 h-4'} group-hover:-translate-y-0.5 transition-transform duration-300`} />
+              <ArrowUp className="w-3 h-3 group-hover:-translate-y-0.5 transition-transform duration-300" />
             )}
           </button>
         </div>

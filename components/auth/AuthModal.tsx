@@ -163,7 +163,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md mx-4 bg-white rounded-2xl overflow-hidden"
+      <div className="relative w-full max-w-md mx-4 bg-white/70 backdrop-blur-md rounded-2xl overflow-hidden border border-white/30"
         style={{
           boxShadow: '0 0 0 1px rgba(26, 26, 255, 0.1), 0 20px 50px rgba(0, 0, 0, 0.2)'
         }}
@@ -183,10 +183,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
             <>
               {/* Logo and Header */}
               <div className="mb-8 text-center">
-                <div className="flex items-center justify-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-[#1a1aff] rounded flex items-center justify-center">
-                    <span className="text-2xl font-bold text-white">J</span>
-                  </div>
+                <div className="flex items-center justify-center mb-6">
                   <span className="text-2xl text-black">joltibase</span>
                 </div>
                 <h2 className="text-3xl font-bold text-black">
@@ -214,7 +211,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               <div className="space-y-3 mb-6">
                 <button
                   onClick={() => handleOAuth('google')}
-                  className="w-full flex items-center justify-center gap-3 py-3.5 px-4 border-2 border-gray-200 rounded-lg bg-white text-base font-medium text-gray-700 hover:bg-gray-50 hover:border-[#1a1aff] transition-all"
+                  className="w-full flex items-center justify-center gap-3 py-3.5 px-4 border-2 border-gray-200/80 rounded-lg bg-white/50 backdrop-blur-sm text-base font-medium text-gray-700 hover:bg-white/70 hover:border-gray-300 transition-all"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path
@@ -239,7 +236,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
 
                 <button
                   onClick={() => handleOAuth('github')}
-                  className="w-full flex items-center justify-center gap-3 py-3.5 px-4 border-2 border-gray-200 rounded-lg bg-white text-base font-medium text-gray-700 hover:bg-gray-50 hover:border-[#1a1aff] transition-all"
+                  className="w-full flex items-center justify-center gap-3 py-3.5 px-4 border-2 border-gray-200/80 rounded-lg bg-white/50 backdrop-blur-sm text-base font-medium text-gray-700 hover:bg-white/70 hover:border-gray-300 transition-all"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                     <path
@@ -255,17 +252,14 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               {/* Divider */}
               <div className="relative mb-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-3 bg-white text-gray-500">OR</span>
+                  <div className="w-full border-t border-gray-200/50" />
                 </div>
               </div>
 
               {/* Continue with Email Button */}
               <button
                 onClick={() => setShowEmailForm(true)}
-                className="w-full py-3.5 px-4 bg-white border-2 border-gray-200 text-gray-700 rounded-lg text-base font-medium hover:bg-gray-50 hover:border-[#1a1aff] transition-all"
+                className="w-full py-3.5 px-4 bg-white/50 backdrop-blur-sm border-2 border-gray-200/80 text-gray-700 rounded-lg text-base font-medium hover:bg-white/70 hover:border-gray-300 transition-all"
               >
                 Continue with email
               </button>
@@ -286,12 +280,12 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               </button>
 
               {/* Tabs */}
-              <div className="flex gap-1 p-1 bg-gray-100 rounded-lg mb-6">
+              <div className="flex gap-1 p-1 bg-gray-100/50 backdrop-blur-sm rounded-lg mb-6">
                 <button
                   onClick={() => setMode('signin')}
                   className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-all ${
                     mode === 'signin'
-                      ? 'bg-white text-black shadow-sm'
+                      ? 'bg-white/70 backdrop-blur-sm text-black shadow-sm'
                       : 'text-gray-600 hover:text-black'
                   }`}
                 >
@@ -301,7 +295,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   onClick={() => setMode('signup')}
                   className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-all ${
                     mode === 'signup'
-                      ? 'bg-white text-black shadow-sm'
+                      ? 'bg-white/70 backdrop-blur-sm text-black shadow-sm'
                       : 'text-gray-600 hover:text-black'
                   }`}
                 >
@@ -348,7 +342,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                       required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-[#1a1aff] transition-all"
+                      className="w-full px-3 py-2.5 bg-white/50 backdrop-blur-sm border-2 border-gray-200/80 rounded-lg focus:outline-none focus:border-gray-300 transition-all"
                       placeholder="John Doe"
                     />
                   </div>
@@ -366,7 +360,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-[#1a1aff] transition-all"
+                    className="w-full px-3 py-2.5 bg-white/50 backdrop-blur-sm border-2 border-gray-200/80 rounded-lg focus:outline-none focus:border-gray-300 transition-all"
                     placeholder="you@example.com"
                   />
                 </div>

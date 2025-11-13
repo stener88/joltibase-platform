@@ -7,7 +7,6 @@ import { Header } from '@/components/layout/Header';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { GradientBackground } from '@/components/campaigns/GradientBackground';
 import { PromptInput } from '@/components/campaigns/PromptInput';
-import { ExamplePrompts } from '@/components/campaigns/ExamplePrompts';
 import { GenerationProgress } from '@/components/campaigns/GenerationProgress';
 import { EmailSkeleton } from '@/components/campaigns/EmailSkeleton';
 import { SplitScreenLayout } from '@/components/campaigns/SplitScreenLayout';
@@ -187,16 +186,24 @@ export default function HomePage() {
             <div className="w-full max-w-6xl">
               {/* Header */}
               <div className="text-center mb-12">
-                <h1 className="text-5xl md:text-6xl font-bold text-black mb-4 leading-tight">
+                <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 leading-[1.1] tracking-[-0.03em]" style={{ 
+                  fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                  fontWeight: 500,
+                  textShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+                }}>
                   Email marketing in
                   <br />
-                  <span className="text-[#1a1aff]">
+                  <span className="text-white text-7xl md:text-8xl italic font-light" style={{ 
+                    fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                    fontStyle: 'italic',
+                    fontWeight: 300,
+                    opacity: 0.9,
+                    letterSpacing: '-0.02em'
+                  }}>
                     one conversation
                   </span>
                 </h1>
-                <p className="text-lg text-gray-800 max-w-xl mx-auto">
-                Create email campaigns by chatting with AI
-                </p>
+              
               </div>
 
               {/* Main Input */}
@@ -205,18 +212,16 @@ export default function HomePage() {
                 onChange={setPrompt}
                 onSubmit={handleGenerate}
                 isLoading={isLoading}
-                placeholder="Ask Jolti..."
+                placeholder="Build SaaS Dashboard..."
               />
 
               {/* Error Display */}
               {error && (
-                <div className="mt-4 max-w-3xl mx-auto p-4 bg-red-50 border border-red-200 rounded-xl">
+                <div className="mt-4 max-w-3xl mx-auto p-4 bg-red-50/90 backdrop-blur-sm border border-red-200 rounded-xl">
                   <p className="text-sm text-red-800 text-center">{error}</p>
                 </div>
               )}
 
-              {/* Example Prompts */}
-              <ExamplePrompts onSelectPrompt={(p) => setPrompt(p)} />
             </div>
           </div>
         </div>

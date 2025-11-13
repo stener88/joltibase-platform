@@ -83,17 +83,14 @@ export function Header({ onLoginClick, campaignMode }: HeaderProps = {}) {
   };
 
   return (
-    <header className="relative z-20 bg-[#F5F5F5] border-b border-gray-200">
+    <header className="relative z-20 bg-transparent">
       <div className="w-full px-8 py-3 flex items-center justify-between gap-4">
         {/* Logo */}
     <Link 
       href="/" 
-      className="flex items-center gap-3 hover:opacity-80 transition-opacity flex-shrink-0"
+      className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0"
     >
-      <div className="w-8 h-8 bg-[#1a1aff] rounded flex items-center justify-center">
-        <span className="text-lg font-bold text-white">J</span>
-      </div>
-      <span className="text-xl font-medium text-gray-900">joltibase</span>
+      <span className="text-xl font-medium text-white">joltibase</span>
     </Link>
 
         {/* Campaign content (when in campaign mode) */}
@@ -146,19 +143,19 @@ export function Header({ onLoginClick, campaignMode }: HeaderProps = {}) {
               )}
             </div>
           ) : (
-            // Logged out: Login and Get started buttons
+            // Logged out: Sign in and Sign up buttons
             <>
               <button
                 onClick={onLoginClick}
-                className="px-6 py-1.5 text-sm font-normal bg-transparent border border-gray-300 text-gray-700 rounded-lg hover:border-gray-400 hover:text-gray-900 transition-all"
+                className="px-6 py-1.5 text-sm font-normal bg-white text-gray-900 rounded-lg hover:bg-gray-50 transition-all"
               >
-                Log in
+                Sign in
               </button>
               <button
                 onClick={onLoginClick}
-                className="px-6 py-1.5 text-sm font-normal bg-white border border-gray-200 text-black rounded-lg hover:bg-gray-50 transition-all shadow-sm"
+                className="px-6 py-1.5 text-sm font-normal bg-transparent border border-white/30 text-white rounded-lg hover:bg-white/10 transition-all shadow-sm"
               >
-                Get started
+                Sign up
               </button>
             </>
           )}

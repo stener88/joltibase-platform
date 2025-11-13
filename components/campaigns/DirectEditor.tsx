@@ -2,7 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { Edit3, Wand2 } from 'lucide-react';
-import type { RenderedEmail } from '@/lib/email/templates/types';
+
+/**
+ * Rendered email structure (used for direct editing)
+ */
+export interface RenderedEmail {
+  html: string;
+  plainText: string;
+  previewText: string;
+  subject: string;
+}
 
 interface CampaignInfo {
   campaignName: string;

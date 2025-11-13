@@ -96,35 +96,10 @@ const GeneratedBlockEmailSchema = z.object({
 
 /**
  * Design configuration from AI
+ * NOTE: template field is deprecated (legacy) - system now uses blocks
  */
 const DesignConfigSchema = z.object({
-  template: z.enum([
-    // Legacy templates
-    'gradient-hero', 
-    'color-blocks', 
-    'bold-modern', 
-    'minimal-accent', 
-    'text-first',
-    // Premium templates
-    'premium-hero',
-    'split-hero',
-    'gradient-impact',
-    'minimal-hero',
-    // Content-focused templates
-    'story-teller',
-    'feature-showcase',
-    'newsletter-pro',
-    'text-luxury',
-    // Conversion-focused templates
-    'launch-announcement',
-    'promo-bold',
-    'social-proof',
-    'comparison-hero',
-    // Specialized templates
-    'welcome-warmth',
-    'milestone-celebration',
-    'update-digest',
-  ]),
+  template: z.string().nullish(), // Deprecated: kept for backward compatibility, not used for rendering
   headerGradient: z.object({
     from: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color'),
     to: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color'),

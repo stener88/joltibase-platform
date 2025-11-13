@@ -5,14 +5,14 @@
 export type ToneType = 'professional' | 'friendly' | 'casual';
 export type CampaignType = 'one-time' | 'sequence';
 export type AIModel = 'gpt-4o' | 'gpt-4-turbo-preview' | 'gpt-4' | 'gemini-flash-2.5';
-export type TemplateType = 'gradient-hero' | 'color-blocks' | 'bold-modern' | 'minimal-accent' | 'text-first';
 export type GradientDirection = 'to-right' | 'to-bottom' | 'to-br';
 
 /**
  * Design configuration for email
+ * NOTE: template field is deprecated - system now uses blocks
  */
 export interface EmailDesign {
-  template: TemplateType;
+  template?: string; // Deprecated: kept for backward compatibility, not used for rendering
   headerGradient?: {
     from: string;
     to: string;
@@ -20,7 +20,7 @@ export interface EmailDesign {
   };
   ctaColor: string;
   accentColor?: string;
-  visualStyle: 'modern-clean' | 'bold-energetic' | 'minimal-professional';
+  visualStyle?: 'modern-clean' | 'bold-energetic' | 'minimal-professional';
 }
 
 /**

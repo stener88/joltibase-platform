@@ -1,6 +1,6 @@
 'use client';
 
-import { Lightbulb, UserPlus, Rocket, Sparkles, Newspaper } from 'lucide-react';
+import { UserPlus, Rocket, Sparkles, Newspaper } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface ExamplePromptsProps {
@@ -33,42 +33,28 @@ const EXAMPLE_PROMPTS = [
 export function ExamplePrompts({ onSelectPrompt }: ExamplePromptsProps) {
   return (
     <div className="w-full max-w-4xl mx-auto mt-12">
-      {/* Header */}
-      <div className="flex items-center justify-center gap-2 mb-6">
-        <Lightbulb className="w-4 h-4 text-gray-400" />
-        <span className="text-sm font-medium text-gray-600">
-          Try these examples
-        </span>
-      </div>
-
       {/* Grid of example prompts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {EXAMPLE_PROMPTS.map((example, index) => {
-          const Icon = example.icon;
           return (
           <button
             key={index}
             onClick={() => onSelectPrompt(example.prompt)}
-            className="group relative p-6 bg-white rounded-lg border border-gray-200 hover:border-[#1a1aff] hover:shadow-md transition-all duration-200 text-left hover:scale-[1.02] active:scale-[0.98]"
+            className="group relative p-6 bg-white/30 backdrop-blur-sm rounded-lg border border-white/30 hover:border-white/60 hover:shadow-md transition-all duration-200 text-left hover:scale-[1.02] active:scale-[0.98]"
           >
-            {/* Icon */}
-            <div className="mb-3">
-              <Icon className="w-4 h-4 text-black group-hover:text-[#1a1aff] transition-colors" />
-            </div>
-
             {/* Title */}
-            <h3 className="font-semibold text-black mb-2 group-hover:text-[#1a1aff] transition-colors">
+            <h3 className="font-semibold text-gray-900 mb-2 transition-colors">
               {example.title}
             </h3>
 
             {/* Description */}
-            <p className="text-sm text-gray-600 leading-relaxed">
+            <p className="text-sm text-gray-700 leading-relaxed">
               {example.prompt}
             </p>
 
             {/* Hover indicator */}
             <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="text-xs text-[#1a1aff] font-medium">
+              <div className="text-xs text-gray-700 font-medium">
                 Click to use →
               </div>
             </div>
@@ -80,7 +66,7 @@ export function ExamplePrompts({ onSelectPrompt }: ExamplePromptsProps) {
       {/* Or divider */}
       <div className="relative my-12">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-200"></div>
+          <div className="w-full border-t border-white/20"></div>
         </div>
         
       </div>

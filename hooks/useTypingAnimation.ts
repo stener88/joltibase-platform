@@ -30,13 +30,13 @@ export function useTypingAnimation(texts: string[], isActive: boolean = true) {
           // Continue typing
           currentPositionRef.current++;
           nextText = currentText.slice(0, currentPos + 1);
-          // Random typing speed between 30-60ms for fast animation
-          delay = Math.random() * 30 + 30;
+          // Random typing speed between 15-30ms for faster animation
+          delay = Math.random() * 15 + 15;
         } else {
           // Finished typing, pause before deleting
           nextText = currentText;
           isDeletingRef.current = true;
-          delay = 3000;
+          delay = 2000;
         }
       } else {
         // Deleting mode
@@ -44,15 +44,15 @@ export function useTypingAnimation(texts: string[], isActive: boolean = true) {
           // Continue deleting
           currentPositionRef.current--;
           nextText = currentText.slice(0, currentPos - 1);
-          // Delete speed between 25-45ms
-          delay = Math.random() * 20 + 25;
+          // Delete speed between 10-25ms for faster deletion
+          delay = Math.random() * 15 + 10;
         } else {
           // Finished deleting, move to next text
           nextText = '';
           isDeletingRef.current = false;
           currentIndexRef.current = (currentIndexRef.current + 1) % texts.length;
           currentPositionRef.current = 0;
-          delay = 800;
+          delay = 500;
         }
       }
 
