@@ -33,6 +33,8 @@ Generate email campaigns with block-based structure. The schema is enforced, so 
 
 ## Complex Layout Blocks (Flodesk-Level Sophistication)
 
+**STANDARD COMPLEX BLOCKS:**
+
 **TWO-COLUMN** - Side-by-side image + text layouts
 - Layout options: 50-50, 60-40, 40-60, 70-30, 30-70
 - Columns can be: image, text, or rich-content (heading+body+button)
@@ -86,6 +88,50 @@ Generate email campaigns with block-based structure. The schema is enforced, so 
 - Use for: sales percentages, ratings, labels
 - Example: "50% OFF" badge in top-right of product image
 
+**ADVANCED INTERACTIVE BLOCKS (Gemini-Powered):**
+
+**CAROUSEL** - Multi-slide interactive image galleries
+- 2-10 slides with images, headings, text, and CTAs
+- Auto-play option with configurable intervals
+- Indicators for navigation
+- Use for: product showcases, step-by-step guides, before/after series
+- Example: 5-slide product tour with "Learn More" CTAs
+
+**TAB-CONTAINER** - Tabbed content sections
+- 2-8 tabs with labels and optional icons
+- Each tab contains: heading, text, image, and button
+- Tab styles: pills, underline, or bordered
+- Use for: feature comparisons, multi-product displays, FAQs
+- Example: 3 tabs for "Basic", "Pro", "Enterprise" pricing tiers
+
+**ACCORDION** - Expandable/collapsible content sections
+- 2-10 collapsible items with titles and content
+- Allow single or multiple items expanded
+- Customizable icons and styling
+- Use for: FAQs, feature details, lengthy content organization
+- Example: 5 FAQ items with "+" expand indicators
+
+**MASONRY-GRID** - Pinterest-style auto-flowing layouts
+- 2-5 columns with variable-height items
+- Items can be: images, text, or cards
+- Auto-flow algorithm for optimal spacing
+- Use for: portfolios, product galleries, content feeds
+- Example: 3-column grid with 12 product images
+
+**DYNAMIC-COLUMN** - Flexible 2-5 column layouts
+- Each column can have custom width (20%-80%)
+- Supports icons, images, headings, text, buttons
+- Auto-stacks on mobile
+- Use for: comparison tables, feature lists, team grids
+- Example: 4 equal columns showing team members
+
+**CONTAINER** - Nested block groups (blocks within blocks!)
+- Contains 1-10 child blocks
+- Layout options: stack, grid, or flex
+- Customizable background and borders
+- Use for: complex sections, grouped content, advanced layouts
+- Example: Container with hero + stats + button blocks inside
+
 ## Example Campaign
 
 {
@@ -119,6 +165,38 @@ Generate email campaigns with block-based structure. The schema is enforced, so 
   "successMetrics": "Open >30%, Click >5%, Trial conversion >15%"
 }
 
+## Example with Advanced Blocks (Gemini-Powered)
+
+{
+  "campaignName": "Interactive Product Showcase",
+  "blocks": [
+    { "id": "logo", "type": "logo", "position": 0, "content": {"imageUrl": "{{logo_url}}", "altText": "Logo"}, "settings": {"width": "140px", "align": "center", "padding": {"top": 20, "bottom": 20, "left": 20, "right": 20}} },
+    { "id": "carousel-hero", "type": "carousel", "position": 1,
+      "content": {"slides": [
+        {"imageUrl": "https://images.unsplash.com/photo-1", "imageAltText": "Product 1", "heading": "Meet Our Flagship", "text": "Premium quality meets modern design", "buttonText": "Explore", "buttonUrl": "{{shop_url}}/1"},
+        {"imageUrl": "https://images.unsplash.com/photo-2", "imageAltText": "Product 2", "heading": "Best Seller", "text": "Loved by thousands worldwide", "buttonText": "Shop Now", "buttonUrl": "{{shop_url}}/2"},
+        {"imageUrl": "https://images.unsplash.com/photo-3", "imageAltText": "Product 3", "heading": "New Arrival", "text": "Just dropped this week", "buttonText": "View", "buttonUrl": "{{shop_url}}/3"}
+      ]},
+      "settings": {"slideHeight": "400px", "showIndicators": true, "indicatorColor": "#d1d5db", "indicatorActiveColor": "#7c3aed", "autoPlay": true, "padding": {"top": 0, "bottom": 0, "left": 0, "right": 0}} },
+    { "id": "tabs-pricing", "type": "tab-container", "position": 2,
+      "content": {"tabs": [
+        {"label": "Basic", "icon": "📦", "heading": "$29/month", "text": "Perfect for individuals\n• 10 projects\n• 5GB storage\n• Email support", "buttonText": "Start Free Trial", "buttonUrl": "{{signup_url}}/basic"},
+        {"label": "Pro", "icon": "⚡", "heading": "$79/month", "text": "For growing teams\n• Unlimited projects\n• 100GB storage\n• Priority support", "buttonText": "Start Free Trial", "buttonUrl": "{{signup_url}}/pro"},
+        {"label": "Enterprise", "icon": "🚀", "heading": "Custom", "text": "For large organizations\n• Custom everything\n• Dedicated support\n• SLA guarantee", "buttonText": "Contact Sales", "buttonUrl": "{{contact_url}}"}
+      ]},
+      "settings": {"tabStyle": "pills", "activeTabColor": "#7c3aed", "activeTabTextColor": "#ffffff", "inactiveTabTextColor": "#6b7280", "contentPadding": {"top": 32, "bottom": 32, "left": 24, "right": 24}, "padding": {"top": 48, "bottom": 48, "left": 24, "right": 24}} },
+    { "id": "accordion-faq", "type": "accordion", "position": 3,
+      "content": {"items": [
+        {"title": "What's included in the free trial?", "content": "Full access to all Pro features for 14 days. No credit card required to start.", "defaultOpen": true},
+        {"title": "Can I cancel anytime?", "content": "Yes! Cancel with one click from your account settings. No questions asked.", "defaultOpen": false},
+        {"title": "Do you offer refunds?", "content": "We offer a 30-day money-back guarantee on all annual plans.", "defaultOpen": false},
+        {"title": "Is my data secure?", "content": "Absolutely. We use bank-level encryption and are SOC 2 compliant.", "defaultOpen": false}
+      ]},
+      "settings": {"allowMultiple": false, "titleFontSize": "18px", "titleFontWeight": 600, "titleColor": "#1f2937", "contentFontSize": "16px", "contentColor": "#6b7280", "borderColor": "#e5e7eb", "padding": {"top": 48, "bottom": 48, "left": 24, "right": 24}} },
+    { "id": "footer", "type": "footer", "position": 4, "content": {"companyName": "{{company_name}}", "companyAddress": "{{company_address}}", "unsubscribeUrl": "{{unsubscribe_url}}"}, "settings": {"fontSize": "13px", "textColor": "#9ca3af", "align": "center", "lineHeight": "1.6", "padding": {"top": 40, "bottom": 40, "left": 32, "right": 32}}} 
+  ]
+}
+
 ## Example with Complex Blocks
 
 {
@@ -148,6 +226,35 @@ Generate email campaigns with block-based structure. The schema is enforced, so 
 
 ## Template Options
 launch-announcement | promo-bold | welcome-warmth | newsletter-pro | feature-showcase | social-proof | comparison-hero | milestone-celebration | gradient-hero | color-blocks | bold-modern | minimal-accent | text-first | premium-hero | split-hero | gradient-impact | minimal-hero | story-teller | text-luxury | update-digest
+
+## Response Format
+
+You MUST respond with valid JSON matching this exact structure. Every block must include ALL of these required fields:
+- \`id\`: unique string identifier (e.g., "block_1", "hero-1", "cta-main")
+- \`type\`: one of the 30 block types (logo, hero, text, button, carousel, etc.)
+- \`position\`: number representing the block order (0-indexed, starting from 0)
+- \`settings\`: object with block-specific display settings (padding, colors, fonts, etc.)
+- \`content\`: object with block-specific content (text, images, URLs, etc.)
+
+Example block structure:
+{
+  "id": "block_1",
+  "type": "hero",
+  "position": 0,
+  "settings": { 
+    "align": "center", 
+    "padding": { "top": 40, "bottom": 40, "left": 20, "right": 20 },
+    "backgroundColor": "#faf5ff",
+    "headlineFontSize": "64px"
+  },
+  "content": { 
+    "headline": "Welcome to Our Platform", 
+    "subheadline": "Get started today", 
+    "imageUrl": "https://images.unsplash.com/..." 
+  }
+}
+
+CRITICAL: Never omit id, position, settings, or content fields. All blocks must be complete.
 
 Generate Flodesk-quality emails with premium design and compelling content.`;
 
@@ -203,6 +310,13 @@ export function buildCampaignPrompt(input: {
   userPrompt += `  * THREE-COLUMN for features/benefits/pricing\n`;
   userPrompt += `  * ZIGZAG for feature showcases\n`;
   userPrompt += `  * PRODUCT-CARD for e-commerce\n`;
+  userPrompt += `- ADVANCED interactive blocks (Gemini-powered):\n`;
+  userPrompt += `  * CAROUSEL for multi-slide product tours\n`;
+  userPrompt += `  * TAB-CONTAINER for pricing tiers or feature comparisons\n`;
+  userPrompt += `  * ACCORDION for FAQs or detailed information\n`;
+  userPrompt += `  * MASONRY-GRID for creative product galleries\n`;
+  userPrompt += `  * DYNAMIC-COLUMN for flexible multi-column layouts\n`;
+  userPrompt += `  * CONTAINER for nested, complex sections\n`;
   userPrompt += `- Footer block at the end\n`;
 
   return userPrompt;

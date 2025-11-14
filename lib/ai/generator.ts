@@ -5,9 +5,9 @@
  * brand kits, rate limiting, and database tracking
  */
 
-import { generateCompletion } from './client';
+import { generateCompletion, type AIProvider } from './client';
 import { CAMPAIGN_GENERATOR_SYSTEM_PROMPT, buildCampaignPrompt } from './prompts';
-import { validateCampaignInput, parseStructuredCampaign, getCampaignJSONSchema, type GeneratedCampaign } from './validator';
+import { validateCampaignInput, parseStructuredCampaign, getCampaignSchema, type GeneratedCampaign } from './validator';
 import { enforceRateLimit } from './rate-limit';
 import { saveAIGeneration } from './usage-tracker';
 
@@ -86,32 +86,39 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
       
     });
     
-    // 5. Get JSON Schema for Structured Outputs
-    const jsonSchema = getCampaignJSONSchema();
-    console.log('📐 [GENERATOR] Using Structured Outputs with JSON Schema');
+    // 5. Get Zod Schema for validation (Gemini uses prompts, validates with Zod after)
+    const zodSchema = getCampaignSchema();
+    console.log('📐 [GENERATOR] Using prompt-based generation (Zod validation after)');
     
-    // 6. Call OpenAI API with Structured Outputs
-    console.log('🤖 [GENERATOR] Calling OpenAI API with Structured Outputs...');
+    // 6. Call AI API (Gemini primary, OpenAI fallback)
+    const provider: AIProvider = (process.env.AI_PROVIDER as AIProvider) || 'gemini';
+    console.log(`🤖 [GENERATOR] Using ${provider.toUpperCase()} (33x cheaper, 2-4x faster)`);
+    
     const aiResult = await generateCompletion(
       [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
       {
-        model: 'gpt-4o',
+        provider,
+        model: provider === 'gemini' ? 'gemini-2.5-flash' : 'gpt-4o',
         temperature: 0.7,
-        maxTokens: 4000,
-        jsonSchema, // Use Structured Outputs - guarantees schema compliance
+        maxTokens: 8192,
+        zodSchema, // Passed for OpenAI fallback
         retries: 3,
       }
     );
-    console.log('✅ [GENERATOR] OpenAI response received:', { 
+    
+    console.log(`✅ [GENERATOR] ${aiResult.provider.toUpperCase()} response received:`, { 
+      provider: aiResult.provider,
       model: aiResult.model, 
       tokens: aiResult.tokensUsed,
+      cost: `$${aiResult.costUsd.toFixed(6)}`,
+      time: `${aiResult.generationTimeMs}ms`,
       contentLength: aiResult.content.length 
     });
     
-    // 7. Parse structured response (OpenAI guarantees schema compliance)
+    // 7. Parse structured response (Gemini/OpenAI guarantee schema compliance)
     console.log('🔍 [GENERATOR] Parsing structured response...');
     const parsedContent = JSON.parse(aiResult.content);
     const generatedCampaign = parseStructuredCampaign(parsedContent);

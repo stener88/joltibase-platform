@@ -1,7 +1,7 @@
 'use client';
 
 import { UserPlus, Rocket, Sparkles, Newspaper } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+
 
 interface ExamplePromptsProps {
   onSelectPrompt: (prompt: string) => void;

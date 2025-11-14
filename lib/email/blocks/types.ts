@@ -58,7 +58,14 @@ export type BlockType =
   | 'zigzag'
   | 'split-background'
   | 'product-card'
-  | 'badge-overlay';
+  | 'badge-overlay'
+  // Advanced Interactive Blocks (Gemini-powered)
+  | 'carousel'
+  | 'tab-container'
+  | 'accordion'
+  | 'masonry-grid'
+  | 'dynamic-column'
+  | 'container';
 
 /**
  * Base block interface - all blocks extend this
@@ -98,7 +105,14 @@ export type BlockSettings =
   | ZigzagBlockSettings
   | SplitBackgroundBlockSettings
   | ProductCardBlockSettings
-  | BadgeOverlayBlockSettings;
+  | BadgeOverlayBlockSettings
+  // Advanced blocks (Gemini-enabled)
+  | CarouselBlockSettings
+  | TabContainerBlockSettings
+  | AccordionBlockSettings
+  | MasonryGridBlockSettings
+  | DynamicColumnBlockSettings
+  | ContainerBlockSettings;
 
 /**
  * Union type for all block content
@@ -127,7 +141,14 @@ export type BlockContent =
   | ZigzagBlockContent
   | SplitBackgroundBlockContent
   | ProductCardBlockContent
-  | BadgeOverlayBlockContent;
+  | BadgeOverlayBlockContent
+  // Advanced blocks (Gemini-enabled)
+  | CarouselBlockContent
+  | TabContainerBlockContent
+  | AccordionBlockContent
+  | MasonryGridBlockContent
+  | DynamicColumnBlockContent
+  | ContainerBlockContent;
 
 // ============================================================================
 // Common Types

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { generateCompletion } from '@/lib/ai/client';
+import { generateCompletion, type AIProvider } from '@/lib/ai/client';
 import { 
   EmailBlockSchema, 
   GlobalEmailSettingsSchema,
@@ -9,8 +9,7 @@ import {
   type GlobalEmailSettingsType 
 } from '@/lib/email/blocks/schemas';
 import { renderBlocksToEmail } from '@/lib/email/blocks/renderer';
-import { z, toJSONSchema } from 'zod';
-import { fixSchemaForStrictMode } from '@/lib/ai/validator';
+import { z } from 'zod';
 
 /**
  * API Route: POST /api/ai/refine-campaign
@@ -42,22 +41,20 @@ type RefineCampaignInput = z.infer<typeof RefineCampaignInputSchema>;
  */
 const RefineResponseSchema = z.object({
   subject: z.string().min(1).max(100),
-  previewText: z.string().max(150).nullish(), // nullish for OpenAI compatibility
+  previewText: z.string().max(150).optional(),
   blocks: z.array(EmailBlockSchema).min(1),
-  globalSettings: GlobalEmailSettingsSchema.nullish(), // nullish for OpenAI compatibility
-  changes: z.array(z.string()).nullish(), // nullish for OpenAI compatibility - technical tracking
+  globalSettings: GlobalEmailSettingsSchema.optional(),
+  changes: z.array(z.string()).optional(), // Technical tracking
   conversationalMessage: z.string().min(20).max(500), // Natural, colleague-like response for chat UI
 });
 
 type RefineResponse = z.infer<typeof RefineResponseSchema>;
 
 /**
- * Get JSON Schema for refine response (for Structured Outputs)
+ * Get Zod schema for refine response (native Gemini support!)
  */
-function getRefineJSONSchema(): Record<string, any> {
-  const schema = toJSONSchema(RefineResponseSchema);
-  // Fix schema for OpenAI's strict mode requirements
-  return fixSchemaForStrictMode(schema);
+function getRefineSchema(): z.ZodType<any> {
+  return RefineResponseSchema;
 }
 
 interface RefinedEmail {
@@ -465,13 +462,15 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ [REFINE-API] Campaign ownership verified');
 
-    // 4. Get JSON Schema for Structured Outputs
-    const jsonSchema = getRefineJSONSchema();
-    console.log('📐 [REFINE-API] Using Structured Outputs with JSON Schema');
+    // 4. Get Zod Schema for Gemini (or JSON Schema for OpenAI fallback)
+    const zodSchema = getRefineSchema();
+    console.log('📐 [REFINE-API] Using native Zod schema with Gemini');
     
-    // 5. Call AI to refine the blocks
+    // 5. Call AI to refine the blocks (Gemini primary, OpenAI fallback)
     console.log('🤖 [REFINE-API] Calling AI for block-based refinement...');
     const prompt = buildBlockRefinementPrompt(validatedInput);
+    
+    const provider: AIProvider = (process.env.AI_PROVIDER as AIProvider) || 'gemini';
     
     const aiResult = await generateCompletion(
       [
@@ -493,24 +492,28 @@ Be conversational, enthusiastic, and helpful - like you're brainstorming with a 
         },
       ],
       {
+        provider,
+        model: provider === 'gemini' ? 'gemini-2.5-flash' : 'gpt-4o',
         temperature: 0.7,
-        maxTokens: 4000,
-        jsonSchema, // Use Structured Outputs - guarantees schema compliance
+        maxTokens: 8192,
+        zodSchema, // Passed for OpenAI fallback
       }
     );
 
-    console.log('✅ [REFINE-API] AI response received:', {
+    console.log(`✅ [REFINE-API] ${aiResult.provider.toUpperCase()} response received:`, {
+      provider: aiResult.provider,
       model: aiResult.model,
       tokens: aiResult.tokensUsed,
+      cost: `$${aiResult.costUsd.toFixed(6)}`,
       contentLength: aiResult.content.length,
     });
 
-    // 6. Parse structured response (OpenAI guarantees schema compliance)
+    // 6. Parse structured response (Gemini/OpenAI guarantee schema compliance)
     let aiResponse: RefineResponse;
 
     try {
       const parsed = JSON.parse(aiResult.content);
-      // Validate with Zod (mainly for type checking since Structured Outputs guarantees compliance)
+      // Validate with Zod (mainly for type checking since structured outputs guarantee compliance)
       aiResponse = RefineResponseSchema.parse(parsed);
       console.log('✅ [REFINE-API] Structured response parsed and validated');
     } catch (error) {

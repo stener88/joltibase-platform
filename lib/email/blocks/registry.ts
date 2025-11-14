@@ -412,6 +412,91 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     ],
     previewDescription: 'Image with badge overlay',
   },
+  // Advanced Interactive Blocks (Gemini-powered)
+  'carousel': {
+    type: 'carousel',
+    name: 'Carousel',
+    description: 'Multi-slide interactive gallery',
+    category: 'layout',
+    icon: '🎠',
+    aiHints: [
+      'Product showcases',
+      'Step-by-step guides',
+      'Feature tours',
+      'Before/after series',
+    ],
+    previewDescription: 'Interactive image carousel',
+  },
+  'tab-container': {
+    type: 'tab-container',
+    name: 'Tab Container',
+    description: 'Tabbed content sections',
+    category: 'layout',
+    icon: '📑',
+    aiHints: [
+      'Pricing tiers',
+      'Feature comparisons',
+      'Multi-option displays',
+      'FAQs',
+    ],
+    previewDescription: 'Tabbed content container',
+  },
+  'accordion': {
+    type: 'accordion',
+    name: 'Accordion',
+    description: 'Expandable/collapsible content',
+    category: 'layout',
+    icon: '📋',
+    aiHints: [
+      'FAQs',
+      'Feature details',
+      'Long content organization',
+      'Product specifications',
+    ],
+    previewDescription: 'Expandable accordion items',
+  },
+  'masonry-grid': {
+    type: 'masonry-grid',
+    name: 'Masonry Grid',
+    description: 'Pinterest-style auto-flowing layout',
+    category: 'layout',
+    icon: '🧱',
+    aiHints: [
+      'Product galleries',
+      'Portfolio showcases',
+      'Content feeds',
+      'Image collections',
+    ],
+    previewDescription: 'Masonry grid layout',
+  },
+  'dynamic-column': {
+    type: 'dynamic-column',
+    name: 'Dynamic Columns',
+    description: 'Flexible 2-5 column layout',
+    category: 'layout',
+    icon: '📊',
+    aiHints: [
+      'Feature lists',
+      'Team members',
+      'Comparison tables',
+      'Service offerings',
+    ],
+    previewDescription: 'Flexible multi-column layout',
+  },
+  'container': {
+    type: 'container',
+    name: 'Container',
+    description: 'Nested block container',
+    category: 'layout',
+    icon: '📦',
+    aiHints: [
+      'Complex sections',
+      'Grouped content',
+      'Advanced layouts',
+      'Nested structures',
+    ],
+    previewDescription: 'Container with nested blocks',
+  },
 };
 
 // ============================================================================
@@ -680,6 +765,70 @@ export function getDefaultBlockSettings(type: BlockType): any {
         badgeFontWeight: 700,
         imageHeight: '400px',
         borderRadius: '8px',
+        padding: { top: 24, bottom: 24, left: 24, right: 24 },
+      };
+    
+    // Advanced Interactive Blocks
+    case 'carousel':
+      return {
+        slideHeight: '400px',
+        showIndicators: true,
+        indicatorColor: '#d1d5db',
+        indicatorActiveColor: '#7c3aed',
+        autoPlay: false,
+        autoPlayInterval: 5000,
+        borderRadius: '8px',
+        padding: { top: 24, bottom: 24, left: 24, right: 24 },
+      };
+    
+    case 'tab-container':
+      return {
+        tabStyle: 'pills',
+        tabPosition: 'top',
+        activeTabColor: '#7c3aed',
+        activeTabTextColor: '#ffffff',
+        inactiveTabTextColor: '#6b7280',
+        contentPadding: { top: 32, bottom: 32, left: 24, right: 24 },
+        padding: { top: 24, bottom: 24, left: 24, right: 24 },
+      };
+    
+    case 'accordion':
+      return {
+        allowMultiple: false,
+        titleFontSize: '18px',
+        titleFontWeight: 600,
+        titleColor: '#1f2937',
+        contentFontSize: '16px',
+        contentColor: '#6b7280',
+        borderColor: '#e5e7eb',
+        borderWidth: 1,
+        padding: { top: 24, bottom: 24, left: 24, right: 24 },
+        itemSpacing: 16,
+      };
+    
+    case 'masonry-grid':
+      return {
+        columns: 3,
+        gap: 16,
+        itemBorderRadius: '8px',
+        padding: { top: 24, bottom: 24, left: 24, right: 24 },
+      };
+    
+    case 'dynamic-column':
+      return {
+        columnCount: 3,
+        columnGap: 24,
+        verticalAlign: 'top',
+        mobileStack: true,
+        padding: { top: 24, bottom: 24, left: 24, right: 24 },
+      };
+    
+    case 'container':
+      return {
+        layout: 'stack',
+        gridColumns: 2,
+        gap: 24,
+        borderWidth: 0,
         padding: { top: 24, bottom: 24, left: 24, right: 24 },
       };
     
@@ -967,6 +1116,110 @@ export function getDefaultBlockContent(type: BlockType): any {
         imageAltText: 'Product',
         badgeText: '50% OFF',
         linkUrl: 'https://example.com',
+      };
+    
+    // Advanced Interactive Blocks
+    case 'carousel':
+      return {
+        slides: [
+          {
+            imageUrl: 'https://via.placeholder.com/1200x600',
+            imageAltText: 'Slide 1',
+            heading: 'Welcome',
+            text: 'Discover our products',
+            buttonText: 'Learn More',
+            buttonUrl: 'https://example.com',
+          },
+          {
+            imageUrl: 'https://via.placeholder.com/1200x600',
+            imageAltText: 'Slide 2',
+            heading: 'Featured',
+            text: 'Check out our best sellers',
+            buttonText: 'Shop Now',
+            buttonUrl: 'https://example.com',
+          },
+        ],
+      };
+    
+    case 'tab-container':
+      return {
+        tabs: [
+          {
+            label: 'Option 1',
+            heading: 'First Option',
+            text: 'Description for the first option',
+            buttonText: 'Get Started',
+            buttonUrl: 'https://example.com',
+          },
+          {
+            label: 'Option 2',
+            heading: 'Second Option',
+            text: 'Description for the second option',
+            buttonText: 'Get Started',
+            buttonUrl: 'https://example.com',
+          },
+        ],
+      };
+    
+    case 'accordion':
+      return {
+        items: [
+          {
+            title: 'Question 1',
+            content: 'Answer to the first question',
+            defaultOpen: true,
+          },
+          {
+            title: 'Question 2',
+            content: 'Answer to the second question',
+            defaultOpen: false,
+          },
+        ],
+      };
+    
+    case 'masonry-grid':
+      return {
+        items: [
+          {
+            type: 'image',
+            imageUrl: 'https://via.placeholder.com/400x300',
+            imageAltText: 'Item 1',
+          },
+          {
+            type: 'card',
+            heading: 'Card Item',
+            text: 'Card content',
+            backgroundColor: '#f9fafb',
+          },
+          {
+            type: 'image',
+            imageUrl: 'https://via.placeholder.com/400x500',
+            imageAltText: 'Item 2',
+          },
+        ],
+      };
+    
+    case 'dynamic-column':
+      return {
+        columns: [
+          {
+            heading: 'Column 1',
+            text: 'Content for first column',
+          },
+          {
+            heading: 'Column 2',
+            text: 'Content for second column',
+          },
+          {
+            heading: 'Column 3',
+            text: 'Content for third column',
+          },
+        ],
+      };
+    
+    case 'container':
+      return {
+        children: [],
       };
     
     default:

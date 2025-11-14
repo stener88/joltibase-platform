@@ -6,7 +6,7 @@
  * Phase 4B: Now supports block-based email generation
  */
 
-import { z, toJSONSchema } from 'zod';
+import { z } from 'zod';
 import { EmailBlockSchema, GlobalEmailSettingsSchema } from '../email/blocks/schemas';
 
 // ============================================================================
@@ -142,93 +142,15 @@ export type GeneratedEmail = z.infer<typeof GeneratedEmailSchema>;
 export type GeneratedBlockEmail = z.infer<typeof GeneratedBlockEmailSchema>;
 export type DesignConfig = z.infer<typeof DesignConfigSchema>;
 
-/**
- * Post-process JSON Schema to fix OpenAI Structured Outputs strict mode compatibility
- * 
- * NOTE: This transforms the SCHEMA for OpenAI API compatibility, NOT the AI output.
- * Structured Outputs guarantees the AI output matches the schema - we just need to
- * make our Zod-generated schema compatible with OpenAI's strict mode requirements.
- * 
- * Fixes:
- * 1. Remove unsupported formats (uri, email) - validation still happens in Zod
- * 2. Convert optional properties to nullable (anyOf with null)
- * 3. Ensure all properties are in required array (OpenAI strict mode requirement)
- */
-export function fixSchemaForStrictMode(schema: Record<string, any>): Record<string, any> {
-  if (typeof schema !== 'object' || schema === null) {
-    return schema;
-  }
-
-  // Recursively process the schema
-  const processed = { ...schema };
-
-  // Remove unsupported format constraints (OpenAI doesn't support uri, email, etc.)
-  // Validation still happens in Zod after we get the response
-  if (processed.format && ['uri', 'email', 'url'].includes(processed.format)) {
-    delete processed.format;
-  }
-
-  // If this is an object schema with properties
-  if (processed.type === 'object' && processed.properties) {
-    const allPropertyKeys = Object.keys(processed.properties);
-    const requiredKeys = processed.required || [];
-    
-    // For each property, recursively fix it first
-    const fixedProperties: Record<string, any> = {};
-    
-    for (const [key, value] of Object.entries(processed.properties)) {
-      const propValue = fixSchemaForStrictMode(value as Record<string, any>);
-      const isRequired = requiredKeys.includes(key);
-      
-      // If property is not in required array (optional), make it nullable
-      // OpenAI strict mode requires all properties to be in required array
-      // By making optional properties nullable, they can be included in required
-      if (!isRequired && propValue.type && propValue.type !== 'null' && !propValue.anyOf) {
-        // Convert optional property to nullable using anyOf
-        fixedProperties[key] = {
-          anyOf: [
-            propValue,
-            { type: 'null' }
-          ]
-        };
-      } else {
-        fixedProperties[key] = propValue;
-      }
-    }
-    processed.properties = fixedProperties;
-
-    // OpenAI strict mode: ALL properties must be in required array
-    // Since we made optional properties nullable, we include them all
-    processed.required = allPropertyKeys;
-  }
-
-  // Process arrays
-  if (processed.type === 'array' && processed.items) {
-    processed.items = fixSchemaForStrictMode(processed.items as Record<string, any>);
-  }
-
-  // Process anyOf, oneOf, allOf
-  if (processed.anyOf) {
-    processed.anyOf = processed.anyOf.map((item: any) => fixSchemaForStrictMode(item));
-  }
-  if (processed.oneOf) {
-    processed.oneOf = processed.oneOf.map((item: any) => fixSchemaForStrictMode(item));
-  }
-  if (processed.allOf) {
-    processed.allOf = processed.allOf.map((item: any) => fixSchemaForStrictMode(item));
-  }
-
-  return processed;
-}
+// Removed: fixSchemaForStrictMode() - No longer needed with Gemini's native Zod support!
 
 /**
- * Convert GeneratedCampaignSchema to JSON Schema for OpenAI Structured Outputs
- * This guarantees schema compliance - OpenAI will enforce the structure
+ * Get the campaign Zod schema for AI generation
+ * With Gemini, we can pass Zod schemas directly - no JSON Schema conversion needed!
+ * For OpenAI fallback, we'll handle conversion in the provider layer.
  */
-export function getCampaignJSONSchema(): Record<string, any> {
-  const schema = toJSONSchema(GeneratedCampaignSchema);
-  // Fix schema for OpenAI's strict mode requirements
-  return fixSchemaForStrictMode(schema);
+export function getCampaignSchema(): z.ZodType<any> {
+  return GeneratedCampaignSchema;
 }
 
 /**
