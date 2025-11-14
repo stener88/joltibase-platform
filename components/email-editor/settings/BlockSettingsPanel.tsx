@@ -20,12 +20,14 @@ import { FeatureGridBlockSettings } from './blocks/FeatureGridBlockSettings';
 import { ComparisonBlockSettings } from './blocks/ComparisonBlockSettings';
 import { SocialLinksBlockSettings } from './blocks/SocialLinksBlockSettings';
 import { FooterBlockSettings } from './blocks/FooterBlockSettings';
+import { SectionLibraryPanel } from './SectionLibraryPanel';
 
 interface BlockSettingsPanelProps {
   selectedBlock: EmailBlock | null;
   designConfig: GlobalEmailSettings;
   onUpdateBlock: (blockId: string, updates: Partial<EmailBlock>) => void;
   onUpdateDesignConfig: (updates: Partial<GlobalEmailSettings>) => void;
+  onInsertSection?: (sectionId: string) => void;
   campaignId?: string;
 }
 
@@ -34,6 +36,7 @@ export function BlockSettingsPanel({
   designConfig,
   onUpdateBlock,
   onUpdateDesignConfig,
+  onInsertSection,
   campaignId,
 }: BlockSettingsPanelProps) {
   // Set default tab based on block type
@@ -150,9 +153,11 @@ export function BlockSettingsPanel({
       {
         id: 'layout',
         label: 'Layout',
-        content: (
+        content: onInsertSection ? (
+          <SectionLibraryPanel onInsertSection={onInsertSection} />
+        ) : (
           <div className="p-6 space-y-4">
-            <p className="text-sm text-gray-500">Layout settings coming soon</p>
+            <p className="text-sm text-gray-500">Section library unavailable</p>
           </div>
         ),
       },

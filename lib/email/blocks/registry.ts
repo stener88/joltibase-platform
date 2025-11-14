@@ -27,6 +27,16 @@ import type {
   ComparisonBlock,
   SocialLinksBlock,
   FooterBlock,
+  TwoColumnBlock,
+  ImageOverlayBlock,
+  ImageGrid2x2Block,
+  ImageGrid3x3Block,
+  ImageCollageBlock,
+  ThreeColumnBlock,
+  ZigzagBlock,
+  SplitBackgroundBlock,
+  ProductCardBlock,
+  BadgeOverlayBlock,
   Padding,
 } from './types';
 
@@ -272,6 +282,136 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     ],
     previewDescription: 'Footer with company info and unsubscribe',
   },
+  'two-column': {
+    type: 'two-column',
+    name: 'Two-Column',
+    description: 'Side-by-side image + text layout',
+    category: 'layout',
+    icon: '📐',
+    aiHints: [
+      'Product features with image',
+      'Side-by-side comparisons',
+      'Image + description layouts',
+    ],
+    previewDescription: 'Two columns with image and text',
+  },
+  'image-overlay': {
+    type: 'image-overlay',
+    name: 'Image Overlay',
+    description: 'Hero image with overlay text and CTA',
+    category: 'layout',
+    icon: '🎭',
+    aiHints: [
+      'Dramatic hero sections',
+      'Full-width promotional banners',
+      'Visual-first announcements',
+    ],
+    previewDescription: 'Image with overlay content',
+  },
+  'image-grid-2x2': {
+    type: 'image-grid-2x2',
+    name: 'Image Grid 2x2',
+    description: '2x2 product gallery grid',
+    category: 'layout',
+    icon: '🎨',
+    aiHints: [
+      'Product galleries',
+      'Portfolio showcases',
+      'Multiple offerings',
+    ],
+    previewDescription: '2x2 image grid with captions',
+  },
+  'image-grid-3x3': {
+    type: 'image-grid-3x3',
+    name: 'Image Grid 3x3',
+    description: '3x3 compact gallery grid',
+    category: 'layout',
+    icon: '🖼️',
+    aiHints: [
+      'Large product collections',
+      'Instagram-style feeds',
+      'Portfolio galleries',
+    ],
+    previewDescription: '3x3 compact image grid',
+  },
+  'image-collage': {
+    type: 'image-collage',
+    name: 'Image Collage',
+    description: 'Featured image with detail shots',
+    category: 'layout',
+    icon: '🎪',
+    aiHints: [
+      'Product detail showcase',
+      'Lifestyle collections',
+      'Editorial layouts',
+    ],
+    previewDescription: 'Asymmetric collage with featured image',
+  },
+  'three-column': {
+    type: 'three-column',
+    name: 'Three-Column',
+    description: 'Three columns for features or benefits',
+    category: 'layout',
+    icon: '🏛️',
+    aiHints: [
+      'Key benefits',
+      'Feature lists',
+      'Pricing tiers',
+    ],
+    previewDescription: 'Three equal columns',
+  },
+  'zigzag': {
+    type: 'zigzag',
+    name: 'Zigzag',
+    description: 'Alternating image-text rows',
+    category: 'layout',
+    icon: '⚡',
+    aiHints: [
+      'Feature showcases',
+      'Step-by-step guides',
+      'Dynamic presentations',
+    ],
+    previewDescription: 'Alternating content rows',
+  },
+  'split-background': {
+    type: 'split-background',
+    name: 'Split Background',
+    description: 'Dramatic split hero with contrasting sides',
+    category: 'layout',
+    icon: '🎬',
+    aiHints: [
+      'Bold announcements',
+      'High-contrast designs',
+      'Premium branding',
+    ],
+    previewDescription: 'Split background hero',
+  },
+  'product-card': {
+    type: 'product-card',
+    name: 'Product Card',
+    description: 'E-commerce product card with badge',
+    category: 'layout',
+    icon: '🛍️',
+    aiHints: [
+      'E-commerce products',
+      'Product promotions',
+      'Shopping campaigns',
+    ],
+    previewDescription: 'Product card with pricing',
+  },
+  'badge-overlay': {
+    type: 'badge-overlay',
+    name: 'Badge Overlay',
+    description: 'Image with promotional badge',
+    category: 'layout',
+    icon: '🏷️',
+    aiHints: [
+      'Sale promotions',
+      'Discount announcements',
+      'Limited offers',
+    ],
+    previewDescription: 'Image with badge overlay',
+  },
 };
 
 // ============================================================================
@@ -440,6 +580,109 @@ export function getDefaultBlockSettings(type: BlockType): any {
         linkColor: '#2563eb',
       };
     
+    case 'two-column':
+      return {
+        layout: '50-50',
+        verticalAlign: 'middle',
+        columnGap: 32,
+        padding: { top: 48, bottom: 48, left: 24, right: 24 },
+      };
+    
+    case 'image-overlay':
+      return {
+        overlayPosition: 'center',
+        overlayBackgroundColor: '#000000',
+        overlayBackgroundOpacity: 50,
+        overlayPadding: { top: 40, bottom: 40, left: 40, right: 40 },
+        overlayBorderRadius: '8px',
+        imageHeight: '500px',
+        padding: { top: 0, bottom: 0, left: 0, right: 0 },
+      };
+    
+    case 'image-grid-2x2':
+      return {
+        gridGap: 16,
+        imageHeight: '200px',
+        borderRadius: '8px',
+        showCaptions: true,
+        captionFontSize: '14px',
+        captionColor: '#374151',
+        padding: { top: 32, bottom: 32, left: 24, right: 24 },
+      };
+    
+    case 'image-grid-3x3':
+      return {
+        gridGap: 8,
+        imageHeight: '120px',
+        borderRadius: '4px',
+        showCaptions: false,
+        padding: { top: 24, bottom: 24, left: 16, right: 16 },
+      };
+    
+    case 'image-collage':
+      return {
+        layout: 'featured-left',
+        gridGap: 12,
+        borderRadius: '8px',
+        padding: { top: 32, bottom: 32, left: 20, right: 20 },
+      };
+    
+    case 'three-column':
+      return {
+        layout: 'equal',
+        columnGap: 24,
+        verticalAlign: 'top',
+        padding: { top: 40, bottom: 40, left: 20, right: 20 },
+      };
+    
+    case 'zigzag':
+      return {
+        rowGap: 40,
+        columnGap: 32,
+        imageWidth: '45%',
+        padding: { top: 48, bottom: 48, left: 24, right: 24 },
+      };
+    
+    case 'split-background':
+      return {
+        layout: '50-50',
+        leftBackgroundColor: '#1f2937',
+        rightBackgroundColor: '#ffffff',
+        columnGap: 0,
+        verticalAlign: 'middle',
+        padding: { top: 0, bottom: 0, left: 0, right: 0 },
+        leftColumnPadding: { top: 60, bottom: 60, left: 32, right: 32 },
+        rightColumnPadding: { top: 60, bottom: 60, left: 32, right: 32 },
+      };
+    
+    case 'product-card':
+      return {
+        imageHeight: '400px',
+        borderRadius: '12px',
+        padding: { top: 32, bottom: 32, left: 24, right: 24 },
+        contentPadding: { top: 20, bottom: 20, left: 24, right: 24 },
+        backgroundColor: '#ffffff',
+        nameFontSize: '24px',
+        nameColor: '#111827',
+        priceFontSize: '28px',
+        priceColor: '#111827',
+        descriptionFontSize: '14px',
+        descriptionColor: '#6b7280',
+      };
+    
+    case 'badge-overlay':
+      return {
+        badgePosition: 'top-right',
+        badgeSize: 'medium',
+        badgeBackgroundColor: '#ef4444',
+        badgeTextColor: '#ffffff',
+        badgeFontSize: '16px',
+        badgeFontWeight: 700,
+        imageHeight: '400px',
+        borderRadius: '8px',
+        padding: { top: 24, bottom: 24, left: 24, right: 24 },
+      };
+    
     default:
       return {};
   }
@@ -542,6 +785,188 @@ export function getDefaultBlockContent(type: BlockType): any {
         customText: 'Questions? Just reply to this email.',
         unsubscribeUrl: '{{unsubscribe_url}}',
         preferencesUrl: '{{preferences_url}}',
+      };
+    
+    case 'two-column':
+      return {
+        leftColumn: {
+          type: 'image',
+          imageUrl: 'https://via.placeholder.com/600x400',
+          imageAltText: 'Image',
+        },
+        rightColumn: {
+          type: 'rich-content',
+          richContent: {
+            heading: 'Your Heading Here',
+            headingSize: '32px',
+            headingColor: '#111827',
+            body: 'Your content goes here. Add your message and details.',
+            bodySize: '16px',
+            bodyColor: '#6b7280',
+            buttonText: 'Learn More',
+            buttonUrl: 'https://example.com',
+            buttonColor: '#2563eb',
+            buttonTextColor: '#ffffff',
+          },
+        },
+      };
+    
+    case 'image-overlay':
+      return {
+        imageUrl: 'https://via.placeholder.com/1200x600',
+        imageAltText: 'Hero image',
+        heading: 'Your Headline Here',
+        headingSize: '48px',
+        headingColor: '#ffffff',
+        subheading: 'Your subheading text',
+        subheadingSize: '20px',
+        subheadingColor: '#e5e7eb',
+        buttonText: 'Get Started',
+        buttonUrl: 'https://example.com',
+        buttonColor: '#2563eb',
+        buttonTextColor: '#ffffff',
+      };
+    
+    case 'image-grid-2x2':
+      return {
+        images: [
+          { imageUrl: 'https://via.placeholder.com/300x300', altText: 'Image 1', caption: 'Caption 1', linkUrl: 'https://example.com' },
+          { imageUrl: 'https://via.placeholder.com/300x300', altText: 'Image 2', caption: 'Caption 2', linkUrl: 'https://example.com' },
+          { imageUrl: 'https://via.placeholder.com/300x300', altText: 'Image 3', caption: 'Caption 3', linkUrl: 'https://example.com' },
+          { imageUrl: 'https://via.placeholder.com/300x300', altText: 'Image 4', caption: 'Caption 4', linkUrl: 'https://example.com' },
+        ],
+      };
+    
+    case 'image-grid-3x3':
+      return {
+        images: [
+          { imageUrl: 'https://via.placeholder.com/200x200', altText: 'Image 1', linkUrl: 'https://example.com' },
+          { imageUrl: 'https://via.placeholder.com/200x200', altText: 'Image 2', linkUrl: 'https://example.com' },
+          { imageUrl: 'https://via.placeholder.com/200x200', altText: 'Image 3', linkUrl: 'https://example.com' },
+          { imageUrl: 'https://via.placeholder.com/200x200', altText: 'Image 4', linkUrl: 'https://example.com' },
+          { imageUrl: 'https://via.placeholder.com/200x200', altText: 'Image 5', linkUrl: 'https://example.com' },
+          { imageUrl: 'https://via.placeholder.com/200x200', altText: 'Image 6', linkUrl: 'https://example.com' },
+          { imageUrl: 'https://via.placeholder.com/200x200', altText: 'Image 7', linkUrl: 'https://example.com' },
+          { imageUrl: 'https://via.placeholder.com/200x200', altText: 'Image 8', linkUrl: 'https://example.com' },
+          { imageUrl: 'https://via.placeholder.com/200x200', altText: 'Image 9', linkUrl: 'https://example.com' },
+        ],
+      };
+    
+    case 'image-collage':
+      return {
+        featuredImage: {
+          imageUrl: 'https://via.placeholder.com/600x800',
+          altText: 'Featured image',
+          linkUrl: 'https://example.com',
+        },
+        secondaryImages: [
+          { imageUrl: 'https://via.placeholder.com/300x400', altText: 'Image 1', linkUrl: 'https://example.com' },
+          { imageUrl: 'https://via.placeholder.com/300x400', altText: 'Image 2', linkUrl: 'https://example.com' },
+          { imageUrl: 'https://via.placeholder.com/300x400', altText: 'Image 3', linkUrl: 'https://example.com' },
+        ],
+      };
+    
+    case 'three-column':
+      return {
+        columns: [
+          {
+            heading: 'Feature 1',
+            headingSize: '20px',
+            headingColor: '#111827',
+            body: 'Description for feature 1',
+            bodySize: '14px',
+            bodyColor: '#6b7280',
+          },
+          {
+            heading: 'Feature 2',
+            headingSize: '20px',
+            headingColor: '#111827',
+            body: 'Description for feature 2',
+            bodySize: '14px',
+            bodyColor: '#6b7280',
+          },
+          {
+            heading: 'Feature 3',
+            headingSize: '20px',
+            headingColor: '#111827',
+            body: 'Description for feature 3',
+            bodySize: '14px',
+            bodyColor: '#6b7280',
+          },
+        ],
+      };
+    
+    case 'zigzag':
+      return {
+        rows: [
+          {
+            imageUrl: 'https://via.placeholder.com/600x400',
+            imageAltText: 'Feature 1',
+            imagePosition: 'left',
+            heading: 'Feature One',
+            headingSize: '32px',
+            headingColor: '#111827',
+            body: 'Description of your first feature',
+            bodySize: '16px',
+            bodyColor: '#6b7280',
+          },
+          {
+            imageUrl: 'https://via.placeholder.com/600x400',
+            imageAltText: 'Feature 2',
+            imagePosition: 'right',
+            heading: 'Feature Two',
+            headingSize: '32px',
+            headingColor: '#111827',
+            body: 'Description of your second feature',
+            bodySize: '16px',
+            bodyColor: '#6b7280',
+          },
+        ],
+      };
+    
+    case 'split-background':
+      return {
+        leftColumn: {
+          heading: 'Your Message',
+          headingSize: '44px',
+          headingColor: '#ffffff',
+          body: 'Your description text goes here',
+          bodySize: '18px',
+          bodyColor: '#d1d5db',
+          buttonText: 'Get Started',
+          buttonUrl: 'https://example.com',
+          buttonColor: '#fbbf24',
+          buttonTextColor: '#111827',
+        },
+        rightColumn: {
+          imageUrl: 'https://via.placeholder.com/600x800',
+          imageAltText: 'Hero image',
+        },
+      };
+    
+    case 'product-card':
+      return {
+        productImage: 'https://via.placeholder.com/600x800',
+        productImageAlt: 'Product',
+        badge: 'NEW',
+        badgeColor: '#ef4444',
+        badgeTextColor: '#ffffff',
+        productName: 'Product Name',
+        price: '$99',
+        originalPrice: '$129',
+        description: 'Product description goes here',
+        buttonText: 'Shop Now',
+        buttonUrl: 'https://example.com',
+        buttonColor: '#2563eb',
+        buttonTextColor: '#ffffff',
+      };
+    
+    case 'badge-overlay':
+      return {
+        imageUrl: 'https://via.placeholder.com/1200x600',
+        imageAltText: 'Product',
+        badgeText: '50% OFF',
+        linkUrl: 'https://example.com',
       };
     
     default:

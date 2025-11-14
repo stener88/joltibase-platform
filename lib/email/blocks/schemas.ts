@@ -56,7 +56,7 @@ export const LogoBlockSettingsSchema = z.object({
 export const LogoBlockContentSchema = z.object({
   imageUrl: UrlOrMergeTagSchema,
   altText: z.string().min(1).max(200),
-  linkUrl: UrlOrMergeTagSchema.nullish(), // nullish for OpenAI compatibility
+  linkUrl: z.string().max(500).optional(),
 });
 
 export const LogoBlockSchema = z.object({
@@ -154,8 +154,8 @@ export const ImageBlockSettingsSchema = z.object({
 export const ImageBlockContentSchema = z.object({
   imageUrl: UrlOrMergeTagSchema,
   altText: z.string().min(1).max(200),
-  linkUrl: UrlOrMergeTagSchema.nullish(), // nullish for OpenAI compatibility
-  caption: z.string().max(500).nullish(), // nullish for OpenAI compatibility
+  linkUrl: z.string().max(500).optional(),
+  caption: z.string().max(500).optional(),
 });
 
 export const ImageBlockSchema = z.object({
@@ -450,6 +450,401 @@ export const FooterBlockSchema = z.object({
 });
 
 // ============================================================================
+// COMPLEX LAYOUT BLOCKS
+// ============================================================================
+
+// ============================================================================
+// 15. Two-Column Block
+// ============================================================================
+
+const TwoColumnContentSchema = z.object({
+  type: z.enum(['image', 'text', 'rich-content']),
+  imageUrl: UrlOrMergeTagSchema.nullish(),
+  imageAltText: z.string().max(200).nullish(),
+  text: z.string().max(1000).nullish(),
+  richContent: z.object({
+    heading: z.string().max(200).nullish(),
+    headingSize: PixelValueSchema.nullish(),
+    headingColor: HexColorSchema.nullish(),
+    body: z.string().max(2000).nullish(),
+    bodySize: PixelValueSchema.nullish(),
+    bodyColor: HexColorSchema.nullish(),
+    buttonText: z.string().max(100).nullish(),
+    buttonUrl: UrlOrMergeTagSchema.nullish(),
+    buttonColor: HexColorSchema.nullish(),
+    buttonTextColor: HexColorSchema.nullish(),
+  }).nullish(),
+});
+
+export const TwoColumnBlockSettingsSchema = z.object({
+  layout: z.enum(['50-50', '60-40', '40-60', '70-30', '30-70']),
+  verticalAlign: z.enum(['top', 'middle', 'bottom']),
+  columnGap: z.number().int().min(0).max(100),
+  backgroundColor: HexColorSchema.nullish(),
+  padding: PaddingSchema,
+  reverseOnMobile: z.boolean().nullish(),
+  leftColumnBackgroundColor: HexColorSchema.nullish(),
+  rightColumnBackgroundColor: HexColorSchema.nullish(),
+  leftColumnPadding: PaddingSchema.nullish(),
+  rightColumnPadding: PaddingSchema.nullish(),
+});
+
+export const TwoColumnBlockContentSchema = z.object({
+  leftColumn: TwoColumnContentSchema,
+  rightColumn: TwoColumnContentSchema,
+});
+
+export const TwoColumnBlockSchema = z.object({
+  id: z.string().min(1),
+  type: z.literal('two-column'),
+  position: z.number().int().min(0),
+  settings: TwoColumnBlockSettingsSchema,
+  content: TwoColumnBlockContentSchema,
+});
+
+// ============================================================================
+// 16. Image Overlay Block
+// ============================================================================
+
+export const ImageOverlayBlockSettingsSchema = z.object({
+  overlayPosition: z.enum(['center', 'top-left', 'top-right', 'bottom-left', 'bottom-right', 'center-bottom']),
+  overlayBackgroundColor: HexColorSchema.nullish(),
+  overlayBackgroundOpacity: z.number().int().min(0).max(100),
+  overlayPadding: PaddingSchema,
+  overlayBorderRadius: PixelValueSchema.nullish(),
+  imageHeight: PixelValueSchema,
+  padding: PaddingSchema,
+});
+
+export const ImageOverlayBlockContentSchema = z.object({
+  imageUrl: UrlOrMergeTagSchema,
+  imageAltText: z.string().max(200),
+  heading: z.string().max(200).nullish(),
+  headingSize: PixelValueSchema.nullish(),
+  headingColor: HexColorSchema.nullish(),
+  subheading: z.string().max(300).nullish(),
+  subheadingSize: PixelValueSchema.nullish(),
+  subheadingColor: HexColorSchema.nullish(),
+  buttonText: z.string().max(100).nullish(),
+  buttonUrl: UrlOrMergeTagSchema.nullish(),
+  buttonColor: HexColorSchema.nullish(),
+  buttonTextColor: HexColorSchema.nullish(),
+});
+
+export const ImageOverlayBlockSchema = z.object({
+  id: z.string().min(1),
+  type: z.literal('image-overlay'),
+  position: z.number().int().min(0),
+  settings: ImageOverlayBlockSettingsSchema,
+  content: ImageOverlayBlockContentSchema,
+});
+
+// ============================================================================
+// 17. Image Grid 2x2 Block
+// ============================================================================
+
+const GridImageSchema = z.object({
+  imageUrl: UrlOrMergeTagSchema,
+  altText: z.string().max(200),
+  caption: z.string().max(100).optional(),
+  linkUrl: z.string().max(500).optional(),
+});
+
+export const ImageGrid2x2BlockSettingsSchema = z.object({
+  gridGap: z.number().int().min(0).max(50),
+  imageHeight: PixelValueSchema,
+  borderRadius: PixelValueSchema.nullish(),
+  showCaptions: z.boolean(),
+  captionFontSize: PixelValueSchema.nullish(),
+  captionColor: HexColorSchema.nullish(),
+  captionBackgroundColor: HexColorSchema.nullish(),
+  captionBackgroundOpacity: z.number().int().min(0).max(100).nullish(),
+  padding: PaddingSchema,
+});
+
+export const ImageGrid2x2BlockContentSchema = z.object({
+  images: z.array(GridImageSchema).length(4),
+});
+
+export const ImageGrid2x2BlockSchema = z.object({
+  id: z.string().min(1),
+  type: z.literal('image-grid-2x2'),
+  position: z.number().int().min(0),
+  settings: ImageGrid2x2BlockSettingsSchema,
+  content: ImageGrid2x2BlockContentSchema,
+});
+
+// ============================================================================
+// 18. Image Grid 3x3 Block
+// ============================================================================
+
+export const ImageGrid3x3BlockSettingsSchema = z.object({
+  gridGap: z.number().int().min(0).max(50),
+  imageHeight: PixelValueSchema,
+  borderRadius: PixelValueSchema.nullish(),
+  showCaptions: z.boolean(),
+  captionFontSize: PixelValueSchema.nullish(),
+  captionColor: HexColorSchema.nullish(),
+  captionBackgroundColor: HexColorSchema.nullish(),
+  captionBackgroundOpacity: z.number().int().min(0).max(100).nullish(),
+  padding: PaddingSchema,
+});
+
+export const ImageGrid3x3BlockContentSchema = z.object({
+  images: z.array(GridImageSchema).length(9),
+});
+
+export const ImageGrid3x3BlockSchema = z.object({
+  id: z.string().min(1),
+  type: z.literal('image-grid-3x3'),
+  position: z.number().int().min(0),
+  settings: ImageGrid3x3BlockSettingsSchema,
+  content: ImageGrid3x3BlockContentSchema,
+});
+
+// ============================================================================
+// 19. Image Collage Block
+// ============================================================================
+
+export const ImageCollageBlockSettingsSchema = z.object({
+  layout: z.enum(['featured-left', 'featured-right', 'featured-center']),
+  gridGap: z.number().int().min(0).max(50),
+  borderRadius: PixelValueSchema.nullish(),
+  padding: PaddingSchema,
+});
+
+export const ImageCollageBlockContentSchema = z.object({
+  featuredImage: z.object({
+    imageUrl: UrlOrMergeTagSchema,
+    altText: z.string().max(200),
+    linkUrl: z.string().max(500).optional(),
+  }),
+  secondaryImages: z.array(z.object({
+    imageUrl: UrlOrMergeTagSchema,
+    altText: z.string().max(200),
+    linkUrl: z.string().max(500).optional(),
+  })).min(1).max(4),
+});
+
+export const ImageCollageBlockSchema = z.object({
+  id: z.string().min(1),
+  type: z.literal('image-collage'),
+  position: z.number().int().min(0),
+  settings: ImageCollageBlockSettingsSchema,
+  content: ImageCollageBlockContentSchema,
+});
+
+// ============================================================================
+// 20. Three-Column Block
+// ============================================================================
+
+const ThreeColumnItemSchema = z.object({
+  icon: z.string().max(10).nullish(),
+  imageUrl: UrlOrMergeTagSchema.nullish(),
+  imageAltText: z.string().max(200).nullish(),
+  heading: z.string().max(200).nullish(),
+  headingSize: PixelValueSchema.nullish(),
+  headingColor: HexColorSchema.nullish(),
+  body: z.string().max(1000).nullish(),
+  bodySize: PixelValueSchema.nullish(),
+  bodyColor: HexColorSchema.nullish(),
+  buttonText: z.string().max(100).nullish(),
+  buttonUrl: UrlOrMergeTagSchema.nullish(),
+});
+
+export const ThreeColumnBlockSettingsSchema = z.object({
+  layout: z.enum(['equal', 'wide-center', 'wide-outer']),
+  columnGap: z.number().int().min(0).max(100),
+  verticalAlign: z.enum(['top', 'middle', 'bottom']),
+  backgroundColor: HexColorSchema.nullish(),
+  padding: PaddingSchema,
+  columnBackgroundColor: HexColorSchema.nullish(),
+  columnPadding: PaddingSchema.nullish(),
+  columnBorderRadius: PixelValueSchema.nullish(),
+});
+
+export const ThreeColumnBlockContentSchema = z.object({
+  columns: z.array(ThreeColumnItemSchema).length(3),
+});
+
+export const ThreeColumnBlockSchema = z.object({
+  id: z.string().min(1),
+  type: z.literal('three-column'),
+  position: z.number().int().min(0),
+  settings: ThreeColumnBlockSettingsSchema,
+  content: ThreeColumnBlockContentSchema,
+});
+
+// ============================================================================
+// 21. Zigzag Block
+// ============================================================================
+
+const ZigzagRowSchema = z.object({
+  imageUrl: UrlOrMergeTagSchema,
+  imageAltText: z.string().max(200),
+  heading: z.string().max(200),
+  headingSize: PixelValueSchema.nullish(),
+  headingColor: HexColorSchema.nullish(),
+  body: z.string().max(1000),
+  bodySize: PixelValueSchema.nullish(),
+  bodyColor: HexColorSchema.nullish(),
+  buttonText: z.string().max(100).nullish(),
+  buttonUrl: UrlOrMergeTagSchema.nullish(),
+  buttonColor: HexColorSchema.nullish(),
+  buttonTextColor: HexColorSchema.nullish(),
+});
+
+export const ZigzagBlockSettingsSchema = z.object({
+  imageWidth: z.enum(['40%', '50%', '60%']),
+  columnGap: z.number().int().min(0).max(100),
+  rowGap: z.number().int().min(0).max(100),
+  verticalAlign: z.enum(['top', 'middle', 'bottom']),
+  backgroundColor: HexColorSchema.nullish(),
+  padding: PaddingSchema,
+  imageBorderRadius: PixelValueSchema.nullish(),
+});
+
+export const ZigzagBlockContentSchema = z.object({
+  rows: z.array(ZigzagRowSchema).min(2).max(4),
+});
+
+export const ZigzagBlockSchema = z.object({
+  id: z.string().min(1),
+  type: z.literal('zigzag'),
+  position: z.number().int().min(0),
+  settings: ZigzagBlockSettingsSchema,
+  content: ZigzagBlockContentSchema,
+});
+
+// ============================================================================
+// 22. Split Background Block
+// ============================================================================
+
+const GradientSchema = z.object({
+  from: HexColorSchema,
+  to: HexColorSchema,
+  direction: z.enum(['to-right', 'to-bottom', 'to-br']),
+});
+
+const SplitColumnContentSchema = z.object({
+  heading: z.string().max(200).nullish(),
+  headingSize: PixelValueSchema.nullish(),
+  headingColor: HexColorSchema.nullish(),
+  body: z.string().max(1000).nullish(),
+  bodySize: PixelValueSchema.nullish(),
+  bodyColor: HexColorSchema.nullish(),
+  imageUrl: UrlOrMergeTagSchema.nullish(),
+  imageAltText: z.string().max(200).nullish(),
+  buttonText: z.string().max(100).nullish(),
+  buttonUrl: UrlOrMergeTagSchema.nullish(),
+  buttonColor: HexColorSchema.nullish(),
+  buttonTextColor: HexColorSchema.nullish(),
+});
+
+export const SplitBackgroundBlockSettingsSchema = z.object({
+  layout: z.enum(['50-50', '60-40', '40-60']),
+  leftBackgroundColor: HexColorSchema,
+  rightBackgroundColor: HexColorSchema,
+  leftBackgroundGradient: GradientSchema.nullish(),
+  rightBackgroundGradient: GradientSchema.nullish(),
+  columnGap: z.number().int().min(0).max(100),
+  verticalAlign: z.enum(['top', 'middle', 'bottom']),
+  padding: PaddingSchema,
+  leftColumnPadding: PaddingSchema,
+  rightColumnPadding: PaddingSchema,
+});
+
+export const SplitBackgroundBlockContentSchema = z.object({
+  leftColumn: SplitColumnContentSchema,
+  rightColumn: SplitColumnContentSchema,
+});
+
+export const SplitBackgroundBlockSchema = z.object({
+  id: z.string().min(1),
+  type: z.literal('split-background'),
+  position: z.number().int().min(0),
+  settings: SplitBackgroundBlockSettingsSchema,
+  content: SplitBackgroundBlockContentSchema,
+});
+
+// ============================================================================
+// 23. Product Card Block
+// ============================================================================
+
+export const ProductCardBlockSettingsSchema = z.object({
+  backgroundColor: HexColorSchema.nullish(),
+  borderColor: HexColorSchema.nullish(),
+  borderWidth: z.number().int().min(0).max(10).nullish(),
+  borderRadius: PixelValueSchema.nullish(),
+  padding: PaddingSchema,
+  imagePosition: z.enum(['top', 'left']),
+  imageWidth: z.string().regex(/^\d+%$/).nullish(),
+  imageHeight: PixelValueSchema.nullish(),
+  badgePosition: z.enum(['top-left', 'top-right']).nullish(),
+  badgeBackgroundColor: HexColorSchema.nullish(),
+  badgeTextColor: HexColorSchema.nullish(),
+});
+
+export const ProductCardBlockContentSchema = z.object({
+  imageUrl: UrlOrMergeTagSchema,
+  imageAltText: z.string().max(200),
+  badge: z.string().max(50).nullish(),
+  heading: z.string().max(200),
+  headingSize: PixelValueSchema.nullish(),
+  headingColor: HexColorSchema.nullish(),
+  description: z.string().max(500).nullish(),
+  descriptionSize: PixelValueSchema.nullish(),
+  descriptionColor: HexColorSchema.nullish(),
+  price: z.string().max(50).nullish(),
+  priceSize: PixelValueSchema.nullish(),
+  priceColor: HexColorSchema.nullish(),
+  originalPrice: z.string().max(50).nullish(),
+  buttonText: z.string().max(100).nullish(),
+  buttonUrl: UrlOrMergeTagSchema.nullish(),
+  buttonColor: HexColorSchema.nullish(),
+  buttonTextColor: HexColorSchema.nullish(),
+});
+
+export const ProductCardBlockSchema = z.object({
+  id: z.string().min(1),
+  type: z.literal('product-card'),
+  position: z.number().int().min(0),
+  settings: ProductCardBlockSettingsSchema,
+  content: ProductCardBlockContentSchema,
+});
+
+// ============================================================================
+// 24. Badge Overlay Block
+// ============================================================================
+
+export const BadgeOverlayBlockSettingsSchema = z.object({
+  badgePosition: z.enum(['top-left', 'top-right', 'bottom-left', 'bottom-right', 'center']),
+  badgeSize: z.enum(['small', 'medium', 'large']),
+  badgeBackgroundColor: HexColorSchema,
+  badgeTextColor: HexColorSchema,
+  badgeFontSize: PixelValueSchema.nullish(),
+  badgeFontWeight: z.number().int().min(100).max(900).nullish(),
+  imageHeight: PixelValueSchema,
+  borderRadius: PixelValueSchema.nullish(),
+  padding: PaddingSchema,
+});
+
+export const BadgeOverlayBlockContentSchema = z.object({
+  imageUrl: UrlOrMergeTagSchema,
+  imageAltText: z.string().max(200),
+  badgeText: z.string().max(50),
+  linkUrl: z.string().max(500).optional(),
+});
+
+export const BadgeOverlayBlockSchema = z.object({
+  id: z.string().min(1),
+  type: z.literal('badge-overlay'),
+  position: z.number().int().min(0),
+  settings: BadgeOverlayBlockSettingsSchema,
+  content: BadgeOverlayBlockContentSchema,
+});
+
+// ============================================================================
 // Union Schema for All Block Types
 // ============================================================================
 
@@ -468,6 +863,16 @@ export const EmailBlockSchema = z.discriminatedUnion('type', [
   ComparisonBlockSchema,
   SocialLinksBlockSchema,
   FooterBlockSchema,
+  TwoColumnBlockSchema,
+  ImageOverlayBlockSchema,
+  ImageGrid2x2BlockSchema,
+  ImageGrid3x3BlockSchema,
+  ImageCollageBlockSchema,
+  ThreeColumnBlockSchema,
+  ZigzagBlockSchema,
+  SplitBackgroundBlockSchema,
+  ProductCardBlockSchema,
+  BadgeOverlayBlockSchema,
 ]);
 
 // ============================================================================
@@ -586,6 +991,16 @@ export type FeatureGridBlockType = z.infer<typeof FeatureGridBlockSchema>;
 export type ComparisonBlockType = z.infer<typeof ComparisonBlockSchema>;
 export type SocialLinksBlockType = z.infer<typeof SocialLinksBlockSchema>;
 export type FooterBlockType = z.infer<typeof FooterBlockSchema>;
+export type TwoColumnBlockType = z.infer<typeof TwoColumnBlockSchema>;
+export type ImageOverlayBlockType = z.infer<typeof ImageOverlayBlockSchema>;
+export type ImageGrid2x2BlockType = z.infer<typeof ImageGrid2x2BlockSchema>;
+export type ImageGrid3x3BlockType = z.infer<typeof ImageGrid3x3BlockSchema>;
+export type ImageCollageBlockType = z.infer<typeof ImageCollageBlockSchema>;
+export type ThreeColumnBlockType = z.infer<typeof ThreeColumnBlockSchema>;
+export type ZigzagBlockType = z.infer<typeof ZigzagBlockSchema>;
+export type SplitBackgroundBlockType = z.infer<typeof SplitBackgroundBlockSchema>;
+export type ProductCardBlockType = z.infer<typeof ProductCardBlockSchema>;
+export type BadgeOverlayBlockType = z.infer<typeof BadgeOverlayBlockSchema>;
 export type EmailBlockType = z.infer<typeof EmailBlockSchema>;
 export type BlockEmailType = z.infer<typeof BlockEmailSchema>;
 export type GlobalEmailSettingsType = z.infer<typeof GlobalEmailSettingsSchema>;

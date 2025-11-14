@@ -121,11 +121,7 @@ export function EmailFrame({
                         data-block-id={block.id}
                         data-block-type={block.type}
                         onClick={(e) => handleBlockClick(e, block)}
-                        className="relative border-2 border-transparent hover:border-[#e9a589]/50 hover:border-dashed transition-colors cursor-pointer"
-                        style={{
-                          // Ensure wrapper inherits content background so spacer blocks match visual mode
-                          backgroundColor: config.contentBackgroundColor,
-                        }}
+                        className="relative hover:outline hover:outline-2 hover:outline-[#e9a589]/50 hover:outline-dashed outline-offset-[-2px] transition-all cursor-pointer"
                       >
                         <div
                           dangerouslySetInnerHTML={{

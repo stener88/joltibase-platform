@@ -101,14 +101,14 @@ export function BlockCanvas({
                 return (
                   <div
                     key={block.id}
-                    className="relative group mb-1"
+                    className="relative group"
                     onMouseEnter={() => onBlockHover(block.id)}
                     onMouseLeave={() => onBlockHover(null)}
                   >
                     {/* Plus Button Above */}
                     <button
                       className={`absolute -top-4 left-1/2 -translate-x-1/2 z-10 w-6 h-6 rounded-full bg-white border-2 border-gray-300 hover:border-[#e9a589] hover:bg-[#e9a589] hover:text-white transition-all duration-200 flex items-center justify-center text-gray-600 shadow-sm hover:shadow-md ${
-                        showControls ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
+                        isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
                       }`}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -123,9 +123,9 @@ export function BlockCanvas({
                     <div
                       className={`email-block-content relative transition-all duration-200 cursor-pointer ${
                         isSelected
-                          ? 'ring-2 ring-[#e9a589] ring-offset-1'
+                          ? 'outline outline-2 outline-[#e9a589] outline-offset-[-2px]'
                           : isHovered
-                          ? 'ring-2 ring-gray-300 ring-offset-1'
+                          ? 'outline outline-2 outline-gray-300 outline-offset-[-2px]'
                           : ''
                       }`}
                       onClick={(e) => {
@@ -153,7 +153,7 @@ export function BlockCanvas({
                     {/* Plus Button Below */}
                     <button
                       className={`absolute -bottom-4 left-1/2 -translate-x-1/2 z-10 w-6 h-6 rounded-full bg-white border-2 border-gray-300 hover:border-[#e9a589] hover:bg-[#e9a589] hover:text-white transition-all duration-200 flex items-center justify-center text-gray-600 shadow-sm hover:shadow-md ${
-                        showControls ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
+                        isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
                       }`}
                       onClick={(e) => {
                         e.stopPropagation();

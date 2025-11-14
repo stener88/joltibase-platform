@@ -6,6 +6,7 @@ import { createDefaultBlock } from '@/lib/email/blocks/registry';
 import { BlockCanvas } from './BlockCanvas';
 import { BlockSettingsPanel } from './settings/BlockSettingsPanel';
 import { BlockPaletteModal } from './BlockPaletteModal';
+import { insertSectionRelativeToBlock } from '@/lib/email/sections/inserter';
 
 type DeviceMode = 'desktop' | 'mobile';
 
@@ -204,6 +205,39 @@ export function VisualBlockEditor({
     [blocks, triggerSave]
   );
 
+  // Insert section template
+  const insertSection = useCallback(
+    (sectionId: string) => {
+      const targetBlockId = selectedBlockId || blocks[blocks.length - 1]?.id;
+      
+      if (!targetBlockId) {
+        console.error('No target block found for section insertion');
+        return;
+      }
+      
+      const result = insertSectionRelativeToBlock(
+        sectionId,
+        blocks,
+        targetBlockId,
+        'after'
+      );
+      
+      if (result.success && result.blocks) {
+        setBlocks(result.blocks);
+        
+        // Select the first block of the newly inserted section
+        if (result.insertedBlockIds && result.insertedBlockIds.length > 0) {
+          setSelectedBlockId(result.insertedBlockIds[0]);
+        }
+        
+        triggerSave();
+      } else {
+        console.error('Failed to insert section:', result.error);
+      }
+    },
+    [blocks, selectedBlockId, triggerSave]
+  );
+
   // Update design config
   const updateDesignConfig = useCallback(
     (updates: Partial<GlobalEmailSettings>) => {
@@ -222,8 +256,28 @@ export function VisualBlockEditor({
           designConfig={designConfig}
           onUpdateBlock={updateBlock}
           onUpdateDesignConfig={updateDesignConfig}
+          onInsertSection={insertSection}
           campaignId={campaignId}
         />
+        
+        {/* Save Status */}
+        <div className="px-6 py-3 border-t border-gray-200 bg-gray-50">
+          <div className={`text-xs transition-colors duration-200 ${
+            saveStatus === 'error' ? 'text-red-600' : 
+            saveStatus === 'saved' ? 'text-green-600' : 
+            'text-gray-500'
+          }`}>
+            {saveStatus === 'saving' && (
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                Saving...
+              </div>
+            )}
+            {saveStatus === 'saved' && '✅ All changes saved'}
+            {saveStatus === 'error' && `❌ ${saveError || 'Failed to save'}`}
+            {saveStatus === 'idle' && <span className="opacity-0">.</span>}
+          </div>
+        </div>
       </div>
 
       {/* Right: Canvas (65% width) */}

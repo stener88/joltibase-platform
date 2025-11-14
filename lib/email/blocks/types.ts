@@ -47,7 +47,18 @@ export type BlockType =
   | 'feature-grid'
   | 'comparison'
   | 'social-links'
-  | 'footer';
+  | 'footer'
+  // Complex Layout Blocks
+  | 'two-column'
+  | 'image-overlay'
+  | 'image-grid-2x2'
+  | 'image-grid-3x3'
+  | 'image-collage'
+  | 'three-column'
+  | 'zigzag'
+  | 'split-background'
+  | 'product-card'
+  | 'badge-overlay';
 
 /**
  * Base block interface - all blocks extend this
@@ -77,7 +88,17 @@ export type BlockSettings =
   | FeatureGridBlockSettings
   | ComparisonBlockSettings
   | SocialLinksBlockSettings
-  | FooterBlockSettings;
+  | FooterBlockSettings
+  | TwoColumnBlockSettings
+  | ImageOverlayBlockSettings
+  | ImageGrid2x2BlockSettings
+  | ImageGrid3x3BlockSettings
+  | ImageCollageBlockSettings
+  | ThreeColumnBlockSettings
+  | ZigzagBlockSettings
+  | SplitBackgroundBlockSettings
+  | ProductCardBlockSettings
+  | BadgeOverlayBlockSettings;
 
 /**
  * Union type for all block content
@@ -96,7 +117,17 @@ export type BlockContent =
   | FeatureGridBlockContent
   | ComparisonBlockContent
   | SocialLinksBlockContent
-  | FooterBlockContent;
+  | FooterBlockContent
+  | TwoColumnBlockContent
+  | ImageOverlayBlockContent
+  | ImageGrid2x2BlockContent
+  | ImageGrid3x3BlockContent
+  | ImageCollageBlockContent
+  | ThreeColumnBlockContent
+  | ZigzagBlockContent
+  | SplitBackgroundBlockContent
+  | ProductCardBlockContent
+  | BadgeOverlayBlockContent;
 
 // ============================================================================
 // Common Types
@@ -494,6 +525,458 @@ export interface FooterBlockContent {
 }
 
 // ============================================================================
+// COMPLEX LAYOUT BLOCKS
+// ============================================================================
+
+// ============================================================================
+// 15. Two-Column Block
+// ============================================================================
+
+export interface TwoColumnBlock extends EmailBlock {
+  type: 'two-column';
+  settings: TwoColumnBlockSettings;
+  content: TwoColumnBlockContent;
+}
+
+export interface TwoColumnBlockSettings {
+  layout: '50-50' | '60-40' | '40-60' | '70-30' | '30-70';
+  verticalAlign: 'top' | 'middle' | 'bottom';
+  columnGap: number; // 16, 24, 32, 48
+  backgroundColor?: string | null;
+  padding: Padding;
+  reverseOnMobile?: boolean; // Stack columns in reverse order on mobile
+  leftColumnBackgroundColor?: string | null;
+  rightColumnBackgroundColor?: string | null;
+  leftColumnPadding?: Padding | null;
+  rightColumnPadding?: Padding | null;
+}
+
+export interface TwoColumnBlockContent {
+  leftColumn: {
+    type: 'image' | 'text' | 'rich-content';
+    imageUrl?: string | null;
+    imageAltText?: string | null;
+    text?: string | null; // Simple text
+    richContent?: {
+      heading?: string | null;
+      headingSize?: string | null; // '24px', '32px', '44px'
+      headingColor?: string | null;
+      body?: string | null;
+      bodySize?: string | null; // '14px', '16px', '18px'
+      bodyColor?: string | null;
+      buttonText?: string | null;
+      buttonUrl?: string | null;
+      buttonColor?: string | null;
+      buttonTextColor?: string | null;
+    } | null;
+  };
+  rightColumn: {
+    type: 'image' | 'text' | 'rich-content';
+    imageUrl?: string | null;
+    imageAltText?: string | null;
+    text?: string | null;
+    richContent?: {
+      heading?: string | null;
+      headingSize?: string | null;
+      headingColor?: string | null;
+      body?: string | null;
+      bodySize?: string | null;
+      bodyColor?: string | null;
+      buttonText?: string | null;
+      buttonUrl?: string | null;
+      buttonColor?: string | null;
+      buttonTextColor?: string | null;
+    } | null;
+  };
+}
+
+// ============================================================================
+// 16. Image Overlay Block
+// ============================================================================
+
+export interface ImageOverlayBlock extends EmailBlock {
+  type: 'image-overlay';
+  settings: ImageOverlayBlockSettings;
+  content: ImageOverlayBlockContent;
+}
+
+export interface ImageOverlayBlockSettings {
+  overlayPosition: 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center-bottom';
+  overlayBackgroundColor?: string | null;
+  overlayBackgroundOpacity: number; // 0-100
+  overlayPadding: Padding;
+  overlayBorderRadius?: string | null; // '0px', '8px', '16px'
+  imageHeight: string; // '300px', '400px', '500px'
+  padding: Padding;
+}
+
+export interface ImageOverlayBlockContent {
+  imageUrl: string;
+  imageAltText: string;
+  heading?: string | null;
+  headingSize?: string | null; // '24px', '32px', '44px'
+  headingColor?: string | null;
+  subheading?: string | null;
+  subheadingSize?: string | null;
+  subheadingColor?: string | null;
+  buttonText?: string | null;
+  buttonUrl?: string | null;
+  buttonColor?: string | null;
+  buttonTextColor?: string | null;
+}
+
+// ============================================================================
+// 17. Image Grid 2x2 Block
+// ============================================================================
+
+export interface ImageGrid2x2Block extends EmailBlock {
+  type: 'image-grid-2x2';
+  settings: ImageGrid2x2BlockSettings;
+  content: ImageGrid2x2BlockContent;
+}
+
+export interface ImageGrid2x2BlockSettings {
+  gridGap: number; // 8, 12, 16, 24
+  imageHeight: string; // '150px', '200px', '250px'
+  borderRadius?: string | null; // '0px', '4px', '8px'
+  showCaptions: boolean;
+  captionFontSize?: string | null; // '12px', '14px'
+  captionColor?: string | null;
+  captionBackgroundColor?: string | null;
+  captionBackgroundOpacity?: number | null; // 0-100
+  padding: Padding;
+}
+
+export interface ImageGrid2x2BlockContent {
+  images: [
+    {
+      imageUrl: string;
+      altText: string;
+      caption?: string | null;
+      linkUrl?: string | null;
+    },
+    {
+      imageUrl: string;
+      altText: string;
+      caption?: string | null;
+      linkUrl?: string | null;
+    },
+    {
+      imageUrl: string;
+      altText: string;
+      caption?: string | null;
+      linkUrl?: string | null;
+    },
+    {
+      imageUrl: string;
+      altText: string;
+      caption?: string | null;
+      linkUrl?: string | null;
+    }
+  ];
+}
+
+// ============================================================================
+// 18. Image Grid 3x3 Block
+// ============================================================================
+
+export interface ImageGrid3x3Block extends EmailBlock {
+  type: 'image-grid-3x3';
+  settings: ImageGrid3x3BlockSettings;
+  content: ImageGrid3x3BlockContent;
+}
+
+export interface ImageGrid3x3BlockSettings {
+  gridGap: number; // 4, 8, 12, 16
+  imageHeight: string; // '100px', '120px', '150px'
+  borderRadius?: string | null; // '0px', '4px', '8px'
+  showCaptions: boolean;
+  captionFontSize?: string | null; // '10px', '12px'
+  captionColor?: string | null;
+  captionBackgroundColor?: string | null;
+  captionBackgroundOpacity?: number | null; // 0-100
+  padding: Padding;
+}
+
+export interface ImageGrid3x3BlockContent {
+  images: Array<{
+    imageUrl: string;
+    altText: string;
+    caption?: string | null;
+    linkUrl?: string | null;
+  }>; // Must have 9 images
+}
+
+// ============================================================================
+// 19. Image Collage Block (Asymmetric)
+// ============================================================================
+
+export interface ImageCollageBlock extends EmailBlock {
+  type: 'image-collage';
+  settings: ImageCollageBlockSettings;
+  content: ImageCollageBlockContent;
+}
+
+export interface ImageCollageBlockSettings {
+  layout: 'featured-left' | 'featured-right' | 'featured-center';
+  gridGap: number; // 8, 12, 16
+  borderRadius?: string | null; // '0px', '4px', '8px'
+  padding: Padding;
+}
+
+export interface ImageCollageBlockContent {
+  // Featured image takes up more space (e.g., 60%)
+  featuredImage: {
+    imageUrl: string;
+    altText: string;
+    linkUrl?: string | null;
+  };
+  // Secondary images (3-4 smaller images)
+  secondaryImages: Array<{
+    imageUrl: string;
+    altText: string;
+    linkUrl?: string | null;
+  }>;
+}
+
+// ============================================================================
+// 20. Three-Column Block
+// ============================================================================
+
+export interface ThreeColumnBlock extends EmailBlock {
+  type: 'three-column';
+  settings: ThreeColumnBlockSettings;
+  content: ThreeColumnBlockContent;
+}
+
+export interface ThreeColumnBlockSettings {
+  layout: 'equal' | 'wide-center' | 'wide-outer';
+  columnGap: number; // 12, 16, 24, 32
+  verticalAlign: 'top' | 'middle' | 'bottom';
+  backgroundColor?: string | null;
+  padding: Padding;
+  columnBackgroundColor?: string | null;
+  columnPadding?: Padding | null;
+  columnBorderRadius?: string | null;
+}
+
+export interface ThreeColumnBlockContent {
+  columns: [
+    {
+      icon?: string | null; // Emoji or icon
+      imageUrl?: string | null;
+      imageAltText?: string | null;
+      heading?: string | null;
+      headingSize?: string | null;
+      headingColor?: string | null;
+      body?: string | null;
+      bodySize?: string | null;
+      bodyColor?: string | null;
+      buttonText?: string | null;
+      buttonUrl?: string | null;
+    },
+    {
+      icon?: string | null;
+      imageUrl?: string | null;
+      imageAltText?: string | null;
+      heading?: string | null;
+      headingSize?: string | null;
+      headingColor?: string | null;
+      body?: string | null;
+      bodySize?: string | null;
+      bodyColor?: string | null;
+      buttonText?: string | null;
+      buttonUrl?: string | null;
+    },
+    {
+      icon?: string | null;
+      imageUrl?: string | null;
+      imageAltText?: string | null;
+      heading?: string | null;
+      headingSize?: string | null;
+      headingColor?: string | null;
+      body?: string | null;
+      bodySize?: string | null;
+      bodyColor?: string | null;
+      buttonText?: string | null;
+      buttonUrl?: string | null;
+    }
+  ];
+}
+
+// ============================================================================
+// 21. Zigzag/Alternating Block
+// ============================================================================
+
+export interface ZigzagBlock extends EmailBlock {
+  type: 'zigzag';
+  settings: ZigzagBlockSettings;
+  content: ZigzagBlockContent;
+}
+
+export interface ZigzagBlockSettings {
+  imageWidth: '40%' | '50%' | '60%';
+  columnGap: number; // 24, 32, 48
+  rowGap: number; // 32, 48, 64
+  verticalAlign: 'top' | 'middle' | 'bottom';
+  backgroundColor?: string | null;
+  padding: Padding;
+  imageBorderRadius?: string | null;
+}
+
+export interface ZigzagBlockContent {
+  rows: Array<{
+    imageUrl: string;
+    imageAltText: string;
+    heading: string;
+    headingSize?: string | null;
+    headingColor?: string | null;
+    body: string;
+    bodySize?: string | null;
+    bodyColor?: string | null;
+    buttonText?: string | null;
+    buttonUrl?: string | null;
+    buttonColor?: string | null;
+    buttonTextColor?: string | null;
+  }>; // 2-4 rows
+}
+
+// ============================================================================
+// 22. Split Background Two-Column Block
+// ============================================================================
+
+export interface SplitBackgroundBlock extends EmailBlock {
+  type: 'split-background';
+  settings: SplitBackgroundBlockSettings;
+  content: SplitBackgroundBlockContent;
+}
+
+export interface SplitBackgroundBlockSettings {
+  layout: '50-50' | '60-40' | '40-60';
+  leftBackgroundColor: string;
+  rightBackgroundColor: string;
+  leftBackgroundGradient?: {
+    from: string;
+    to: string;
+    direction: 'to-right' | 'to-bottom' | 'to-br';
+  } | null;
+  rightBackgroundGradient?: {
+    from: string;
+    to: string;
+    direction: 'to-right' | 'to-bottom' | 'to-br';
+  } | null;
+  columnGap: number; // 0, 16, 24, 32
+  verticalAlign: 'top' | 'middle' | 'bottom';
+  padding: Padding;
+  leftColumnPadding: Padding;
+  rightColumnPadding: Padding;
+}
+
+export interface SplitBackgroundBlockContent {
+  leftColumn: {
+    heading?: string | null;
+    headingSize?: string | null;
+    headingColor?: string | null;
+    body?: string | null;
+    bodySize?: string | null;
+    bodyColor?: string | null;
+    imageUrl?: string | null;
+    imageAltText?: string | null;
+    buttonText?: string | null;
+    buttonUrl?: string | null;
+    buttonColor?: string | null;
+    buttonTextColor?: string | null;
+  };
+  rightColumn: {
+    heading?: string | null;
+    headingSize?: string | null;
+    headingColor?: string | null;
+    body?: string | null;
+    bodySize?: string | null;
+    bodyColor?: string | null;
+    imageUrl?: string | null;
+    imageAltText?: string | null;
+    buttonText?: string | null;
+    buttonUrl?: string | null;
+    buttonColor?: string | null;
+    buttonTextColor?: string | null;
+  };
+}
+
+// ============================================================================
+// 23. Product Card Block
+// ============================================================================
+
+export interface ProductCardBlock extends EmailBlock {
+  type: 'product-card';
+  settings: ProductCardBlockSettings;
+  content: ProductCardBlockContent;
+}
+
+export interface ProductCardBlockSettings {
+  backgroundColor?: string | null;
+  borderColor?: string | null;
+  borderWidth?: number | null; // 0, 1, 2
+  borderRadius?: string | null; // '0px', '8px', '16px'
+  padding: Padding;
+  imagePosition: 'top' | 'left'; // Image on top or left side
+  imageWidth?: string | null; // '40%', '50%' (for left position)
+  imageHeight?: string | null; // '200px', '250px', '300px' (for top position)
+  badgePosition?: 'top-left' | 'top-right' | null;
+  badgeBackgroundColor?: string | null;
+  badgeTextColor?: string | null;
+}
+
+export interface ProductCardBlockContent {
+  imageUrl: string;
+  imageAltText: string;
+  badge?: string | null; // 'New', 'Sale', '20% OFF'
+  heading: string;
+  headingSize?: string | null;
+  headingColor?: string | null;
+  description?: string | null;
+  descriptionSize?: string | null;
+  descriptionColor?: string | null;
+  price?: string | null;
+  priceSize?: string | null;
+  priceColor?: string | null;
+  originalPrice?: string | null; // Strikethrough price
+  buttonText?: string | null;
+  buttonUrl?: string | null;
+  buttonColor?: string | null;
+  buttonTextColor?: string | null;
+}
+
+// ============================================================================
+// 24. Badge Overlay Block
+// ============================================================================
+
+export interface BadgeOverlayBlock extends EmailBlock {
+  type: 'badge-overlay';
+  settings: BadgeOverlayBlockSettings;
+  content: BadgeOverlayBlockContent;
+}
+
+export interface BadgeOverlayBlockSettings {
+  badgePosition: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center';
+  badgeSize: 'small' | 'medium' | 'large'; // Circular badge dimensions
+  badgeBackgroundColor: string;
+  badgeTextColor: string;
+  badgeFontSize?: string | null;
+  badgeFontWeight?: number | null;
+  imageHeight: string; // '300px', '400px', '500px'
+  borderRadius?: string | null;
+  padding: Padding;
+}
+
+export interface BadgeOverlayBlockContent {
+  imageUrl: string;
+  imageAltText: string;
+  badgeText: string; // 'New', '50%', 'Sale', '★ 4.9'
+  linkUrl?: string | null;
+}
+
+// ============================================================================
 // Typed Block Interfaces (for type guards)
 // ============================================================================
 
@@ -525,6 +1008,16 @@ export type TypedBlock<T extends BlockType> =
   T extends 'comparison' ? ComparisonBlock :
   T extends 'social-links' ? SocialLinksBlock :
   T extends 'footer' ? FooterBlock :
+  T extends 'two-column' ? TwoColumnBlock :
+  T extends 'image-overlay' ? ImageOverlayBlock :
+  T extends 'image-grid-2x2' ? ImageGrid2x2Block :
+  T extends 'image-grid-3x3' ? ImageGrid3x3Block :
+  T extends 'image-collage' ? ImageCollageBlock :
+  T extends 'three-column' ? ThreeColumnBlock :
+  T extends 'zigzag' ? ZigzagBlock :
+  T extends 'split-background' ? SplitBackgroundBlock :
+  T extends 'product-card' ? ProductCardBlock :
+  T extends 'badge-overlay' ? BadgeOverlayBlock :
   never;
 
 // ============================================================================

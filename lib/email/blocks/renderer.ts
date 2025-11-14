@@ -21,6 +21,16 @@ import type {
   ComparisonBlock,
   SocialLinksBlock,
   FooterBlock,
+  TwoColumnBlock,
+  ImageOverlayBlock,
+  ImageGrid2x2Block,
+  ImageGrid3x3Block,
+  ImageCollageBlock,
+  ThreeColumnBlock,
+  ZigzagBlock,
+  SplitBackgroundBlock,
+  ProductCardBlock,
+  BadgeOverlayBlock,
   GlobalEmailSettings,
 } from './types';
 
@@ -152,6 +162,26 @@ export function renderBlock(block: EmailBlock, context: RenderContext): string {
       return renderSocialLinksBlock(block as SocialLinksBlock);
     case 'footer':
       return renderFooterBlock(block as FooterBlock, context);
+    case 'two-column':
+      return renderTwoColumnBlock(block as TwoColumnBlock);
+    case 'image-overlay':
+      return renderImageOverlayBlock(block as ImageOverlayBlock);
+    case 'image-grid-2x2':
+      return renderImageGrid2x2Block(block as ImageGrid2x2Block);
+    case 'image-grid-3x3':
+      return renderImageGrid3x3Block(block as ImageGrid3x3Block);
+    case 'image-collage':
+      return renderImageCollageBlock(block as ImageCollageBlock);
+    case 'three-column':
+      return renderThreeColumnBlock(block as ThreeColumnBlock);
+    case 'zigzag':
+      return renderZigzagBlock(block as ZigzagBlock);
+    case 'split-background':
+      return renderSplitBackgroundBlock(block as SplitBackgroundBlock);
+    case 'product-card':
+      return renderProductCardBlock(block as ProductCardBlock);
+    case 'badge-overlay':
+      return renderBadgeOverlayBlock(block as BadgeOverlayBlock);
     default:
       return '';
   }
@@ -247,7 +277,7 @@ function renderHeadingBlock(block: HeadingBlock): string {
  * 4. Text Block
  */
 function renderTextBlock(block: TextBlock): string {
-  const { settings, content } = block;
+  const { settings, content} = block;
   const { fontSize, fontWeight, color, align, backgroundColor, padding, lineHeight } = settings;
   
   return `
@@ -709,6 +739,548 @@ function renderFooterBlock(block: FooterBlock, context: RenderContext): string {
         </td>
       </tr>
     </table>`;
+}
+
+// ============================================================================
+// COMPLEX LAYOUT BLOCKS
+// ============================================================================
+
+/**
+ * 15. Two-Column Block
+ */
+function renderTwoColumnBlock(block: TwoColumnBlock): string {
+  const { settings, content } = block;
+  const { layout, verticalAlign, columnGap, backgroundColor, padding, leftColumnBackgroundColor, rightColumnBackgroundColor, leftColumnPadding, rightColumnPadding } = settings;
+  
+  // Calculate column widths
+  const widths: Record<string, [number, number]> = {
+    '50-50': [50, 50],
+    '60-40': [60, 40],
+    '40-60': [40, 60],
+    '70-30': [70, 30],
+    '30-70': [30, 70],
+  };
+  const [leftWidth, rightWidth] = widths[layout];
+  
+  // Vertical alignment mapping
+  const vAlignMap = { top: 'top', middle: 'middle', bottom: 'bottom' };
+  const vAlign = vAlignMap[verticalAlign];
+  
+  // Render column content
+  const renderColumnContent = (col: typeof content.leftColumn | typeof content.rightColumn, colPadding?: typeof leftColumnPadding, colBg?: string | null) => {
+    const p = colPadding || { top: 0, right: 0, bottom: 0, left: 0 };
+    const padStyle = `padding: ${p.top}px ${p.right}px ${p.bottom}px ${p.left}px;`;
+    const bgStyle = colBg ? `background-color: ${colBg};` : '';
+    
+    if (col.type === 'image' && col.imageUrl) {
+      return `<div style="${padStyle}${bgStyle}"><img src="${escapeHtml(processImageUrl(col.imageUrl))}" alt="${escapeHtml(col.imageAltText || '')}" style="display: block; max-width: 100%; height: auto;" /></div>`;
+    } else if (col.type === 'text' && col.text) {
+      return `<div style="${padStyle}${bgStyle}"><p style="margin: 0; font-size: 16px; line-height: 1.6; color: #374151;">${escapeHtml(col.text)}</p></div>`;
+    } else if (col.type === 'rich-content' && col.richContent) {
+      const rc = col.richContent;
+      return `<div style="${padStyle}${bgStyle}">
+        ${rc.heading ? `<h2 style="margin: 0 0 12px; font-size: ${rc.headingSize || '32px'}; font-weight: 700; color: ${rc.headingColor || '#111827'}; line-height: 1.2;">${escapeHtml(rc.heading)}</h2>` : ''}
+        ${rc.body ? `<p style="margin: 0${rc.buttonText ? ' 0 20px 0' : ''}; font-size: ${rc.bodySize || '16px'}; color: ${rc.bodyColor || '#6b7280'}; line-height: 1.6;">${escapeHtml(rc.body)}</p>` : ''}
+        ${rc.buttonText && rc.buttonUrl ? `<a href="${escapeHtml(rc.buttonUrl)}" style="display: inline-block; padding: 12px 24px; background-color: ${rc.buttonColor || '#2563eb'}; color: ${rc.buttonTextColor || '#ffffff'}; text-decoration: none; border-radius: 6px; font-weight: 600;">${escapeHtml(rc.buttonText)}</a>` : ''}
+      </div>`;
+    }
+    return '';
+  };
+  
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;${backgroundColor ? ` background-color: ${backgroundColor};` : ''}">
+          <!--[if mso]>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+          <td width="${leftWidth}%" valign="${vAlign}">${renderColumnContent(content.leftColumn, leftColumnPadding, leftColumnBackgroundColor)}</td>
+          <td width="${rightWidth}%" valign="${vAlign}">${renderColumnContent(content.rightColumn, rightColumnPadding, rightColumnBackgroundColor)}</td>
+          </tr></table>
+          <![endif]-->
+          <div style="display: table; width: 100%;">
+            <div style="display: table-cell; width: ${leftWidth}%; vertical-align: ${vAlign}; padding-right: ${columnGap / 2}px;">
+              ${renderColumnContent(content.leftColumn, leftColumnPadding, leftColumnBackgroundColor)}
+            </div>
+            <div style="display: table-cell; width: ${rightWidth}%; vertical-align: ${vAlign}; padding-left: ${columnGap / 2}px;">
+              ${renderColumnContent(content.rightColumn, rightColumnPadding, rightColumnBackgroundColor)}
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>`;
+}
+
+/**
+ * 16. Image Overlay Block
+ */
+function renderImageOverlayBlock(block: ImageOverlayBlock): string {
+  const { settings, content } = block;
+  const { overlayPosition, overlayBackgroundColor, overlayBackgroundOpacity, overlayPadding, overlayBorderRadius, imageHeight, padding } = settings;
+  
+  const overlayBg = overlayBackgroundColor ? `rgba(${parseInt(overlayBackgroundColor.slice(1, 3), 16)}, ${parseInt(overlayBackgroundColor.slice(3, 5), 16)}, ${parseInt(overlayBackgroundColor.slice(5, 7), 16)}, ${overlayBackgroundOpacity / 100})` : 'rgba(0, 0, 0, 0.6)';
+  
+  // Position mapping
+  const positionStyle: Record<string, string> = {
+    'center': 'text-align: center; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);',
+    'top-left': 'position: absolute; top: 20px; left: 20px;',
+    'top-right': 'position: absolute; top: 20px; right: 20px;',
+    'bottom-left': 'position: absolute; bottom: 20px; left: 20px;',
+    'bottom-right': 'position: absolute; bottom: 20px; right: 20px;',
+    'center-bottom': 'text-align: center; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);',
+  };
+  
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;">
+          <div style="position: relative; height: ${imageHeight}; overflow: hidden; background-image: url('${escapeHtml(processImageUrl(content.imageUrl))}'); background-size: cover; background-position: center;">
+            <div style="${positionStyle[overlayPosition]} background-color: ${overlayBg}; padding: ${overlayPadding.top}px ${overlayPadding.right}px ${overlayPadding.bottom}px ${overlayPadding.left}px;${overlayBorderRadius ? ` border-radius: ${overlayBorderRadius};` : ''}">
+              ${content.heading ? `<h2 style="margin: 0 0 8px; font-size: ${content.headingSize || '32px'}; font-weight: 700; color: ${content.headingColor || '#ffffff'};">${escapeHtml(content.heading)}</h2>` : ''}
+              ${content.subheading ? `<p style="margin: 0${content.buttonText ? ' 0 16px 0' : ''}; font-size: ${content.subheadingSize || '16px'}; color: ${content.subheadingColor || '#ffffff'};">${escapeHtml(content.subheading)}</p>` : ''}
+              ${content.buttonText && content.buttonUrl ? `<a href="${escapeHtml(content.buttonUrl)}" style="display: inline-block; padding: 12px 24px; background-color: ${content.buttonColor || '#ffffff'}; color: ${content.buttonTextColor || '#111827'}; text-decoration: none; border-radius: 6px; font-weight: 600;">${escapeHtml(content.buttonText)}</a>` : ''}
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>`;
+}
+
+/**
+ * 17. Image Grid 2x2 Block
+ */
+function renderImageGrid2x2Block(block: ImageGrid2x2Block): string {
+  const { settings, content } = block;
+  const { gridGap, imageHeight, borderRadius, showCaptions, captionFontSize, captionColor, captionBackgroundColor, captionBackgroundOpacity, padding } = settings;
+  
+  const renderImage = (img: typeof content.images[0]) => {
+    const imgHtml = `<img src="${escapeHtml(processImageUrl(img.imageUrl))}" alt="${escapeHtml(img.altText)}" style="display: block; width: 100%; height: ${imageHeight}; object-fit: cover;${borderRadius ? ` border-radius: ${borderRadius};` : ''}" />`;
+    const imgContent = img.linkUrl ? `<a href="${escapeHtml(img.linkUrl)}">${imgHtml}</a>` : imgHtml;
+    const caption = showCaptions && img.caption ? `<p style="margin: 8px 0 0; font-size: ${captionFontSize || '12px'}; color: ${captionColor || '#6b7280'}; text-align: center; ${captionBackgroundColor ? `background-color: rgba(${parseInt(captionBackgroundColor.slice(1, 3), 16)}, ${parseInt(captionBackgroundColor.slice(3, 5), 16)}, ${parseInt(captionBackgroundColor.slice(5, 7), 16)}, ${(captionBackgroundOpacity || 100) / 100}); padding: 4px 8px; border-radius: 4px;` : ''}">${escapeHtml(img.caption)}</p>` : '';
+    
+    return imgContent + caption;
+  };
+  
+  // 2x2 grid: two rows, two columns each
+  const images = content.images.slice(0, 4);
+  const halfGap = gridGap / 2;
+  
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;">
+          <!-- Row 1 -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: ${gridGap}px;">
+            <tr>
+              <td width="50%" style="padding-right: ${halfGap}px;" valign="top">
+                ${images[0] ? renderImage(images[0]) : ''}
+              </td>
+              <td width="50%" style="padding-left: ${halfGap}px;" valign="top">
+                ${images[1] ? renderImage(images[1]) : ''}
+              </td>
+            </tr>
+          </table>
+          <!-- Row 2 -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td width="50%" style="padding-right: ${halfGap}px;" valign="top">
+                ${images[2] ? renderImage(images[2]) : ''}
+              </td>
+              <td width="50%" style="padding-left: ${halfGap}px;" valign="top">
+                ${images[3] ? renderImage(images[3]) : ''}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>`;
+}
+
+/**
+ * 18. Image Grid 3x3 Block
+ */
+function renderImageGrid3x3Block(block: ImageGrid3x3Block): string {
+  const { settings, content } = block;
+  const { gridGap, imageHeight, borderRadius, showCaptions, captionFontSize, captionColor, captionBackgroundColor, captionBackgroundOpacity, padding } = settings;
+  
+  const renderImage = (img: typeof content.images[0]) => {
+    const imgHtml = `<img src="${escapeHtml(processImageUrl(img.imageUrl))}" alt="${escapeHtml(img.altText)}" style="display: block; width: 100%; height: ${imageHeight}; object-fit: cover;${borderRadius ? ` border-radius: ${borderRadius};` : ''}" />`;
+    const imgContent = img.linkUrl ? `<a href="${escapeHtml(img.linkUrl)}">${imgHtml}</a>` : imgHtml;
+    const caption = showCaptions && img.caption ? `<p style="margin: 4px 0 0; font-size: ${captionFontSize || '10px'}; color: ${captionColor || '#6b7280'}; text-align: center; ${captionBackgroundColor ? `background-color: rgba(${parseInt(captionBackgroundColor.slice(1, 3), 16)}, ${parseInt(captionBackgroundColor.slice(3, 5), 16)}, ${parseInt(captionBackgroundColor.slice(5, 7), 16)}, ${(captionBackgroundOpacity || 100) / 100}); padding: 2px 6px; border-radius: 3px;` : ''}">${escapeHtml(img.caption)}</p>` : '';
+    
+    return imgContent + caption;
+  };
+  
+  // 3x3 grid: three rows, three columns each
+  const images = content.images.slice(0, 9);
+  const thirdGap = gridGap * 2 / 3;
+  
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;">
+          <!-- Row 1 -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: ${gridGap}px;">
+            <tr>
+              <td width="33.33%" style="padding-right: ${thirdGap}px;" valign="top">
+                ${images[0] ? renderImage(images[0]) : ''}
+              </td>
+              <td width="33.33%" style="padding-left: ${thirdGap / 2}px; padding-right: ${thirdGap / 2}px;" valign="top">
+                ${images[1] ? renderImage(images[1]) : ''}
+              </td>
+              <td width="33.33%" style="padding-left: ${thirdGap}px;" valign="top">
+                ${images[2] ? renderImage(images[2]) : ''}
+              </td>
+            </tr>
+          </table>
+          <!-- Row 2 -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: ${gridGap}px;">
+            <tr>
+              <td width="33.33%" style="padding-right: ${thirdGap}px;" valign="top">
+                ${images[3] ? renderImage(images[3]) : ''}
+              </td>
+              <td width="33.33%" style="padding-left: ${thirdGap / 2}px; padding-right: ${thirdGap / 2}px;" valign="top">
+                ${images[4] ? renderImage(images[4]) : ''}
+              </td>
+              <td width="33.33%" style="padding-left: ${thirdGap}px;" valign="top">
+                ${images[5] ? renderImage(images[5]) : ''}
+              </td>
+            </tr>
+          </table>
+          <!-- Row 3 -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td width="33.33%" style="padding-right: ${thirdGap}px;" valign="top">
+                ${images[6] ? renderImage(images[6]) : ''}
+              </td>
+              <td width="33.33%" style="padding-left: ${thirdGap / 2}px; padding-right: ${thirdGap / 2}px;" valign="top">
+                ${images[7] ? renderImage(images[7]) : ''}
+              </td>
+              <td width="33.33%" style="padding-left: ${thirdGap}px;" valign="top">
+                ${images[8] ? renderImage(images[8]) : ''}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>`;
+}
+
+/**
+ * 19. Image Collage Block (Asymmetric)
+ */
+function renderImageCollageBlock(block: ImageCollageBlock): string {
+  const { settings, content } = block;
+  const { layout, gridGap, borderRadius, padding } = settings;
+  
+  const featuredImg = `<img src="${escapeHtml(processImageUrl(content.featuredImage.imageUrl))}" alt="${escapeHtml(content.featuredImage.altText)}" style="display: block; width: 100%; height: auto;${borderRadius ? ` border-radius: ${borderRadius};` : ''}" />`;
+  const featuredContent = content.featuredImage.linkUrl ? `<a href="${escapeHtml(content.featuredImage.linkUrl)}">${featuredImg}</a>` : featuredImg;
+  
+  const secondaryImages = content.secondaryImages.map((img, i) => {
+    const imgHtml = `<img src="${escapeHtml(processImageUrl(img.imageUrl))}" alt="${escapeHtml(img.altText)}" style="display: block; width: 100%; height: auto;${borderRadius ? ` border-radius: ${borderRadius};` : ''}" />`;
+    const imgContent = img.linkUrl ? `<a href="${escapeHtml(img.linkUrl)}">${imgHtml}</a>` : imgHtml;
+    return `<div style="margin-bottom: ${i < content.secondaryImages.length - 1 ? gridGap : 0}px;">${imgContent}</div>`;
+  }).join('');
+  
+  if (layout === 'featured-left') {
+    return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;">
+          <div style="display: table; width: 100%;">
+            <div style="display: table-cell; width: 60%; vertical-align: top; padding-right: ${gridGap / 2}px;">
+              ${featuredContent}
+            </div>
+            <div style="display: table-cell; width: 40%; vertical-align: top; padding-left: ${gridGap / 2}px;">
+              ${secondaryImages}
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>`;
+  } else if (layout === 'featured-right') {
+    return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;">
+          <div style="display: table; width: 100%;">
+            <div style="display: table-cell; width: 40%; vertical-align: top; padding-right: ${gridGap / 2}px;">
+              ${secondaryImages}
+            </div>
+            <div style="display: table-cell; width: 60%; vertical-align: top; padding-left: ${gridGap / 2}px;">
+              ${featuredContent}
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>`;
+  } else {
+    // featured-center
+    return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;">
+          <div style="margin-bottom: ${gridGap}px;">${featuredContent}</div>
+          <div style="display: flex; gap: ${gridGap}px;">
+            ${content.secondaryImages.map((img, i) => {
+              const imgHtml = `<img src="${escapeHtml(processImageUrl(img.imageUrl))}" alt="${escapeHtml(img.altText)}" style="display: block; width: 100%; height: auto;${borderRadius ? ` border-radius: ${borderRadius};` : ''}" />`;
+              const imgContent = img.linkUrl ? `<a href="${escapeHtml(img.linkUrl)}">${imgHtml}</a>` : imgHtml;
+              return `<div style="flex: 1;">${imgContent}</div>`;
+            }).join('')}
+          </div>
+        </td>
+      </tr>
+    </table>`;
+  }
+}
+
+/**
+ * 20. Three-Column Block
+ */
+function renderThreeColumnBlock(block: ThreeColumnBlock): string {
+  const { settings, content } = block;
+  const { layout, columnGap, verticalAlign, backgroundColor, padding, columnBackgroundColor, columnPadding, columnBorderRadius } = settings;
+  
+  const widths: Record<string, [number, number, number]> = {
+    'equal': [33.33, 33.33, 33.33],
+    'wide-center': [25, 50, 25],
+    'wide-outer': [37.5, 25, 37.5],
+  };
+  const [w1, w2, w3] = widths[layout];
+  
+  const vAlignMap = { top: 'top', middle: 'middle', bottom: 'bottom' };
+  const vAlign = vAlignMap[verticalAlign];
+  
+  const renderColumn = (col: typeof content.columns[0]) => {
+    const p = columnPadding || { top: 12, right: 12, bottom: 12, left: 12 };
+    const colStyle = `padding: ${p.top}px ${p.right}px ${p.bottom}px ${p.left}px;${columnBackgroundColor ? ` background-color: ${columnBackgroundColor};` : ''}${columnBorderRadius ? ` border-radius: ${columnBorderRadius};` : ''}`;
+    
+    return `<div style="${colStyle}">
+      ${col.icon ? `<div style="font-size: 32px; margin-bottom: 12px;">${escapeHtml(col.icon)}</div>` : ''}
+      ${col.imageUrl ? `<img src="${escapeHtml(processImageUrl(col.imageUrl))}" alt="${escapeHtml(col.imageAltText || '')}" style="display: block; width: 100%; height: auto; margin-bottom: 12px;" />` : ''}
+      ${col.heading ? `<h3 style="margin: 0 0 8px; font-size: ${col.headingSize || '20px'}; font-weight: 700; color: ${col.headingColor || '#111827'};">${escapeHtml(col.heading)}</h3>` : ''}
+      ${col.body ? `<p style="margin: 0${col.buttonText ? ' 0 12px 0' : ''}; font-size: ${col.bodySize || '14px'}; color: ${col.bodyColor || '#6b7280'}; line-height: 1.6;">${escapeHtml(col.body)}</p>` : ''}
+      ${col.buttonText && col.buttonUrl ? `<a href="${escapeHtml(col.buttonUrl)}" style="display: inline-block; padding: 8px 16px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 600;">${escapeHtml(col.buttonText)}</a>` : ''}
+    </div>`;
+  };
+  
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;${backgroundColor ? ` background-color: ${backgroundColor};` : ''}">
+          <div style="display: table; width: 100%;">
+            <div style="display: table-cell; width: ${w1}%; vertical-align: ${vAlign}; padding-right: ${columnGap / 2}px;">
+              ${renderColumn(content.columns[0])}
+            </div>
+            <div style="display: table-cell; width: ${w2}%; vertical-align: ${vAlign}; padding-left: ${columnGap / 2}px; padding-right: ${columnGap / 2}px;">
+              ${renderColumn(content.columns[1])}
+            </div>
+            <div style="display: table-cell; width: ${w3}%; vertical-align: ${vAlign}; padding-left: ${columnGap / 2}px;">
+              ${renderColumn(content.columns[2])}
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>`;
+}
+
+/**
+ * 21. Zigzag/Alternating Block
+ */
+function renderZigzagBlock(block: ZigzagBlock): string {
+  const { settings, content } = block;
+  const { imageWidth, columnGap, rowGap, verticalAlign, backgroundColor, padding, imageBorderRadius } = settings;
+  
+  const imgWidthNum = parseInt(imageWidth);
+  const textWidth = 100 - imgWidthNum;
+  
+  const vAlignMap = { top: 'top', middle: 'middle', bottom: 'bottom' };
+  const vAlign = vAlignMap[verticalAlign];
+  
+  const rows = content.rows.map((row, index) => {
+    const isEven = index % 2 === 0;
+    const imgHtml = `<img src="${escapeHtml(processImageUrl(row.imageUrl))}" alt="${escapeHtml(row.imageAltText)}" style="display: block; width: 100%; height: auto;${imageBorderRadius ? ` border-radius: ${imageBorderRadius};` : ''}" />`;
+    const textHtml = `
+      <div style="padding: 0 ${columnGap / 2}px;">
+        <h3 style="margin: 0 0 12px; font-size: ${row.headingSize || '28px'}; font-weight: 700; color: ${row.headingColor || '#111827'}; line-height: 1.2;">${escapeHtml(row.heading)}</h3>
+        <p style="margin: 0${row.buttonText ? ' 0 16px 0' : ''}; font-size: ${row.bodySize || '16px'}; color: ${row.bodyColor || '#6b7280'}; line-height: 1.6;">${escapeHtml(row.body)}</p>
+        ${row.buttonText && row.buttonUrl ? `<a href="${escapeHtml(row.buttonUrl)}" style="display: inline-block; padding: 12px 24px; background-color: ${row.buttonColor || '#2563eb'}; color: ${row.buttonTextColor || '#ffffff'}; text-decoration: none; border-radius: 6px; font-weight: 600;">${escapeHtml(row.buttonText)}</a>` : ''}
+      </div>`;
+    
+    return `
+      <div style="display: table; width: 100%; margin-bottom: ${index < content.rows.length - 1 ? rowGap : 0}px;">
+        ${isEven ? `
+          <div style="display: table-cell; width: ${imgWidthNum}%; vertical-align: ${vAlign}; padding-right: ${columnGap / 2}px;">${imgHtml}</div>
+          <div style="display: table-cell; width: ${textWidth}%; vertical-align: ${vAlign};">${textHtml}</div>
+        ` : `
+          <div style="display: table-cell; width: ${textWidth}%; vertical-align: ${vAlign};">${textHtml}</div>
+          <div style="display: table-cell; width: ${imgWidthNum}%; vertical-align: ${vAlign}; padding-left: ${columnGap / 2}px;">${imgHtml}</div>
+        `}
+      </div>`;
+  }).join('');
+  
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;${backgroundColor ? ` background-color: ${backgroundColor};` : ''}">
+          ${rows}
+        </td>
+      </tr>
+    </table>`;
+}
+
+/**
+ * 22. Split Background Two-Column Block
+ */
+function renderSplitBackgroundBlock(block: SplitBackgroundBlock): string {
+  const { settings, content } = block;
+  const { layout, leftBackgroundColor, rightBackgroundColor, leftBackgroundGradient, rightBackgroundGradient, columnGap, verticalAlign, padding, leftColumnPadding, rightColumnPadding } = settings;
+  
+  const widths: Record<string, [number, number]> = {
+    '50-50': [50, 50],
+    '60-40': [60, 40],
+    '40-60': [40, 60],
+  };
+  const [leftWidth, rightWidth] = widths[layout];
+  
+  const vAlignMap = { top: 'top', middle: 'middle', bottom: 'bottom' };
+  const vAlign = vAlignMap[verticalAlign];
+  
+  const getBackgroundStyle = (color: string, gradient?: typeof leftBackgroundGradient) => {
+    if (gradient) {
+      const dir = gradient.direction === 'to-right' ? 'to right' : gradient.direction === 'to-bottom' ? 'to bottom' : '135deg';
+      return `background: linear-gradient(${dir}, ${gradient.from}, ${gradient.to});`;
+    }
+    return `background-color: ${color};`;
+  };
+  
+  const renderColumn = (col: typeof content.leftColumn, colPadding: typeof leftColumnPadding, bgStyle: string) => {
+    return `<div style="${bgStyle} padding: ${colPadding.top}px ${colPadding.right}px ${colPadding.bottom}px ${colPadding.left}px;">
+      ${col.imageUrl ? `<img src="${escapeHtml(processImageUrl(col.imageUrl))}" alt="${escapeHtml(col.imageAltText || '')}" style="display: block; width: 100%; height: auto; margin-bottom: 16px;" />` : ''}
+      ${col.heading ? `<h2 style="margin: 0 0 12px; font-size: ${col.headingSize || '32px'}; font-weight: 700; color: ${col.headingColor || '#ffffff'};">${escapeHtml(col.heading)}</h2>` : ''}
+      ${col.body ? `<p style="margin: 0${col.buttonText ? ' 0 16px 0' : ''}; font-size: ${col.bodySize || '16px'}; color: ${col.bodyColor || '#ffffff'}; line-height: 1.6;">${escapeHtml(col.body)}</p>` : ''}
+      ${col.buttonText && col.buttonUrl ? `<a href="${escapeHtml(col.buttonUrl)}" style="display: inline-block; padding: 12px 24px; background-color: ${col.buttonColor || '#ffffff'}; color: ${col.buttonTextColor || '#111827'}; text-decoration: none; border-radius: 6px; font-weight: 600;">${escapeHtml(col.buttonText)}</a>` : ''}
+    </div>`;
+  };
+  
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;">
+          <div style="display: table; width: 100%;">
+            <div style="display: table-cell; width: ${leftWidth}%; vertical-align: ${vAlign}; ${columnGap > 0 ? `padding-right: ${columnGap / 2}px;` : ''}">
+              ${renderColumn(content.leftColumn, leftColumnPadding, getBackgroundStyle(leftBackgroundColor, leftBackgroundGradient))}
+            </div>
+            <div style="display: table-cell; width: ${rightWidth}%; vertical-align: ${vAlign}; ${columnGap > 0 ? `padding-left: ${columnGap / 2}px;` : ''}">
+              ${renderColumn(content.rightColumn, rightColumnPadding, getBackgroundStyle(rightBackgroundColor, rightBackgroundGradient))}
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>`;
+}
+
+/**
+ * 23. Product Card Block
+ */
+function renderProductCardBlock(block: ProductCardBlock): string {
+  const { settings, content } = block;
+  const { backgroundColor, borderColor, borderWidth, borderRadius, padding, imagePosition, imageWidth, imageHeight, badgePosition, badgeBackgroundColor, badgeTextColor } = settings;
+  
+  const cardStyle = `padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;${backgroundColor ? ` background-color: ${backgroundColor};` : ''}${borderColor && borderWidth ? ` border: ${borderWidth}px solid ${borderColor};` : ''}${borderRadius ? ` border-radius: ${borderRadius};` : ''}`;
+  
+  const badge = content.badge && badgePosition ? `<div style="position: absolute; ${badgePosition === 'top-left' ? 'top: 12px; left: 12px;' : 'top: 12px; right: 12px;'} background-color: ${badgeBackgroundColor || '#ef4444'}; color: ${badgeTextColor || '#ffffff'}; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 700;">${escapeHtml(content.badge)}</div>` : '';
+  
+  const imgHtml = `<div style="position: relative;"><img src="${escapeHtml(processImageUrl(content.imageUrl))}" alt="${escapeHtml(content.imageAltText)}" style="display: block; width: 100%; height: ${imagePosition === 'top' ? (imageHeight || 'auto') : 'auto'}; object-fit: cover;" />${badge}</div>`;
+  
+  const productInfo = `
+    <div style="padding: 16px;">
+      <h3 style="margin: 0 0 8px; font-size: ${content.headingSize || '20px'}; font-weight: 700; color: ${content.headingColor || '#111827'};">${escapeHtml(content.heading)}</h3>
+      ${content.description ? `<p style="margin: 0 0 12px; font-size: ${content.descriptionSize || '14px'}; color: ${content.descriptionColor || '#6b7280'}; line-height: 1.6;">${escapeHtml(content.description)}</p>` : ''}
+      ${content.price ? `<div style="margin-bottom: 12px;">
+        <span style="font-size: ${content.priceSize || '24px'}; font-weight: 700; color: ${content.priceColor || '#111827'};">${escapeHtml(content.price)}</span>
+        ${content.originalPrice ? `<span style="font-size: 16px; color: #9ca3af; text-decoration: line-through; margin-left: 8px;">${escapeHtml(content.originalPrice)}</span>` : ''}
+      </div>` : ''}
+      ${content.buttonText && content.buttonUrl ? `<a href="${escapeHtml(content.buttonUrl)}" style="display: inline-block; padding: 12px 24px; background-color: ${content.buttonColor || '#2563eb'}; color: ${content.buttonTextColor || '#ffffff'}; text-decoration: none; border-radius: 6px; font-weight: 600; width: 100%; text-align: center; box-sizing: border-box;">${escapeHtml(content.buttonText)}</a>` : ''}
+    </div>`;
+  
+  if (imagePosition === 'left') {
+    return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="${cardStyle}">
+          <div style="display: table; width: 100%;">
+            <div style="display: table-cell; width: ${imageWidth || '40%'}; vertical-align: top;">
+              ${imgHtml}
+            </div>
+            <div style="display: table-cell; vertical-align: top;">
+              ${productInfo}
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>`;
+  } else {
+    return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="${cardStyle}">
+          ${imgHtml}
+          ${productInfo}
+        </td>
+      </tr>
+    </table>`;
+  }
+}
+
+/**
+ * 24. Badge Overlay Block
+ */
+function renderBadgeOverlayBlock(block: BadgeOverlayBlock): string {
+  const { settings, content } = block;
+  const { badgePosition, badgeSize, badgeBackgroundColor, badgeTextColor, badgeFontSize, badgeFontWeight, imageHeight, borderRadius, padding } = settings;
+  
+  const badgeSizeMap = {
+    small: '60px',
+    medium: '80px',
+    large: '100px',
+  };
+  const badgeDim = badgeSizeMap[badgeSize];
+  
+  const positionMap: Record<string, string> = {
+    'top-left': 'top: 20px; left: 20px;',
+    'top-right': 'top: 20px; right: 20px;',
+    'bottom-left': 'bottom: 20px; left: 20px;',
+    'bottom-right': 'bottom: 20px; right: 20px;',
+    'center': 'top: 50%; left: 50%; transform: translate(-50%, -50%);',
+  };
+  
+  const imgHtml = `<img src="${escapeHtml(processImageUrl(content.imageUrl))}" alt="${escapeHtml(content.imageAltText)}" style="display: block; width: 100%; height: ${imageHeight}; object-fit: cover;${borderRadius ? ` border-radius: ${borderRadius};` : ''}" />`;
+  
+  const badgeHtml = `<div style="position: absolute; ${positionMap[badgePosition]} width: ${badgeDim}; height: ${badgeDim}; border-radius: 50%; background-color: ${badgeBackgroundColor}; color: ${badgeTextColor}; display: flex; align-items: center; justify-content: center; font-size: ${badgeFontSize || '16px'}; font-weight: ${badgeFontWeight || 700}; text-align: center; padding: 8px; box-sizing: border-box;">${escapeHtml(content.badgeText)}</div>`;
+  
+  const content_html = `<div style="position: relative;">${imgHtml}${badgeHtml}</div>`;
+  
+  if (content.linkUrl) {
+    return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;">
+          <a href="${escapeHtml(content.linkUrl)}" style="text-decoration: none; display: block;">
+            ${content_html}
+          </a>
+        </td>
+      </tr>
+    </table>`;
+  } else {
+    return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;">
+          ${content_html}
+        </td>
+      </tr>
+    </table>`;
+  }
 }
 
 // ============================================================================
