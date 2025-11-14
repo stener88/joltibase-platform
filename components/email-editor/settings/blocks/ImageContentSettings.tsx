@@ -42,12 +42,12 @@ export function ImageContentSettings({ block, onUpdate, campaignId }: ImageConte
               value={block.content.imageUrl}
               onChange={(e) => updateContent({ imageUrl: e.target.value })}
               placeholder="{{image_url}}"
-              className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+              className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
             />
             <button
               type="button"
               onClick={insertMergeTag}
-              className="px-3 py-2 text-xs font-medium text-[#1a1aff] border border-[#1a1aff] rounded-lg hover:bg-[#1a1aff]/5 transition-colors"
+              className="px-3 py-2 text-xs font-medium text-[#e9a589] border border-[#e9a589] rounded-lg hover:bg-[#e9a589]/5 transition-colors"
               title="Insert merge tag"
             >
               {'{{image_url}}'}
@@ -74,7 +74,7 @@ export function ImageContentSettings({ block, onUpdate, campaignId }: ImageConte
             value={block.content.altText}
             onChange={(e) => updateContent({ altText: e.target.value })}
             placeholder="Image description"
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           />
         </div>
 
@@ -86,7 +86,7 @@ export function ImageContentSettings({ block, onUpdate, campaignId }: ImageConte
             value={block.content.linkUrl || ''}
             onChange={(e) => updateContent({ linkUrl: e.target.value || undefined })}
             placeholder="https://example.com"
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           />
         </div>
 
@@ -98,7 +98,7 @@ export function ImageContentSettings({ block, onUpdate, campaignId }: ImageConte
             value={block.content.caption || ''}
             onChange={(e) => updateContent({ caption: e.target.value || undefined })}
             placeholder="Image caption"
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           />
         </div>
       </div>

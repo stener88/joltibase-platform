@@ -121,17 +121,10 @@ export function EmailFrame({
                         data-block-id={block.id}
                         data-block-type={block.type}
                         onClick={(e) => handleBlockClick(e, block)}
-                        className={`relative transition-all ${
-                          isSpacer
-                            ? 'border border-gray-300 border-dashed min-h-[20px]'
-                            : 'hover:border-2 hover:border-blue-200 hover:border-dashed'
-                        } cursor-pointer`}
+                        className="relative border-2 border-transparent hover:border-[#e9a589]/50 hover:border-dashed transition-colors cursor-pointer"
                         style={{
-                          // Show spacer blocks in chat mode
-                          ...(isSpacer && chatMode ? {
-                            backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                            minHeight: '20px',
-                          } : {}),
+                          // Ensure wrapper inherits content background so spacer blocks match visual mode
+                          backgroundColor: config.contentBackgroundColor,
                         }}
                       >
                         <div

@@ -31,7 +31,7 @@ export function AlignmentPicker({ value, onChange, label }: AlignmentPickerProps
             onClick={() => onChange(alignValue)}
             className={`flex-1 px-3 py-2 rounded-lg border transition-colors ${
               value === alignValue
-                ? 'border-[#1a1aff] bg-[#1a1aff]/5 text-[#1a1aff]'
+                ? 'border-[#e9a589] bg-[#e9a589]/5 text-[#e9a589]'
                 : 'border-gray-200 text-gray-600 hover:border-gray-300'
             }`}
             title={alignLabel}

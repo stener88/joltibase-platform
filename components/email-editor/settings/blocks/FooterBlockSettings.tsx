@@ -27,7 +27,7 @@ export function FooterBlockSettings({ block, onUpdate }: FooterBlockSettingsProp
           type="text"
           value={block.content.companyName}
           onChange={(e) => updateContent({ companyName: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         />
       </div>
 
@@ -36,7 +36,7 @@ export function FooterBlockSettings({ block, onUpdate }: FooterBlockSettingsProp
         <textarea
           value={block.content.companyAddress || ''}
           onChange={(e) => updateContent({ companyAddress: e.target.value || undefined })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           rows={2}
         />
       </div>
@@ -46,7 +46,7 @@ export function FooterBlockSettings({ block, onUpdate }: FooterBlockSettingsProp
         <textarea
           value={block.content.customText || ''}
           onChange={(e) => updateContent({ customText: e.target.value || undefined })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           rows={2}
         />
       </div>
@@ -57,7 +57,7 @@ export function FooterBlockSettings({ block, onUpdate }: FooterBlockSettingsProp
           type="text"
           value={block.content.unsubscribeUrl}
           onChange={(e) => updateContent({ unsubscribeUrl: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         />
         <p className="text-xs text-gray-500">Use merge tags like {'{{unsubscribe_url}}'}</p>
       </div>
@@ -68,7 +68,7 @@ export function FooterBlockSettings({ block, onUpdate }: FooterBlockSettingsProp
           type="text"
           value={block.content.preferencesUrl || ''}
           onChange={(e) => updateContent({ preferencesUrl: e.target.value || undefined })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         />
       </div>
 

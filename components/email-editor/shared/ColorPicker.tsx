@@ -38,7 +38,7 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
           value={localValue}
           onChange={handleChange}
           placeholder="#000000"
-          className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         />
       </div>
     </div>

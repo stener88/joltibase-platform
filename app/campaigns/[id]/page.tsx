@@ -119,11 +119,109 @@ export default function CampaignEditorPage() {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isRefining, setIsRefining] = useState(false);
 
-  // Save chat history to localStorage whenever it changes
+  // Load chat history from server on mount
+  useEffect(() => {
+    if (campaignId && campaignData) {
+      const loadChatHistory = async () => {
+        try {
+          const response = await fetch(`/api/campaigns/${campaignId}/chat-history`);
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.data && Array.isArray(result.data) && result.data.length > 0) {
+              // Convert timestamp strings back to Date objects
+              const restoredHistory: ChatMessage[] = result.data.map((msg: any) => ({
+                ...msg,
+                timestamp: new Date(msg.timestamp),
+              }));
+              setChatHistory(restoredHistory);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load chat history from server:', error);
+        }
+
+        // Fallback to localStorage if server load fails or returns empty
+        const storageKey = `chat-history-${campaignId}`;
+        const savedHistory = localStorage.getItem(storageKey);
+        if (savedHistory) {
+          try {
+            const parsed = JSON.parse(savedHistory);
+            const restoredHistory: ChatMessage[] = parsed.map((msg: any) => ({
+              ...msg,
+              timestamp: new Date(msg.timestamp),
+            }));
+            setChatHistory(restoredHistory);
+            
+            // Migrate localStorage data to server
+            const historyForServer = restoredHistory.map(msg => ({
+              ...msg,
+              timestamp: msg.timestamp.toISOString(),
+            }));
+            await fetch(`/api/campaigns/${campaignId}/chat-history`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(historyForServer),
+            });
+            return;
+          } catch (error) {
+            console.error('Failed to restore chat history from localStorage:', error);
+          }
+        }
+
+        // If no history exists, set initial message
+        const placeholderName = campaignData.campaign.campaignName || getCampaignPlaceholderName(campaignData);
+        const initialMessage: ChatMessage = {
+          role: 'assistant',
+          content: `I've loaded your campaign: "${placeholderName}". How would you like to refine it?`,
+          timestamp: new Date(),
+        };
+        setChatHistory([initialMessage]);
+        
+        // Save initial message to server
+        try {
+          await fetch(`/api/campaigns/${campaignId}/chat-history`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify([{
+              ...initialMessage,
+              timestamp: initialMessage.timestamp.toISOString(),
+            }]),
+          });
+        } catch (error) {
+          console.error('Failed to save initial chat message:', error);
+        }
+      };
+
+      loadChatHistory();
+    }
+  }, [campaignId, campaignData]);
+
+  // Save chat history to server (debounced) and localStorage (immediate cache)
   useEffect(() => {
     if (campaignId && chatHistory.length > 0) {
+      // Save to localStorage immediately as cache
       const storageKey = `chat-history-${campaignId}`;
       localStorage.setItem(storageKey, JSON.stringify(chatHistory));
+
+      // Debounce server save
+      const timeoutId = setTimeout(async () => {
+        try {
+          const historyForServer = chatHistory.map(msg => ({
+            ...msg,
+            timestamp: msg.timestamp.toISOString(),
+          }));
+          await fetch(`/api/campaigns/${campaignId}/chat-history`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(historyForServer),
+          });
+        } catch (error) {
+          console.error('Failed to save chat history to server:', error);
+        }
+      }, 2000); // 2 second debounce
+
+      return () => clearTimeout(timeoutId);
     }
   }, [chatHistory, campaignId]);
   const [selectedEmailIndex, setSelectedEmailIndex] = useState(0);
@@ -226,41 +324,7 @@ export default function CampaignEditorPage() {
           setCampaignData(transformedData);
           setEditedEmails(transformedData.renderedEmails);
           
-          // Restore chat history from localStorage, or set initial message
-          const storageKey = `chat-history-${campaignId}`;
-          const savedHistory = localStorage.getItem(storageKey);
-          if (savedHistory) {
-            try {
-              const parsed = JSON.parse(savedHistory);
-              // Convert timestamp strings back to Date objects
-              const restoredHistory: ChatMessage[] = parsed.map((msg: any) => ({
-                ...msg,
-                timestamp: new Date(msg.timestamp),
-              }));
-              setChatHistory(restoredHistory);
-            } catch (error) {
-              console.error('Failed to restore chat history:', error);
-              // Fallback to initial message
-              const placeholderName = transformedData.campaign.campaignName || getCampaignPlaceholderName(transformedData);
-              setChatHistory([
-                {
-                  role: 'assistant',
-                  content: `I've loaded your campaign: "${placeholderName}". How would you like to refine it?`,
-                  timestamp: new Date(),
-                },
-              ]);
-            }
-          } else {
-            // Set initial chat message
-            const placeholderName = transformedData.campaign.campaignName || getCampaignPlaceholderName(transformedData);
-            setChatHistory([
-              {
-                role: 'assistant',
-                content: `I've loaded your campaign: "${placeholderName}". How would you like to refine it?`,
-                timestamp: new Date(),
-              },
-            ]);
-          }
+          // Chat history is loaded separately via useEffect hook above (triggered when campaignData changes)
         } else {
           throw new Error('Invalid campaign data received');
         }

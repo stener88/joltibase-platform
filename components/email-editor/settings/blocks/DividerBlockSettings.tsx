@@ -25,7 +25,7 @@ export function DividerBlockSettings({ block, onUpdate }: DividerBlockSettingsPr
         <select
           value={block.settings.style}
           onChange={(e) => updateSettings({ style: e.target.value as any })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         >
           <option value="solid">Solid Line</option>
           <option value="dashed">Dashed Line</option>
@@ -41,7 +41,7 @@ export function DividerBlockSettings({ block, onUpdate }: DividerBlockSettingsPr
             type="text"
             value={block.content.decorativeElement || ''}
             onChange={(e) => updateContent({ decorativeElement: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
             placeholder="✦ ✧ ✦"
           />
         </div>
@@ -59,7 +59,7 @@ export function DividerBlockSettings({ block, onUpdate }: DividerBlockSettingsPr
               type="number"
               value={block.settings.thickness || 1}
               onChange={(e) => updateSettings({ thickness: parseInt(e.target.value) || 1 })}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
               min="1"
               max="5"
             />

@@ -45,7 +45,7 @@ export function SocialLinksBlockSettings({ block, onUpdate }: SocialLinksBlockSe
             <select
               value={link.platform}
               onChange={(e) => updateLink(index, 'platform', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
             >
               <option value="twitter">Twitter</option>
               <option value="linkedin">LinkedIn</option>
@@ -59,7 +59,7 @@ export function SocialLinksBlockSettings({ block, onUpdate }: SocialLinksBlockSe
               type="text"
               value={link.url}
               onChange={(e) => updateLink(index, 'url', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
               placeholder="https://..."
             />
             <button
@@ -89,7 +89,7 @@ export function SocialLinksBlockSettings({ block, onUpdate }: SocialLinksBlockSe
         <select
           value={block.settings.iconSize}
           onChange={(e) => updateSettings({ iconSize: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         >
           <option value="24px">Small (24px)</option>
           <option value="32px">Medium (32px)</option>

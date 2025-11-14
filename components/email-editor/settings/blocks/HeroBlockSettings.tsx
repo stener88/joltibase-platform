@@ -26,7 +26,7 @@ export function HeroBlockSettings({ block, onUpdate }: HeroBlockSettingsProps) {
         <textarea
           value={block.content.headline}
           onChange={(e) => updateContent({ headline: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           rows={2}
         />
       </div>
@@ -36,7 +36,7 @@ export function HeroBlockSettings({ block, onUpdate }: HeroBlockSettingsProps) {
         <textarea
           value={block.content.subheadline || ''}
           onChange={(e) => updateContent({ subheadline: e.target.value || undefined })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           rows={2}
         />
       </div>
@@ -47,7 +47,7 @@ export function HeroBlockSettings({ block, onUpdate }: HeroBlockSettingsProps) {
           type="text"
           value={block.content.imageUrl || ''}
           onChange={(e) => updateContent({ imageUrl: e.target.value || undefined })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         />
       </div>
 
@@ -62,7 +62,7 @@ export function HeroBlockSettings({ block, onUpdate }: HeroBlockSettingsProps) {
         <select
           value={block.settings.headlineFontSize}
           onChange={(e) => updateSettings({ headlineFontSize: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         >
           <option value="44px">Medium (44px)</option>
           <option value="56px">Large (56px)</option>

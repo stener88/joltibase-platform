@@ -36,7 +36,7 @@ export function ImageBlockSettings({
         <select
           value={block.settings.width}
           onChange={(e) => updateSettings({ width: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         >
           <option value="100%">Full Width (100%)</option>
           <option value="75%">Three Quarters (75%)</option>
@@ -55,7 +55,7 @@ export function ImageBlockSettings({
         <select
           value={block.settings.borderRadius || '0px'}
           onChange={(e) => updateSettings({ borderRadius: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         >
           <option value="0px">Square (0px)</option>
           <option value="4px">Slightly Rounded (4px)</option>

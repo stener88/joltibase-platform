@@ -25,13 +25,13 @@ export function SettingsTabs({ tabs, activeTab, onTabChange }: SettingsTabsProps
             onClick={() => onTabChange(tab.id)}
             className={`px-4 py-2 text-sm font-medium transition-colors relative ${
               activeTab === tab.id
-                ? 'text-[#1a1aff]'
+                ? 'text-[#e9a589]'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             {tab.label}
             {activeTab === tab.id && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1a1aff]" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#e9a589]" />
             )}
           </button>
         ))}

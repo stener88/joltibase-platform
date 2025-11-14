@@ -36,7 +36,7 @@ export function TextBlockSettings({
         <textarea
           value={block.content.text}
           onChange={(e) => updateContent({ text: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           rows={6}
         />
         <p className="text-xs text-gray-500">
@@ -52,7 +52,7 @@ export function TextBlockSettings({
         <select
           value={block.settings.fontSize}
           onChange={(e) => updateSettings({ fontSize: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         >
           <option value="12px">Small (12px)</option>
           <option value="14px">Default (14px)</option>
@@ -70,7 +70,7 @@ export function TextBlockSettings({
         <select
           value={block.settings.fontWeight}
           onChange={(e) => updateSettings({ fontWeight: parseInt(e.target.value) })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         >
           <option value="400">Normal (400)</option>
           <option value="500">Medium (500)</option>
@@ -101,7 +101,7 @@ export function TextBlockSettings({
         <select
           value={block.settings.lineHeight}
           onChange={(e) => updateSettings({ lineHeight: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         >
           <option value="1.4">Tight (1.4)</option>
           <option value="1.5">Normal (1.5)</option>

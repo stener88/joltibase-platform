@@ -74,7 +74,7 @@ export function DirectEditor({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-[#faf9f5]">
       {/* Email Selector */}
       {renderedEmails.length > 1 && (
         <div className="flex-shrink-0 px-6 py-3 border-b border-gray-200 bg-gray-50">
@@ -153,21 +153,7 @@ export function DirectEditor({
           </p>
         </div>
 
-        {/* AI Enhancement Tip */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <Wand2 className="w-5 h-5 text-[#e9a589] flex-shrink-0 mt-0.5" />
-            <div>
-              <h5 className="text-sm font-medium text-blue-900 mb-1">
-                Pro Tip
-              </h5>
-              <p className="text-xs text-blue-700">
-                Switch to Chat Mode to use AI to refine your content, or edit
-                directly here for precise control.
-              </p>
-            </div>
-          </div>
-        </div>
+     
       </div>
     </div>
   );

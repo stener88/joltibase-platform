@@ -55,8 +55,8 @@ export function BlockCanvas({
       
       {/* Canvas - Using same styling as EmailFrame */}
       <div 
-        className="flex-1 overflow-y-auto p-8"
-        style={{ backgroundColor: designConfig.backgroundColor }}
+        className="flex-1 overflow-y-auto p-8 bg-[#faf9f5]"
+        style={{ backgroundColor: designConfig.backgroundColor || '#faf9f5' }}
         onClick={(e) => {
           // Click on gray background (not on email container or blocks) deselects
           const emailContainer = (e.target as HTMLElement).closest('[data-email-container]');
@@ -87,7 +87,7 @@ export function BlockCanvas({
                 <p className="text-gray-400 mb-4">No blocks yet</p>
                 <button
                   onClick={() => onAddBlockClick(0, 'above')}
-                  className="px-4 py-2 bg-[#1a1aff] text-white rounded-lg hover:bg-[#0000cc] transition-colors"
+                  className="px-4 py-2 bg-[#e9a589] text-white rounded-lg hover:bg-[#d89478] transition-colors"
                 >
                   Add First Block
                 </button>
@@ -101,13 +101,13 @@ export function BlockCanvas({
                 return (
                   <div
                     key={block.id}
-                    className="relative group"
+                    className="relative group mb-1"
                     onMouseEnter={() => onBlockHover(block.id)}
                     onMouseLeave={() => onBlockHover(null)}
                   >
                     {/* Plus Button Above */}
                     <button
-                      className={`absolute -top-4 left-1/2 -translate-x-1/2 z-10 w-6 h-6 rounded-full bg-white border-2 border-gray-300 hover:border-[#1a1aff] hover:bg-[#1a1aff] hover:text-white transition-all duration-200 flex items-center justify-center text-gray-600 shadow-sm hover:shadow-md ${
+                      className={`absolute -top-4 left-1/2 -translate-x-1/2 z-10 w-6 h-6 rounded-full bg-white border-2 border-gray-300 hover:border-[#e9a589] hover:bg-[#e9a589] hover:text-white transition-all duration-200 flex items-center justify-center text-gray-600 shadow-sm hover:shadow-md ${
                         showControls ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
                       }`}
                       onClick={(e) => {
@@ -123,9 +123,9 @@ export function BlockCanvas({
                     <div
                       className={`email-block-content relative transition-all duration-200 cursor-pointer ${
                         isSelected
-                          ? 'ring-2 ring-[#1a1aff] ring-offset-2'
+                          ? 'ring-2 ring-[#e9a589] ring-offset-1'
                           : isHovered
-                          ? 'ring-2 ring-gray-300 ring-offset-2'
+                          ? 'ring-2 ring-gray-300 ring-offset-1'
                           : ''
                       }`}
                       onClick={(e) => {
@@ -152,7 +152,7 @@ export function BlockCanvas({
 
                     {/* Plus Button Below */}
                     <button
-                      className={`absolute -bottom-4 left-1/2 -translate-x-1/2 z-10 w-6 h-6 rounded-full bg-white border-2 border-gray-300 hover:border-[#1a1aff] hover:bg-[#1a1aff] hover:text-white transition-all duration-200 flex items-center justify-center text-gray-600 shadow-sm hover:shadow-md ${
+                      className={`absolute -bottom-4 left-1/2 -translate-x-1/2 z-10 w-6 h-6 rounded-full bg-white border-2 border-gray-300 hover:border-[#e9a589] hover:bg-[#e9a589] hover:text-white transition-all duration-200 flex items-center justify-center text-gray-600 shadow-sm hover:shadow-md ${
                         showControls ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
                       }`}
                       onClick={(e) => {

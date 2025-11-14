@@ -43,7 +43,7 @@ export function FeatureGridBlockSettings({ block, onUpdate }: FeatureGridBlockSe
         <select
           value={block.settings.layout}
           onChange={(e) => updateSettings({ layout: e.target.value as any })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         >
           <option value="single-col">Single Column</option>
           <option value="2-col">2 Columns</option>
@@ -59,20 +59,20 @@ export function FeatureGridBlockSettings({ block, onUpdate }: FeatureGridBlockSe
               type="text"
               value={feature.icon || ''}
               onChange={(e) => updateFeature(index, 'icon', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
               placeholder="Icon (emoji only, e.g. ⚡)"
             />
             <input
               type="text"
               value={feature.title}
               onChange={(e) => updateFeature(index, 'title', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
               placeholder="Title"
             />
             <textarea
               value={feature.description}
               onChange={(e) => updateFeature(index, 'description', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
               rows={2}
               placeholder="Description"
             />

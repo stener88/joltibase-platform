@@ -48,7 +48,7 @@ export function GlobalSettingsPanel({
             <select
               value={designConfig.fontFamily}
               onChange={(e) => onUpdate({ fontFamily: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
             >
               <option value="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">
                 System Default

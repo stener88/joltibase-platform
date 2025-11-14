@@ -36,7 +36,7 @@ export function HeadingBlockSettings({
         <textarea
           value={block.content.text}
           onChange={(e) => updateContent({ text: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           rows={3}
         />
       </div>
@@ -49,7 +49,7 @@ export function HeadingBlockSettings({
         <select
           value={block.settings.fontSize}
           onChange={(e) => updateSettings({ fontSize: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         >
           <option value="28px">Small (28px)</option>
           <option value="36px">Medium (36px)</option>
@@ -67,7 +67,7 @@ export function HeadingBlockSettings({
         <select
           value={block.settings.fontWeight}
           onChange={(e) => updateSettings({ fontWeight: parseInt(e.target.value) })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         >
           <option value="400">Normal (400)</option>
           <option value="600">Semi-Bold (600)</option>
@@ -99,7 +99,7 @@ export function HeadingBlockSettings({
         <select
           value={block.settings.lineHeight}
           onChange={(e) => updateSettings({ lineHeight: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         >
           <option value="1.0">Tight (1.0)</option>
           <option value="1.1">Snug (1.1)</option>

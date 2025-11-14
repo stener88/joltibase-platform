@@ -81,6 +81,7 @@ export default function DashboardCampaignEditorPage() {
   const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
   const [viewMode, setViewMode] = useState<ViewMode>('html');
   const chatInterfaceRef = useRef<ChatInterfaceRef>(null);
+  const chatHistoryLoadedRef = useRef<string | null>(null);
   
   // Undo/redo history (for visual & text modes)
   const editorHistory = useEditorHistory((state) => {
@@ -91,32 +92,116 @@ export default function DashboardCampaignEditorPage() {
     });
   });
   
-  // Restore chat history from localStorage on mount
+  // Load chat history from server on mount (only once per campaignId)
   useEffect(() => {
-    if (campaignId) {
-      const storageKey = `chat-history-${campaignId}`;
-      const savedHistory = localStorage.getItem(storageKey);
-      if (savedHistory) {
-        try {
-          const parsed = JSON.parse(savedHistory);
-          // Convert timestamp strings back to Date objects
-          const restoredHistory: ChatMessage[] = parsed.map((msg: any) => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp),
-          }));
-          setChatHistory(restoredHistory);
-        } catch (error) {
-          console.error('Failed to restore chat history:', error);
-        }
-      }
+    // Reset ref when campaignId changes
+    if (chatHistoryLoadedRef.current !== campaignId) {
+      chatHistoryLoadedRef.current = null;
     }
-  }, [campaignId]);
+    
+    // Only load if we have campaignId, campaign is available, and we haven't loaded for this campaignId yet
+    if (campaignId && campaign && chatHistoryLoadedRef.current !== campaignId) {
+      chatHistoryLoadedRef.current = campaignId;
+      const loadChatHistory = async () => {
+        try {
+          const response = await fetch(`/api/campaigns/${campaignId}/chat-history`);
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.data && Array.isArray(result.data) && result.data.length > 0) {
+              // Convert timestamp strings back to Date objects
+              const restoredHistory: ChatMessage[] = result.data.map((msg: any) => ({
+                ...msg,
+                timestamp: new Date(msg.timestamp),
+              }));
+              setChatHistory(restoredHistory);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load chat history from server:', error);
+        }
 
-  // Save chat history to localStorage whenever it changes
+        // Fallback to localStorage if server load fails or returns empty
+        const storageKey = `chat-history-${campaignId}`;
+        const savedHistory = localStorage.getItem(storageKey);
+        if (savedHistory) {
+          try {
+            const parsed = JSON.parse(savedHistory);
+            const restoredHistory: ChatMessage[] = parsed.map((msg: any) => ({
+              ...msg,
+              timestamp: new Date(msg.timestamp),
+            }));
+            setChatHistory(restoredHistory);
+            
+            // Migrate localStorage data to server
+            const historyForServer = restoredHistory.map(msg => ({
+              ...msg,
+              timestamp: msg.timestamp.toISOString(),
+            }));
+            await fetch(`/api/campaigns/${campaignId}/chat-history`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(historyForServer),
+            });
+            return;
+          } catch (error) {
+            console.error('Failed to restore chat history from localStorage:', error);
+          }
+        }
+
+        // If no history exists, set initial message
+        const placeholderName = getCampaignPlaceholderName(campaign);
+        const initialMessage: ChatMessage = {
+          role: 'assistant',
+          content: `I've loaded your campaign: "${placeholderName}". How would you like to refine it?`,
+          timestamp: new Date(),
+        };
+        setChatHistory([initialMessage]);
+        
+        // Save initial message to server
+        try {
+          await fetch(`/api/campaigns/${campaignId}/chat-history`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify([{
+              ...initialMessage,
+              timestamp: initialMessage.timestamp.toISOString(),
+            }]),
+          });
+        } catch (error) {
+          console.error('Failed to save initial chat message:', error);
+        }
+      };
+
+      loadChatHistory();
+    }
+  }, [campaignId, campaign]);
+
+  // Save chat history to server (debounced) and localStorage (immediate cache)
   useEffect(() => {
     if (campaignId && chatHistory.length > 0) {
+      // Save to localStorage immediately as cache
       const storageKey = `chat-history-${campaignId}`;
       localStorage.setItem(storageKey, JSON.stringify(chatHistory));
+
+      // Debounce server save
+      const timeoutId = setTimeout(async () => {
+        try {
+          const historyForServer = chatHistory.map(msg => ({
+            ...msg,
+            timestamp: msg.timestamp.toISOString(),
+          }));
+          await fetch(`/api/campaigns/${campaignId}/chat-history`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(historyForServer),
+          });
+        } catch (error) {
+          console.error('Failed to save chat history to server:', error);
+        }
+      }, 2000); // 2 second debounce
+
+      return () => clearTimeout(timeoutId);
     }
   }, [chatHistory, campaignId]);
 
@@ -145,23 +230,7 @@ export default function DashboardCampaignEditorPage() {
         timestamp: new Date(),
       }]);
       
-      // Only set initial greeting if no saved chat history exists
-      const storageKey = `chat-history-${campaignId}`;
-      const savedHistory = localStorage.getItem(storageKey);
-      if (!savedHistory) {
-        // Set initial chat messages
-        const initialMessages: ChatMessage[] = [];
-        
-        // Add assistant greeting
-        const placeholderName = campaign.campaign?.campaignName || getCampaignPlaceholderName(campaign);
-        initialMessages.push({
-          role: 'assistant',
-          content: `I've loaded your campaign: "${placeholderName}". How would you like to refine it?`,
-          timestamp: new Date(),
-        });
-        
-        setChatHistory(initialMessages);
-      }
+      // Chat history is loaded separately via useEffect hook above (triggered when campaign changes)
     }
   }, [campaign, campaignId, editorHistory]);
   

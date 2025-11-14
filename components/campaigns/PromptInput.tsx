@@ -151,14 +151,12 @@ export function PromptInput({
             onKeyDown={handleKeyDown}
             placeholder={dynamicPlaceholder || "Reply..."}
             disabled={isLoading}
-            className="w-full min-h-[80px] max-h-[200px] pr-4 py-4 font-normal text-[#3d3d3a] placeholder-[#6b6b6b]/40 bg-transparent border-none outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full min-h-[80px] px-4 pt-4 font-normal text-[#3d3d3a] placeholder-[#6b6b6b]/40 bg-transparent border-none outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ 
               fontSize: '15px',
               lineHeight: '1.6',
               fontFamily: 'system-ui, -apple-system, sans-serif',
               caretColor: '#3d3d3a',
-              paddingLeft: onLightningToggle ? '48px' : '12px',
-              paddingRight: onChatOnlyToggle ? '96px' : '64px',
               paddingBottom: '52px'
             }}
           />

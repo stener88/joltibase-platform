@@ -31,7 +31,7 @@ export function PaddingInput({ value, onChange, label }: PaddingInputProps) {
             type="number"
             value={value.top}
             onChange={(e) => handleChange('top', e.target.value)}
-            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           />
         </div>
         <div>
@@ -40,7 +40,7 @@ export function PaddingInput({ value, onChange, label }: PaddingInputProps) {
             type="number"
             value={value.bottom}
             onChange={(e) => handleChange('bottom', e.target.value)}
-            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           />
         </div>
         <div>
@@ -49,7 +49,7 @@ export function PaddingInput({ value, onChange, label }: PaddingInputProps) {
             type="number"
             value={value.left}
             onChange={(e) => handleChange('left', e.target.value)}
-            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           />
         </div>
         <div>
@@ -58,7 +58,7 @@ export function PaddingInput({ value, onChange, label }: PaddingInputProps) {
             type="number"
             value={value.right}
             onChange={(e) => handleChange('right', e.target.value)}
-            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           />
         </div>
       </div>

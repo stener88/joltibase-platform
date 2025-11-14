@@ -123,7 +123,7 @@ export function ImageUpload({
           border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors
           ${isUploading 
             ? 'border-gray-300 bg-gray-50 cursor-not-allowed' 
-            : 'border-gray-300 hover:border-[#1a1aff] hover:bg-[#1a1aff]/5'
+            : 'border-gray-300 hover:border-[#e9a589] hover:bg-[#e9a589]/5'
           }
         `}
         onClick={() => !isUploading && fileInputRef.current?.click()}

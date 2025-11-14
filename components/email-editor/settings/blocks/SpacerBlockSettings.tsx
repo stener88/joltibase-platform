@@ -21,7 +21,7 @@ export function SpacerBlockSettings({ block, onUpdate }: SpacerBlockSettingsProp
           type="number"
           value={block.settings.height}
           onChange={(e) => updateSettings({ height: parseInt(e.target.value) || 20 })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           min="0"
           max="200"
         />

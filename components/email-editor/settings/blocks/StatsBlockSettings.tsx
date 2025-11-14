@@ -43,7 +43,7 @@ export function StatsBlockSettings({ block, onUpdate }: StatsBlockSettingsProps)
         <select
           value={block.settings.layout}
           onChange={(e) => updateSettings({ layout: e.target.value as any })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         >
           <option value="2-col">2 Columns</option>
           <option value="3-col">3 Columns</option>
@@ -59,14 +59,14 @@ export function StatsBlockSettings({ block, onUpdate }: StatsBlockSettingsProps)
               type="text"
               value={stat.value}
               onChange={(e) => updateStat(index, 'value', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
               placeholder="10,000+"
             />
             <input
               type="text"
               value={stat.label}
               onChange={(e) => updateStat(index, 'label', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
               placeholder="Users"
             />
             <button

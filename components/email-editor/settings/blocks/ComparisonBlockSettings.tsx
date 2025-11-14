@@ -32,7 +32,7 @@ export function ComparisonBlockSettings({ block, onUpdate }: ComparisonBlockSett
                 before: { ...block.content.before, label: e.target.value || undefined },
               })
             }
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           />
         </div>
         <div className="space-y-2">
@@ -44,7 +44,7 @@ export function ComparisonBlockSettings({ block, onUpdate }: ComparisonBlockSett
                 before: { ...block.content.before, text: e.target.value },
               })
             }
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
             rows={3}
           />
         </div>
@@ -72,7 +72,7 @@ export function ComparisonBlockSettings({ block, onUpdate }: ComparisonBlockSett
                 after: { ...block.content.after, label: e.target.value || undefined },
               })
             }
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           />
         </div>
         <div className="space-y-2">
@@ -84,7 +84,7 @@ export function ComparisonBlockSettings({ block, onUpdate }: ComparisonBlockSett
                 after: { ...block.content.after, text: e.target.value },
               })
             }
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
             rows={3}
           />
         </div>

@@ -43,6 +43,11 @@ export function DashboardHeader({ campaignEditor }: DashboardHeaderProps) {
     segments.forEach((segment, index) => {
       currentPath += `/${segment}`;
       
+      // Skip analytics segment
+      if (segment === 'analytics') {
+        return;
+      }
+      
       // Skip UUIDs or dynamic segments (assume segments with hyphens and length > 30 are IDs)
       if (segment.includes('-') && segment.length > 30) {
         breadcrumbs.push({

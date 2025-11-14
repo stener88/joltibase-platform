@@ -25,7 +25,7 @@ export function TestimonialBlockSettings({ block, onUpdate }: TestimonialBlockSe
         <textarea
           value={block.content.quote}
           onChange={(e) => updateContent({ quote: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           rows={4}
         />
       </div>
@@ -36,7 +36,7 @@ export function TestimonialBlockSettings({ block, onUpdate }: TestimonialBlockSe
           type="text"
           value={block.content.author}
           onChange={(e) => updateContent({ author: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         />
       </div>
 
@@ -46,7 +46,7 @@ export function TestimonialBlockSettings({ block, onUpdate }: TestimonialBlockSe
           type="text"
           value={block.content.role || ''}
           onChange={(e) => updateContent({ role: e.target.value || undefined })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         />
       </div>
 
@@ -56,7 +56,7 @@ export function TestimonialBlockSettings({ block, onUpdate }: TestimonialBlockSe
           type="text"
           value={block.content.company || ''}
           onChange={(e) => updateContent({ company: e.target.value || undefined })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         />
       </div>
 
@@ -66,7 +66,7 @@ export function TestimonialBlockSettings({ block, onUpdate }: TestimonialBlockSe
           type="text"
           value={block.content.avatarUrl || ''}
           onChange={(e) => updateContent({ avatarUrl: e.target.value || undefined })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1aff]/20 focus:border-[#1a1aff]"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         />
       </div>
 

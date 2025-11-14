@@ -28,9 +28,6 @@ export function SplitScreenLayout({
         {leftPanel}
       </div>
 
-      {/* Divider */}
-      <div className="w-px h-full bg-gray-300 flex-shrink-0" />
-
       {/* Right Panel - Email Preview (65% width) */}
       <div className="flex-[0.65] overflow-hidden bg-gray-50">
         {rightPanel}
