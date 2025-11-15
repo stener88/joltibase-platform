@@ -1,6 +1,6 @@
 'use client';
 
-import { EmailBlock, GlobalEmailSettings } from '@/lib/email/blocks/types';
+import { EmailBlock, GlobalEmailSettings, getBlockDisplayName } from '@/lib/email/blocks/types';
 import { renderBlock } from '@/lib/email/blocks/renderer';
 import { BlockToolbar } from './BlockToolbar';
 
@@ -39,7 +39,12 @@ export function BlockCanvas({
   // Sort blocks by position
   const sortedBlocks = [...blocks].sort((a, b) => a.position - b.position);
 
-  const canvasWidth = deviceMode === 'desktop' ? designConfig.maxWidth : 375;
+  // Canvas always renders at fixed 600px width (Option 2: Fixed/Shrink approach)
+  const canvasWidth = 600;
+  
+  // Calculate scale for mobile preview to simulate shrinking
+  const scale = deviceMode === 'mobile' ? 0.625 : 1; // 375/600 = 0.625
+  const containerWidth = deviceMode === 'desktop' ? canvasWidth : 375;
 
   return (
     <div className="h-full flex flex-col">
@@ -66,22 +71,33 @@ export function BlockCanvas({
         }}
       >
         <div
-          className="mx-auto transition-all duration-300"
+          className="mx-auto"
           data-email-container
           style={{
-            width: canvasWidth,
-            maxWidth: '100%',
+            width: containerWidth,
             backgroundColor: designConfig.backgroundColor,
+            overflow: 'hidden',
           }}
         >
-          {/* Email Container */}
+          {/* Scaling wrapper for mobile view */}
           <div
-            className="relative"
             style={{
-              backgroundColor: designConfig.contentBackgroundColor,
-              fontFamily: designConfig.fontFamily,
+              transform: `scale(${scale})`,
+              transformOrigin: 'top center',
+              width: canvasWidth,
+              marginLeft: deviceMode === 'mobile' ? `${(canvasWidth - containerWidth) / -2}px` : '0',
             }}
           >
+            {/* Email Container - ALWAYS 600px wide (Fixed/Shrink approach) */}
+            <div
+              className="relative"
+              style={{
+                backgroundColor: designConfig.contentBackgroundColor,
+                fontFamily: designConfig.fontFamily,
+                width: canvasWidth,
+                minWidth: canvasWidth,
+              }}
+            >
             {sortedBlocks.length === 0 ? (
               <div className="p-12 text-center">
                 <p className="text-gray-400 mb-4">No blocks yet</p>
@@ -168,9 +184,12 @@ export function BlockCanvas({
               })
             )}
           </div>
+          {/* End scaling wrapper */}
+          </div>
         </div>
       </div>
     </div>
   );
 }
+
 

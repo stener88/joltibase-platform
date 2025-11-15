@@ -14,7 +14,7 @@ export function SpacerBlockSettings({ block, onUpdate }: SpacerBlockSettingsProp
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 pb-12">
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-700">Height (px)</label>
         <input
@@ -27,13 +27,11 @@ export function SpacerBlockSettings({ block, onUpdate }: SpacerBlockSettingsProp
         />
       </div>
 
-      {block.settings.backgroundColor !== undefined && (
-        <ColorPicker
-          label="Background Color (Optional)"
-          value={block.settings.backgroundColor || ''}
-          onChange={(value) => updateSettings({ backgroundColor: value || undefined })}
-        />
-      )}
+      <ColorPicker
+        label="Background Color"
+        value={block.settings.backgroundColor || 'transparent'}
+        onChange={(value) => updateSettings({ backgroundColor: value })}
+      />
     </div>
   );
 }

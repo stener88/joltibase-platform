@@ -64,6 +64,22 @@ export function DividerBlockSettings({ block, onUpdate }: DividerBlockSettingsPr
               max="5"
             />
           </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Width</label>
+            <select
+              value={block.settings.width || '100%'}
+              onChange={(e) => updateSettings({ width: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
+            >
+              <option value="100%">Full Width (100%)</option>
+              <option value="75%">75%</option>
+              <option value="50%">50%</option>
+              <option value="25%">25%</option>
+              <option value="200px">Short (200px)</option>
+              <option value="400px">Medium (400px)</option>
+            </select>
+          </div>
         </>
       )}
 

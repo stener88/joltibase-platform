@@ -16,7 +16,7 @@ export function LogoBlockSettings({ block, onUpdate }: LogoBlockSettingsProps) {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 pb-12">
       <AlignmentPicker
         label="Alignment"
         value={block.settings.align}
@@ -34,13 +34,11 @@ export function LogoBlockSettings({ block, onUpdate }: LogoBlockSettingsProps) {
         />
       </div>
 
-      {block.settings.backgroundColor !== undefined && (
-        <ColorPicker
-          label="Background Color (Optional)"
-          value={block.settings.backgroundColor || ''}
-          onChange={(value) => updateSettings({ backgroundColor: value || undefined })}
-        />
-      )}
+      <ColorPicker
+        label="Background Color"
+        value={block.settings.backgroundColor || 'transparent'}
+        onChange={(value) => updateSettings({ backgroundColor: value })}
+      />
 
       <PaddingInput
         label="Padding"

@@ -12,21 +12,16 @@ export type {
   BlockContent,
   BlockEmail,
   GlobalEmailSettings,
-  // Individual block types
+  // Individual block types (V2 base blocks)
   LogoBlock,
   SpacerBlock,
-  HeadingBlock,
   TextBlock,
   ImageBlock,
   ButtonBlock,
   DividerBlock,
-  HeroBlock,
-  StatsBlock,
-  TestimonialBlock,
-  FeatureGridBlock,
-  ComparisonBlock,
   SocialLinksBlock,
   FooterBlock,
+  // V2 blocks (link-bar, address, layouts to be added later)
   // Helpers
   Padding,
   Alignment,
@@ -69,23 +64,18 @@ export {
   validateBlocks,
   validateBlockEmail,
   getValidationErrors,
-  // Schemas
+  // Schemas (V2 base blocks)
   EmailBlockSchema,
   BlockEmailSchema,
   GlobalEmailSettingsSchema,
   LogoBlockSchema,
   SpacerBlockSchema,
-  HeadingBlockSchema,
   TextBlockSchema,
   ImageBlockSchema,
   ButtonBlockSchema,
   DividerBlockSchema,
-  HeroBlockSchema,
-  StatsBlockSchema,
-  TestimonialBlockSchema,
-  FeatureGridBlockSchema,
-  ComparisonBlockSchema,
   SocialLinksBlockSchema,
   FooterBlockSchema,
+  // V2 blocks (link-bar, address, layouts to be added later)
 } from './schemas';
 

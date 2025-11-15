@@ -7,12 +7,87 @@
 
 import { generateCompletion, type AIProvider } from './client';
 import { CAMPAIGN_GENERATOR_SYSTEM_PROMPT, buildCampaignPrompt } from './prompts';
-import { validateCampaignInput, parseStructuredCampaign, getCampaignSchema, type GeneratedCampaign } from './validator';
+import { validateCampaignInput, parseStructuredCampaign, type GeneratedCampaign } from './validator';
 import { enforceRateLimit } from './rate-limit';
 import { saveAIGeneration } from './usage-tracker';
+import { CampaignSchema } from '@/lib/email/blocks/schemas-v2';
 
 import { renderBlocksToEmail } from '@/lib/email/blocks/renderer';
 import { createClient } from '@/lib/supabase/server';
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Robust JSON parser with automatic error fixing
+ * Handles common issues from LLM-generated JSON
+ */
+function parseRobustJSON(content: string): any {
+  try {
+    // First attempt: standard parsing
+    return JSON.parse(content);
+  } catch (firstError) {
+    console.log('🔧 [PARSER] Initial JSON parse failed, attempting fixes...');
+    
+    let fixedContent = content;
+    
+    // Fix 1: Remove trailing commas (very common in LLM output)
+    fixedContent = fixedContent.replace(/,(\s*[}\]])/g, '$1');
+    
+    // Fix 2: Remove comments (shouldn't be in JSON but sometimes appear)
+    fixedContent = fixedContent.replace(/\/\/[^\n]*/g, '');
+    fixedContent = fixedContent.replace(/\/\*[\s\S]*?\*\//g, '');
+    
+    // Fix 3: Fix unquoted property names (but be careful not to break string values)
+    // Match: word characters followed by colon, but only at start of line or after { or ,
+    fixedContent = fixedContent.replace(/([\{\,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)(\s*:)/g, '$1"$2"$3');
+    
+    // Fix 4: Replace single quotes with double quotes for property names
+    // Only for property names (followed by colon)
+    fixedContent = fixedContent.replace(/'([^']+)'(\s*:)/g, '"$1"$2');
+    
+    // Fix 5: Remove any undefined values (replace with null)
+    fixedContent = fixedContent.replace(/:\s*undefined/g, ': null');
+    
+    try {
+      const result = JSON.parse(fixedContent);
+      console.log('✅ [PARSER] Successfully fixed and parsed JSON!');
+      return result;
+    } catch (secondError) {
+      // Log detailed error information
+      console.error('❌ [PARSER] JSON parsing failed after automatic fixes!');
+      console.error('📄 [PARSER] Content length:', content.length);
+      console.error('📄 [PARSER] First 1000 chars:', content.substring(0, 1000));
+      console.error('📄 [PARSER] Last 500 chars:', content.substring(content.length - 500));
+      
+      // If the error has a position, show content around that position
+      const errorMsg = (firstError as Error).message;
+      const posMatch = errorMsg.match(/position (\d+)/);
+      if (posMatch) {
+        const pos = parseInt(posMatch[1]);
+        const start = Math.max(0, pos - 200);
+        const end = Math.min(content.length, pos + 200);
+        console.error(`📄 [PARSER] Content around error position ${pos}:`, content.substring(start, end));
+      }
+      
+      // Save to file for debugging
+      try {
+        const fs = require('fs');
+        const debugPath = `/tmp/gemini-json-error-${Date.now()}.json`;
+        fs.writeFileSync(debugPath, content);
+        console.error('💾 [PARSER] Raw content saved to:', debugPath);
+        console.error('💾 [PARSER] Fixed content saved to:', debugPath.replace('.json', '-fixed.json'));
+        fs.writeFileSync(debugPath.replace('.json', '-fixed.json'), fixedContent);
+      } catch (fsError) {
+        console.error('⚠️ [PARSER] Could not save debug file:', fsError);
+      }
+      
+      // Throw the original error
+      throw firstError;
+    }
+  }
+}
 
 // ============================================================================
 // Generator Input & Output Interfaces
@@ -86,9 +161,10 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
       
     });
     
-    // 5. Get Zod Schema for validation (Gemini uses prompts, validates with Zod after)
-    const zodSchema = getCampaignSchema();
-    console.log('📐 [GENERATOR] Using prompt-based generation (Zod validation after)');
+    // 5. Get Zod Schema for post-generation validation
+    // Note: Gemini API doesn't support flexible objects in responseSchema
+    const zodSchema = CampaignSchema;
+    console.log('📐 [GENERATOR] Prompt-based generation with post-validation (Gemini API limitation)');
     
     // 6. Call AI API (Gemini primary, OpenAI fallback)
     const provider: AIProvider = (process.env.AI_PROVIDER as AIProvider) || 'gemini';
@@ -102,7 +178,7 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
       {
         provider,
         model: provider === 'gemini' ? 'gemini-2.5-flash' : 'gpt-4o',
-        temperature: 0.7,
+        temperature: 0.9, // Increased from 0.7 for more structural diversity
         maxTokens: 8192,
         zodSchema, // Passed for OpenAI fallback
         retries: 3,
@@ -120,7 +196,7 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
     
     // 7. Parse structured response (Gemini/OpenAI guarantee schema compliance)
     console.log('🔍 [GENERATOR] Parsing structured response...');
-    const parsedContent = JSON.parse(aiResult.content);
+    const parsedContent = parseRobustJSON(aiResult.content);
     const generatedCampaign = parseStructuredCampaign(parsedContent);
     console.log('✅ [GENERATOR] Campaign validated:', { 
       name: generatedCampaign.campaignName,

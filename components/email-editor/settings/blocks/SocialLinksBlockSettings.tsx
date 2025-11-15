@@ -1,8 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { SocialLinksBlock } from '@/lib/email/blocks/types';
 import { PaddingInput } from '../../shared/PaddingInput';
 import { AlignmentPicker } from '../../shared/AlignmentPicker';
+import { ColorPicker } from '../../shared/ColorPicker';
+import { CollapsibleSection } from '../../shared/CollapsibleSection';
 
 interface SocialLinksBlockSettingsProps {
   block: SocialLinksBlock;
@@ -10,6 +13,20 @@ interface SocialLinksBlockSettingsProps {
 }
 
 export function SocialLinksBlockSettings({ block, onUpdate }: SocialLinksBlockSettingsProps) {
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set(['content']));
+
+  const toggleSection = (section: string) => {
+    setOpenSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(section)) {
+        newSet.delete(section);
+      } else {
+        newSet.add(section);
+      }
+      return newSet;
+    });
+  };
+
   const updateContent = (updates: Partial<typeof block.content>) => {
     onUpdate(block.id, { content: { ...block.content, ...updates } });
   };
@@ -37,71 +54,93 @@ export function SocialLinksBlockSettings({ block, onUpdate }: SocialLinksBlockSe
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="space-y-3">
-        <label className="block text-sm font-medium text-gray-700">Social Links</label>
-        {block.content.links.map((link, index) => (
-          <div key={index} className="p-3 border border-gray-200 rounded-lg space-y-2">
-            <select
-              value={link.platform}
-              onChange={(e) => updateLink(index, 'platform', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
-            >
-              <option value="twitter">Twitter</option>
-              <option value="linkedin">LinkedIn</option>
-              <option value="facebook">Facebook</option>
-              <option value="instagram">Instagram</option>
-              <option value="youtube">YouTube</option>
-              <option value="github">GitHub</option>
-              <option value="tiktok">TikTok</option>
-            </select>
-            <input
-              type="text"
-              value={link.url}
-              onChange={(e) => updateLink(index, 'url', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
-              placeholder="https://..."
-            />
+    <div className="pb-12">
+      <CollapsibleSection 
+        title="Content" 
+        isOpen={openSections.has('content')}
+        onToggle={() => toggleSection('content')}
+      >
+        <div className="p-6 space-y-4">
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-gray-700">Social Links</label>
+            {block.content.links.map((link, index) => (
+              <div key={index} className="p-3 border border-gray-200 rounded-lg space-y-2">
+                <select
+                  value={link.platform}
+                  onChange={(e) => updateLink(index, 'platform', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
+                >
+                  <option value="twitter">Twitter</option>
+                  <option value="linkedin">LinkedIn</option>
+                  <option value="facebook">Facebook</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="youtube">YouTube</option>
+                  <option value="github">GitHub</option>
+                  <option value="tiktok">TikTok</option>
+                </select>
+                <input
+                  type="text"
+                  value={link.url}
+                  onChange={(e) => updateLink(index, 'url', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
+                  placeholder="https://..."
+                />
+                <button
+                  onClick={() => removeLink(index)}
+                  className="text-xs text-red-600 hover:text-red-700"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
             <button
-              onClick={() => removeLink(index)}
-              className="text-xs text-red-600 hover:text-red-700"
+              onClick={addLink}
+              className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-600 hover:border-gray-400 hover:text-gray-700"
             >
-              Remove
+              + Add Social Link
             </button>
           </div>
-        ))}
-        <button
-          onClick={addLink}
-          className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-600 hover:border-gray-400 hover:text-gray-700"
-        >
-          + Add Social Link
-        </button>
-      </div>
+        </div>
+      </CollapsibleSection>
 
-      <AlignmentPicker
-        label="Alignment"
-        value={block.settings.align}
-        onChange={(value) => updateSettings({ align: value })}
-      />
+      <CollapsibleSection 
+        title="Styling" 
+        isOpen={openSections.has('styling')}
+        onToggle={() => toggleSection('styling')}
+      >
+        <div className="p-6 space-y-4">
+          <AlignmentPicker
+            label="Alignment"
+            value={block.settings.align}
+            onChange={(value) => updateSettings({ align: value })}
+          />
 
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">Icon Size</label>
-        <select
-          value={block.settings.iconSize}
-          onChange={(e) => updateSettings({ iconSize: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
-        >
-          <option value="24px">Small (24px)</option>
-          <option value="32px">Medium (32px)</option>
-          <option value="40px">Large (40px)</option>
-        </select>
-      </div>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Icon Size</label>
+            <select
+              value={block.settings.iconSize}
+              onChange={(e) => updateSettings({ iconSize: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
+            >
+              <option value="24px">Small (24px)</option>
+              <option value="32px">Medium (32px)</option>
+              <option value="40px">Large (40px)</option>
+            </select>
+          </div>
 
-      <PaddingInput
-        label="Padding"
-        value={block.settings.padding}
-        onChange={(value) => updateSettings({ padding: value })}
-      />
+          <ColorPicker
+            label="Background Color"
+            value={block.settings.backgroundColor || 'transparent'}
+            onChange={(value) => updateSettings({ backgroundColor: value })}
+          />
+
+          <PaddingInput
+            label="Padding"
+            value={block.settings.padding}
+            onChange={(value) => updateSettings({ padding: value })}
+          />
+        </div>
+      </CollapsibleSection>
     </div>
   );
 }

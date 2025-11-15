@@ -153,11 +153,24 @@ export async function generateGeminiCompletion(
       const generationConfig: any = {
         temperature,
         maxOutputTokens: maxTokens,
-        responseMimeType: 'application/json', // Always JSON, but no strict schema
+        responseMimeType: 'application/json',
       };
 
-      // Note: We skip responseSchema for complex discriminated unions
-      // Gemini will follow the prompt examples, and Zod validates afterwards
+      // Use responseSchema with hybrid approach: strict for structure, flexible for settings/content
+      // DISABLED: Gemini API requires non-empty properties for OBJECT types
+      // Even with .loose()/.passthrough(), Gemini rejects empty object schemas
+      // We validate with Zod after generation instead
+      // if (zodSchema) {
+      //   const geminiSchema = zodToGoogleAISchema(zodSchema);
+      //   generationConfig.responseSchema = geminiSchema;
+      //   console.log('✅ [GEMINI] Using responseSchema with passthrough objects for flexibility');
+      // }
+      console.log('📐 [GEMINI] Using JSON mode with explicit formatting instructions');
+      console.log('⚙️ [GEMINI] Config:', { 
+        temperature, 
+        maxTokens, 
+        responseMimeType: 'application/json'
+      });
 
       // Generate content
       const result = await genModel.generateContent({
@@ -167,7 +180,25 @@ export async function generateGeminiCompletion(
       });
 
       const response = result.response;
-      const text = response.text();
+      let text = response.text();
+
+      // Post-process JSON to ensure it's valid
+      // Gemini sometimes adds markdown code blocks or extra whitespace
+      text = text.trim();
+      
+      // Remove markdown code blocks if present
+      if (text.startsWith('```json')) {
+        text = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (text.startsWith('```')) {
+        text = text.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      // Trim again after removing code blocks
+      text = text.trim();
+      
+      // Log a preview of what we're returning
+      console.log('📄 [GEMINI] Response preview (first 500 chars):', text.substring(0, 500));
+      console.log('📄 [GEMINI] Response preview (last 200 chars):', text.substring(text.length - 200));
 
       // Get token usage
       const usageMetadata = response.usageMetadata;

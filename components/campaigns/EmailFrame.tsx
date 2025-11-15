@@ -1,6 +1,6 @@
 'use client';
 
-import { EmailBlock, GlobalEmailSettings } from '@/lib/email/blocks/types';
+import { EmailBlock, GlobalEmailSettings, getBlockDisplayName } from '@/lib/email/blocks/types-v2';
 import { renderBlock } from '@/lib/email/blocks/renderer';
 import { getBlockDefinition } from '@/lib/email/blocks/registry';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -44,8 +44,12 @@ export function EmailFrame({
 
   const config = designConfig || defaultConfig;
   
-  // Determine email width based on device mode
-  const emailWidth = deviceMode === 'desktop' ? config.maxWidth : 375;
+  // Email always renders at fixed 600px width (Option 2: Fixed/Shrink approach)
+  const emailWidth = 600;
+  
+  // Calculate scale for mobile preview to simulate shrinking
+  const scale = deviceMode === 'mobile' ? 0.625 : 1; // 375/600 = 0.625
+  const containerWidth = deviceMode === 'desktop' ? emailWidth : 375;
 
   // Sort blocks by position
   const sortedBlocks = [...blocks].sort((a, b) => a.position - b.position);
@@ -57,16 +61,16 @@ export function EmailFrame({
   }, {} as Record<string, number>);
   
   const getBlockReference = (block: EmailBlock): string => {
-    const blockDef = getBlockDefinition(block.type);
+    const displayName = getBlockDisplayName(block);
     const count = blockTypeCounts[block.type] || 1;
     
     if (count > 1) {
       // Find position among blocks of same type
       const sameTypeBlocks = sortedBlocks.filter(b => b.type === block.type);
       const position = sameTypeBlocks.findIndex(b => b.id === block.id) + 1;
-      return `the ${blockDef.name.toLowerCase()} block (position ${position})`;
+      return `the ${displayName.toLowerCase()} (position ${position})`;
     }
-    return `the ${blockDef.name.toLowerCase()} block`;
+    return `the ${displayName.toLowerCase()}`;
   };
   
   const handleBlockClick = (e: React.MouseEvent<HTMLDivElement>, block: EmailBlock) => {
@@ -79,8 +83,8 @@ export function EmailFrame({
     }
     
     if (onBlockClick && chatMode) {
-      const blockDef = getBlockDefinition(block.type);
-      onBlockClick(block.id, block.type, blockDef.name);
+      const displayName = getBlockDisplayName(block);
+      onBlockClick(block.id, block.type, displayName);
     }
   };
 
@@ -92,25 +96,36 @@ export function EmailFrame({
         style={{ backgroundColor: config.backgroundColor }}
       >
         <div
-          className="mx-auto transition-all duration-300"
+          className="mx-auto"
           style={{
-            width: emailWidth,
-            maxWidth: '100%',
+            width: containerWidth,
+            overflow: 'hidden',
           }}
         >
-          {/* Email Container - renders blocks directly like Visual Editor */}
+          {/* Scaling wrapper for mobile view */}
           <div
-            className={`relative ${interactive ? 'cursor-default' : ''}`}
             style={{
-              backgroundColor: config.contentBackgroundColor,
-              fontFamily: config.fontFamily,
+              transform: `scale(${scale})`,
+              transformOrigin: 'top center',
+              width: emailWidth,
+              marginLeft: deviceMode === 'mobile' ? `${(emailWidth - containerWidth) / -2}px` : '0',
             }}
-            onClick={onCanvasClick}
           >
+            {/* Email Container - ALWAYS 600px wide (Fixed/Shrink approach) */}
+            <div
+              className={`relative ${interactive ? 'cursor-default' : ''}`}
+              style={{
+                backgroundColor: config.contentBackgroundColor,
+                fontFamily: config.fontFamily,
+                width: emailWidth,
+                minWidth: emailWidth,
+              }}
+              onClick={onCanvasClick}
+            >
             {/* Render blocks individually (same as BlockCanvas) */}
             {sortedBlocks.map((block) => {
-              const blockDef = getBlockDefinition(block.type);
               const isSpacer = block.type === 'spacer';
+              const displayName = getBlockDisplayName(block);
               
               if (chatMode) {
                 return (
@@ -135,7 +150,7 @@ export function EmailFrame({
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="left">
-                      <p>Reference {blockDef.name}</p>
+                      <p>Reference {displayName}</p>
                     </TooltipContent>
                   </Tooltip>
                 );
@@ -155,6 +170,8 @@ export function EmailFrame({
                 />
               );
             })}
+          </div>
+          {/* End scaling wrapper */}
           </div>
         </div>
       </div>

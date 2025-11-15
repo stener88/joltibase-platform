@@ -9,10 +9,13 @@ interface PaddingInputProps {
 }
 
 export function PaddingInput({ value, onChange, label }: PaddingInputProps) {
+  // Provide default values if value is undefined
+  const paddingValue = value || { top: 0, bottom: 0, left: 0, right: 0 };
+  
   const handleChange = (side: keyof Padding, val: string) => {
     const numValue = parseInt(val) || 0;
     onChange({
-      ...value,
+      ...paddingValue,
       [side]: numValue,
     });
   };
@@ -29,7 +32,7 @@ export function PaddingInput({ value, onChange, label }: PaddingInputProps) {
           <label className="block text-xs text-gray-500 mb-1">Top</label>
           <input
             type="number"
-            value={value.top}
+            value={paddingValue.top}
             onChange={(e) => handleChange('top', e.target.value)}
             className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           />
@@ -38,7 +41,7 @@ export function PaddingInput({ value, onChange, label }: PaddingInputProps) {
           <label className="block text-xs text-gray-500 mb-1">Bottom</label>
           <input
             type="number"
-            value={value.bottom}
+            value={paddingValue.bottom}
             onChange={(e) => handleChange('bottom', e.target.value)}
             className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           />
@@ -47,7 +50,7 @@ export function PaddingInput({ value, onChange, label }: PaddingInputProps) {
           <label className="block text-xs text-gray-500 mb-1">Left</label>
           <input
             type="number"
-            value={value.left}
+            value={paddingValue.left}
             onChange={(e) => handleChange('left', e.target.value)}
             className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           />
@@ -56,7 +59,7 @@ export function PaddingInput({ value, onChange, label }: PaddingInputProps) {
           <label className="block text-xs text-gray-500 mb-1">Right</label>
           <input
             type="number"
-            value={value.right}
+            value={paddingValue.right}
             onChange={(e) => handleChange('right', e.target.value)}
             className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
           />

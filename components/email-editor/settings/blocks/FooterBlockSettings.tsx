@@ -25,7 +25,7 @@ export function FooterBlockSettings({ block, onUpdate }: FooterBlockSettingsProp
         <label className="block text-sm font-medium text-gray-700">Company Name</label>
         <input
           type="text"
-          value={block.content.companyName}
+          value={block.content.companyName || ''}
           onChange={(e) => updateContent({ companyName: e.target.value })}
           className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         />
@@ -55,7 +55,7 @@ export function FooterBlockSettings({ block, onUpdate }: FooterBlockSettingsProp
         <label className="block text-sm font-medium text-gray-700">Unsubscribe URL</label>
         <input
           type="text"
-          value={block.content.unsubscribeUrl}
+          value={block.content.unsubscribeUrl || ''}
           onChange={(e) => updateContent({ unsubscribeUrl: e.target.value })}
           className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         />

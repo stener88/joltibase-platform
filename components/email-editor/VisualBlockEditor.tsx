@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { EmailBlock, GlobalEmailSettings } from '@/lib/email/blocks/types';
-import { createDefaultBlock } from '@/lib/email/blocks/registry';
+import type { LayoutVariation } from '@/lib/email/blocks/types';
+import { createDefaultBlock, createLayoutBlock, createLinkBarBlock, createAddressBlock } from '@/lib/email/blocks/registry';
 import { BlockCanvas } from './BlockCanvas';
 import { BlockSettingsPanel } from './settings/BlockSettingsPanel';
 import { BlockPaletteModal } from './BlockPaletteModal';
@@ -89,8 +90,19 @@ export function VisualBlockEditor({
 
   // Insert block
   const insertBlock = useCallback(
-    (type: string, position: number) => {
-      const newBlock = createDefaultBlock(type as any, position);
+    (type: string, position: number, layoutVariation?: LayoutVariation) => {
+      let newBlock: EmailBlock;
+      
+      // Create block based on type
+      if (type === 'layouts' && layoutVariation) {
+        newBlock = createLayoutBlock(layoutVariation, position);
+      } else if (type === 'link-bar') {
+        newBlock = createLinkBarBlock(position);
+      } else if (type === 'address') {
+        newBlock = createAddressBlock(position);
+      } else {
+        newBlock = createDefaultBlock(type as any, position);
+      }
       
       setBlocks((prev) => {
         // Adjust positions of blocks at or after insertion point
@@ -250,7 +262,7 @@ export function VisualBlockEditor({
   return (
     <div className="flex h-full bg-[#faf9f5]">
       {/* Left: Settings Panel (35% width) */}
-      <div className="flex-[0.35] border-r border-gray-200 bg-[#faf9f5] overflow-hidden flex flex-col">
+      <div className="flex-[0.35] border-r border-gray-200 bg-[#faf9f5] flex flex-col">
         <BlockSettingsPanel
           selectedBlock={selectedBlock}
           designConfig={designConfig}
@@ -259,25 +271,6 @@ export function VisualBlockEditor({
           onInsertSection={insertSection}
           campaignId={campaignId}
         />
-        
-        {/* Save Status */}
-        <div className="px-6 py-3 border-t border-gray-200 bg-gray-50">
-          <div className={`text-xs transition-colors duration-200 ${
-            saveStatus === 'error' ? 'text-red-600' : 
-            saveStatus === 'saved' ? 'text-green-600' : 
-            'text-gray-500'
-          }`}>
-            {saveStatus === 'saving' && (
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                Saving...
-              </div>
-            )}
-            {saveStatus === 'saved' && '✅ All changes saved'}
-            {saveStatus === 'error' && `❌ ${saveError || 'Failed to save'}`}
-            {saveStatus === 'idle' && <span className="opacity-0">.</span>}
-          </div>
-        </div>
       </div>
 
       {/* Right: Canvas (65% width) */}
@@ -302,7 +295,7 @@ export function VisualBlockEditor({
       {showAddBlockModal && (
         <BlockPaletteModal
           position={showAddBlockModal.type}
-          onSelect={(blockType) => insertBlock(blockType, showAddBlockModal.position)}
+          onSelect={(blockType, layoutVariation) => insertBlock(blockType, showAddBlockModal.position, layoutVariation)}
           onClose={() => setShowAddBlockModal(null)}
         />
       )}

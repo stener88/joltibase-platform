@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ColorPickerProps {
   value: string;
@@ -9,7 +9,12 @@ interface ColorPickerProps {
 }
 
 export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
-  const [localValue, setLocalValue] = useState(value);
+  const [localValue, setLocalValue] = useState(value || '#000000');
+
+  // Sync with external prop changes
+  useEffect(() => {
+    setLocalValue(value || '#000000');
+  }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;

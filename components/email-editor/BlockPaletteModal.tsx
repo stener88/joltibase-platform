@@ -1,7 +1,8 @@
 'use client';
 
-import { BLOCK_DEFINITIONS, getAllBlockDefinitions } from '@/lib/email/blocks/registry';
+import { getAllBlockDefinitions } from '@/lib/email/blocks/registry';
 import { BlockType } from '@/lib/email/blocks/types';
+import type { LayoutVariation } from '@/lib/email/blocks/types';
 import { 
   X, 
   Image, 
@@ -16,11 +17,13 @@ import {
   GitCompare, 
   Share2, 
   FileCode,
-  Layers
+  Layers,
+  MapPin,
+  Link as LinkIcon
 } from 'lucide-react';
 
 interface BlockPaletteModalProps {
-  onSelect: (blockType: BlockType) => void;
+  onSelect: (blockType: BlockType, layoutVariation?: LayoutVariation) => void;
   onClose: () => void;
   position: 'above' | 'below';
 }
@@ -33,8 +36,6 @@ const getBlockIcon = (type: BlockType) => {
       return <Image {...iconProps} />;
     case 'spacer':
       return <Square {...iconProps} />;
-    case 'heading':
-      return <Type {...iconProps} />;
     case 'text':
       return <FileText {...iconProps} />;
     case 'image':
@@ -43,20 +44,16 @@ const getBlockIcon = (type: BlockType) => {
       return <Square {...iconProps} />;
     case 'divider':
       return <Minus {...iconProps} />;
-    case 'hero':
-      return <Sparkles {...iconProps} />;
-    case 'stats':
-      return <BarChart3 {...iconProps} />;
-    case 'testimonial':
-      return <MessageSquare {...iconProps} />;
-    case 'feature-grid':
-      return <Grid3x3 {...iconProps} />;
-    case 'comparison':
-      return <GitCompare {...iconProps} />;
     case 'social-links':
       return <Share2 {...iconProps} />;
     case 'footer':
       return <FileCode {...iconProps} />;
+    case 'layouts':
+      return <Layers {...iconProps} />;
+    case 'link-bar':
+      return <LinkIcon {...iconProps} />;
+    case 'address':
+      return <MapPin {...iconProps} />;
     default:
       return <Layers {...iconProps} />;
   }
@@ -68,6 +65,17 @@ export function BlockPaletteModal({
   position,
 }: BlockPaletteModalProps) {
   const blockDefinitions = getAllBlockDefinitions();
+
+  const handleBlockClick = (blockType: BlockType) => {
+    if (blockType === 'layouts') {
+      // Add layouts block with default hero-center variation
+      onSelect('layouts', 'hero-center');
+    } else {
+      // Directly add the block
+      onSelect(blockType);
+    }
+    onClose();
+  };
 
   return (
     <div
@@ -100,7 +108,7 @@ export function BlockPaletteModal({
             {blockDefinitions.map((definition) => (
               <button
                 key={definition.type}
-                onClick={() => onSelect(definition.type)}
+                onClick={() => handleBlockClick(definition.type)}
                 className="group p-3 border border-[#e8e7e5] rounded-lg hover:border-[#e9a589] hover:bg-white transition-all duration-200 hover:shadow-sm text-left flex flex-col gap-2 bg-white"
               >
                 {/* Icon */}
@@ -117,6 +125,15 @@ export function BlockPaletteModal({
                     {definition.description}
                   </div>
                 </div>
+
+                {/* Special indicator for layouts */}
+                {definition.type === 'layouts' && (
+                  <div className="mt-1">
+                    <span className="inline-block px-2 py-0.5 bg-[#e9a589]/10 text-[10px] font-medium text-[#e9a589] rounded">
+                      Change variation in settings
+                    </span>
+                  </div>
+                )}
               </button>
             ))}
           </div>

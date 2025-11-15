@@ -17,11 +17,6 @@ export function LogoContentSettings({ block, onUpdate, campaignId }: LogoContent
     onUpdate(block.id, { content: { ...block.content, ...updates } });
   };
 
-  const insertMergeTag = () => {
-    const currentValue = block.content.imageUrl || '';
-    updateContent({ imageUrl: currentValue + '{{logo_url}}' });
-  };
-
   const handleUpload = (url: string) => {
     updateContent({ imageUrl: url });
   };
@@ -33,37 +28,19 @@ export function LogoContentSettings({ block, onUpdate, campaignId }: LogoContent
   return (
     <>
       <div className="p-6 space-y-6">
-        {/* Logo Image URL */}
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Logo Image URL</label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={block.content.imageUrl}
-              onChange={(e) => updateContent({ imageUrl: e.target.value })}
-              placeholder="{{logo_url}}"
-              className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
-            />
-            <button
-              type="button"
-              onClick={insertMergeTag}
-              className="px-3 py-2 text-xs font-medium text-[#e9a589] border border-[#e9a589] rounded-lg hover:bg-[#e9a589]/5 transition-colors"
-              title="Insert merge tag"
-            >
-              {'{{logo_url}}'}
-            </button>
-          </div>
-        </div>
-
         {/* Upload Logo Button */}
         <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Logo Image</label>
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            className="w-full px-4 py-2 text-sm font-medium text-white bg-[#e9a589] rounded-lg hover:bg-[#d89478] transition-colors"
           >
-            Upload Logo
+            {block.content.imageUrl ? 'Change Logo' : 'Upload Logo'}
           </button>
+          {block.content.imageUrl && (
+            <p className="text-xs text-gray-500 mt-1">Logo uploaded</p>
+          )}
         </div>
 
         {/* Alt Text */}
@@ -71,7 +48,7 @@ export function LogoContentSettings({ block, onUpdate, campaignId }: LogoContent
           <label className="block text-sm font-medium text-gray-700">Alt Text</label>
           <input
             type="text"
-            value={block.content.altText}
+            value={block.content.altText || ''}
             onChange={(e) => updateContent({ altText: e.target.value })}
             placeholder="Logo"
             className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
@@ -97,7 +74,7 @@ export function LogoContentSettings({ block, onUpdate, campaignId }: LogoContent
         onClose={() => setIsModalOpen(false)}
         onUpload={handleUpload}
         onDelete={handleDelete}
-        currentImageUrl={block.content.imageUrl}
+        currentImageUrl={block.content.imageUrl || ''}
         campaignId={campaignId}
         type="logo"
       />

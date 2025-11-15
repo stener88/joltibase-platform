@@ -1,13 +1,24 @@
 /**
- * AI Campaign Generator - Validation Schemas
+ * AI Campaign Generator - Validation Schemas V2
  * 
- * Zod schemas for type-safe validation of inputs and AI responses
- * 
- * Phase 4B: Now supports block-based email generation
+ * Zod schemas for type-safe validation using new Flodesk-pattern block system
+ * 11 base blocks + 50+ layout variations
  */
 
 import { z } from 'zod';
-import { EmailBlockSchema, GlobalEmailSettingsSchema } from '../email/blocks/schemas';
+import { 
+  BlockSchema, 
+  EmailSchema, 
+  CampaignSchema,
+  type Block,
+  type Email,
+  type Campaign
+} from '../email/blocks/schemas-v2';
+
+// Re-export types for compatibility
+export type GeneratedCampaign = Campaign;
+export type GeneratedBlockEmail = Email;
+export type EmailBlock = Block;
 
 // ============================================================================
 // Input Validation Schemas
@@ -83,74 +94,26 @@ const GeneratedEmailSchema = z.object({
   ctaUrl: z.string().optional(),
 });
 
-/**
- * Email structure from AI (Phase 4B: block-based format)
- */
-const GeneratedBlockEmailSchema = z.object({
-  subject: z.string().min(1).max(100),
-  previewText: z.string().min(1).max(150),
-  blocks: z.array(EmailBlockSchema).min(1),
-  globalSettings: GlobalEmailSettingsSchema.nullish(), // nullish for OpenAI compatibility
-  notes: z.string().nullish(), // nullish for OpenAI compatibility
-});
+// ============================================================================
+// Legacy schemas removed - now using V2 schemas from schemas-v2.ts
+// ============================================================================
 
-/**
- * Design configuration from AI
- * NOTE: template field is deprecated (legacy) - system now uses blocks
- */
-const DesignConfigSchema = z.object({
-  template: z.string().nullish(), // Deprecated: kept for backward compatibility, not used for rendering
-  headerGradient: z.object({
-    from: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color'),
-    to: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color'),
-    direction: z.enum(['to-right', 'to-bottom', 'to-br', 'to-tr']).nullish(), // nullish for OpenAI compatibility
-  }).nullish(), // nullish for OpenAI compatibility
-  ctaColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color'),
-  accentColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').nullish(), // nullish for OpenAI compatibility
-  visualStyle: z.string().nullish(), // nullish for OpenAI compatibility
-  // AI-powered design customization
-  typographyScale: z.enum(['premium', 'standard', 'minimal']).nullish(), // nullish for OpenAI compatibility
-  layoutVariation: z.object({
-    heroPlacement: z.enum(['top-centered', 'full-bleed', 'split-screen', 'minimal']).nullish(), // nullish for OpenAI compatibility
-    sectionLayout: z.enum(['single-column', 'two-column', 'grid', 'alternating']).nullish(), // nullish for OpenAI compatibility
-    ctaStyle: z.enum(['bold-centered', 'inline', 'floating', 'subtle']).nullish(), // nullish for OpenAI compatibility
-    spacing: z.enum(['generous', 'standard', 'compact']).nullish(), // nullish for OpenAI compatibility
-    visualWeight: z.enum(['balanced', 'text-heavy', 'image-heavy']).nullish(), // nullish for OpenAI compatibility
-  }).nullish(), // nullish for OpenAI compatibility
-});
+// Re-export V2 schemas for use in this module
+export { EmailSchema as GeneratedBlockEmailSchema } from '../email/blocks/schemas-v2';
+export { CampaignSchema as GeneratedCampaignSchema } from '../email/blocks/schemas-v2';
 
-/**
- * Complete AI-generated campaign (block-based emails only)
- */
-export const GeneratedCampaignSchema = z.object({
-  campaignName: z.string().min(1).max(100),
-  campaignType: z.enum(['one-time', 'sequence']),
-  recommendedSegment: z.string(),
-  strategy: z.object({
-    goal: z.string(),
-    keyMessage: z.string(),
-  }).nullish(), // nullish for OpenAI compatibility
-  design: DesignConfigSchema,
-  emails: z.array(GeneratedBlockEmailSchema).min(1).max(5),
-  segmentationSuggestion: z.string(),
-  sendTimeSuggestion: z.string(),
-  successMetrics: z.string(),
-});
-
-export type GeneratedCampaign = z.infer<typeof GeneratedCampaignSchema>;
-export type GeneratedEmail = z.infer<typeof GeneratedEmailSchema>;
-export type GeneratedBlockEmail = z.infer<typeof GeneratedBlockEmailSchema>;
-export type DesignConfig = z.infer<typeof DesignConfigSchema>;
+// Type exports for backward compatibility
+export type GeneratedEmail = Email; // Legacy type alias
+export type DesignConfig = Campaign['design']; // Extract design type from Campaign
 
 // Removed: fixSchemaForStrictMode() - No longer needed with Gemini's native Zod support!
 
 /**
  * Get the campaign Zod schema for AI generation
- * With Gemini, we can pass Zod schemas directly - no JSON Schema conversion needed!
- * For OpenAI fallback, we'll handle conversion in the provider layer.
+ * V2: Gemini-optimized schema with 11 base blocks + layout variations
  */
 export function getCampaignSchema(): z.ZodType<any> {
-  return GeneratedCampaignSchema;
+  return CampaignSchema;
 }
 
 /**
@@ -169,7 +132,7 @@ export function isBlockBasedEmail(email: GeneratedBlockEmail): email is Generate
  */
 export const GenerationResultSchema = z.object({
   id: z.string().uuid(),
-  campaign: GeneratedCampaignSchema,
+  campaign: CampaignSchema,
   metadata: z.object({
     model: z.string(),
     tokensUsed: z.number(),
@@ -207,7 +170,7 @@ export function validateCampaignInput(input: unknown): GenerateCampaignInput {
  */
 export function validateAIResponse(response: unknown): GeneratedCampaign {
   try {
-    return GeneratedCampaignSchema.parse(response);
+    return CampaignSchema.parse(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
       console.error('🔍 [VALIDATOR] Zod validation error count:', error.issues?.length || 0);
@@ -253,12 +216,187 @@ export function parseAndValidateCampaign(jsonString: string): GeneratedCampaign 
  * Used when OpenAI Structured Outputs returns typed object
  */
 export function parseStructuredCampaign(data: unknown): GeneratedCampaign {
+  // Remove _flexible placeholder properties that Gemini adds
+  let cleanedData = removeFlexiblePlaceholders(data);
+  
+  // DEBUG: Log the actual structure we received
+  console.log('🔍 [VALIDATOR] Raw cleaned data keys:', Object.keys(cleanedData as any));
+  console.log('🔍 [VALIDATOR] Raw JSON preview (first 500 chars):', JSON.stringify(cleanedData).substring(0, 500));
+  
+  // FALLBACK: If Gemini returned just blocks array, wrap it in full campaign structure
+  if ((cleanedData as any).blocks && !(cleanedData as any).campaignName && !(cleanedData as any).emails) {
+    console.log('🔧 [VALIDATOR] Wrapping bare blocks array into full campaign structure');
+    cleanedData = {
+      campaignName: "Generated Campaign",
+      campaignType: "one-time" as const,
+      recommendedSegment: "all_contacts",
+      strategy: {
+        goal: "Engage users with generated content",
+        keyMessage: "Auto-generated from blocks"
+      },
+      design: {
+        template: "minimal-accent" as const,
+        ctaColor: "#7c3aed",
+        accentColor: "#a78bfa"
+      },
+      emails: [{
+        subject: "Generated Email",
+        previewText: "Auto-generated email preview",
+        blocks: (cleanedData as any).blocks,
+        globalSettings: {
+          backgroundColor: "#f9fafb",
+          contentBackgroundColor: "#ffffff",
+          maxWidth: 600,
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          mobileBreakpoint: 480, // Standard mobile breakpoint
+        }
+      }],
+      segmentationSuggestion: "all_contacts",
+      sendTimeSuggestion: "Tuesday 10am local",
+      successMetrics: "Open >25%, Click >3%"
+    };
+  }
+  
+  // FALLBACK: Ensure all emails have globalSettings with mobileBreakpoint
+  if ((cleanedData as any).emails) {
+    (cleanedData as any).emails = (cleanedData as any).emails.map((email: any) => {
+      if (!email.globalSettings) {
+        email.globalSettings = {
+          backgroundColor: "#f9fafb",
+          contentBackgroundColor: "#ffffff",
+          maxWidth: 600,
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          mobileBreakpoint: 480, // Standard mobile breakpoint
+        };
+      } else if (!email.globalSettings.mobileBreakpoint) {
+        // Add default mobileBreakpoint if missing
+        email.globalSettings.mobileBreakpoint = 480;
+      }
+      return email;
+    });
+    console.log('✅ [VALIDATOR] Ensured all emails have mobileBreakpoint (default: 480px)');
+  }
+  
+  // CRITICAL: Filter out blocks with empty/broken image URLs
+  if ((cleanedData as any).emails) {
+    (cleanedData as any).emails = (cleanedData as any).emails.map((email: any) => {
+      if (email.blocks) {
+        const originalCount = email.blocks.length;
+        email.blocks = email.blocks.filter((block: any) => {
+          // Filter out image blocks with empty URLs
+          if (block.type === 'image' && block.content) {
+            const hasValidImage = block.content.images?.some((img: any) => 
+              img.url && img.url !== '' && !img.url.includes('example.com')
+            ) || (block.content.imageUrl && block.content.imageUrl !== '' && !block.content.imageUrl.includes('example.com'));
+            
+            if (!hasValidImage) {
+              console.log('🚫 [VALIDATOR] Filtering out image block with empty/invalid URL:', block.id);
+              return false;
+            }
+          }
+          
+          // Filter out logo blocks with empty URLs
+          if (block.type === 'logo' && block.content) {
+            if (!block.content.imageUrl || block.content.imageUrl === '' || block.content.imageUrl.includes('example.com')) {
+              console.log('🚫 [VALIDATOR] Filtering out logo block with empty/invalid URL:', block.id);
+              return false;
+            }
+          }
+          
+          // Filter out layout blocks with image-focused variations that have empty image URLs
+          if (block.type === 'layouts' && block.content) {
+            const imageVariations = [
+              'hero-image-overlay', 'image-overlay-center', 'image-overlay-top-left',
+              'image-overlay-top-right', 'image-overlay-bottom-left', 'image-overlay-bottom-right',
+              'image-overlay-center-bottom', 'image-collage-featured-left', 'image-collage-featured-right',
+              'image-collage-featured-center', 'zigzag-2-rows', 'zigzag-3-rows', 'zigzag-4-rows',
+              'product-card-image-top', 'product-card-image-left', 'badge-overlay-corner',
+              'badge-overlay-center', 'testimonial-with-image'
+            ];
+            
+            if (imageVariations.includes(block.layoutVariation)) {
+              const hasImage = block.content.image?.url || block.content.imageUrl;
+              if (!hasImage || hasImage === '' || hasImage.includes('example.com')) {
+                console.log('🚫 [VALIDATOR] Filtering out image-focused layout block with empty/invalid URL:', block.id, block.layoutVariation);
+                return false;
+              }
+            }
+          }
+          
+          return true;
+        });
+        
+        // Re-index positions after filtering
+        email.blocks = email.blocks.map((block: any, index: number) => ({
+          ...block,
+          position: index,
+        }));
+        
+        const filteredCount = originalCount - email.blocks.length;
+        if (filteredCount > 0) {
+          console.log(`✅ [VALIDATOR] Filtered out ${filteredCount} blocks with broken images`);
+        }
+      }
+      return email;
+    });
+  }
+  
   // Structured Outputs guarantees schema compliance, so this is mainly type checking
   console.log('📋 [VALIDATOR] Parsing structured campaign:', {
-    campaignName: (data as any)?.campaignName,
-    emailCount: (data as any)?.emails?.length,
+    campaignName: (cleanedData as any)?.campaignName,
+    emailCount: (cleanedData as any)?.emails?.length,
   });
   
-  return validateAIResponse(data);
+  // DEBUG: Log first few blocks to see what layoutVariation values Gemini is generating
+  const firstEmail = (cleanedData as any)?.emails?.[0];
+  if (firstEmail?.blocks) {
+    console.log('🔍 [VALIDATOR] First 10 blocks from Gemini:');
+    firstEmail.blocks.slice(0, 10).forEach((block: any, idx: number) => {
+      console.log(`  Block ${idx}:`, {
+        id: block.id,
+        type: block.type,
+        layoutVariation: block.layoutVariation,
+        layoutVariationType: typeof block.layoutVariation,
+        hasSettings: !!block.settings,
+        hasContent: !!block.content,
+      });
+    });
+    
+    // Also check ALL blocks with issues
+    const problematicBlocks = firstEmail.blocks.filter((b: any) => 
+      b.type === 'layouts' && (!b.layoutVariation || b.layoutVariation === '')
+    );
+    if (problematicBlocks.length > 0) {
+      console.log(`⚠️ [VALIDATOR] Found ${problematicBlocks.length} layouts blocks with missing/empty layoutVariation`);
+    }
+  } else {
+    console.log('⚠️ [VALIDATOR] No emails or blocks found in response!');
+  }
+  
+  return validateAIResponse(cleanedData);
+}
+
+/**
+ * Remove _flexible placeholder properties added by Gemini schema workaround
+ */
+function removeFlexiblePlaceholders(obj: any): any {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(removeFlexiblePlaceholders);
+  }
+  
+  const cleaned: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    // Skip the _flexible placeholder property
+    if (key === '_flexible') {
+      continue;
+    }
+    cleaned[key] = removeFlexiblePlaceholders(value);
+  }
+  
+  return cleaned;
 }
 

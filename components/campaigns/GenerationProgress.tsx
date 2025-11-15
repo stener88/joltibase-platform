@@ -118,11 +118,7 @@ export function GenerationProgress({ prompt }: GenerationProgressProps) {
       </div>
 
       {/* Fun fact or tip */}
-      <div className="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <p className="text-xs text-gray-600 text-center">
-          Pro tip: You can refine your email with natural language after it's generated
-        </p>
-      </div>
+      
     </div>
   );
 }

@@ -32,43 +32,45 @@ const EXAMPLE_PROMPTS = [
 
 export function ExamplePrompts({ onSelectPrompt }: ExamplePromptsProps) {
   return (
-    <div className="w-full max-w-4xl mx-auto mt-12">
+    <div className="w-full">
+      <h2 className="text-lg font-semibold text-gray-900 mb-4">Example Prompts</h2>
+      
       {/* Grid of example prompts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {EXAMPLE_PROMPTS.map((example, index) => {
+          const IconComponent = example.icon;
           return (
           <button
             key={index}
             onClick={() => onSelectPrompt(example.prompt)}
-            className="group relative p-6 bg-white/30 backdrop-blur-sm rounded-lg border border-white/30 hover:border-white/60 hover:shadow-md transition-all duration-200 text-left hover:scale-[1.02] active:scale-[0.98]"
+            className="group relative p-6 bg-white rounded-lg border border-gray-200 hover:border-[#e9a589] hover:shadow-sm transition-all duration-200 text-left"
           >
-            {/* Title */}
-            <h3 className="font-semibold text-gray-900 mb-2 transition-colors">
-              {example.title}
-            </h3>
+            {/* Icon and Title */}
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-[#e9a589]/10 transition-colors">
+                <IconComponent className="w-5 h-5 text-black group-hover:text-[#e9a589] transition-colors" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 mb-2 transition-colors">
+                  {example.title}
+                </h3>
+              </div>
+            </div>
 
             {/* Description */}
-            <p className="text-sm text-gray-700 leading-relaxed">
+            <p className="text-sm text-gray-600 leading-relaxed">
               {example.prompt}
             </p>
 
             {/* Hover indicator */}
             <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="text-xs text-gray-700 font-medium">
+              <div className="text-xs text-[#e9a589] font-medium">
                 Click to use →
               </div>
             </div>
           </button>
           );
         })}
-      </div>
-
-      {/* Or divider */}
-      <div className="relative my-12">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-white/20"></div>
-        </div>
-        
       </div>
     </div>
   );

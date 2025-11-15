@@ -13,32 +13,10 @@
 import type {
   BlockType,
   EmailBlock,
-  LogoBlock,
-  SpacerBlock,
-  HeadingBlock,
-  TextBlock,
-  ImageBlock,
-  ButtonBlock,
-  DividerBlock,
-  HeroBlock,
-  StatsBlock,
-  TestimonialBlock,
-  FeatureGridBlock,
-  ComparisonBlock,
-  SocialLinksBlock,
-  FooterBlock,
-  TwoColumnBlock,
-  ImageOverlayBlock,
-  ImageGrid2x2Block,
-  ImageGrid3x3Block,
-  ImageCollageBlock,
-  ThreeColumnBlock,
-  ZigzagBlock,
-  SplitBackgroundBlock,
-  ProductCardBlock,
-  BadgeOverlayBlock,
   Padding,
 } from './types';
+
+import type { LayoutVariation } from './types-v2';
 
 // ============================================================================
 // Block Categories
@@ -126,44 +104,36 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     ],
     previewDescription: 'Empty vertical space',
   },
-  'heading': {
-    type: 'heading',
-    name: 'Heading',
-    description: 'Section heading',
-    category: 'content',
-    icon: '📝',
-    aiHints: [
-      'Section titles',
-      'Content hierarchy',
-      'Break up long text',
-    ],
-    previewDescription: 'Large text heading',
-  },
   'text': {
     type: 'text',
     name: 'Text',
-    description: 'Paragraph text',
+    description: 'Text content (body or headings)',
     category: 'content',
     icon: '📄',
     aiHints: [
       'Body copy',
+      'Headings and titles',
       'Explanations',
+      'Section titles',
       'Detailed information',
     ],
-    previewDescription: 'Body text paragraph',
+    previewDescription: 'Text paragraph or heading',
   },
   'image': {
     type: 'image',
     name: 'Image',
-    description: 'Image with optional caption',
+    description: 'Single image or grid (1-9 images, 1-3 columns)',
     category: 'media',
     icon: '🖼️',
     aiHints: [
       'Product photos',
       'Visual content',
       'Screenshots',
+      'Single images or grids (up to 3×3)',
+      'Product galleries',
+      'Photo grids',
     ],
-    previewDescription: 'Full-width image',
+    previewDescription: 'Image or image grid',
   },
   'button': {
     type: 'button',
@@ -191,71 +161,6 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     ],
     previewDescription: 'Horizontal divider line',
   },
-  'hero': {
-    type: 'hero',
-    name: 'Hero',
-    description: 'Large headline with optional background',
-    category: 'layout',
-    icon: '⭐',
-    aiHints: [
-      'Email opening',
-      'Major announcements',
-      'High impact messages',
-    ],
-    previewDescription: 'Hero section with large headline',
-  },
-  'stats': {
-    type: 'stats',
-    name: 'Stats',
-    description: 'Numbers grid (2-4 stats)',
-    category: 'layout',
-    icon: '📊',
-    aiHints: [
-      'Impressive numbers',
-      'Metrics and achievements',
-      'Social proof with data',
-    ],
-    previewDescription: 'Grid of statistics',
-  },
-  'testimonial': {
-    type: 'testimonial',
-    name: 'Testimonial',
-    description: 'Customer quote with author',
-    category: 'social',
-    icon: '💬',
-    aiHints: [
-      'Social proof',
-      'Customer feedback',
-      'Trust building',
-    ],
-    previewDescription: 'Quote with author details',
-  },
-  'feature-grid': {
-    type: 'feature-grid',
-    name: 'Feature Grid',
-    description: '2-3 features side-by-side',
-    category: 'layout',
-    icon: '📋',
-    aiHints: [
-      'Product features',
-      'Benefits list',
-      'Multiple offerings',
-    ],
-    previewDescription: 'Grid of features with icons',
-  },
-  'comparison': {
-    type: 'comparison',
-    name: 'Comparison',
-    description: 'Before/After comparison',
-    category: 'layout',
-    icon: '⚖️',
-    aiHints: [
-      'Before and after',
-      'Problem vs solution',
-      'Transformation stories',
-    ],
-    previewDescription: 'Two-column before/after',
-  },
   'social-links': {
     type: 'social-links',
     name: 'Social Links',
@@ -268,6 +173,21 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
       'Follow us section',
     ],
     previewDescription: 'Row of social icons',
+  },
+  'layouts': {
+    type: 'layouts',
+    name: 'Layouts',
+    description: 'Complex multi-element layouts',
+    category: 'layout',
+    icon: '📐',
+    aiHints: [
+      'Hero sections',
+      'Multi-column layouts',
+      'Stats displays',
+      'Feature showcases',
+      'Complex compositions',
+    ],
+    previewDescription: 'Advanced layout with multiple elements',
   },
   'footer': {
     type: 'footer',
@@ -282,220 +202,31 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     ],
     previewDescription: 'Footer with company info and unsubscribe',
   },
-  'two-column': {
-    type: 'two-column',
-    name: 'Two-Column',
-    description: 'Side-by-side image + text layout',
-    category: 'layout',
-    icon: '📐',
+  'link-bar': {
+    type: 'link-bar',
+    name: 'Link Bar',
+    description: 'Horizontal or vertical navigation links',
+    category: 'structure',
+    icon: '🔗',
     aiHints: [
-      'Product features with image',
-      'Side-by-side comparisons',
-      'Image + description layouts',
+      'Navigation',
+      'Quick links',
+      'Menu bar',
     ],
-    previewDescription: 'Two columns with image and text',
+    previewDescription: 'Navigation link bar',
   },
-  'image-overlay': {
-    type: 'image-overlay',
-    name: 'Image Overlay',
-    description: 'Hero image with overlay text and CTA',
-    category: 'layout',
-    icon: '🎭',
+  'address': {
+    type: 'address',
+    name: 'Address',
+    description: 'Physical address display',
+    category: 'structure',
+    icon: '📍',
     aiHints: [
-      'Dramatic hero sections',
-      'Full-width promotional banners',
-      'Visual-first announcements',
+      'Company address',
+      'Contact information',
+      'CAN-SPAM compliance',
     ],
-    previewDescription: 'Image with overlay content',
-  },
-  'image-grid-2x2': {
-    type: 'image-grid-2x2',
-    name: 'Image Grid 2x2',
-    description: '2x2 product gallery grid',
-    category: 'layout',
-    icon: '🎨',
-    aiHints: [
-      'Product galleries',
-      'Portfolio showcases',
-      'Multiple offerings',
-    ],
-    previewDescription: '2x2 image grid with captions',
-  },
-  'image-grid-3x3': {
-    type: 'image-grid-3x3',
-    name: 'Image Grid 3x3',
-    description: '3x3 compact gallery grid',
-    category: 'layout',
-    icon: '🖼️',
-    aiHints: [
-      'Large product collections',
-      'Instagram-style feeds',
-      'Portfolio galleries',
-    ],
-    previewDescription: '3x3 compact image grid',
-  },
-  'image-collage': {
-    type: 'image-collage',
-    name: 'Image Collage',
-    description: 'Featured image with detail shots',
-    category: 'layout',
-    icon: '🎪',
-    aiHints: [
-      'Product detail showcase',
-      'Lifestyle collections',
-      'Editorial layouts',
-    ],
-    previewDescription: 'Asymmetric collage with featured image',
-  },
-  'three-column': {
-    type: 'three-column',
-    name: 'Three-Column',
-    description: 'Three columns for features or benefits',
-    category: 'layout',
-    icon: '🏛️',
-    aiHints: [
-      'Key benefits',
-      'Feature lists',
-      'Pricing tiers',
-    ],
-    previewDescription: 'Three equal columns',
-  },
-  'zigzag': {
-    type: 'zigzag',
-    name: 'Zigzag',
-    description: 'Alternating image-text rows',
-    category: 'layout',
-    icon: '⚡',
-    aiHints: [
-      'Feature showcases',
-      'Step-by-step guides',
-      'Dynamic presentations',
-    ],
-    previewDescription: 'Alternating content rows',
-  },
-  'split-background': {
-    type: 'split-background',
-    name: 'Split Background',
-    description: 'Dramatic split hero with contrasting sides',
-    category: 'layout',
-    icon: '🎬',
-    aiHints: [
-      'Bold announcements',
-      'High-contrast designs',
-      'Premium branding',
-    ],
-    previewDescription: 'Split background hero',
-  },
-  'product-card': {
-    type: 'product-card',
-    name: 'Product Card',
-    description: 'E-commerce product card with badge',
-    category: 'layout',
-    icon: '🛍️',
-    aiHints: [
-      'E-commerce products',
-      'Product promotions',
-      'Shopping campaigns',
-    ],
-    previewDescription: 'Product card with pricing',
-  },
-  'badge-overlay': {
-    type: 'badge-overlay',
-    name: 'Badge Overlay',
-    description: 'Image with promotional badge',
-    category: 'layout',
-    icon: '🏷️',
-    aiHints: [
-      'Sale promotions',
-      'Discount announcements',
-      'Limited offers',
-    ],
-    previewDescription: 'Image with badge overlay',
-  },
-  // Advanced Interactive Blocks (Gemini-powered)
-  'carousel': {
-    type: 'carousel',
-    name: 'Carousel',
-    description: 'Multi-slide interactive gallery',
-    category: 'layout',
-    icon: '🎠',
-    aiHints: [
-      'Product showcases',
-      'Step-by-step guides',
-      'Feature tours',
-      'Before/after series',
-    ],
-    previewDescription: 'Interactive image carousel',
-  },
-  'tab-container': {
-    type: 'tab-container',
-    name: 'Tab Container',
-    description: 'Tabbed content sections',
-    category: 'layout',
-    icon: '📑',
-    aiHints: [
-      'Pricing tiers',
-      'Feature comparisons',
-      'Multi-option displays',
-      'FAQs',
-    ],
-    previewDescription: 'Tabbed content container',
-  },
-  'accordion': {
-    type: 'accordion',
-    name: 'Accordion',
-    description: 'Expandable/collapsible content',
-    category: 'layout',
-    icon: '📋',
-    aiHints: [
-      'FAQs',
-      'Feature details',
-      'Long content organization',
-      'Product specifications',
-    ],
-    previewDescription: 'Expandable accordion items',
-  },
-  'masonry-grid': {
-    type: 'masonry-grid',
-    name: 'Masonry Grid',
-    description: 'Pinterest-style auto-flowing layout',
-    category: 'layout',
-    icon: '🧱',
-    aiHints: [
-      'Product galleries',
-      'Portfolio showcases',
-      'Content feeds',
-      'Image collections',
-    ],
-    previewDescription: 'Masonry grid layout',
-  },
-  'dynamic-column': {
-    type: 'dynamic-column',
-    name: 'Dynamic Columns',
-    description: 'Flexible 2-5 column layout',
-    category: 'layout',
-    icon: '📊',
-    aiHints: [
-      'Feature lists',
-      'Team members',
-      'Comparison tables',
-      'Service offerings',
-    ],
-    previewDescription: 'Flexible multi-column layout',
-  },
-  'container': {
-    type: 'container',
-    name: 'Container',
-    description: 'Nested block container',
-    category: 'layout',
-    icon: '📦',
-    aiHints: [
-      'Complex sections',
-      'Grouped content',
-      'Advanced layouts',
-      'Nested structures',
-    ],
-    previewDescription: 'Container with nested blocks',
+    previewDescription: 'Physical address block',
   },
 };
 
@@ -515,30 +246,24 @@ export function getDefaultBlockSettings(type: BlockType): any {
         align: 'center' as const,
         width: '150px',
         height: 'auto',
+        backgroundColor: 'transparent',
         padding: { top: 40, bottom: 20, left: 20, right: 20 },
       };
     
     case 'spacer':
       return {
         height: 40,
-      };
-    
-    case 'heading':
-      return {
-        fontSize: '44px',
-        fontWeight: 700,
-        color: '#111827',
-        align: 'left' as const,
-        padding: DEFAULT_PADDING,
-        lineHeight: '1.2',
+        backgroundColor: 'transparent',
       };
     
     case 'text':
       return {
         fontSize: '16px',
         fontWeight: 400,
+        fontFamily: undefined, // Uses global font by default
         color: '#374151',
         align: 'left' as const,
+        backgroundColor: 'transparent',
         padding: DEFAULT_PADDING,
         lineHeight: '1.6',
       };
@@ -550,6 +275,10 @@ export function getDefaultBlockSettings(type: BlockType): any {
         height: 'auto',
         borderRadius: '0px',
         padding: DEFAULT_PADDING,
+        columns: 1,
+        aspectRatio: 'auto' as const,
+        gap: 8,
+        backgroundColor: 'transparent',
       };
     
     case 'button':
@@ -575,83 +304,26 @@ export function getDefaultBlockSettings(type: BlockType): any {
         padding: { top: 32, bottom: 32, left: 20, right: 20 },
       };
     
-    case 'hero':
-      return {
-        backgroundColor: '#f9fafb',
-        padding: { top: 60, bottom: 60, left: 40, right: 40 },
-        align: 'center' as const,
-        headlineFontSize: '56px',
-        headlineFontWeight: 800,
-        headlineColor: '#111827',
-        subheadlineFontSize: '18px',
-        subheadlineColor: '#6b7280',
-      };
-    
-    case 'stats':
-      return {
-        layout: '3-col' as const,
-        align: 'center' as const,
-        valueFontSize: '64px',
-        valueFontWeight: 900,
-        valueColor: '#2563eb',
-        labelFontSize: '14px',
-        labelFontWeight: 600,
-        labelColor: '#6b7280',
-        padding: { top: 40, bottom: 40, left: 20, right: 20 },
-        spacing: 32,
-      };
-    
-    case 'testimonial':
-      return {
-        backgroundColor: '#f9fafb',
-        borderColor: '#2563eb',
-        borderWidth: 4,
-        borderRadius: '4px',
-        padding: { top: 24, bottom: 24, left: 24, right: 24 },
-        quoteFontSize: '18px',
-        quoteColor: '#374151',
-        quoteFontStyle: 'italic' as const,
-        authorFontSize: '14px',
-        authorColor: '#6b7280',
-        authorFontWeight: 600,
-      };
-    
-    case 'feature-grid':
-      return {
-        layout: '3-col' as const,
-        align: 'center' as const,
-        iconSize: '48px',
-        titleFontSize: '20px',
-        titleFontWeight: 700,
-        titleColor: '#111827',
-        descriptionFontSize: '14px',
-        descriptionColor: '#6b7280',
-        padding: { top: 40, bottom: 40, left: 20, right: 20 },
-        spacing: 32,
-      };
-    
-    case 'comparison':
-      return {
-        beforeBackgroundColor: '#fef2f2',
-        afterBackgroundColor: '#f0fdf4',
-        beforeLabelColor: '#dc2626',
-        afterLabelColor: '#16a34a',
-        labelFontSize: '12px',
-        labelFontWeight: 600,
-        contentFontSize: '14px',
-        contentColor: '#374151',
-        borderRadius: '4px',
-        padding: { top: 24, bottom: 24, left: 0, right: 0 },
-        cellPadding: 16,
-      };
-    
     case 'social-links':
       return {
         align: 'center' as const,
         iconSize: '32px',
-        spacing: 16,
+        spacing: 24,
         iconStyle: 'color' as const,
         padding: { top: 20, bottom: 20, left: 20, right: 20 },
+      };
+    
+    case 'layouts':
+      return {
+        padding: { top: 40, right: 20, bottom: 40, left: 20 },
+        backgroundColor: 'transparent',
+        align: 'center',
+        showHeader: true,
+        showTitle: true,
+        showDivider: false,
+        showParagraph: true,
+        showButton: true,
+        showImage: false,
       };
     
     case 'footer':
@@ -665,173 +337,6 @@ export function getDefaultBlockSettings(type: BlockType): any {
         linkColor: '#2563eb',
       };
     
-    case 'two-column':
-      return {
-        layout: '50-50',
-        verticalAlign: 'middle',
-        columnGap: 32,
-        padding: { top: 48, bottom: 48, left: 24, right: 24 },
-      };
-    
-    case 'image-overlay':
-      return {
-        overlayPosition: 'center',
-        overlayBackgroundColor: '#000000',
-        overlayBackgroundOpacity: 50,
-        overlayPadding: { top: 40, bottom: 40, left: 40, right: 40 },
-        overlayBorderRadius: '8px',
-        imageHeight: '500px',
-        padding: { top: 0, bottom: 0, left: 0, right: 0 },
-      };
-    
-    case 'image-grid-2x2':
-      return {
-        gridGap: 16,
-        imageHeight: '200px',
-        borderRadius: '8px',
-        showCaptions: true,
-        captionFontSize: '14px',
-        captionColor: '#374151',
-        padding: { top: 32, bottom: 32, left: 24, right: 24 },
-      };
-    
-    case 'image-grid-3x3':
-      return {
-        gridGap: 8,
-        imageHeight: '120px',
-        borderRadius: '4px',
-        showCaptions: false,
-        padding: { top: 24, bottom: 24, left: 16, right: 16 },
-      };
-    
-    case 'image-collage':
-      return {
-        layout: 'featured-left',
-        gridGap: 12,
-        borderRadius: '8px',
-        padding: { top: 32, bottom: 32, left: 20, right: 20 },
-      };
-    
-    case 'three-column':
-      return {
-        layout: 'equal',
-        columnGap: 24,
-        verticalAlign: 'top',
-        padding: { top: 40, bottom: 40, left: 20, right: 20 },
-      };
-    
-    case 'zigzag':
-      return {
-        rowGap: 40,
-        columnGap: 32,
-        imageWidth: '45%',
-        padding: { top: 48, bottom: 48, left: 24, right: 24 },
-      };
-    
-    case 'split-background':
-      return {
-        layout: '50-50',
-        leftBackgroundColor: '#1f2937',
-        rightBackgroundColor: '#ffffff',
-        columnGap: 0,
-        verticalAlign: 'middle',
-        padding: { top: 0, bottom: 0, left: 0, right: 0 },
-        leftColumnPadding: { top: 60, bottom: 60, left: 32, right: 32 },
-        rightColumnPadding: { top: 60, bottom: 60, left: 32, right: 32 },
-      };
-    
-    case 'product-card':
-      return {
-        imageHeight: '400px',
-        borderRadius: '12px',
-        padding: { top: 32, bottom: 32, left: 24, right: 24 },
-        contentPadding: { top: 20, bottom: 20, left: 24, right: 24 },
-        backgroundColor: '#ffffff',
-        nameFontSize: '24px',
-        nameColor: '#111827',
-        priceFontSize: '28px',
-        priceColor: '#111827',
-        descriptionFontSize: '14px',
-        descriptionColor: '#6b7280',
-      };
-    
-    case 'badge-overlay':
-      return {
-        badgePosition: 'top-right',
-        badgeSize: 'medium',
-        badgeBackgroundColor: '#ef4444',
-        badgeTextColor: '#ffffff',
-        badgeFontSize: '16px',
-        badgeFontWeight: 700,
-        imageHeight: '400px',
-        borderRadius: '8px',
-        padding: { top: 24, bottom: 24, left: 24, right: 24 },
-      };
-    
-    // Advanced Interactive Blocks
-    case 'carousel':
-      return {
-        slideHeight: '400px',
-        showIndicators: true,
-        indicatorColor: '#d1d5db',
-        indicatorActiveColor: '#7c3aed',
-        autoPlay: false,
-        autoPlayInterval: 5000,
-        borderRadius: '8px',
-        padding: { top: 24, bottom: 24, left: 24, right: 24 },
-      };
-    
-    case 'tab-container':
-      return {
-        tabStyle: 'pills',
-        tabPosition: 'top',
-        activeTabColor: '#7c3aed',
-        activeTabTextColor: '#ffffff',
-        inactiveTabTextColor: '#6b7280',
-        contentPadding: { top: 32, bottom: 32, left: 24, right: 24 },
-        padding: { top: 24, bottom: 24, left: 24, right: 24 },
-      };
-    
-    case 'accordion':
-      return {
-        allowMultiple: false,
-        titleFontSize: '18px',
-        titleFontWeight: 600,
-        titleColor: '#1f2937',
-        contentFontSize: '16px',
-        contentColor: '#6b7280',
-        borderColor: '#e5e7eb',
-        borderWidth: 1,
-        padding: { top: 24, bottom: 24, left: 24, right: 24 },
-        itemSpacing: 16,
-      };
-    
-    case 'masonry-grid':
-      return {
-        columns: 3,
-        gap: 16,
-        itemBorderRadius: '8px',
-        padding: { top: 24, bottom: 24, left: 24, right: 24 },
-      };
-    
-    case 'dynamic-column':
-      return {
-        columnCount: 3,
-        columnGap: 24,
-        verticalAlign: 'top',
-        mobileStack: true,
-        padding: { top: 24, bottom: 24, left: 24, right: 24 },
-      };
-    
-    case 'container':
-      return {
-        layout: 'stack',
-        gridColumns: 2,
-        gap: 24,
-        borderWidth: 0,
-        padding: { top: 24, bottom: 24, left: 24, right: 24 },
-      };
-    
     default:
       return {};
   }
@@ -840,21 +345,16 @@ export function getDefaultBlockSettings(type: BlockType): any {
 /**
  * Get default content for a block type
  */
-export function getDefaultBlockContent(type: BlockType): any {
+export function getDefaultBlockContent(type: BlockType, options?: { layoutVariation?: string }): any {
   switch (type) {
     case 'logo':
       return {
-        imageUrl: '{{logo_url}}',
+        imageUrl: '',
         altText: 'Company Logo',
       };
     
     case 'spacer':
       return {};
-    
-    case 'heading':
-      return {
-        text: 'Your Heading Here',
-      };
     
     case 'text':
       return {
@@ -863,8 +363,13 @@ export function getDefaultBlockContent(type: BlockType): any {
     
     case 'image':
       return {
-        imageUrl: '{{image_url}}',
-        altText: 'Image',
+        images: [
+          {
+            url: '',
+            altText: 'Image',
+            linkUrl: '',
+          },
+        ],
       };
     
     case 'button':
@@ -876,48 +381,6 @@ export function getDefaultBlockContent(type: BlockType): any {
     case 'divider':
       return {};
     
-    case 'hero':
-      return {
-        headline: 'Welcome to Our Platform',
-        subheadline: 'Discover amazing features and possibilities',
-      };
-    
-    case 'stats':
-      return {
-        stats: [
-          { value: '10,000+', label: 'Users' },
-          { value: '99.9%', label: 'Uptime' },
-          { value: '24/7', label: 'Support' },
-        ],
-      };
-    
-    case 'testimonial':
-      return {
-        quote: 'This product changed everything for our business. Highly recommended!',
-        author: 'Jane Doe',
-        role: 'CEO',
-        company: 'Acme Inc',
-      };
-    
-    case 'feature-grid':
-      return {
-        features: [
-          { icon: '⚡', title: 'Fast', description: 'Lightning fast performance' },
-          { icon: '🔒', title: 'Secure', description: 'Bank-level security' },
-          { icon: '📱', title: 'Mobile', description: 'Works on any device' },
-        ],
-      };
-    
-    case 'comparison':
-      return {
-        before: {
-          text: 'Manual processes taking hours of your time',
-        },
-        after: {
-          text: 'Automated workflows saving 10+ hours per week',
-        },
-      };
-    
     case 'social-links':
       return {
         links: [
@@ -927,6 +390,92 @@ export function getDefaultBlockContent(type: BlockType): any {
         ],
       };
     
+    case 'layouts': {
+      const variation = (options as any)?.layoutVariation;
+      
+      if (variation === 'hero-center') {
+        return {
+          header: 'Introducing',
+          title: 'Your Headline Here',
+          paragraph: 'Add your description text here.',
+          button: { text: 'Get Started', url: '#' },
+        };
+      }
+      
+      if (variation === 'two-column-50-50' || variation === 'two-column-60-40' || variation === 'two-column-40-60') {
+        return {
+          title: 'Feature Title',
+          paragraph: 'Feature description goes here.',
+          button: { text: 'Learn More', url: '#' },
+          image: { url: '', altText: 'Feature image' },
+        };
+      }
+      
+      if (variation === 'stats-2-col') {
+        return {
+          items: [
+            { value: '10K+', title: 'Users', description: 'Active monthly users' },
+            { value: '99.9%', title: 'Uptime', description: 'Guaranteed reliability' },
+          ],
+        };
+      }
+      
+      if (variation === 'stats-3-col') {
+        return {
+          items: [
+            { value: '10K+', title: 'Users', description: 'Active monthly users' },
+            { value: '99.9%', title: 'Uptime', description: 'Guaranteed reliability' },
+            { value: '24/7', title: 'Support', description: 'Always here to help' },
+          ],
+        };
+      }
+      
+      if (variation === 'stats-4-col') {
+        return {
+          items: [
+            { value: '10K+', title: 'Users', description: 'Active monthly users' },
+            { value: '99.9%', title: 'Uptime', description: 'Guaranteed reliability' },
+            { value: '24/7', title: 'Support', description: 'Always here to help' },
+            { value: '<1s', title: 'Response', description: 'Lightning fast' },
+          ],
+        };
+      }
+      
+      // New layout variations
+      if (variation === 'image-overlay') {
+        return {
+          title: 'A LITTLE GIFT OF THANKS FOR JOINING THE LIST',
+          badge: '003',
+          paragraph: 'Your exclusive content awaits',
+          image: { url: '', altText: 'Background image' },
+        };
+      }
+      
+      if (variation === 'card-centered') {
+        return {
+          title: '6',
+          subtitle: 'Tips to Photograph Food',
+          paragraph: 'I remember my first try at food photography. I created this guide to help you get started without making all the mistakes I did.',
+          button: { text: 'READ IT', url: '#' },
+          divider: true,
+        };
+      }
+      
+      if (variation === 'compact-image-text') {
+        return {
+          title: 'One',
+          subtitle: 'Click here for my creamy butternut squash soup',
+          image: { url: '', altText: 'Recipe preview' },
+        };
+      }
+      
+      // Default content for unknown variations
+      return {
+        title: 'Layout Title',
+        paragraph: 'Add your content here.',
+      };
+    }
+    
     case 'footer':
       return {
         companyName: '{{company_name}}',
@@ -934,292 +483,6 @@ export function getDefaultBlockContent(type: BlockType): any {
         customText: 'Questions? Just reply to this email.',
         unsubscribeUrl: '{{unsubscribe_url}}',
         preferencesUrl: '{{preferences_url}}',
-      };
-    
-    case 'two-column':
-      return {
-        leftColumn: {
-          type: 'image',
-          imageUrl: 'https://via.placeholder.com/600x400',
-          imageAltText: 'Image',
-        },
-        rightColumn: {
-          type: 'rich-content',
-          richContent: {
-            heading: 'Your Heading Here',
-            headingSize: '32px',
-            headingColor: '#111827',
-            body: 'Your content goes here. Add your message and details.',
-            bodySize: '16px',
-            bodyColor: '#6b7280',
-            buttonText: 'Learn More',
-            buttonUrl: 'https://example.com',
-            buttonColor: '#2563eb',
-            buttonTextColor: '#ffffff',
-          },
-        },
-      };
-    
-    case 'image-overlay':
-      return {
-        imageUrl: 'https://via.placeholder.com/1200x600',
-        imageAltText: 'Hero image',
-        heading: 'Your Headline Here',
-        headingSize: '48px',
-        headingColor: '#ffffff',
-        subheading: 'Your subheading text',
-        subheadingSize: '20px',
-        subheadingColor: '#e5e7eb',
-        buttonText: 'Get Started',
-        buttonUrl: 'https://example.com',
-        buttonColor: '#2563eb',
-        buttonTextColor: '#ffffff',
-      };
-    
-    case 'image-grid-2x2':
-      return {
-        images: [
-          { imageUrl: 'https://via.placeholder.com/300x300', altText: 'Image 1', caption: 'Caption 1', linkUrl: 'https://example.com' },
-          { imageUrl: 'https://via.placeholder.com/300x300', altText: 'Image 2', caption: 'Caption 2', linkUrl: 'https://example.com' },
-          { imageUrl: 'https://via.placeholder.com/300x300', altText: 'Image 3', caption: 'Caption 3', linkUrl: 'https://example.com' },
-          { imageUrl: 'https://via.placeholder.com/300x300', altText: 'Image 4', caption: 'Caption 4', linkUrl: 'https://example.com' },
-        ],
-      };
-    
-    case 'image-grid-3x3':
-      return {
-        images: [
-          { imageUrl: 'https://via.placeholder.com/200x200', altText: 'Image 1', linkUrl: 'https://example.com' },
-          { imageUrl: 'https://via.placeholder.com/200x200', altText: 'Image 2', linkUrl: 'https://example.com' },
-          { imageUrl: 'https://via.placeholder.com/200x200', altText: 'Image 3', linkUrl: 'https://example.com' },
-          { imageUrl: 'https://via.placeholder.com/200x200', altText: 'Image 4', linkUrl: 'https://example.com' },
-          { imageUrl: 'https://via.placeholder.com/200x200', altText: 'Image 5', linkUrl: 'https://example.com' },
-          { imageUrl: 'https://via.placeholder.com/200x200', altText: 'Image 6', linkUrl: 'https://example.com' },
-          { imageUrl: 'https://via.placeholder.com/200x200', altText: 'Image 7', linkUrl: 'https://example.com' },
-          { imageUrl: 'https://via.placeholder.com/200x200', altText: 'Image 8', linkUrl: 'https://example.com' },
-          { imageUrl: 'https://via.placeholder.com/200x200', altText: 'Image 9', linkUrl: 'https://example.com' },
-        ],
-      };
-    
-    case 'image-collage':
-      return {
-        featuredImage: {
-          imageUrl: 'https://via.placeholder.com/600x800',
-          altText: 'Featured image',
-          linkUrl: 'https://example.com',
-        },
-        secondaryImages: [
-          { imageUrl: 'https://via.placeholder.com/300x400', altText: 'Image 1', linkUrl: 'https://example.com' },
-          { imageUrl: 'https://via.placeholder.com/300x400', altText: 'Image 2', linkUrl: 'https://example.com' },
-          { imageUrl: 'https://via.placeholder.com/300x400', altText: 'Image 3', linkUrl: 'https://example.com' },
-        ],
-      };
-    
-    case 'three-column':
-      return {
-        columns: [
-          {
-            heading: 'Feature 1',
-            headingSize: '20px',
-            headingColor: '#111827',
-            body: 'Description for feature 1',
-            bodySize: '14px',
-            bodyColor: '#6b7280',
-          },
-          {
-            heading: 'Feature 2',
-            headingSize: '20px',
-            headingColor: '#111827',
-            body: 'Description for feature 2',
-            bodySize: '14px',
-            bodyColor: '#6b7280',
-          },
-          {
-            heading: 'Feature 3',
-            headingSize: '20px',
-            headingColor: '#111827',
-            body: 'Description for feature 3',
-            bodySize: '14px',
-            bodyColor: '#6b7280',
-          },
-        ],
-      };
-    
-    case 'zigzag':
-      return {
-        rows: [
-          {
-            imageUrl: 'https://via.placeholder.com/600x400',
-            imageAltText: 'Feature 1',
-            imagePosition: 'left',
-            heading: 'Feature One',
-            headingSize: '32px',
-            headingColor: '#111827',
-            body: 'Description of your first feature',
-            bodySize: '16px',
-            bodyColor: '#6b7280',
-          },
-          {
-            imageUrl: 'https://via.placeholder.com/600x400',
-            imageAltText: 'Feature 2',
-            imagePosition: 'right',
-            heading: 'Feature Two',
-            headingSize: '32px',
-            headingColor: '#111827',
-            body: 'Description of your second feature',
-            bodySize: '16px',
-            bodyColor: '#6b7280',
-          },
-        ],
-      };
-    
-    case 'split-background':
-      return {
-        leftColumn: {
-          heading: 'Your Message',
-          headingSize: '44px',
-          headingColor: '#ffffff',
-          body: 'Your description text goes here',
-          bodySize: '18px',
-          bodyColor: '#d1d5db',
-          buttonText: 'Get Started',
-          buttonUrl: 'https://example.com',
-          buttonColor: '#fbbf24',
-          buttonTextColor: '#111827',
-        },
-        rightColumn: {
-          imageUrl: 'https://via.placeholder.com/600x800',
-          imageAltText: 'Hero image',
-        },
-      };
-    
-    case 'product-card':
-      return {
-        productImage: 'https://via.placeholder.com/600x800',
-        productImageAlt: 'Product',
-        badge: 'NEW',
-        badgeColor: '#ef4444',
-        badgeTextColor: '#ffffff',
-        productName: 'Product Name',
-        price: '$99',
-        originalPrice: '$129',
-        description: 'Product description goes here',
-        buttonText: 'Shop Now',
-        buttonUrl: 'https://example.com',
-        buttonColor: '#2563eb',
-        buttonTextColor: '#ffffff',
-      };
-    
-    case 'badge-overlay':
-      return {
-        imageUrl: 'https://via.placeholder.com/1200x600',
-        imageAltText: 'Product',
-        badgeText: '50% OFF',
-        linkUrl: 'https://example.com',
-      };
-    
-    // Advanced Interactive Blocks
-    case 'carousel':
-      return {
-        slides: [
-          {
-            imageUrl: 'https://via.placeholder.com/1200x600',
-            imageAltText: 'Slide 1',
-            heading: 'Welcome',
-            text: 'Discover our products',
-            buttonText: 'Learn More',
-            buttonUrl: 'https://example.com',
-          },
-          {
-            imageUrl: 'https://via.placeholder.com/1200x600',
-            imageAltText: 'Slide 2',
-            heading: 'Featured',
-            text: 'Check out our best sellers',
-            buttonText: 'Shop Now',
-            buttonUrl: 'https://example.com',
-          },
-        ],
-      };
-    
-    case 'tab-container':
-      return {
-        tabs: [
-          {
-            label: 'Option 1',
-            heading: 'First Option',
-            text: 'Description for the first option',
-            buttonText: 'Get Started',
-            buttonUrl: 'https://example.com',
-          },
-          {
-            label: 'Option 2',
-            heading: 'Second Option',
-            text: 'Description for the second option',
-            buttonText: 'Get Started',
-            buttonUrl: 'https://example.com',
-          },
-        ],
-      };
-    
-    case 'accordion':
-      return {
-        items: [
-          {
-            title: 'Question 1',
-            content: 'Answer to the first question',
-            defaultOpen: true,
-          },
-          {
-            title: 'Question 2',
-            content: 'Answer to the second question',
-            defaultOpen: false,
-          },
-        ],
-      };
-    
-    case 'masonry-grid':
-      return {
-        items: [
-          {
-            type: 'image',
-            imageUrl: 'https://via.placeholder.com/400x300',
-            imageAltText: 'Item 1',
-          },
-          {
-            type: 'card',
-            heading: 'Card Item',
-            text: 'Card content',
-            backgroundColor: '#f9fafb',
-          },
-          {
-            type: 'image',
-            imageUrl: 'https://via.placeholder.com/400x500',
-            imageAltText: 'Item 2',
-          },
-        ],
-      };
-    
-    case 'dynamic-column':
-      return {
-        columns: [
-          {
-            heading: 'Column 1',
-            text: 'Content for first column',
-          },
-          {
-            heading: 'Column 2',
-            text: 'Content for second column',
-          },
-          {
-            heading: 'Column 3',
-            text: 'Content for third column',
-          },
-        ],
-      };
-    
-    case 'container':
-      return {
-        children: [],
       };
     
     default:
@@ -1314,31 +577,31 @@ export function getAIBlockRecommendations(campaignType: string): BlockType[] {
   
   // Product launch
   if (lowerType.includes('launch') || lowerType.includes('announcement')) {
-    return ['hero', 'stats', 'feature-grid', 'button'];
+    return ['logo', 'text', 'image', 'button'];
   }
   
   // Newsletter
   if (lowerType.includes('newsletter') || lowerType.includes('update')) {
-    return ['heading', 'text', 'divider', 'image', 'button'];
+    return ['logo', 'text', 'divider', 'image', 'button'];
   }
   
   // Promotion
   if (lowerType.includes('promo') || lowerType.includes('sale') || lowerType.includes('discount')) {
-    return ['hero', 'comparison', 'button', 'spacer'];
+    return ['logo', 'text', 'button', 'spacer'];
   }
   
   // Welcome
   if (lowerType.includes('welcome') || lowerType.includes('onboard')) {
-    return ['hero', 'text', 'feature-grid', 'button'];
+    return ['logo', 'text', 'image', 'button'];
   }
   
   // Testimonial/Social proof
   if (lowerType.includes('testimonial') || lowerType.includes('proof')) {
-    return ['testimonial', 'stats', 'button'];
+    return ['logo', 'text', 'button'];
   }
   
   // Default structure
-  return ['hero', 'text', 'button', 'footer'];
+  return ['logo', 'text', 'button', 'footer'];
 }
 
 /**
@@ -1349,3 +612,857 @@ export function getBlocksForUseCase(useCase: string): BlockDefinition[] {
   return recommendedTypes.map(type => BLOCK_DEFINITIONS[type]);
 }
 
+// ============================================================================
+// V2 BLOCK SYSTEM - Layout Variation Metadata
+// ============================================================================
+
+export type LayoutVariationCategory = 
+  | 'content'
+  | 'two-column'
+  | 'three-column'
+  | 'four-plus-column'
+  | 'image'
+  | 'advanced'
+  | 'interactive';
+
+export interface LayoutVariationDefinition {
+  variation: LayoutVariation;
+  name: string;
+  description: string;
+  category: LayoutVariationCategory;
+  icon: string;
+  aiHints: string[];
+}
+
+/**
+ * Metadata for all 60+ layout variations
+ */
+export const LAYOUT_VARIATION_DEFINITIONS: Record<LayoutVariation, LayoutVariationDefinition> = {
+  // Content layouts (8)
+  'hero-center': {
+    variation: 'hero-center',
+    name: 'Hero Center',
+    description: 'Centered hero with headline and subheadline',
+    category: 'content',
+    icon: '⭐',
+    aiHints: ['email opening', 'major announcement', 'centered headline'],
+  },
+  'hero-image-overlay': {
+    variation: 'hero-image-overlay',
+    name: 'Hero Image Overlay',
+    description: 'Full-width image with text overlay',
+    category: 'content',
+    icon: '🎭',
+    aiHints: ['dramatic opening', 'visual-first', 'background image'],
+  },
+  'stats-2-col': {
+    variation: 'stats-2-col',
+    name: 'Stats (2 Columns)',
+    description: '2 impressive statistics side-by-side',
+    category: 'content',
+    icon: '📊',
+    aiHints: ['two metrics', 'comparison stats', 'key numbers'],
+  },
+  'stats-3-col': {
+    variation: 'stats-3-col',
+    name: 'Stats (3 Columns)',
+    description: '3 impressive statistics in a row',
+    category: 'content',
+    icon: '📊',
+    aiHints: ['key metrics', 'three numbers', 'achievements'],
+  },
+  'stats-4-col': {
+    variation: 'stats-4-col',
+    name: 'Stats (4 Columns)',
+    description: '4 impressive statistics in a row',
+    category: 'content',
+    icon: '📊',
+    aiHints: ['multiple metrics', 'four numbers', 'comprehensive stats'],
+  },
+  'testimonial-centered': {
+    variation: 'testimonial-centered',
+    name: 'Testimonial Centered',
+    description: 'Centered testimonial quote with author',
+    category: 'content',
+    icon: '💬',
+    aiHints: ['customer quote', 'social proof', 'centered testimonial'],
+  },
+  'testimonial-with-image': {
+    variation: 'testimonial-with-image',
+    name: 'Testimonial with Image',
+    description: 'Testimonial with author photo',
+    category: 'content',
+    icon: '💬',
+    aiHints: ['customer quote with photo', 'personal testimonial'],
+  },
+  'testimonial-card': {
+    variation: 'testimonial-card',
+    name: 'Testimonial Card',
+    description: 'Card-style testimonial with border',
+    category: 'content',
+    icon: '💬',
+    aiHints: ['boxed testimonial', 'card design', 'highlighted quote'],
+  },
+  
+  // Two-column (5)
+  'two-column-50-50': {
+    variation: 'two-column-50-50',
+    name: 'Two Columns (50/50)',
+    description: 'Two equal-width columns',
+    category: 'two-column',
+    icon: '📐',
+    aiHints: ['equal columns', 'side by side', 'balanced layout'],
+  },
+  'two-column-60-40': {
+    variation: 'two-column-60-40',
+    name: 'Two Columns (60/40)',
+    description: 'Two columns with 60/40 split',
+    category: 'two-column',
+    icon: '📐',
+    aiHints: ['asymmetric columns', 'wider left', 'image and text'],
+  },
+  'two-column-40-60': {
+    variation: 'two-column-40-60',
+    name: 'Two Columns (40/60)',
+    description: 'Two columns with 40/60 split',
+    category: 'two-column',
+    icon: '📐',
+    aiHints: ['asymmetric columns', 'wider right', 'text and image'],
+  },
+  'two-column-70-30': {
+    variation: 'two-column-70-30',
+    name: 'Two Columns (70/30)',
+    description: 'Two columns with 70/30 split',
+    category: 'two-column',
+    icon: '📐',
+    aiHints: ['dominant left column', 'sidebar layout'],
+  },
+  'two-column-30-70': {
+    variation: 'two-column-30-70',
+    name: 'Two Columns (30/70)',
+    description: 'Two columns with 30/70 split',
+    category: 'two-column',
+    icon: '📐',
+    aiHints: ['dominant right column', 'sidebar layout'],
+  },
+  
+  // Three-column (3)
+  'three-column-equal': {
+    variation: 'three-column-equal',
+    name: 'Three Columns Equal',
+    description: 'Three equal-width columns',
+    category: 'three-column',
+    icon: '🏛️',
+    aiHints: ['three features', 'pricing tiers', 'benefits'],
+  },
+  'three-column-wide-center': {
+    variation: 'three-column-wide-center',
+    name: 'Three Columns (Wide Center)',
+    description: 'Three columns with wide center',
+    category: 'three-column',
+    icon: '🏛️',
+    aiHints: ['featured center', 'highlight middle'],
+  },
+  'three-column-wide-outer': {
+    variation: 'three-column-wide-outer',
+    name: 'Three Columns (Wide Outer)',
+    description: 'Three columns with wide outer columns',
+    category: 'three-column',
+    icon: '🏛️',
+    aiHints: ['narrow center', 'emphasis on sides'],
+  },
+  
+  // Four+ columns (2)
+  'four-column-equal': {
+    variation: 'four-column-equal',
+    name: 'Four Columns Equal',
+    description: 'Four equal-width columns',
+    category: 'four-plus-column',
+    icon: '📊',
+    aiHints: ['multiple options', 'feature grid', 'team members'],
+  },
+  'five-column-equal': {
+    variation: 'five-column-equal',
+    name: 'Five Columns Equal',
+    description: 'Five equal-width columns',
+    category: 'four-plus-column',
+    icon: '📊',
+    aiHints: ['many options', 'dense grid', 'icon row'],
+  },
+  
+  // Image layouts (11)
+  'image-overlay-center': {
+    variation: 'image-overlay-center',
+    name: 'Image Overlay Center',
+    description: 'Image with centered text overlay',
+    category: 'image',
+    icon: '🎨',
+    aiHints: ['hero image', 'centered text', 'dramatic'],
+  },
+  'image-overlay-top-left': {
+    variation: 'image-overlay-top-left',
+    name: 'Image Overlay Top Left',
+    description: 'Image with top-left text overlay',
+    category: 'image',
+    icon: '🎨',
+    aiHints: ['header image', 'top-left text'],
+  },
+  'image-overlay-top-right': {
+    variation: 'image-overlay-top-right',
+    name: 'Image Overlay Top Right',
+    description: 'Image with top-right text overlay',
+    category: 'image',
+    icon: '🎨',
+    aiHints: ['header image', 'top-right text'],
+  },
+  'image-overlay-bottom-left': {
+    variation: 'image-overlay-bottom-left',
+    name: 'Image Overlay Bottom Left',
+    description: 'Image with bottom-left text overlay',
+    category: 'image',
+    icon: '🎨',
+    aiHints: ['footer image', 'bottom-left text'],
+  },
+  'image-overlay-bottom-right': {
+    variation: 'image-overlay-bottom-right',
+    name: 'Image Overlay Bottom Right',
+    description: 'Image with bottom-right text overlay',
+    category: 'image',
+    icon: '🎨',
+    aiHints: ['footer image', 'bottom-right text'],
+  },
+  'image-overlay-center-bottom': {
+    variation: 'image-overlay-center-bottom',
+    name: 'Image Overlay Center Bottom',
+    description: 'Image with center-bottom text overlay',
+    category: 'image',
+    icon: '🎨',
+    aiHints: ['centered bottom text', 'banner style'],
+  },
+  'image-collage-featured-left': {
+    variation: 'image-collage-featured-left',
+    name: 'Image Collage (Featured Left)',
+    description: 'Asymmetric collage with featured left image',
+    category: 'image',
+    icon: '🎪',
+    aiHints: ['featured product', 'detail shots', 'left emphasis'],
+  },
+  'image-collage-featured-right': {
+    variation: 'image-collage-featured-right',
+    name: 'Image Collage (Featured Right)',
+    description: 'Asymmetric collage with featured right image',
+    category: 'image',
+    icon: '🎪',
+    aiHints: ['featured product', 'detail shots', 'right emphasis'],
+  },
+  'image-collage-featured-center': {
+    variation: 'image-collage-featured-center',
+    name: 'Image Collage (Featured Center)',
+    description: 'Asymmetric collage with featured center image',
+    category: 'image',
+    icon: '🎪',
+    aiHints: ['featured product', 'detail shots', 'center emphasis'],
+  },
+  
+  // Advanced layouts (13)
+  'image-overlay': {
+    variation: 'image-overlay',
+    name: 'Image Overlay',
+    description: 'Text overlaid on background image with badge',
+    category: 'image',
+    icon: '🎨',
+    aiHints: ['background image', 'text overlay', 'badge number'],
+  },
+  'card-centered': {
+    variation: 'card-centered',
+    name: 'Card Centered',
+    description: 'Centered card with large number and content',
+    category: 'advanced',
+    icon: '🎴',
+    aiHints: ['card layout', 'centered content', 'numbered section'],
+  },
+  'compact-image-text': {
+    variation: 'compact-image-text',
+    name: 'Compact Image Text',
+    description: 'Small image with text side-by-side',
+    category: 'two-column',
+    icon: '📝',
+    aiHints: ['compact layout', 'image and text', 'recipe preview'],
+  },
+  'two-column-text': {
+    variation: 'two-column-text',
+    name: 'Two Column Text',
+    description: 'Two columns of text side-by-side',
+    category: 'content',
+    icon: '📄',
+    aiHints: ['long form content', 'text layout', 'story telling', 'newsletter'],
+  },
+  'magazine-feature': {
+    variation: 'magazine-feature',
+    name: 'Magazine Feature',
+    description: 'Vertical layout with title, square image with number overlay, and description',
+    category: 'content',
+    icon: '📰',
+    aiHints: ['magazine style', 'featured article', 'numbered section', 'editorial design'],
+  },
+  'zigzag-2-rows': {
+    variation: 'zigzag-2-rows',
+    name: 'Zigzag (2 Rows)',
+    description: 'Alternating image-text layout with 2 rows',
+    category: 'advanced',
+    icon: '⚡',
+    aiHints: ['alternating content', 'feature showcase', 'two features'],
+  },
+  'zigzag-3-rows': {
+    variation: 'zigzag-3-rows',
+    name: 'Zigzag (3 Rows)',
+    description: 'Alternating image-text layout with 3 rows',
+    category: 'advanced',
+    icon: '⚡',
+    aiHints: ['alternating content', 'feature showcase', 'three features'],
+  },
+  'zigzag-4-rows': {
+    variation: 'zigzag-4-rows',
+    name: 'Zigzag (4 Rows)',
+    description: 'Alternating image-text layout with 4 rows',
+    category: 'advanced',
+    icon: '⚡',
+    aiHints: ['alternating content', 'feature showcase', 'four features'],
+  },
+  'split-background': {
+    variation: 'split-background',
+    name: 'Split Background',
+    description: 'Dramatic split with contrasting backgrounds',
+    category: 'advanced',
+    icon: '🎬',
+    aiHints: ['bold design', 'contrast', 'premium branding'],
+  },
+  'product-card-image-top': {
+    variation: 'product-card-image-top',
+    name: 'Product Card (Image Top)',
+    description: 'E-commerce product card with image on top',
+    category: 'advanced',
+    icon: '🛍️',
+    aiHints: ['product display', 'e-commerce', 'pricing'],
+  },
+  'product-card-image-left': {
+    variation: 'product-card-image-left',
+    name: 'Product Card (Image Left)',
+    description: 'E-commerce product card with side image',
+    category: 'advanced',
+    icon: '🛍️',
+    aiHints: ['product display', 'e-commerce', 'horizontal card'],
+  },
+  'badge-overlay-corner': {
+    variation: 'badge-overlay-corner',
+    name: 'Badge Overlay Corner',
+    description: 'Image with corner badge (sale, new, etc.)',
+    category: 'advanced',
+    icon: '🏷️',
+    aiHints: ['sale badge', 'promotion', 'corner label'],
+  },
+  'badge-overlay-center': {
+    variation: 'badge-overlay-center',
+    name: 'Badge Overlay Center',
+    description: 'Image with center badge',
+    category: 'advanced',
+    icon: '🏷️',
+    aiHints: ['centered badge', 'discount', 'center label'],
+  },
+  'feature-grid-2-items': {
+    variation: 'feature-grid-2-items',
+    name: 'Feature Grid (2 Items)',
+    description: 'Grid of 2 features with icons',
+    category: 'advanced',
+    icon: '📋',
+    aiHints: ['two features', 'benefits', 'icon grid'],
+  },
+  'feature-grid-3-items': {
+    variation: 'feature-grid-3-items',
+    name: 'Feature Grid (3 Items)',
+    description: 'Grid of 3 features with icons',
+    category: 'advanced',
+    icon: '📋',
+    aiHints: ['three features', 'benefits', 'icon grid'],
+  },
+  'feature-grid-4-items': {
+    variation: 'feature-grid-4-items',
+    name: 'Feature Grid (4 Items)',
+    description: 'Grid of 4 features with icons',
+    category: 'advanced',
+    icon: '📋',
+    aiHints: ['four features', 'benefits', 'icon grid'],
+  },
+  'feature-grid-6-items': {
+    variation: 'feature-grid-6-items',
+    name: 'Feature Grid (6 Items)',
+    description: 'Grid of 6 features with icons',
+    category: 'advanced',
+    icon: '📋',
+    aiHints: ['six features', 'comprehensive benefits', 'icon grid'],
+  },
+  'comparison-table-2-col': {
+    variation: 'comparison-table-2-col',
+    name: 'Comparison Table (2 Columns)',
+    description: 'Before/after or comparison table with 2 columns',
+    category: 'advanced',
+    icon: '⚖️',
+    aiHints: ['before after', 'comparison', 'two options'],
+  },
+  'comparison-table-3-col': {
+    variation: 'comparison-table-3-col',
+    name: 'Comparison Table (3 Columns)',
+    description: 'Comparison table with 3 columns',
+    category: 'advanced',
+    icon: '⚖️',
+    aiHints: ['pricing tiers', 'plan comparison', 'three options'],
+  },
+  
+  // Interactive (12)
+  'carousel-2-slides': {
+    variation: 'carousel-2-slides',
+    name: 'Carousel (2 Slides)',
+    description: 'Image carousel with 2 slides',
+    category: 'interactive',
+    icon: '🎠',
+    aiHints: ['slideshow', 'two images', 'interactive'],
+  },
+  'carousel-3-5-slides': {
+    variation: 'carousel-3-5-slides',
+    name: 'Carousel (3-5 Slides)',
+    description: 'Image carousel with 3-5 slides',
+    category: 'interactive',
+    icon: '🎠',
+    aiHints: ['slideshow', 'multiple images', 'interactive'],
+  },
+  'carousel-6-10-slides': {
+    variation: 'carousel-6-10-slides',
+    name: 'Carousel (6-10 Slides)',
+    description: 'Image carousel with 6-10 slides',
+    category: 'interactive',
+    icon: '🎠',
+    aiHints: ['large slideshow', 'many images', 'interactive'],
+  },
+  'tabs-2-tabs': {
+    variation: 'tabs-2-tabs',
+    name: 'Tabs (2 Tabs)',
+    description: 'Tabbed content with 2 tabs',
+    category: 'interactive',
+    icon: '📑',
+    aiHints: ['two options', 'switchable content', 'tabs'],
+  },
+  'tabs-3-5-tabs': {
+    variation: 'tabs-3-5-tabs',
+    name: 'Tabs (3-5 Tabs)',
+    description: 'Tabbed content with 3-5 tabs',
+    category: 'interactive',
+    icon: '📑',
+    aiHints: ['multiple options', 'switchable content', 'tabs'],
+  },
+  'tabs-6-8-tabs': {
+    variation: 'tabs-6-8-tabs',
+    name: 'Tabs (6-8 Tabs)',
+    description: 'Tabbed content with 6-8 tabs',
+    category: 'interactive',
+    icon: '📑',
+    aiHints: ['many options', 'switchable content', 'tabs'],
+  },
+  'accordion-2-items': {
+    variation: 'accordion-2-items',
+    name: 'Accordion (2 Items)',
+    description: 'Collapsible accordion with 2 items',
+    category: 'interactive',
+    icon: '📋',
+    aiHints: ['expandable', 'FAQ', 'two questions'],
+  },
+  'accordion-3-5-items': {
+    variation: 'accordion-3-5-items',
+    name: 'Accordion (3-5 Items)',
+    description: 'Collapsible accordion with 3-5 items',
+    category: 'interactive',
+    icon: '📋',
+    aiHints: ['expandable', 'FAQ', 'multiple questions'],
+  },
+  'accordion-6-10-items': {
+    variation: 'accordion-6-10-items',
+    name: 'Accordion (6-10 Items)',
+    description: 'Collapsible accordion with 6-10 items',
+    category: 'interactive',
+    icon: '📋',
+    aiHints: ['expandable', 'FAQ', 'many questions'],
+  },
+  'masonry-2-col': {
+    variation: 'masonry-2-col',
+    name: 'Masonry (2 Columns)',
+    description: 'Pinterest-style masonry grid with 2 columns',
+    category: 'interactive',
+    icon: '🧱',
+    aiHints: ['masonry', 'pinterest style', 'two columns'],
+  },
+  'masonry-3-col': {
+    variation: 'masonry-3-col',
+    name: 'Masonry (3 Columns)',
+    description: 'Pinterest-style masonry grid with 3 columns',
+    category: 'interactive',
+    icon: '🧱',
+    aiHints: ['masonry', 'pinterest style', 'three columns'],
+  },
+  'masonry-4-col': {
+    variation: 'masonry-4-col',
+    name: 'Masonry (4 Columns)',
+    description: 'Pinterest-style masonry grid with 4 columns',
+    category: 'interactive',
+    icon: '🧱',
+    aiHints: ['masonry', 'pinterest style', 'four columns'],
+  },
+  'masonry-5-col': {
+    variation: 'masonry-5-col',
+    name: 'Masonry (5 Columns)',
+    description: 'Pinterest-style masonry grid with 5 columns',
+    category: 'interactive',
+    icon: '🧱',
+    aiHints: ['masonry', 'pinterest style', 'five columns'],
+  },
+  'container-stack': {
+    variation: 'container-stack',
+    name: 'Container Stack',
+    description: 'Vertical stacking container for nested blocks',
+    category: 'interactive',
+    icon: '📦',
+    aiHints: ['nested blocks', 'vertical stack', 'container'],
+  },
+  'container-grid': {
+    variation: 'container-grid',
+    name: 'Container Grid',
+    description: 'Grid container for nested blocks',
+    category: 'interactive',
+    icon: '📦',
+    aiHints: ['nested blocks', 'grid layout', 'container'],
+  },
+  'container-flex': {
+    variation: 'container-flex',
+    name: 'Container Flex',
+    description: 'Flexible container for nested blocks',
+    category: 'interactive',
+    icon: '📦',
+    aiHints: ['nested blocks', 'flexible layout', 'container'],
+  },
+};
+
+/**
+ * Get all layout variations by category
+ */
+export function getLayoutVariationsByCategory(category: LayoutVariationCategory): LayoutVariationDefinition[] {
+  return Object.values(LAYOUT_VARIATION_DEFINITIONS).filter(def => def.category === category);
+}
+
+/**
+ * Get layout variation definition
+ */
+export function getLayoutVariationDefinition(variation: LayoutVariation): LayoutVariationDefinition {
+  return LAYOUT_VARIATION_DEFINITIONS[variation];
+}
+
+// ============================================================================
+// V2 Block Factory Functions
+// ============================================================================
+
+/**
+ * Create a layout block with a specific variation
+ */
+export function createLayoutBlock(variation: LayoutVariation, position: number = 0): EmailBlock {
+  return {
+    id: generateBlockId(),
+    type: 'layouts',
+    position,
+    layoutVariation: variation,
+    settings: getDefaultLayoutSettings(variation),
+    content: getDefaultLayoutContent(variation),
+  };
+}
+
+/**
+ * Create a link-bar block
+ */
+export function createLinkBarBlock(position: number = 0): EmailBlock {
+  return {
+    id: generateBlockId(),
+    type: 'link-bar',
+    position,
+    settings: {
+      layout: 'horizontal',
+      align: 'center',
+      spacing: 24,
+      fontSize: '14px',
+      fontWeight: 500,
+      color: '#2563eb',
+      hoverColor: '#1d4ed8',
+      padding: DEFAULT_PADDING,
+    },
+    content: {
+      links: [
+        { label: 'Home', url: '{{home_url}}' },
+        { label: 'Shop', url: '{{shop_url}}' },
+        { label: 'About', url: '{{about_url}}' },
+        { label: 'Contact', url: '{{contact_url}}' },
+      ],
+    },
+  };
+}
+
+/**
+ * Create an address block
+ */
+export function createAddressBlock(position: number = 0): EmailBlock {
+  return {
+    id: generateBlockId(),
+    type: 'address',
+    position,
+    settings: {
+      align: 'center',
+      fontSize: '12px',
+      color: '#6b7280',
+      lineHeight: '1.6',
+      showMapLink: false,
+      padding: DEFAULT_PADDING,
+    },
+    content: {
+      companyName: '{{company_name}}',
+      street: '{{company_address}}',
+      city: '{{company_city}}',
+      state: '{{company_state}}',
+      zip: '{{company_zip}}',
+      country: '{{company_country}}',
+    },
+  };
+}
+
+/**
+ * Get default settings for a layout variation
+ */
+function getDefaultLayoutSettings(variation: LayoutVariation): Record<string, any> {
+  const category = LAYOUT_VARIATION_DEFINITIONS[variation].category;
+  
+  // Common settings by category - ALL TOGGLES ON for premium defaults
+  const baseSettings = {
+    padding: DEFAULT_PADDING,
+    showHeader: true,
+    showTitle: true,
+    showParagraph: true,
+    showButton: true,
+    showDivider: true,
+    showImage: true,
+  };
+  
+  // Category-specific defaults
+  if (category === 'content') {
+    if (variation.startsWith('hero')) {
+      return {
+        ...baseSettings,
+        padding: { top: 60, bottom: 60, left: 40, right: 40 },
+        backgroundColor: '#f9fafb',
+        align: 'center',
+        headlineFontSize: '56px',
+        headlineFontWeight: 800,
+        headlineColor: '#111827',
+        subheadlineFontSize: '18px',
+        subheadlineColor: '#6b7280',
+        titleFontSize: '48px',
+        titleColor: '#111827',
+        headerColor: '#6b7280',
+        paragraphColor: '#374151',
+      };
+    }
+    if (variation.startsWith('stats')) {
+      return {
+        ...baseSettings,
+        padding: { top: 40, bottom: 40, left: 20, right: 20 },
+        align: 'center',
+        valueFontSize: '64px',
+        valueFontWeight: 900,
+        valueColor: '#2563eb',
+        labelFontSize: '14px',
+        labelFontWeight: 600,
+        labelColor: '#6b7280',
+        spacing: 32,
+      };
+    }
+    if (variation.startsWith('testimonial')) {
+      return {
+        ...baseSettings,
+        padding: { top: 24, bottom: 24, left: 24, right: 24 },
+        backgroundColor: '#f9fafb',
+        borderColor: '#2563eb',
+        borderWidth: 4,
+        borderRadius: '4px',
+        quoteFontSize: '18px',
+        quoteColor: '#374151',
+        quoteFontStyle: 'italic',
+        authorFontSize: '14px',
+        authorColor: '#6b7280',
+        authorFontWeight: 600,
+      };
+    }
+    if (variation === 'two-column-text') {
+      return {
+        ...baseSettings,
+        padding: { top: 40, bottom: 40, left: 20, right: 20 },
+        backgroundColor: 'transparent',
+        paragraphFontSize: '16px',
+        paragraphColor: '#374151',
+      };
+    }
+    if (variation === 'magazine-feature') {
+      return {
+        ...baseSettings,
+        padding: { top: 60, bottom: 60, left: 40, right: 40 },
+        backgroundColor: '#9CADB7',
+        titleFontSize: '48px',
+        titleColor: '#111827',
+        paragraphColor: '#111827',
+        borderRadius: '0px',
+      };
+    }
+  }
+  
+  if (category === 'two-column' || category === 'three-column' || category === 'four-plus-column') {
+    return {
+      ...baseSettings,
+      columnGap: 24,
+      verticalAlign: 'top',
+      padding: { top: 40, bottom: 40, left: 20, right: 20 },
+      titleFontSize: '32px',
+      titleColor: '#111827',
+      paragraphColor: '#374151',
+    };
+  }
+  
+  if (category === 'image') {
+    return {
+      ...baseSettings,
+      borderRadius: '8px',
+      imageHeight: '400px',
+    };
+  }
+  
+  if (category === 'advanced') {
+    return {
+      ...baseSettings,
+      padding: { top: 40, bottom: 40, left: 20, right: 20 },
+      titleFontSize: '32px',
+      titleColor: '#111827',
+      paragraphColor: '#374151',
+    };
+  }
+  
+  return baseSettings;
+}
+
+/**
+ * Get default content for a layout variation
+ */
+function getDefaultLayoutContent(variation: LayoutVariation): Record<string, any> {
+  const category = LAYOUT_VARIATION_DEFINITIONS[variation]?.category;
+  
+  // Specific variations first - ALL WITH PREMIUM, COMPLETE CONTENT
+  if (variation === 'hero-center') {
+    return {
+      header: 'Introducing',
+      title: 'Transform Your Business Today',
+      paragraph: 'Join thousands of successful companies using our platform to drive growth, streamline operations, and achieve remarkable results.',
+      button: { text: 'Get Started Free', url: '#' },
+      divider: true,
+    };
+  }
+  
+  if (variation === 'image-overlay') {
+    return {
+      title: 'A LITTLE GIFT OF THANKS FOR JOINING THE LIST',
+      badge: '003',
+      paragraph: 'Your exclusive content awaits - discover insider tips, special offers, and premium resources',
+      button: { text: 'Unlock Now', url: '#' },
+      image: { url: '', altText: 'Background image' },
+    };
+  }
+  
+  if (variation === 'card-centered') {
+    return {
+      title: '6',
+      subtitle: 'Tips to Photograph Food',
+      paragraph: 'I remember my first try at food photography. I created this guide to help you get started without making all the mistakes I did.',
+      button: { text: 'READ IT', url: '#' },
+      divider: true,
+    };
+  }
+  
+  if (variation === 'compact-image-text') {
+    return {
+      title: 'One',
+      subtitle: 'Click here for my creamy butternut squash soup',
+      image: { url: '', altText: 'Recipe preview' },
+    };
+  }
+  
+  if (variation === 'two-column-text') {
+    return {
+      leftColumn: 'Neil Armstrong made it all the way to the moon, but he couldn\'t have dreamed of doing so without the best team supporting the whole journey, and that\'s who YOU are for us. Yep, my friend—you read that right, you\'re our mission control. It\'s true.',
+      rightColumn: 'Your unwavering support, whether big or small, creates space for us to share what we love, run with our wild ideas, and build incredible things together. And, of course, we hope you\'re lovin\' it, too. Thank you for getting us to, well, our own kind of moon.',
+    };
+  }
+  
+  if (variation === 'magazine-feature') {
+    return {
+      title: 'Rose my way',
+      badge: '01',
+      paragraph: 'Since we recently discovered homemade gnocchi, dinners at home have never been quite the same. Check out this easy homemade gnocchi recipe that will transform the way you think about pasta.',
+      image: { url: '', altText: 'Feature image' },
+    };
+  }
+  
+  // Category-based defaults
+  if (category === 'content') {
+    if (variation.startsWith('stats')) {
+      const count = variation === 'stats-2-col' ? 2 : variation === 'stats-3-col' ? 3 : 4;
+      return {
+        items: [
+          { value: '10K+', title: 'Active Users', description: 'Growing every day' },
+          { value: '99.9%', title: 'Uptime', description: 'Guaranteed reliability' },
+          { value: '24/7', title: 'Support', description: 'Always here to help' },
+          { value: '<1s', title: 'Response Time', description: 'Lightning fast' },
+        ].slice(0, count),
+      };
+    }
+    if (variation.startsWith('testimonial')) {
+      return {
+        quote: 'This product changed everything for our business. The results exceeded our expectations, and the support team has been incredible throughout our journey.',
+        author: 'Sarah Johnson',
+        role: 'CEO',
+        company: 'Tech Innovations Inc',
+      };
+    }
+  }
+  
+  if (category === 'two-column') {
+    return {
+      title: 'Discover What Makes Us Different',
+      paragraph: 'Our innovative approach combines cutting-edge technology with personalized service to deliver exceptional results. Whether you\'re just starting out or scaling up, we have the tools and expertise to help you succeed.',
+      button: { text: 'Learn More', url: '#' },
+      image: { url: '', altText: 'Feature showcase' },
+    };
+  }
+  
+  if (category === 'advanced') {
+    return {
+      title: 'Premium Feature',
+      paragraph: 'Experience the power of our advanced tools designed to elevate your business to new heights.',
+      button: { text: 'Explore Features', url: '#' },
+    };
+  }
+  
+  // Default - still premium
+  return {
+    title: 'Your Amazing Headline',
+    paragraph: 'Craft compelling content that resonates with your audience and drives real results.',
+    button: { text: 'Take Action', url: '#' },
+  };
+}

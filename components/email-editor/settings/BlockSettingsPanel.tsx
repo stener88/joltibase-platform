@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { EmailBlock, GlobalEmailSettings } from '@/lib/email/blocks/types';
+import { EmailBlock, GlobalEmailSettings, getBlockDisplayName } from '@/lib/email/blocks/types';
 import { SettingsTabs } from '../shared/SettingsTabs';
 import { GlobalSettingsPanel } from './GlobalSettingsPanel';
-import { HeadingBlockSettings } from './blocks/HeadingBlockSettings';
 import { TextBlockSettings } from './blocks/TextBlockSettings';
 import { ButtonBlockSettings } from './blocks/ButtonBlockSettings';
 import { ImageBlockSettings } from './blocks/ImageBlockSettings';
@@ -13,14 +12,18 @@ import { LogoContentSettings } from './blocks/LogoContentSettings';
 import { ImageContentSettings } from './blocks/ImageContentSettings';
 import { SpacerBlockSettings } from './blocks/SpacerBlockSettings';
 import { DividerBlockSettings } from './blocks/DividerBlockSettings';
-import { HeroBlockSettings } from './blocks/HeroBlockSettings';
-import { StatsBlockSettings } from './blocks/StatsBlockSettings';
-import { TestimonialBlockSettings } from './blocks/TestimonialBlockSettings';
-import { FeatureGridBlockSettings } from './blocks/FeatureGridBlockSettings';
-import { ComparisonBlockSettings } from './blocks/ComparisonBlockSettings';
 import { SocialLinksBlockSettings } from './blocks/SocialLinksBlockSettings';
 import { FooterBlockSettings } from './blocks/FooterBlockSettings';
+import { LinkBarBlockSettings } from './blocks/LinkBarBlockSettings';
+import { AddressBlockSettings } from './blocks/AddressBlockSettings';
+import { LayoutBlockSettings } from './blocks/LayoutBlockSettings';
+import { LayoutVariationSelector } from './layouts/LayoutVariationSelector';
 import { SectionLibraryPanel } from './SectionLibraryPanel';
+
+// Layout variation settings (deprecated - now using LayoutBlockSettings)
+import { HeroCenterSettings } from './layouts/HeroCenterSettings';
+import { Stats3ColSettings } from './layouts/Stats3ColSettings';
+import { TwoColumn5050Settings } from './layouts/TwoColumn5050Settings';
 
 interface BlockSettingsPanelProps {
   selectedBlock: EmailBlock | null;
@@ -59,18 +62,29 @@ export function BlockSettingsPanel({
   // No block selected - show global settings
   if (!selectedBlock) {
     return (
-      <GlobalSettingsPanel
-        designConfig={designConfig}
-        onUpdate={onUpdateDesignConfig}
-      />
+      <div className="flex flex-col h-full">
+        <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
+          <h3 className="text-sm font-semibold text-gray-900 text-center">
+            Global Settings
+          </h3>
+        </div>
+        <GlobalSettingsPanel
+          designConfig={designConfig}
+          onUpdate={onUpdateDesignConfig}
+        />
+      </div>
     );
   }
 
   // Block selected - show block-specific settings with tabs
   const renderBlockSettings = () => {
+    // Handle v2 layouts block with generic settings
+    if (selectedBlock.type === 'layouts') {
+      return <LayoutBlockSettings block={selectedBlock as any} onUpdate={onUpdateBlock} campaignId={campaignId} />;
+    }
+    
+    // Handle other block types
     switch (selectedBlock.type) {
-      case 'heading':
-        return <HeadingBlockSettings block={selectedBlock as any} onUpdate={onUpdateBlock} />;
       case 'text':
         return <TextBlockSettings block={selectedBlock as any} onUpdate={onUpdateBlock} />;
       case 'button':
@@ -83,20 +97,14 @@ export function BlockSettingsPanel({
         return <SpacerBlockSettings block={selectedBlock as any} onUpdate={onUpdateBlock} />;
       case 'divider':
         return <DividerBlockSettings block={selectedBlock as any} onUpdate={onUpdateBlock} />;
-      case 'hero':
-        return <HeroBlockSettings block={selectedBlock as any} onUpdate={onUpdateBlock} />;
-      case 'stats':
-        return <StatsBlockSettings block={selectedBlock as any} onUpdate={onUpdateBlock} />;
-      case 'testimonial':
-        return <TestimonialBlockSettings block={selectedBlock as any} onUpdate={onUpdateBlock} />;
-      case 'feature-grid':
-        return <FeatureGridBlockSettings block={selectedBlock as any} onUpdate={onUpdateBlock} />;
-      case 'comparison':
-        return <ComparisonBlockSettings block={selectedBlock as any} onUpdate={onUpdateBlock} />;
       case 'social-links':
         return <SocialLinksBlockSettings block={selectedBlock as any} onUpdate={onUpdateBlock} />;
       case 'footer':
         return <FooterBlockSettings block={selectedBlock as any} onUpdate={onUpdateBlock} />;
+      case 'link-bar':
+        return <LinkBarBlockSettings block={selectedBlock} onUpdate={onUpdateBlock} />;
+      case 'address':
+        return <AddressBlockSettings block={selectedBlock} onUpdate={onUpdateBlock} />;
       default:
         return <div className="p-6 text-sm text-gray-500">No settings available for this block type.</div>;
     }
@@ -142,6 +150,20 @@ export function BlockSettingsPanel({
         content: renderBlockSettings(),
       },
     ];
+  } else if (selectedBlock.type === 'layouts') {
+    // Layout blocks have Block and Layout tabs (with variation selector)
+    tabs = [
+      {
+        id: 'block',
+        label: 'Block',
+        content: renderBlockSettings(),
+      },
+      {
+        id: 'layout',
+        label: 'Layout',
+        content: <LayoutVariationSelector block={selectedBlock as any} onUpdate={onUpdateBlock} />,
+      },
+    ];
   } else {
     // Other blocks have Block, Layout, and Link tabs
     tabs = [
@@ -175,11 +197,6 @@ export function BlockSettingsPanel({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-sm font-semibold text-gray-900 capitalize text-center">
-          {selectedBlock.type} Block
-        </h3>
-      </div>
       <SettingsTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );

@@ -66,6 +66,22 @@ function convertZodToGemini(schema: z.ZodType<any, any, any>): any {
     };
   }
 
+  // Handle ZodUndefined (for optional fields in unions)
+  if (schema instanceof z.ZodUndefined) {
+    return {
+      type: SchemaType.STRING,
+      nullable: true,
+    };
+  }
+
+  // Handle ZodNull (for nullable fields in unions)
+  if (schema instanceof z.ZodNull) {
+    return {
+      type: SchemaType.STRING,
+      nullable: true,
+    };
+  }
+
   // Handle ZodLiteral
   if (schema instanceof z.ZodLiteral) {
     const value = schema.value;
@@ -121,6 +137,18 @@ function convertZodToGemini(schema: z.ZodType<any, any, any>): any {
       }
     }
 
+    // Check if this is a passthrough object (empty shape)
+    const isPassthrough = Object.keys(shape).length === 0;
+    
+    if (isPassthrough) {
+      // For passthrough objects, don't enforce any specific properties
+      // Let Gemini generate whatever makes sense
+      return {
+        type: SchemaType.OBJECT,
+        description: 'Flexible object structure (passthrough)',
+      };
+    }
+
     return {
       type: SchemaType.OBJECT,
       properties,
@@ -163,19 +191,45 @@ function convertZodToGemini(schema: z.ZodType<any, any, any>): any {
       }
     }
 
-    // For simple unions, convert first option (fallback)
+    // For regular unions: Check if it's an enum union with undefined/null (optional enum)
     const options = (schema as any)._def?.options;
-    if (options && Array.isArray(options) && options.length > 0) {
-      return convertZodToGemini(options[0]);
+    if (options && Array.isArray(options)) {
+      // Check if this is an enum + undefined/null pattern (e.g., z.union([z.enum([...]), z.undefined(), z.null()]))
+      const hasUndefined = options.some((opt: any) => opt instanceof z.ZodUndefined);
+      const hasNull = options.some((opt: any) => opt instanceof z.ZodNull);
+      const enumOptions = options.filter((opt: any) => opt instanceof z.ZodEnum);
+      
+      if ((hasUndefined || hasNull) && enumOptions.length === 1) {
+        // This is an optional/nullable enum - convert the enum part and make it nullable
+        const enumSchema = convertZodToGemini(enumOptions[0]);
+        return {
+          ...enumSchema,
+          nullable: true,
+        };
+      }
+      
+      // Otherwise, convert first option (fallback)
+      if (options.length > 0) {
+        return convertZodToGemini(options[0]);
+      }
     }
   }
 
-  // Handle ZodRecord
+  // Handle ZodRecord - Gemini requires at least one property for OBJECT type
+  // Add a flexible placeholder that accepts any value type
   if (schema instanceof z.ZodRecord) {
     return {
       type: SchemaType.OBJECT,
-      properties: {},
-      additionalProperties: convertZodToGemini((schema as any)._def.valueType),
+      description: 'Flexible object with dynamic properties',
+      properties: {
+        // Placeholder property to satisfy Gemini's requirement
+        // Actual objects can have any properties
+        _flexible: {
+          type: SchemaType.STRING,
+          description: 'Placeholder - actual properties vary',
+          nullable: true,
+        },
+      },
     };
   }
 
