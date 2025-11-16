@@ -12,7 +12,7 @@ import { enforceRateLimit } from './rate-limit';
 import { saveAIGeneration } from './usage-tracker';
 import { CampaignSchema } from '@/lib/email/blocks/schemas-v2';
 
-import { renderBlocksToEmail } from '@/lib/email/blocks/renderer';
+import { renderBlocksToEmail } from '@/lib/email/blocks';
 import { createClient } from '@/lib/supabase/server';
 
 // ============================================================================

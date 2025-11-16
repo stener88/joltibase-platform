@@ -1,7 +1,7 @@
 /**
  * Email Block System - Main Export
  * 
- * Exports all block types, utilities, and functions for Phase 4A
+ * Exports all block types, utilities, and functions from the refactored modular structure
  */
 
 // Types
@@ -12,7 +12,7 @@ export type {
   BlockContent,
   BlockEmail,
   GlobalEmailSettings,
-  // Individual block types (V2 base blocks)
+  // Individual block types
   LogoBlock,
   SpacerBlock,
   TextBlock,
@@ -21,7 +21,6 @@ export type {
   DividerBlock,
   SocialLinksBlock,
   FooterBlock,
-  // V2 blocks (link-bar, address, layouts to be added later)
   // Helpers
   Padding,
   Alignment,
@@ -37,11 +36,14 @@ export {
   renderBlock,
   renderBlocksToEmail,
   type RenderContext,
-} from './renderer';
+} from './renderers';
 
 // Registry
 export {
   createDefaultBlock,
+  createLayoutBlock,
+  createLinkBarBlock,
+  createAddressBlock,
   generateBlockId,
   getDefaultBlockSettings,
   getDefaultBlockContent,
@@ -54,8 +56,12 @@ export {
   type BlockCategory,
   type BlockCategoryInfo,
   type BlockDefinition,
+  type LayoutVariationCategory,
+  type LayoutVariationDefinition,
   BLOCK_DEFINITIONS,
   BLOCK_CATEGORIES,
+  LAYOUT_VARIATION_DEFINITIONS,
+  getLayoutVariationsByCategory,
 } from './registry';
 
 // Validation (Zod schemas)
@@ -64,7 +70,7 @@ export {
   validateBlocks,
   validateBlockEmail,
   getValidationErrors,
-  // Schemas (V2 base blocks)
+  // Schemas
   EmailBlockSchema,
   BlockEmailSchema,
   GlobalEmailSettingsSchema,
@@ -76,6 +82,4 @@ export {
   DividerBlockSchema,
   SocialLinksBlockSchema,
   FooterBlockSchema,
-  // V2 blocks (link-bar, address, layouts to be added later)
 } from './schemas';
-

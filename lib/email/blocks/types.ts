@@ -1,21 +1,143 @@
 /**
- * Email Block System - Type Definitions (V2)
+ * Email Block System - Type Definitions
  * 
- * Block-based architecture using v2 schema: 11 base types + 60+ layout variations
+ * Block-based architecture using 11 base types + 60+ layout variations
  * Optimized for Gemini's native Zod support and flexible content structure.
  */
 
-// Re-export V2 types from types-v2.ts as primary types
-export type {
-  BaseBlockType,
-  LayoutVariation,
-  EmailBlock,
-  GlobalEmailSettings,
-  Email,
-  Campaign,
-} from './types-v2';
+// ============================================================================
+// Base Block Types
+// ============================================================================
 
-// Re-export individual block types from schemas (V2 base blocks only)
+export type BaseBlockType =
+  | 'layouts'
+  | 'logo'
+  | 'text'
+  | 'image'
+  | 'link-bar'
+  | 'button'
+  | 'divider'
+  | 'spacer'
+  | 'social-links'
+  | 'footer'
+  | 'address';
+
+export type LayoutVariation =
+  // Content layouts
+  | 'hero-center'
+  | 'hero-image-overlay'
+  | 'stats-2-col'
+  | 'stats-3-col'
+  | 'stats-4-col'
+  | 'testimonial-centered'
+  | 'testimonial-with-image'
+  | 'testimonial-card'
+  // Two-column
+  | 'two-column-50-50'
+  | 'two-column-60-40'
+  | 'two-column-40-60'
+  | 'two-column-70-30'
+  | 'two-column-30-70'
+  // Three-column
+  | 'three-column-equal'
+  | 'three-column-wide-center'
+  | 'three-column-wide-outer'
+  // Four+ columns
+  | 'four-column-equal'
+  | 'five-column-equal'
+  // Image layouts
+  | 'image-overlay'
+  | 'image-overlay-center'
+  | 'image-overlay-top-left'
+  | 'image-overlay-top-right'
+  | 'image-overlay-bottom-left'
+  | 'image-overlay-bottom-right'
+  | 'image-overlay-center-bottom'
+  | 'image-collage-featured-left'
+  | 'image-collage-featured-right'
+  | 'image-collage-featured-center'
+  // Advanced layouts
+  | 'zigzag-2-rows'
+  | 'zigzag-3-rows'
+  | 'zigzag-4-rows'
+  | 'split-background'
+  | 'product-card-image-top'
+  | 'product-card-image-left'
+  | 'badge-overlay-corner'
+  | 'badge-overlay-center'
+  | 'feature-grid-2-items'
+  | 'feature-grid-3-items'
+  | 'feature-grid-4-items'
+  | 'feature-grid-6-items'
+  | 'comparison-table-2-col'
+  | 'comparison-table-3-col'
+  | 'card-centered'
+  | 'compact-image-text'
+  | 'two-column-text'
+  | 'magazine-feature'
+  // Interactive
+  | 'carousel-2-slides'
+  | 'carousel-3-5-slides'
+  | 'carousel-6-10-slides'
+  | 'tabs-2-tabs'
+  | 'tabs-3-5-tabs'
+  | 'tabs-6-8-tabs'
+  | 'accordion-2-items'
+  | 'accordion-3-5-items'
+  | 'accordion-6-10-items'
+  | 'masonry-2-col'
+  | 'masonry-3-col'
+  | 'masonry-4-col'
+  | 'masonry-5-col'
+  | 'container-stack'
+  | 'container-grid'
+  | 'container-flex';
+
+export interface EmailBlock {
+  id: string;
+  type: BaseBlockType;
+  position: number;
+  layoutVariation?: LayoutVariation;
+  settings: Record<string, any>;
+  content: Record<string, any>;
+}
+
+export interface GlobalEmailSettings {
+  backgroundColor: string;
+  contentBackgroundColor: string;
+  maxWidth: number;
+  fontFamily: string;
+  mobileBreakpoint: number;
+}
+
+export interface Email {
+  subject: string;
+  previewText: string;
+  blocks: EmailBlock[];
+  globalSettings?: GlobalEmailSettings;
+  notes?: string;
+}
+
+export interface Campaign {
+  campaignName: string;
+  campaignType: 'one-time' | 'sequence';
+  emails: Email[];
+  recommendedSegment?: string;
+  strategy?: {
+    goal: string;
+    keyMessage: string;
+  };
+  design: {
+    template: string;
+    ctaColor: string;
+    accentColor?: string;
+  };
+  segmentationSuggestion?: string;
+  sendTimeSuggestion?: string;
+  successMetrics?: string;
+}
+
+// Re-export individual block types from schemas
 export type { LogoBlockType as LogoBlock } from './schemas';
 export type { SpacerBlockType as SpacerBlock } from './schemas';
 export type { TextBlockType as TextBlock } from './schemas';
@@ -28,9 +150,6 @@ export type { FooterBlockType as FooterBlock } from './schemas';
 export type LinkBarBlock = any; // Placeholder
 export type AddressBlock = any; // Placeholder
 export type LayoutsBlock = any; // Placeholder
-
-// Import for internal use
-import type { BaseBlockType, LayoutVariation, EmailBlock, GlobalEmailSettings } from './types-v2';
 
 // ============================================================================
 // V2 Block System - Display Name Helpers

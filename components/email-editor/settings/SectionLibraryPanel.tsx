@@ -1,7 +1,7 @@
 'use client';
 
 import { getAllSections } from '@/lib/email/sections';
-import { renderBlocksToEmail } from '@/lib/email/blocks/renderer';
+import { renderBlocksToEmail } from '@/lib/email/blocks';
 
 interface SectionLibraryPanelProps {
   onInsertSection: (sectionId: string) => void;

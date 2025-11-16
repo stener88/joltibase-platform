@@ -12,7 +12,7 @@ const ImportContactsSchema = z.object({
     firstName: z.string().optional(),
     lastName: z.string().optional(),
     tags: z.array(z.string()).optional(),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
   })),
   duplicateHandling: z.enum(['skip', 'update', 'replace']).default('skip'),
   listIds: z.array(z.string()).optional(),

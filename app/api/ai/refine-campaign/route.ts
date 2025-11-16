@@ -8,7 +8,7 @@ import {
   type EmailBlockType,
   type GlobalEmailSettingsType 
 } from '@/lib/email/blocks/schemas';
-import { renderBlocksToEmail } from '@/lib/email/blocks/renderer';
+import { renderBlocksToEmail } from '@/lib/email/blocks';
 import { z } from 'zod';
 
 /**

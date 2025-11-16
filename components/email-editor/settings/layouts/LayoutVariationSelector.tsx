@@ -1,7 +1,7 @@
 'use client';
 
 import type { EmailBlock, LayoutVariation } from '@/lib/email/blocks/types';
-import { LAYOUT_VARIATION_DEFINITIONS } from '@/lib/email/blocks/registry';
+import { LAYOUT_VARIATION_DEFINITIONS } from '@/lib/email/blocks';
 
 interface LayoutVariationSelectorProps {
   block: EmailBlock & { layoutVariation?: string };

@@ -1,6 +1,6 @@
 'use client';
 
-import { getAllBlockDefinitions } from '@/lib/email/blocks/registry';
+import { getAllBlockDefinitions } from '@/lib/email/blocks';
 import { BlockType } from '@/lib/email/blocks/types';
 import type { LayoutVariation } from '@/lib/email/blocks/types';
 import { 

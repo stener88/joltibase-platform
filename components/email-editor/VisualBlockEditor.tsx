@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { EmailBlock, GlobalEmailSettings } from '@/lib/email/blocks/types';
 import type { LayoutVariation } from '@/lib/email/blocks/types';
-import { createDefaultBlock, createLayoutBlock, createLinkBarBlock, createAddressBlock } from '@/lib/email/blocks/registry';
+import { createDefaultBlock, createLayoutBlock, createLinkBarBlock, createAddressBlock } from '@/lib/email/blocks';
 import { BlockCanvas } from './BlockCanvas';
 import { BlockSettingsPanel } from './settings/BlockSettingsPanel';
 import { BlockPaletteModal } from './BlockPaletteModal';

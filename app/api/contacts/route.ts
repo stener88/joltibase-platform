@@ -12,7 +12,7 @@ const CreateContactSchema = z.object({
   lastName: z.string().optional(),
   status: z.enum(['subscribed', 'unsubscribed', 'bounced', 'complained']).default('subscribed'),
   tags: z.array(z.string()).default([]),
-  metadata: z.record(z.any()).default({}),
+  metadata: z.record(z.string(), z.any()).default({}),
   listIds: z.array(z.string()).optional(),
 });
 

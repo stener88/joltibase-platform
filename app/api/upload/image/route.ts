@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Check for RLS policy violation
-      if (error.statusCode === '403' || error.message?.includes('row-level security policy') || error.message?.includes('violates row-level security')) {
+      if (error.message?.includes('row-level security policy') || error.message?.includes('violates row-level security') || error.message?.includes('policy')) {
         return NextResponse.json(
           { 
             success: false, 

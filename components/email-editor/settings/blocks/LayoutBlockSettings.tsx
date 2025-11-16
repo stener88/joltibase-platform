@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { EmailBlock, LayoutVariation } from '@/lib/email/blocks/types';
 import { getLayoutVariationDisplayName } from '@/lib/email/blocks/types';
-import { LAYOUT_VARIATION_DEFINITIONS, getLayoutVariationsByCategory } from '@/lib/email/blocks/registry';
+import { LAYOUT_VARIATION_DEFINITIONS, getLayoutVariationsByCategory } from '@/lib/email/blocks';
 import { ColorPicker } from '../../shared/ColorPicker';
 import { PaddingInput } from '../../shared/PaddingInput';
 import { AlignmentPicker } from '../../shared/AlignmentPicker';

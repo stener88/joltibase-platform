@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useCampaignQuery, useCampaignMutation, useCampaignRefineMutation } from '@/hooks/use-campaign-query';
 import { useEditorHistory } from '@/hooks/use-editor-history';
-import { renderBlocksToEmail } from '@/lib/email/blocks/renderer';
+import { renderBlocksToEmail } from '@/lib/email/blocks';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import type { CampaignEditorControls } from '@/components/dashboard/DashboardHeader';
 import { SplitScreenLayout } from '@/components/campaigns/SplitScreenLayout';
@@ -28,10 +28,10 @@ function getCampaignPlaceholderName(campaign: any): string {
     return subject.length > 50 ? subject.substring(0, 47) + '...' : subject.replace(/[.!?]+$/, '');
   }
   
-  // Try first heading block text
+  // Try first text block
   if (campaign?.blocks && Array.isArray(campaign.blocks)) {
     const headingBlock = campaign.blocks.find((block: any) => 
-      block.type === 'heading' || block.type === 'text'
+      block.type === 'text'
     );
     if (headingBlock?.content?.text) {
       const text = headingBlock.content.text.trim();
@@ -382,9 +382,9 @@ export default function DashboardCampaignEditorPage() {
     
     // Generate plain text from text blocks
     const plainText = editorHistory.state.blocks
-      .filter(block => block.type === 'text' || block.type === 'heading')
+      .filter(block => block.type === 'text')
       .map(block => {
-        if ((block.type === 'text' || block.type === 'heading') && 'text' in block.content) {
+        if (block.type === 'text' && 'text' in block.content) {
           return block.content.text;
         }
         return '';

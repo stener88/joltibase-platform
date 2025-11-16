@@ -1,7 +1,7 @@
 'use client';
 
 import { EmailBlock, GlobalEmailSettings, getBlockDisplayName } from '@/lib/email/blocks/types';
-import { renderBlock } from '@/lib/email/blocks/renderer';
+import { renderBlock } from '@/lib/email/blocks';
 import { BlockToolbar } from './BlockToolbar';
 
 type DeviceMode = 'desktop' | 'mobile';

@@ -1,8 +1,8 @@
 'use client';
 
-import { EmailBlock, GlobalEmailSettings, getBlockDisplayName } from '@/lib/email/blocks/types-v2';
-import { renderBlock } from '@/lib/email/blocks/renderer';
-import { getBlockDefinition } from '@/lib/email/blocks/registry';
+import { EmailBlock, GlobalEmailSettings, getBlockDisplayName } from '@/lib/email/blocks/types';
+import { renderBlock } from '@/lib/email/blocks';
+
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface EmailFrameProps {

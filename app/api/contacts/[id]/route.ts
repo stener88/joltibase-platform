@@ -12,7 +12,7 @@ const UpdateContactSchema = z.object({
   lastName: z.string().optional(),
   status: z.enum(['subscribed', 'unsubscribed', 'bounced', 'complained']).optional(),
   tags: z.array(z.string()).optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
   listIds: z.array(z.string()).optional(),
 });
 

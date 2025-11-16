@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod';
+import { LayoutVariationSchema } from './schemas';
 
 // ============================================================================
 // Common Schemas
@@ -48,87 +49,7 @@ export const BaseBlockTypeSchema = z.enum([
   'address',
 ]);
 
-// ============================================================================
-// Layout Variations (50+)
-// ============================================================================
-
-export const LayoutVariationSchema = z.enum([
-  // Content layouts (was: hero, stats, testimonial blocks)
-  'hero-center',
-  'hero-image-overlay',
-  'stats-2-col',
-  'stats-3-col',
-  'stats-4-col',
-  'testimonial-centered',
-  'testimonial-with-image',
-  'testimonial-card',
-  
-  // Two-column
-  'two-column-50-50',
-  'two-column-60-40',
-  'two-column-40-60',
-  'two-column-70-30',
-  'two-column-30-70',
-  
-  // Three-column
-  'three-column-equal',
-  'three-column-wide-center',
-  'three-column-wide-outer',
-  
-  // Four+ columns
-  'four-column-equal',
-  'five-column-equal',
-  
-  // Image layouts
-  'image-overlay',
-  'image-overlay-center',
-  'image-overlay-top-left',
-  'image-overlay-top-right',
-  'image-overlay-bottom-left',
-  'image-overlay-bottom-right',
-  'image-overlay-center-bottom',
-  'image-collage-featured-left',
-  'image-collage-featured-right',
-  'image-collage-featured-center',
-  
-  // Advanced layouts
-  'zigzag-2-rows',
-  'zigzag-3-rows',
-  'zigzag-4-rows',
-  'split-background',
-  'product-card-image-top',
-  'product-card-image-left',
-  'badge-overlay-corner',
-  'badge-overlay-center',
-  'feature-grid-2-items',
-  'feature-grid-3-items',
-  'feature-grid-4-items',
-  'feature-grid-6-items',
-  'comparison-table-2-col',
-  'comparison-table-3-col',
-  'card-centered',
-  'compact-image-text',
-  'two-column-text',
-  'magazine-feature',
-  
-  // Interactive (was: carousel, tabs, accordion blocks)
-  'carousel-2-slides',
-  'carousel-3-5-slides',
-  'carousel-6-10-slides',
-  'tabs-2-tabs',
-  'tabs-3-5-tabs',
-  'tabs-6-8-tabs',
-  'accordion-2-items',
-  'accordion-3-5-items',
-  'accordion-6-10-items',
-  'masonry-2-col',
-  'masonry-3-col',
-  'masonry-4-col',
-  'masonry-5-col',
-  'container-stack',
-  'container-grid',
-  'container-flex',
-]);
+// Import LayoutVariationSchema from schemas.ts (no longer defined here)
 
 // ============================================================================
 // Universal Block Schema
