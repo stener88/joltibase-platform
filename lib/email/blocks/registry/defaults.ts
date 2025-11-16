@@ -11,7 +11,7 @@ const DEFAULT_PADDING: Padding = { top: 20, bottom: 20, left: 20, right: 20 };
 /**
  * Get default settings for a block type
  */
-export function getDefaultBlockSettings(type: BlockType): any {
+export function getDefaultBlockSettings(type: BlockType, options?: { layoutVariation?: string }): any {
   switch (type) {
     case 'logo':
       return {
@@ -85,10 +85,11 @@ export function getDefaultBlockSettings(type: BlockType): any {
         padding: { top: 20, bottom: 20, left: 20, right: 20 },
       };
     
-    case 'layouts':
-      return {
-        padding: { top: 40, right: 20, bottom: 40, left: 20 },
-        backgroundColor: 'transparent',
+    case 'layouts': {
+      const variation = (options as any)?.layoutVariation;
+      
+      // Base settings
+      const baseSettings = {
         align: 'center',
         showHeader: true,
         showTitle: true,
@@ -97,6 +98,124 @@ export function getDefaultBlockSettings(type: BlockType): any {
         showButton: true,
         showImage: false,
       };
+      
+      // Hero layouts - Bold, spacious
+      if (variation === 'hero-center') {
+        return {
+          ...baseSettings,
+          padding: { top: 80, right: 40, bottom: 80, left: 40 },
+          backgroundColor: '#ffffff',
+          titleColor: '#000000',
+          paragraphColor: '#374151',
+          dividerColor: '#d17655',
+          titleFontSize: '36px',
+          paragraphFontSize: '18px',
+          buttonBackgroundColor: '#000000',
+          buttonTextColor: '#ffffff',
+          buttonBorderRadius: '6px',
+          buttonFontSize: '16px',
+        };
+      }
+      
+      // Two-column layouts - Clean, professional
+      if (variation?.startsWith('two-column')) {
+        return {
+          ...baseSettings,
+          padding: { top: 40, right: 20, bottom: 40, left: 20 },
+          backgroundColor: '#ffffff',
+          titleColor: '#000000',
+          paragraphColor: '#374151',
+          buttonBackgroundColor: '#000000',
+          buttonTextColor: '#ffffff',
+          buttonBorderRadius: '6px',
+          buttonFontSize: '16px',
+          titleFontSize: '28px',
+          paragraphFontSize: '16px',
+        };
+      }
+      
+      // Stats layouts - Subtle backgrounds, accent colors
+      if (variation?.startsWith('stats-')) {
+        return {
+          ...baseSettings,
+          padding: { top: 40, right: 20, bottom: 40, left: 20 },
+          backgroundColor: '#eeecea',
+          titleColor: '#366460',
+          paragraphColor: '#374151',
+          titleFontSize: '32px',
+          paragraphFontSize: '14px',
+        };
+      }
+      
+      // Image overlay - Dramatic, minimal padding
+      if (variation === 'image-overlay') {
+        return {
+          ...baseSettings,
+          padding: { top: 60, right: 40, bottom: 60, left: 40 },
+          backgroundColor: 'transparent',
+          titleColor: '#ffffff',
+          paragraphColor: '#ffffff',
+          buttonBackgroundColor: '#000000',
+          buttonTextColor: '#ffffff',
+          buttonBorderRadius: '6px',
+          buttonFontSize: '16px',
+          titleFontSize: '40px',
+          paragraphFontSize: '18px',
+        };
+      }
+      
+      // Card centered - Subtle background, centered
+      if (variation === 'card-centered') {
+        return {
+          ...baseSettings,
+          padding: { top: 60, right: 40, bottom: 60, left: 40 },
+          backgroundColor: '#ded9d5',
+          titleColor: '#000000',
+          paragraphColor: '#374151',
+          buttonBackgroundColor: '#000000',
+          buttonTextColor: '#ffffff',
+          buttonBorderRadius: '6px',
+          buttonFontSize: '16px',
+          titleFontSize: '32px',
+          paragraphFontSize: '16px',
+        };
+      }
+      
+      // Compact image text - Efficient, tighter spacing
+      if (variation === 'compact-image-text') {
+        return {
+          ...baseSettings,
+          padding: { top: 30, right: 20, bottom: 30, left: 20 },
+          backgroundColor: '#ffffff',
+          align: 'left',
+          titleColor: '#000000',
+          paragraphColor: '#374151',
+          titleFontSize: '20px',
+          paragraphFontSize: '14px',
+        };
+      }
+      
+      // Magazine feature - Editorial style
+      if (variation === 'magazine-feature') {
+        return {
+          ...baseSettings,
+          padding: { top: 40, right: 20, bottom: 40, left: 20 },
+          backgroundColor: '#ffffff',
+          align: 'left',
+          titleColor: '#000000',
+          paragraphColor: '#374151',
+          titleFontSize: '28px',
+          paragraphFontSize: '16px',
+        };
+      }
+      
+      // Default generic settings for unknown variations
+      return {
+        ...baseSettings,
+        padding: { top: 40, right: 20, bottom: 40, left: 20 },
+        backgroundColor: 'transparent',
+      };
+    }
     
     case 'footer':
       return {
@@ -196,12 +315,55 @@ export function getDefaultBlockContent(type: BlockType, options?: { layoutVariat
         };
       }
       
-      if (variation === 'two-column-50-50' || variation === 'two-column-60-40' || variation === 'two-column-40-60') {
+      if (variation === 'two-column-50-50' || variation === 'two-column-60-40' || variation === 'two-column-40-60' || variation === 'two-column-70-30' || variation === 'two-column-30-70') {
         return {
           title: 'Feature Title',
-          paragraph: 'Feature description goes here.',
+          paragraph: 'Feature description goes here. Explain the benefits and value proposition in a clear, compelling way.',
           button: { text: 'Learn More', url: '#' },
           image: { url: '', altText: 'Feature image' },
+        };
+      }
+      
+      if (variation === 'two-column-text') {
+        return {
+          leftColumn: 'This is the left column. You can use this layout to present information side-by-side, perfect for comparisons or parallel content streams.',
+          rightColumn: 'This is the right column. Both columns will display at equal width, creating a balanced and professional appearance in your email.',
+        };
+      }
+      
+      if (variation === 'image-overlay') {
+        return {
+          badge: 'NEW',
+          title: 'Stunning Visual Impact',
+          paragraph: 'Create dramatic presentations with full-width imagery and overlaid text.',
+          button: { text: 'Explore Now', url: '#' },
+          image: { url: '', altText: 'Background image' },
+        };
+      }
+      
+      if (variation === 'card-centered') {
+        return {
+          title: 'Centered Message',
+          paragraph: 'Perfect for announcements, special offers, or any message that deserves spotlight attention.',
+          button: { text: 'Take Action', url: '#' },
+        };
+      }
+      
+      if (variation === 'compact-image-text') {
+        return {
+          image: { url: '', altText: 'Compact image' },
+          title: 'Compact Layout',
+          subtitle: 'Quick highlights',
+          paragraph: 'Efficient side-by-side presentation with a small image and focused text content.',
+        };
+      }
+      
+      if (variation === 'magazine-feature') {
+        return {
+          badge: 'FEATURED',
+          image: { url: '', altText: 'Feature image' },
+          title: 'Editorial Style Presentation',
+          paragraph: 'Create magazine-quality layouts that combine compelling imagery with engaging editorial content for maximum reader engagement.',
         };
       }
       

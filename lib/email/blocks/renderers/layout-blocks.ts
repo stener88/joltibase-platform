@@ -43,7 +43,14 @@ export function renderLayoutBlock(block: EmailBlock, context: RenderContext): st
   const settings = block.settings || {};
   const content = block.content || {};
   
-  // Route to variation-specific renderer
+  // Try factory-generated renderer first
+  const { getFactoryRenderer } = require('./layout-factory');
+  const factoryRenderer = getFactoryRenderer(variation);
+  if (factoryRenderer) {
+    return factoryRenderer(content, settings, context);
+  }
+  
+  // Route to variation-specific renderer (legacy hand-written)
   switch (variation) {
     case 'hero-center':
     case 'hero-image-overlay':
@@ -265,21 +272,23 @@ export function renderTwoColumnTextLayout(content: any, settings: any, context: 
   const fontSize = settings.paragraphFontSize || '16px';
   const lineHeight = '1.6';
   
-  // Fixed width columns: 290px each with 20px gap
-  const columnWidth = `${COLUMN_WIDTHS.TWO_COL_50}px`;
+  // Account for padding: 600px container - left padding (20) - right padding (20) - column gap (20) = 540px / 2 = 270px per column
+  const padding = settings.padding || { top: 40, right: 20, bottom: 40, left: 20 };
+  const availableWidth = 600 - padding.left - padding.right - 20; // 20px gap between columns
+  const columnWidth = Math.floor(availableWidth / 2);
   
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: ${backgroundColor};">
       <tr>
-        <td style="padding: ${settings.padding?.top || 40}px ${settings.padding?.right || 20}px ${settings.padding?.bottom || 40}px ${settings.padding?.left || 20}px;">
+        <td style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="table-layout: fixed;">
             <tr>
-              <td width="${columnWidth}" valign="top" style="width: ${columnWidth}; max-width: ${columnWidth}; min-width: ${columnWidth}; padding-right: 10px; word-wrap: break-word;">
+              <td width="${columnWidth}" valign="top" style="width: ${columnWidth}px; max-width: ${columnWidth}px; padding-right: 10px; word-wrap: break-word;">
                 <p style="margin: 0; font-size: ${fontSize}; color: ${textColor}; line-height: ${lineHeight};">
                   ${escapeHtml(leftColumn)}
                 </p>
               </td>
-              <td width="${columnWidth}" valign="top" style="width: ${columnWidth}; max-width: ${columnWidth}; min-width: ${columnWidth}; padding-left: 10px; word-wrap: break-word;">
+              <td width="${columnWidth}" valign="top" style="width: ${columnWidth}px; max-width: ${columnWidth}px; padding-left: 10px; word-wrap: break-word;">
                 <p style="margin: 0; font-size: ${fontSize}; color: ${textColor}; line-height: ${lineHeight};">
                   ${escapeHtml(rightColumn)}
                 </p>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { EmailBlock, LayoutVariation } from '@/lib/email/blocks/types';
 import { getLayoutVariationDisplayName } from '@/lib/email/blocks/types';
 import { LAYOUT_VARIATION_DEFINITIONS, getLayoutVariationsByCategory } from '@/lib/email/blocks';
@@ -14,6 +14,7 @@ import {
   useBlockSettingsUpdates,
   useCollapsibleSections 
 } from '@/hooks/use-block-updates';
+import { getLayoutConfig, createLayoutSettingsComponent } from '@/lib/email/blocks/renderers/layout-factory';
 
 interface LayoutBlockSettingsProps {
   block: EmailBlock & { layoutVariation?: string };
@@ -22,6 +23,27 @@ interface LayoutBlockSettingsProps {
 }
 
 export function LayoutBlockSettings({ block, onUpdate, campaignId }: LayoutBlockSettingsProps) {
+  const variation = block.layoutVariation || 'unknown';
+  
+  // Try to use factory-generated settings component
+  // Use useMemo to cache the component so it's only created once per variation
+  // This prevents React from remounting the component on every render, which causes input focus loss
+  const config = getLayoutConfig(variation);
+  const FactorySettings = useMemo(
+    () => config ? createLayoutSettingsComponent(config) : null,
+    [variation] // Only recreate if variation changes
+  );
+  
+  if (FactorySettings) {
+    return <FactorySettings block={block} onUpdate={onUpdate} campaignId={campaignId} />;
+  }
+  
+  // Fall back to hand-written settings component (for non-factory layouts)
+  return <LegacyLayoutBlockSettings block={block} onUpdate={onUpdate} campaignId={campaignId} />;
+}
+
+// Legacy hand-written settings component (kept for non-factory layouts)
+function LegacyLayoutBlockSettings({ block, onUpdate, campaignId }: LayoutBlockSettingsProps) {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const { isOpen, toggleSection } = useCollapsibleSections(['layout']);
   const updateSettings = useBlockSettingsUpdates(block, onUpdate);

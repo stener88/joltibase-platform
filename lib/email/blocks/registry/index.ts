@@ -75,7 +75,7 @@ export function createLayoutBlock(layoutVariation: string, position: number = 0)
     type: 'layouts',
     layoutVariation,
     position,
-    settings: getDefaultBlockSettings('layouts') as any,
+    settings: getDefaultBlockSettings('layouts', { layoutVariation }) as any,
     content: getDefaultBlockContent('layouts', { layoutVariation }) as any,
   } as any;
 }

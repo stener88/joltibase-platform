@@ -158,7 +158,7 @@ export function renderImageBlock(block: ImageBlock): string {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         <tr>
           <td align="center" style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;${backgroundColor && backgroundColor !== 'transparent' ? ` background-color: ${backgroundColor};` : ''}">
-            <img src="${placeholderUrl}" alt="Placeholder" width="${EMAIL_DIMENSIONS.MAX_WIDTH}" style="display: block; width: ${EMAIL_DIMENSIONS.MAX_WIDTH}px; height: auto; border: none;${borderRadius ? ` border-radius: ${borderRadius};` : ''}" />
+            <img src="${placeholderUrl}" alt="Placeholder" style="display: block; width: ${width}; max-width: 100%; height: auto; border: none;${borderRadius ? ` border-radius: ${borderRadius};` : ''}" />
           </td>
         </tr>
       </table>`;
@@ -177,10 +177,10 @@ export function renderImageBlock(block: ImageBlock): string {
         ? processImageUrl(imageUrl, 'image') 
         : getPlaceholderImage(EMAIL_DIMENSIONS.MAX_WIDTH, PLACEHOLDER_DIMENSIONS.IMAGE.HEIGHT, 'image');
       
-      // Use fixed pixel widths for cells and images
+      // Use fixed pixel widths for cells and images (except single column uses settings.width)
       const cellWidthPx = cols === 1 ? COLUMN_WIDTHS.FULL : cols === 2 ? COLUMN_WIDTHS.IMAGE_GRID_2COL : COLUMN_WIDTHS.IMAGE_GRID_3COL;
-      const cellWidth = `${cellWidthPx}px`;
-      const imageWidth = cellWidth;
+      const cellWidth = cols === 1 ? width : `${cellWidthPx}px`;
+      const imageWidth = cols === 1 ? '100%' : cellWidth;
       
       const paddingRight = idx < rowImages.length - 1 ? `${gapPx}px` : '0';
       const paddingBottom = i + cols < images.length ? `${gapPx}px` : '0';
@@ -200,16 +200,22 @@ export function renderImageBlock(block: ImageBlock): string {
       
       const imgHtml = aspectRatio && aspectRatio !== 'auto'
         ? `
-          <div style="position: relative; width: ${imageWidth}; padding-bottom: ${aspectPaddingBottom}; overflow: hidden;${borderRadius ? ` border-radius: ${borderRadius};` : ''}">
-            <img src="${escapeHtml(processedUrl)}" alt="${escapeHtml(img.altText || '')}" style="position: absolute; top: 0; left: 0; width: ${imageWidth}; max-width: ${imageWidth}; height: 100%; object-fit: cover; border: none;" />
+          <div style="position: relative; width: ${imageWidth}; ${cols === 1 ? 'max-width: 100%;' : ''} padding-bottom: ${aspectPaddingBottom}; overflow: hidden;${borderRadius ? ` border-radius: ${borderRadius};` : ''}">
+            <img src="${escapeHtml(processedUrl)}" alt="${escapeHtml(img.altText || '')}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border: none;" />
           </div>`
-        : `<img src="${escapeHtml(processedUrl)}" alt="${escapeHtml(img.altText || '')}" style="display: block; width: ${imageWidth}; max-width: ${imageWidth}; height: auto; border: none;${borderRadius ? ` border-radius: ${borderRadius};` : ''}" />`;
+        : `<img src="${escapeHtml(processedUrl)}" alt="${escapeHtml(img.altText || '')}" style="display: block; width: ${imageWidth}; max-width: 100%; height: auto; border: none;${borderRadius ? ` border-radius: ${borderRadius};` : ''}" />`;
       
       const imageContent = img.linkUrl
         ? `<a href="${escapeHtml(img.linkUrl)}" style="text-decoration: none; display: block;">${imgHtml}</a>`
         : imgHtml;
       
-      return `<td width="${cellWidth}" valign="top" style="width: ${cellWidth}; max-width: ${cellWidth}; min-width: ${cellWidth}; padding-right: ${paddingRight}; padding-bottom: ${paddingBottom};">${imageContent}</td>`;
+      // For single column, use percentage-based width; for multi-column, use fixed pixel width
+      const tdWidthAttr = cols === 1 ? '' : `width="${cellWidth}"`;
+      const tdStyles = cols === 1 
+        ? `padding-right: ${paddingRight}; padding-bottom: ${paddingBottom};`
+        : `width: ${cellWidth}; max-width: ${cellWidth}; min-width: ${cellWidth}; padding-right: ${paddingRight}; padding-bottom: ${paddingBottom};`;
+      
+      return `<td ${tdWidthAttr} valign="top" style="${tdStyles}">${imageContent}</td>`;
     }).join('');
     
     rowsHtml += `<tr>${cellsHtml}</tr>`;

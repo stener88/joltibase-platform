@@ -2,6 +2,7 @@
 
 import type { EmailBlock, LayoutVariation } from '@/lib/email/blocks/types';
 import { LAYOUT_VARIATION_DEFINITIONS } from '@/lib/email/blocks';
+import { getDefaultBlockContent, getDefaultBlockSettings } from '@/lib/email/blocks/registry/defaults';
 
 interface LayoutVariationSelectorProps {
   block: EmailBlock & { layoutVariation?: string };
@@ -34,7 +35,16 @@ export function LayoutVariationSelector({ block, onUpdate }: LayoutVariationSele
     .filter(Boolean);
 
   const handleSelectVariation = (variation: LayoutVariation) => {
-    onUpdate(block.id, { layoutVariation: variation });
+    // Get fresh default content and settings for the new variation
+    const newContent = getDefaultBlockContent('layouts', { layoutVariation: variation });
+    const newSettings = getDefaultBlockSettings('layouts', { layoutVariation: variation });
+    
+    // Update the block with new variation, content, and settings
+    onUpdate(block.id, { 
+      layoutVariation: variation,
+      content: newContent,
+      settings: newSettings,
+    });
   };
 
   return (
@@ -101,19 +111,31 @@ function LayoutPreview({ variation }: { variation: LayoutVariation }) {
   
   // Two Column layouts - image on one side, content on other
   // Based on renderTwoColumnLayout from renderer.ts
-  if (variation.includes('two-column')) {
+  if (variation.includes('two-column') && variation !== 'two-column-text') {
+    // Determine which column gets the image and what width
+    // 60-40 = image is 60% on LEFT
+    // 40-60 = image is 40% on LEFT (or 60% of text on RIGHT)
+    // 70-30 = image is 70% on LEFT
+    // 30-70 = image is 30% on LEFT
+    const isImageOnLeft = !variation.includes('40-60') && !variation.includes('30-70');
     const imageWidth = variation.includes('50-50') ? 'w-1/2' : 
                        variation.includes('60-40') ? 'w-[60%]' :
                        variation.includes('40-60') ? 'w-[40%]' :
                        variation.includes('70-30') ? 'w-[70%]' : 'w-[30%]';
+    
+    const imageElement = <div className={`${imageWidth} bg-gray-300 rounded flex-shrink-0`}></div>;
+    const textElement = (
+      <div className="flex-1 flex flex-col justify-center gap-0.5">
+        <div className="text-[9px] font-bold text-gray-900 leading-tight">Feature Title</div>
+        <div className="text-[6px] text-gray-600 leading-relaxed">Feature description goes here.</div>
+        <div className="mt-1 px-2 py-0.5 bg-gray-900 text-white text-[5px] rounded self-start">Learn More</div>
+      </div>
+    );
+    
     return (
       <div className="w-full h-full bg-white flex gap-2 p-2">
-        <div className={`${imageWidth} bg-gray-300 rounded flex-shrink-0`}></div>
-        <div className="flex-1 flex flex-col justify-center gap-0.5">
-          <div className="text-[9px] font-bold text-gray-900 leading-tight">Feature Title</div>
-          <div className="text-[6px] text-gray-600 leading-relaxed">Feature description goes here.</div>
-          <div className="mt-1 px-2 py-0.5 bg-gray-900 text-white text-[5px] rounded self-start">Learn More</div>
-        </div>
+        {isImageOnLeft ? imageElement : textElement}
+        {isImageOnLeft ? textElement : imageElement}
       </div>
     );
   }
@@ -130,8 +152,13 @@ function LayoutPreview({ variation }: { variation: LayoutVariation }) {
       { value: '<1s', label: 'Response' },
     ].slice(0, cols);
     
+    // Fix: Use explicit grid classes instead of template string (Tailwind needs static classes)
+    const gridClass = cols === 2 ? 'grid grid-cols-2' :
+                      cols === 3 ? 'grid grid-cols-3' :
+                      'grid grid-cols-4';
+    
     return (
-      <div className={`w-full h-full bg-white grid grid-cols-${cols} gap-1 p-2`}>
+      <div className={`w-full h-full bg-white ${gridClass} gap-1 p-2`}>
         {stats.map((stat, i) => (
           <div key={i} className="flex flex-col items-center justify-center">
             <div className="text-[14px] font-bold text-gray-900 leading-none">{stat.value}</div>

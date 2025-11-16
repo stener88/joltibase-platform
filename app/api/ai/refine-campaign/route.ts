@@ -45,7 +45,7 @@ const RefineResponseSchema = z.object({
   blocks: z.array(BlockSchema).min(1), // Use flexible BlockSchema for AI-generated blocks
   globalSettings: GlobalEmailSettingsSchema.optional(),
   changes: z.array(z.string()).optional(), // Technical tracking
-  conversationalMessage: z.string().min(20).max(500), // Natural, colleague-like response for chat UI
+  conversationalMessage: z.string().min(20).max(1000), // Natural, colleague-like response for chat UI (increased limit for detailed responses)
 });
 
 type RefineResponse = z.infer<typeof RefineResponseSchema>;
@@ -315,7 +315,7 @@ ${requestType === 'major' ? `User: "remake the whole newsletter"
 Response: Create a completely new newsletter structure with different blocks, layout, and content flow. Execute the full redesign, don't just suggest improvements.` : ''}
 
 **CONVERSATIONAL MESSAGE (Required):**
-Write a natural, colleague-like message (20-500 characters) that:
+Write a natural, colleague-like message (20-1000 characters) that:
 ${requestType === 'major' ? `- Explains what you redesigned and why ("I've completely remade the newsletter with a fresh structure because...")
 - After executing the redesign, suggest 1-2 additional improvements ("Now that we've redesigned it, we could also...")
 - Ask if they want any adjustments ("Want me to tweak anything else?")` : requestType === 'ambiguous' ? `- Ask clarifying questions if the request is unclear
@@ -344,7 +344,7 @@ ${requestType === 'major' ? `- "Perfect! I've completely remade the newsletter w
   "changes": [
     "List specific changes made. Be precise: 'Changed button text from X to Y', 'Increased hero padding from 60px to 80px'"
   ],
-  "conversationalMessage": "Your natural, colleague-like response here (20-500 chars)"
+  "conversationalMessage": "Your natural, colleague-like response here (20-1000 chars)"
 }
 
 **Final Reminder:**

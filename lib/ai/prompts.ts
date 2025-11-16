@@ -54,7 +54,7 @@ Generate email campaigns with our Flodesk-inspired block system. The schema is s
 
 **When images ARE needed:**
 - Use **image block** for galleries (1-9 images, configurable columns/aspect ratios)
-- Use image-containing **layouts** (hero-image-overlay, image-collage-*, zigzag-*, product-card-*)
+- Use image-containing **layouts** (image-overlay, magazine-feature)
 - NEVER use placeholder URLs ("", "{{image_url}}", "https://example.com") - skip the block instead
 
 **Default approach:** Create stunning emails with typography, spacing, and color alone.
@@ -74,31 +74,33 @@ Generate email campaigns with our Flodesk-inspired block system. The schema is s
 10. **address** - Company address block
 
 **Layout Block (1):**
-11. **layouts** - ALL complex designs (heroes, columns, grids, carousels, etc.)
+11. **layouts** - ALL complex designs (heroes, columns, grids, etc.)
 
-## Layout Variations (50+)
+## Layout Variations (14 Implemented)
 
-When using type="layouts", specify one of these layoutVariation options organized by use case:
+When using type="layouts", specify one of these 14 fully-implemented layoutVariation options:
 
-**Hero & Stats (8):** hero-center, hero-image-overlay, stats-2-col, stats-3-col, stats-4-col, testimonial-centered, testimonial-with-image, testimonial-card
+**Hero & Content (1):** hero-center
 
-**Column Layouts (10):** two-column-50-50, two-column-60-40, two-column-40-60, two-column-70-30, two-column-30-70, three-column-equal, three-column-wide-center, three-column-wide-outer, four-column-equal, five-column-equal
+**Two-Column (6):** two-column-50-50, two-column-60-40, two-column-40-60, two-column-70-30, two-column-30-70, two-column-text
 
-**Image-Heavy (9):** image-overlay-center, image-overlay-top-left, image-overlay-top-right, image-overlay-bottom-left, image-overlay-bottom-right, image-overlay-center-bottom, image-collage-featured-left, image-collage-featured-right, image-collage-featured-center
+**Stats (3):** stats-2-col, stats-3-col, stats-4-col
 
-**Advanced Layouts (14):** zigzag-2-rows, zigzag-3-rows, zigzag-4-rows, split-background, product-card-image-top, product-card-image-left, badge-overlay-corner, badge-overlay-center, feature-grid-2-items, feature-grid-3-items, feature-grid-4-items, feature-grid-6-items, comparison-table-2-col, comparison-table-3-col
+**Advanced (4):** image-overlay, card-centered, compact-image-text, magazine-feature
+
+NOTE: These are the ONLY implemented layouts with full renderer and factory support. Do not use variations not listed here.
 
 ## Layout Selection Guide
 
-**Product Launches:** hero-center/hero-image-overlay → stats-3-col/stats-4-col → feature-grid-3-items → zigzag-2-rows
+**Product Launches:** hero-center → stats-3-col or stats-4-col → two-column-60-40
 
-**E-commerce:** hero-image-overlay → image block (columns: 2-3) → product-card-image-top → two-column-50-50 for comparisons
+**E-commerce:** image-overlay → image block (columns: 2-3) → two-column-50-50 for product features
 
-**Newsletters:** hero-center → two-column-60-40/three-column-equal → testimonial-centered
+**Newsletters:** hero-center → two-column-60-40 → stats-3-col for metrics
 
-**Educational:** feature-grid-4-items → comparison-table-2-col → two-column-60-40
+**Educational/Content:** two-column-60-40 → card-centered → compact-image-text for lists
 
-**Social Proof:** testimonial-centered → testimonial-card → stats-3-col
+**Social Proof:** stats-3-col → card-centered with testimonials
 
 **IMPORTANT:** Vary layoutVariation choices within each email. Mix hero styles, column layouts, and grid elements for visual interest.
 

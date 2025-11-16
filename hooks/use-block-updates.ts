@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { EmailBlock } from '@/lib/email/blocks/types';
 
 /**
@@ -22,13 +22,19 @@ export function useBlockContentUpdates<T extends EmailBlock>(
   block: T,
   onUpdate: (blockId: string, updates: Partial<T>) => void
 ) {
+  // Use ref to avoid recreating callback when content changes
+  const blockRef = useRef(block);
+  useEffect(() => {
+    blockRef.current = block;
+  }, [block]);
+  
   return useCallback(
     (updates: Partial<T['content']>) => {
-      onUpdate(block.id, {
-        content: { ...block.content, ...updates },
+      onUpdate(blockRef.current.id, {
+        content: { ...blockRef.current.content, ...updates },
       } as Partial<T>);
     },
-    [block.id, block.content, onUpdate]
+    [onUpdate]
   );
 }
 
@@ -45,13 +51,19 @@ export function useBlockSettingsUpdates<T extends EmailBlock>(
   block: T,
   onUpdate: (blockId: string, updates: Partial<T>) => void
 ) {
+  // Use ref to avoid recreating callback when settings change
+  const blockRef = useRef(block);
+  useEffect(() => {
+    blockRef.current = block;
+  }, [block]);
+  
   return useCallback(
     (updates: Partial<T['settings']>) => {
-      onUpdate(block.id, {
-        settings: { ...block.settings, ...updates },
+      onUpdate(blockRef.current.id, {
+        settings: { ...blockRef.current.settings, ...updates },
       } as Partial<T>);
     },
-    [block.id, block.settings, onUpdate]
+    [onUpdate]
   );
 }
 

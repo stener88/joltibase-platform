@@ -144,6 +144,10 @@ export function BlockCanvas({
                           ? 'outline outline-2 outline-gray-300 outline-offset-[-2px] shadow-lg'
                           : ''
                       }`}
+                      style={{
+                        maxWidth: '100%',
+                        overflow: 'hidden',
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
                         onBlockSelect(block.id);
