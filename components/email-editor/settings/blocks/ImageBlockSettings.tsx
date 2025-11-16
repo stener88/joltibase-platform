@@ -4,6 +4,7 @@ import { ImageBlock } from '@/lib/email/blocks/types';
 import { PaddingInput } from '../../shared/PaddingInput';
 import { AlignmentPicker } from '../../shared/AlignmentPicker';
 import { ColorPicker } from '../../shared/ColorPicker';
+import { useBlockSettingsUpdates } from '@/hooks/use-block-updates';
 
 interface ImageBlockSettingsProps {
   block: ImageBlock;
@@ -14,11 +15,7 @@ export function ImageBlockSettings({
   block,
   onUpdate,
 }: ImageBlockSettingsProps) {
-  const updateSettings = (updates: Partial<typeof block.settings>) => {
-    onUpdate(block.id, {
-      settings: { ...block.settings, ...updates },
-    });
-  };
+  const updateSettings = useBlockSettingsUpdates(block, onUpdate);
 
   // Check if we have multiple images to show grid controls
   const imageCount = block.content?.images?.length || 0;
@@ -61,7 +58,7 @@ export function ImageBlockSettings({
         </label>
         <select
           value={block.settings.aspectRatio || 'auto'}
-          onChange={(e) => updateSettings({ aspectRatio: e.target.value })}
+          onChange={(e) => updateSettings({ aspectRatio: e.target.value as 'auto' | '1:1' | '16:9' | '4:3' | '3:4' | '2:3' })}
           className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589]/20 focus:border-[#e9a589]"
         >
           <option value="auto">Auto (Original)</option>

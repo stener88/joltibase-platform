@@ -2,6 +2,10 @@
 
 import { EmailBlock } from '@/lib/email/blocks/types';
 import { ColorPicker } from '../../shared/ColorPicker';
+import { 
+  useBlockContentUpdates, 
+  useBlockSettingsUpdates 
+} from '@/hooks/use-block-updates';
 
 interface AddressBlockSettingsProps {
   block: EmailBlock;
@@ -9,20 +13,11 @@ interface AddressBlockSettingsProps {
 }
 
 export function AddressBlockSettings({ block, onUpdate }: AddressBlockSettingsProps) {
+  const updateSettings = useBlockSettingsUpdates(block, onUpdate);
+  const updateContent = useBlockContentUpdates(block, onUpdate);
+
   const settings = block.settings || {};
   const content = block.content || {};
-
-  const updateSettings = (newSettings: Partial<typeof settings>) => {
-    onUpdate(block.id, {
-      settings: { ...settings, ...newSettings },
-    });
-  };
-
-  const updateContent = (newContent: Partial<typeof content>) => {
-    onUpdate(block.id, {
-      content: { ...content, ...newContent },
-    });
-  };
 
   return (
     <div className="p-6 space-y-6">

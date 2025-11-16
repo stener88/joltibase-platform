@@ -11,6 +11,7 @@ import { validateCampaignInput, parseStructuredCampaign, type GeneratedCampaign 
 import { enforceRateLimit } from './rate-limit';
 import { saveAIGeneration } from './usage-tracker';
 import { CampaignSchema } from '@/lib/email/blocks/schemas-v2';
+import type { GlobalEmailSettings } from '@/lib/email/blocks/types';
 
 import { renderBlocksToEmail } from '@/lib/email/blocks';
 import { createClient } from '@/lib/supabase/server';
@@ -214,22 +215,34 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
         console.log(`  📝 [GENERATOR] Rendering email ${index + 1}/${generatedCampaign.emails.length}: ${email.subject}`);
         
         // Prepare globalSettings with defaults
-        const globalSettings = email.globalSettings || {
-          backgroundColor: '#f3f4f6',
-          contentBackgroundColor: '#ffffff',
-          maxWidth: 600,
-          fontFamily: 'system-ui',
-          mobileBreakpoint: 480,
+        const globalSettings: GlobalEmailSettings = {
+          backgroundColor: email.globalSettings?.backgroundColor || '#f3f4f6',
+          contentBackgroundColor: email.globalSettings?.contentBackgroundColor || '#ffffff',
+          maxWidth: email.globalSettings?.maxWidth || 600,
+          fontFamily: email.globalSettings?.fontFamily || 'system-ui',
+          mobileBreakpoint: email.globalSettings?.mobileBreakpoint || 480,
         };
         
+        // Clean blocks - remove null layoutVariation
+        const cleanBlocks = email.blocks.map(block => {
+          if (block.layoutVariation === null) {
+            const { layoutVariation, ...blockWithoutLayoutVariation } = block;
+            return blockWithoutLayoutVariation as any;
+          }
+          return block;
+        });
+        
+        // Store clean blocks back on email for later use
+        (email as any).blocks = cleanBlocks;
+        
         // Render blocks to email-safe HTML (synchronous but wrapped for future async support)
-        const html = renderBlocksToEmail(email.blocks, globalSettings);
+        const html = renderBlocksToEmail(cleanBlocks, globalSettings);
         
         // Generate plain text version (simplified)
-        const plainText = email.blocks
-          .filter(block => block.type === 'text' || block.type === 'heading')
+        const plainText = cleanBlocks
+          .filter(block => block.type === 'text')
           .map(block => {
-            if (block.type === 'text' || block.type === 'heading') {
+            if (block.type === 'text') {
               return block.content.text;
             }
             return '';
@@ -242,8 +255,8 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
           previewText: email.previewText,
           html,
           plainText: plainText || email.subject,
-          ctaText: email.blocks.find(b => b.type === 'button')?.content?.text || 'Get Started',
-          ctaUrl: email.blocks.find(b => b.type === 'button')?.content?.url || '{{cta_url}}',
+          ctaText: cleanBlocks.find(b => b.type === 'button')?.content?.text || 'Get Started',
+          ctaUrl: cleanBlocks.find(b => b.type === 'button')?.content?.url || '{{cta_url}}',
         };
       })
     );

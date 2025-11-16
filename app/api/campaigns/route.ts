@@ -1,6 +1,6 @@
-import { createClient } from '@/lib/supabase/server';
-import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { requireAuth } from '@/lib/api/auth';
+import { successResponse, errorResponse, CommonErrors } from '@/lib/api/responses';
 
 // ============================================
 // VALIDATION SCHEMAS
@@ -27,17 +27,11 @@ const CreateCampaignSchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    const supabase = await createClient();
-    
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
     
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const { user, supabase } = authResult;
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);
@@ -83,25 +77,19 @@ export async function GET(request: Request) {
 
     const totalPages = count ? Math.ceil(count / limit) : 0;
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        campaigns: campaigns || [],
-        pagination: {
-          page,
-          limit,
-          total: count || 0,
-          totalPages,
-        },
+    return successResponse({
+      campaigns: campaigns || [],
+      pagination: {
+        page,
+        limit,
+        total: count || 0,
+        totalPages,
       },
     });
 
   } catch (error: any) {
     console.error('❌ [CAMPAIGNS-API] Error:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Failed to fetch campaigns' },
-      { status: 500 }
-    );
+    return errorResponse(error.message || 'Failed to fetch campaigns');
   }
 }
 
@@ -111,31 +99,18 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
-    
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
     
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const { user, supabase } = authResult;
 
     // Parse and validate request body
     const body = await request.json();
     const validationResult = CreateCampaignSchema.safeParse(body);
 
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Validation failed',
-          details: validationResult.error.issues 
-        },
-        { status: 400 }
-      );
+      return CommonErrors.validationError('Validation failed', validationResult.error.issues);
     }
 
     const data = validationResult.data;
@@ -178,17 +153,11 @@ export async function POST(request: Request) {
 
     console.log('✅ [CAMPAIGNS-API] Campaign created:', campaign.id);
 
-    return NextResponse.json({
-      success: true,
-      data: campaign,
-    });
+    return successResponse(campaign);
 
   } catch (error: any) {
     console.error('❌ [CAMPAIGNS-API] Error:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Failed to create campaign' },
-      { status: 500 }
-    );
+    return errorResponse(error.message || 'Failed to create campaign');
   }
 }
 

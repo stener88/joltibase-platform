@@ -7,29 +7,13 @@
 
 import { z } from 'zod';
 import { LayoutVariationSchema } from './schemas';
-
-// ============================================================================
-// Common Schemas
-// ============================================================================
-
-const PaddingSchema = z.object({
-  top: z.number().int().min(0).max(200),
-  bottom: z.number().int().min(0).max(200),
-  left: z.number().int().min(0).max(200),
-  right: z.number().int().min(0).max(200),
-});
-
-const AlignmentSchema = z.enum(['left', 'center', 'right']);
-const HexColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
-const PixelValueSchema = z.string().regex(/^\d+px$/);
-
-const UrlSchema = z.string().refine(
-  (val) => {
-    if (val === '' || /^\{\{.+\}\}$/.test(val)) return true;
-    return z.string().url().safeParse(val).success;
-  },
-  { message: "Must be a valid URL or merge tag {{...}}" }
-);
+import {
+  PaddingSchema,
+  AlignmentSchema,
+  HexColorSchema,
+  PixelValueSchema,
+  UrlOrMergeTagSchema,
+} from './schemas-common';
 
 // ============================================================================
 // Base Block Types (11)

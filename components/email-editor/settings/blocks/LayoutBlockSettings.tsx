@@ -9,6 +9,11 @@ import { PaddingInput } from '../../shared/PaddingInput';
 import { AlignmentPicker } from '../../shared/AlignmentPicker';
 import { ImageUploadModal } from '../../shared/ImageUploadModal';
 import { CollapsibleSection } from '../../shared/CollapsibleSection';
+import { 
+  useBlockContentUpdates, 
+  useBlockSettingsUpdates,
+  useCollapsibleSections 
+} from '@/hooks/use-block-updates';
 
 interface LayoutBlockSettingsProps {
   block: EmailBlock & { layoutVariation?: string };
@@ -18,7 +23,9 @@ interface LayoutBlockSettingsProps {
 
 export function LayoutBlockSettings({ block, onUpdate, campaignId }: LayoutBlockSettingsProps) {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const [openSections, setOpenSections] = useState<Set<string>>(new Set(['layout']));
+  const { isOpen, toggleSection } = useCollapsibleSections(['layout']);
+  const updateSettings = useBlockSettingsUpdates(block, onUpdate);
+  const updateContent = useBlockContentUpdates(block, onUpdate);
   
   const variation = block.layoutVariation || 'unknown';
   const settings = block.settings || {};
@@ -35,30 +42,6 @@ export function LayoutBlockSettings({ block, onUpdate, campaignId }: LayoutBlock
   const supportsImage = hasElement(variation, 'image');
   const supportsFlip = canFlip(variation);
   const supportsItems = hasItems(variation);
-  
-  const toggleSection = (section: string) => {
-    setOpenSections(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(section)) {
-        newSet.delete(section);
-      } else {
-        newSet.add(section);
-      }
-      return newSet;
-    });
-  };
-  
-  const updateSettings = (updates: Partial<typeof block.settings>) => {
-    onUpdate(block.id, {
-      settings: { ...block.settings, ...updates },
-    });
-  };
-  
-  const updateContent = (updates: Partial<typeof block.content>) => {
-    onUpdate(block.id, {
-      content: { ...block.content, ...updates },
-    });
-  };
   
   const handleImageUpload = (url: string) => {
     updateContent({ 
@@ -87,7 +70,7 @@ export function LayoutBlockSettings({ block, onUpdate, campaignId }: LayoutBlock
         {(supportsFlip || supportsHeader || supportsTitle || supportsDivider || supportsParagraph || supportsButton) && (
           <CollapsibleSection 
             title="Layout Options" 
-            isOpen={openSections.has('layout')}
+            isOpen={isOpen('layout')}
             onToggle={() => toggleSection('layout')}
           >
             {/* Flip Toggle */}
@@ -170,7 +153,7 @@ export function LayoutBlockSettings({ block, onUpdate, campaignId }: LayoutBlock
         {/* Content Section */}
         <CollapsibleSection 
           title="Content" 
-          isOpen={openSections.has('content')}
+          isOpen={isOpen('content')}
           onToggle={() => toggleSection('content')}
         >
           {supportsHeader && settings.showHeader !== false && (
@@ -314,7 +297,7 @@ export function LayoutBlockSettings({ block, onUpdate, campaignId }: LayoutBlock
         {/* Styling Section */}
         <CollapsibleSection 
           title="Styling" 
-          isOpen={openSections.has('styling')}
+          isOpen={isOpen('styling')}
           onToggle={() => toggleSection('styling')}
         >
           <div className="space-y-4">

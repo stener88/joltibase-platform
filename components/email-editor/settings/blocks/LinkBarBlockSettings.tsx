@@ -4,6 +4,10 @@ import { EmailBlock } from '@/lib/email/blocks/types';
 import { ColorPicker } from '../../shared/ColorPicker';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2 } from 'lucide-react';
+import { 
+  useBlockContentUpdates, 
+  useBlockSettingsUpdates 
+} from '@/hooks/use-block-updates';
 
 interface LinkBarBlockSettingsProps {
   block: EmailBlock;
@@ -11,21 +15,12 @@ interface LinkBarBlockSettingsProps {
 }
 
 export function LinkBarBlockSettings({ block, onUpdate }: LinkBarBlockSettingsProps) {
+  const updateSettings = useBlockSettingsUpdates(block, onUpdate);
+  const updateContent = useBlockContentUpdates(block, onUpdate);
+
   const settings = block.settings || {};
   const content = block.content || { links: [] };
   const links = content.links || [];
-
-  const updateSettings = (newSettings: Partial<typeof settings>) => {
-    onUpdate(block.id, {
-      settings: { ...settings, ...newSettings },
-    });
-  };
-
-  const updateContent = (newContent: Partial<typeof content>) => {
-    onUpdate(block.id, {
-      content: { ...content, ...newContent },
-    });
-  };
 
   const addLink = () => {
     updateContent({

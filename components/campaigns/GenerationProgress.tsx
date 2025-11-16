@@ -28,24 +28,26 @@ export function GenerationProgress({ prompt }: GenerationProgressProps) {
   }, [currentStep]);
 
   return (
-    <div className="flex flex-col h-full bg-white p-8 border-r border-gray-200">
+    <div className="flex flex-col h-full bg-[#faf9f5] p-8 border-r border-border">
       {/* Header */}
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-black mb-2">
+        <h2 className="text-3xl font-bold text-foreground mb-2">
           Creating your campaign
         </h2>
-       
+        <p className="text-sm text-muted-foreground">AI is crafting your perfect email...</p>
       </div>
 
       {/* Your prompt card */}
-      <div className="bg-gray-50 rounded-lg border border-gray-200 p-6 mb-8">
+      <div className="bg-card rounded-lg border border-border p-6 mb-8 shadow-sm">
         <div className="flex items-start gap-3">
           <div className="mt-1">
-            <Sparkles className="w-5 h-5 text-[#1a1aff]" />
+            <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-accent" />
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-semibold text-black mb-2">Your Prompt</h3>
-            <p className="text-sm text-gray-600 leading-relaxed">
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-card-foreground mb-2">Your Prompt</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
               {prompt}
             </p>
           </div>
@@ -53,7 +55,7 @@ export function GenerationProgress({ prompt }: GenerationProgressProps) {
       </div>
 
       {/* Progress steps */}
-      <div className="space-y-4 flex-1">
+      <div className="space-y-3 flex-1">
         {STEPS.map((step, index) => {
           const isComplete = index < currentStep;
           const isActive = index === currentStep;
@@ -65,20 +67,20 @@ export function GenerationProgress({ prompt }: GenerationProgressProps) {
               key={step.id}
               className={`
                 flex items-center gap-4 p-4 rounded-lg
-                transition-all duration-500
-                ${isActive ? 'bg-gray-50 scale-105' : ''}
-                ${isComplete ? 'bg-white' : ''}
-                ${isPending ? 'opacity-40' : ''}
+                transition-all duration-300
+                ${isActive ? 'bg-accent/5 border border-accent' : ''}
+                ${isComplete ? 'bg-card border border-border' : ''}
+                ${isPending ? 'opacity-40 bg-muted/50' : ''}
               `}
             >
               {/* Icon */}
               <div
                 className={`
-                  flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center
-                  transition-colors duration-300
-                  ${isActive ? 'bg-[#1a1aff] text-white animate-pulse' : ''}
-                  ${isComplete ? 'bg-black text-white' : ''}
-                  ${isPending ? 'bg-gray-200 text-gray-400' : ''}
+                  flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center
+                  transition-all duration-300
+                  ${isActive ? 'bg-accent text-accent-foreground' : ''}
+                  ${isComplete ? 'bg-emerald-100 text-emerald-600' : ''}
+                  ${isPending ? 'bg-muted text-muted-foreground' : ''}
                 `}
               >
                 {isComplete ? (
@@ -94,31 +96,31 @@ export function GenerationProgress({ prompt }: GenerationProgressProps) {
               <div className="flex-1">
                 <p
                   className={`
-                    text-sm font-medium
-                    ${isActive ? 'text-black' : ''}
-                    ${isComplete ? 'text-gray-600' : ''}
-                    ${isPending ? 'text-gray-400' : ''}
+                    text-sm font-medium transition-colors duration-300
+                    ${isActive ? 'text-foreground' : ''}
+                    ${isComplete ? 'text-muted-foreground' : ''}
+                    ${isPending ? 'text-muted-foreground' : ''}
                   `}
                 >
                   {step.label}
                 </p>
+                {isComplete && (
+                  <p className="text-xs text-emerald-600 mt-0.5">✓ Complete</p>
+                )}
               </div>
 
               {/* Status indicator */}
               {isActive && (
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-[#1a1aff] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 bg-[#1a1aff] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 bg-[#1a1aff] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="flex gap-1.5">
+                  <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
               )}
             </div>
           );
         })}
       </div>
-
-      {/* Fun fact or tip */}
-      
     </div>
   );
 }

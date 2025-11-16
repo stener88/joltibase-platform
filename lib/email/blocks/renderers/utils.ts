@@ -119,7 +119,7 @@ export function processAvatarUrl(url: string | null | undefined): string {
 /**
  * Generate a placeholder image data URL (SVG)
  */
-export function getPlaceholderImage(width = EMAIL_DIMENSIONS.MAX_WIDTH, height = PLACEHOLDER_DIMENSIONS.IMAGE.HEIGHT, type: 'logo' | 'image' = 'image'): string {
+export function getPlaceholderImage(width: number = EMAIL_DIMENSIONS.MAX_WIDTH, height: number = PLACEHOLDER_DIMENSIONS.IMAGE.HEIGHT, type: 'logo' | 'image' = 'image'): string {
   const bgColor = type === 'logo' ? PLACEHOLDER_COLORS.LOGO_BG : PLACEHOLDER_COLORS.IMAGE_BG;
   const iconColor = PLACEHOLDER_COLORS.ICON;
   const icon = type === 'logo' 

@@ -76,7 +76,7 @@ export function BlockCanvas({
           style={{
             width: containerWidth,
             backgroundColor: designConfig.backgroundColor,
-            overflow: 'hidden',
+            overflow: 'visible',
           }}
         >
           {/* Scaling wrapper for mobile view */}
@@ -141,7 +141,7 @@ export function BlockCanvas({
                         isSelected
                           ? 'outline outline-2 outline-[#e9a589] outline-offset-[-2px]'
                           : isHovered
-                          ? 'outline outline-2 outline-gray-300 outline-offset-[-2px]'
+                          ? 'outline outline-2 outline-gray-300 outline-offset-[-2px] shadow-lg'
                           : ''
                       }`}
                       onClick={(e) => {

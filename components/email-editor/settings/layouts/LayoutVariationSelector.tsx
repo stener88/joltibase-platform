@@ -40,6 +40,8 @@ export function LayoutVariationSelector({ block, onUpdate }: LayoutVariationSele
   return (
     <div className="p-2 space-y-1 overflow-y-auto max-w-xs mx-auto">
       {allVariations.map((def) => {
+        if (!def) return null;
+        
         // Determine aspect ratio based on layout type to match actual rendering
         let aspectRatio = 'aspect-[3/2]'; // Default landscape
         

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { LogoBlock } from '@/lib/email/blocks/types';
 import { ImageUploadModal } from '../../shared/ImageUploadModal';
+import { useBlockContentUpdates } from '@/hooks/use-block-updates';
 
 interface LogoContentSettingsProps {
   block: LogoBlock;
@@ -12,10 +13,7 @@ interface LogoContentSettingsProps {
 
 export function LogoContentSettings({ block, onUpdate, campaignId }: LogoContentSettingsProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const updateContent = (updates: Partial<typeof block.content>) => {
-    onUpdate(block.id, { content: { ...block.content, ...updates } });
-  };
+  const updateContent = useBlockContentUpdates(block, onUpdate);
 
   const handleUpload = (url: string) => {
     updateContent({ imageUrl: url });

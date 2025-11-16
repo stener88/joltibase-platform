@@ -4,6 +4,7 @@ import { LogoBlock } from '@/lib/email/blocks/types';
 import { ColorPicker } from '../../shared/ColorPicker';
 import { PaddingInput } from '../../shared/PaddingInput';
 import { AlignmentPicker } from '../../shared/AlignmentPicker';
+import { useBlockSettingsUpdates } from '@/hooks/use-block-updates';
 
 interface LogoBlockSettingsProps {
   block: LogoBlock;
@@ -11,9 +12,7 @@ interface LogoBlockSettingsProps {
 }
 
 export function LogoBlockSettings({ block, onUpdate }: LogoBlockSettingsProps) {
-  const updateSettings = (updates: Partial<typeof block.settings>) => {
-    onUpdate(block.id, { settings: { ...block.settings, ...updates } });
-  };
+  const updateSettings = useBlockSettingsUpdates(block, onUpdate);
 
   return (
     <div className="p-6 space-y-6 pb-12">

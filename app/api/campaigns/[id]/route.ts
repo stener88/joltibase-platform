@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase/server';
-import { NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/api/auth';
+import { successResponse, errorResponse, CommonErrors } from '@/lib/api/responses';
 
 // ============================================
 // GET /api/campaigns/[id] - Get single campaign
@@ -10,17 +10,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
     
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const { user, supabase } = authResult;
 
     const campaignId = (await params).id;
     console.log(`📥 [CAMPAIGNS-API] Fetching campaign: ${campaignId} for user: ${user.id}`);
@@ -35,23 +29,14 @@ export async function GET(
 
     if (campaignError) {
       console.error('❌ [CAMPAIGNS-API] Fetch error:', campaignError);
-      return NextResponse.json(
-        { success: false, error: 'Campaign not found' },
-        { status: 404 }
-      );
+      return CommonErrors.notFound('Campaign');
     }
 
-    return NextResponse.json({
-      success: true,
-      data: campaign,
-    });
+    return successResponse(campaign);
 
   } catch (error: any) {
     console.error('❌ [CAMPAIGNS-API] Error:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Failed to fetch campaign' },
-      { status: 500 }
-    );
+    return errorResponse(error.message || 'Failed to fetch campaign');
   }
 }
 
@@ -64,17 +49,11 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
     
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const { user, supabase } = authResult;
 
     const campaignId = (await params).id;
     const updates = await request.json();
@@ -96,17 +75,11 @@ export async function PUT(
       throw updateError;
     }
 
-    return NextResponse.json({
-      success: true,
-      data: campaign,
-    });
+    return successResponse(campaign);
 
   } catch (error: any) {
     console.error('❌ [CAMPAIGNS-API] Error:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Failed to update campaign' },
-      { status: 500 }
-    );
+    return errorResponse(error.message || 'Failed to update campaign');
   }
 }
 
@@ -119,17 +92,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
     
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const { user, supabase } = authResult;
 
     const campaignId = (await params).id;
 
@@ -145,16 +112,10 @@ export async function DELETE(
       throw deleteError;
     }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Campaign deleted',
-    });
+    return successResponse({ message: 'Campaign deleted' });
 
   } catch (error: any) {
     console.error('❌ [CAMPAIGNS-API] Error:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Failed to delete campaign' },
-      { status: 500 }
-    );
+    return errorResponse(error.message || 'Failed to delete campaign');
   }
 }

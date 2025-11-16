@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase/server';
-import { NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/api/auth';
+import { successResponse, errorResponse } from '@/lib/api/responses';
 
 // ============================================
 // GET /api/analytics/campaigns - Campaign Analytics
@@ -7,17 +7,11 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
   try {
-    const supabase = await createClient();
-    
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
     
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const { user, supabase } = authResult;
 
     const { searchParams } = new URL(request.url);
     const days = parseInt(searchParams.get('days') || '30');

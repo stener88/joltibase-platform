@@ -99,7 +99,12 @@ export function useCampaignRefineMutation(campaignId: string) {
         }),
       });
       
-      if (!response.ok) throw new Error('Refinement failed');
+      if (!response.ok) {
+        // Capture the actual error message from the API
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || `Refinement failed (${response.status})`;
+        throw new Error(errorMessage);
+      }
       return response.json();
     },
     

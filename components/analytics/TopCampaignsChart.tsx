@@ -1,6 +1,7 @@
 'use client';
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { CHART_TOOLTIP_STYLE, CHART_GRID_PROPS, CHART_AXIS_STYLE } from './chart-config';
 
 interface TopCampaignsChartProps {
   data: Array<{
@@ -31,27 +32,20 @@ export function TopCampaignsChart({ data, height = 300 }: TopCampaignsChartProps
           layout="vertical"
           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <CartesianGrid {...CHART_GRID_PROPS} />
           <XAxis 
             type="number" 
-            tick={{ fontSize: 12 }}
-            stroke="#999"
+            {...CHART_AXIS_STYLE}
             tickFormatter={(value) => `${value}%`}
           />
           <YAxis 
             dataKey="name" 
             type="category"
-            tick={{ fontSize: 12 }}
-            stroke="#999"
+            {...CHART_AXIS_STYLE}
             width={150}
           />
           <Tooltip 
-            contentStyle={{ 
-              backgroundColor: 'white', 
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              padding: '12px'
-            }}
+            contentStyle={CHART_TOOLTIP_STYLE}
             formatter={(value: any, name: any, props: any) => {
               return [
                 <>

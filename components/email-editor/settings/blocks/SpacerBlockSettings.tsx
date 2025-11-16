@@ -2,6 +2,7 @@
 
 import { SpacerBlock } from '@/lib/email/blocks/types';
 import { ColorPicker } from '../../shared/ColorPicker';
+import { useBlockSettingsUpdates } from '@/hooks/use-block-updates';
 
 interface SpacerBlockSettingsProps {
   block: SpacerBlock;
@@ -9,9 +10,7 @@ interface SpacerBlockSettingsProps {
 }
 
 export function SpacerBlockSettings({ block, onUpdate }: SpacerBlockSettingsProps) {
-  const updateSettings = (updates: Partial<typeof block.settings>) => {
-    onUpdate(block.id, { settings: { ...block.settings, ...updates } });
-  };
+  const updateSettings = useBlockSettingsUpdates(block, onUpdate);
 
   return (
     <div className="p-6 space-y-6 pb-12">

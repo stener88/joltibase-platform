@@ -1,6 +1,12 @@
 'use client';
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { 
+  CHART_TOOLTIP_STYLE, 
+  CHART_GRID_PROPS, 
+  CHART_AXIS_STYLE,
+  formatChartDate 
+} from './chart-config';
 
 interface PerformanceChartProps {
   data: Array<{
@@ -13,39 +19,26 @@ interface PerformanceChartProps {
 }
 
 export function PerformanceChart({ data, height = 300 }: PerformanceChartProps) {
-  // Format date for display
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
   const formattedData = data.map(item => ({
     ...item,
-    dateDisplay: formatDate(item.date),
+    dateDisplay: formatChartDate(item.date),
   }));
 
   return (
     <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={formattedData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <CartesianGrid {...CHART_GRID_PROPS} />
           <XAxis 
             dataKey="dateDisplay" 
-            tick={{ fontSize: 12 }}
-            stroke="#999"
+            {...CHART_AXIS_STYLE}
           />
           <YAxis 
-            tick={{ fontSize: 12 }}
-            stroke="#999"
+            {...CHART_AXIS_STYLE}
             tickFormatter={(value) => `${value}%`}
           />
           <Tooltip 
-            contentStyle={{ 
-              backgroundColor: 'white', 
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              padding: '12px'
-            }}
+            contentStyle={CHART_TOOLTIP_STYLE}
             formatter={(value: any) => [`${value.toFixed(1)}%`, '']}
           />
           <Legend />

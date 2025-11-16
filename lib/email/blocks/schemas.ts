@@ -6,6 +6,13 @@
  */
 
 import { z } from 'zod';
+import {
+  PaddingSchema,
+  AlignmentSchema,
+  HexColorSchema,
+  PixelValueSchema,
+  UrlOrMergeTagSchema,
+} from './schemas-common';
 
 // ============================================================================
 // Layout Variation Schema
@@ -88,40 +95,6 @@ export const LayoutVariationSchema = z.enum([
   'container-grid',
   'container-flex',
 ]);
-
-// ============================================================================
-// Common Schemas
-// ============================================================================
-
-const PaddingSchema = z.object({
-  top: z.number().int().min(0).max(200),
-  bottom: z.number().int().min(0).max(200),
-  left: z.number().int().min(0).max(200),
-  right: z.number().int().min(0).max(200),
-});
-
-const AlignmentSchema = z.enum(['left', 'center', 'right']);
-
-const HexColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
-
-const PixelValueSchema = z.string().regex(/^\d+px$/);
-
-// URL that accepts valid URLs or merge tag placeholders
-const UrlOrMergeTagSchema = z.string().refine(
-  (val) => {
-    // Allow empty string (for deleted/not set images)
-    if (val === '') {
-      return true;
-    }
-    // Allow merge tag pattern: {{anything}}
-    if (/^\{\{.+\}\}$/.test(val)) {
-      return true;
-    }
-    // Otherwise validate as proper URL
-    return z.string().url().safeParse(val).success;
-  },
-  { message: "Must be a valid URL or merge tag placeholder like {{image_url}}" }
-);
 
 // ============================================================================
 // 1. Logo Block

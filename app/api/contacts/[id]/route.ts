@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase/server';
-import { NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/api/auth';
+import { successResponse, errorResponse, CommonErrors } from '@/lib/api/responses';
 import { z } from 'zod';
 
 // ============================================
@@ -7,7 +7,7 @@ import { z } from 'zod';
 // ============================================
 
 const UpdateContactSchema = z.object({
-  email: z.string().email('Invalid email format').optional(),
+  email: z.string().email().optional(),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   status: z.enum(['subscribed', 'unsubscribed', 'bounced', 'complained']).optional(),
@@ -25,74 +25,56 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
     
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const { user, supabase } = authResult;
 
-    const { id: contactId } = await params;
+    const contactId = (await params).id;
+    console.log(`📥 [CONTACTS-API] Fetching contact: ${contactId} for user: ${user.id}`);
 
-    // Fetch contact with list memberships
-    const { data: contact, error: fetchError } = await supabase
+    // Get contact with list memberships
+    const { data: contact, error: contactError } = await supabase
       .from('contacts')
-      .select(`
-        *,
-        contact_lists(list_id, lists(id, name))
-      `)
+      .select('*, contact_lists(list_id, lists(id, name))')
       .eq('id', contactId)
       .eq('user_id', user.id)
       .single();
 
-    if (fetchError) {
-      if (fetchError.code === 'PGRST116') {
-        return NextResponse.json(
-          { success: false, error: 'Contact not found' },
-          { status: 404 }
-        );
-      }
-      console.error('❌ [CONTACTS-API] Fetch error:', fetchError);
-      throw fetchError;
+    if (contactError) {
+      console.error('❌ [CONTACTS-API] Fetch error:', contactError);
+      return CommonErrors.notFound('Contact');
     }
 
-    // Fetch email history for this contact
-    const { data: emails, error: emailsError } = await supabase
-      .from('emails')
-      .select('id, subject, status, sent_at, opened_at, clicked_at, campaign_id, campaigns(name)')
-      .eq('contact_id', contactId)
-      .order('sent_at', { ascending: false })
-      .limit(50);
-
-    if (emailsError) {
-      console.error('❌ [CONTACTS-API] Email history error:', emailsError);
-      // Don't fail, just log
-    }
-
-    // Transform contact data
+    // Transform the data to flatten lists
     const transformedContact = {
       ...contact,
       lists: contact.contact_lists?.map((cl: any) => cl.lists).filter(Boolean) || [],
-      emailHistory: emails || [],
-      contact_lists: undefined, // Remove the raw join data
+      contact_lists: undefined,
     };
 
-    return NextResponse.json({
-      success: true,
-      data: transformedContact,
+    // Get activity history
+    const { data: activities, error: activityError } = await supabase
+      .from('contact_activities')
+      .select('*')
+      .eq('contact_id', contactId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (activityError) {
+      console.error('❌ [CONTACTS-API] Activity fetch error:', activityError);
+      // Don't fail the request, just return empty activities
+    }
+
+    return successResponse({
+      ...transformedContact,
+      activities: activities || [],
     });
 
   } catch (error: any) {
     console.error('❌ [CONTACTS-API] Error:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Failed to fetch contact' },
-      { status: 500 }
-    );
+    return errorResponse(error.message || 'Failed to fetch contact');
   }
 }
 
@@ -105,55 +87,26 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
     
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const { user, supabase } = authResult;
 
-    const { id: contactId } = await params;
-
-    // Parse and validate request body
+    const contactId = (await params).id;
     const body = await request.json();
+    
+    // Validate input
     const validationResult = UpdateContactSchema.safeParse(body);
-
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Validation failed',
-          details: validationResult.error.issues 
-        },
-        { status: 400 }
-      );
+      return CommonErrors.validationError('Validation failed', validationResult.error.issues);
     }
 
     const { email, firstName, lastName, status, tags, metadata, listIds } = validationResult.data;
 
-    // Check if contact exists and belongs to user
-    const { data: existing, error: checkError } = await supabase
-      .from('contacts')
-      .select('id, email, status')
-      .eq('id', contactId)
-      .eq('user_id', user.id)
-      .single();
-
-    if (checkError || !existing) {
-      return NextResponse.json(
-        { success: false, error: 'Contact not found' },
-        { status: 404 }
-      );
-    }
-
     // If email is being changed, check for duplicates
-    if (email && email.toLowerCase() !== existing.email.toLowerCase()) {
-      const { data: duplicate, error: dupError } = await supabase
+    if (email) {
+      const { data: existing } = await supabase
         .from('contacts')
         .select('id')
         .eq('user_id', user.id)
@@ -161,32 +114,23 @@ export async function PUT(
         .neq('id', contactId)
         .maybeSingle();
 
-      if (dupError) {
-        console.error('❌ [CONTACTS-API] Duplicate check error:', dupError);
-        throw dupError;
-      }
-
-      if (duplicate) {
-        return NextResponse.json(
-          { success: false, error: 'Another contact with this email already exists' },
-          { status: 409 }
-        );
+      if (existing) {
+        return errorResponse('Another contact with this email already exists', 409, 'DUPLICATE_EMAIL');
       }
     }
 
     // Build update object
-    const updates: any = {};
+    const updates: any = {
+      updated_at: new Date().toISOString(),
+    };
+
     if (email !== undefined) updates.email = email.toLowerCase();
     if (firstName !== undefined) updates.first_name = firstName || null;
     if (lastName !== undefined) updates.last_name = lastName || null;
     if (status !== undefined) {
       updates.status = status;
-      // Track status changes
-      if (status === 'subscribed' && existing.status !== 'subscribed') {
+      if (status === 'subscribed' && !updates.subscribed_at) {
         updates.subscribed_at = new Date().toISOString();
-        updates.unsubscribed_at = null;
-      } else if (status === 'unsubscribed' && existing.status !== 'unsubscribed') {
-        updates.unsubscribed_at = new Date().toISOString();
       }
     }
     if (tags !== undefined) updates.tags = tags;
@@ -206,9 +150,9 @@ export async function PUT(
       throw updateError;
     }
 
-    // Update list memberships if specified
+    // Update list memberships if provided
     if (listIds !== undefined) {
-      // Remove existing memberships
+      // Remove all existing memberships
       await supabase
         .from('contact_lists')
         .delete()
@@ -216,14 +160,14 @@ export async function PUT(
 
       // Add new memberships
       if (listIds.length > 0) {
-        const listMemberships = listIds.map(listId => ({
+        const memberships = listIds.map(listId => ({
           contact_id: contactId,
           list_id: listId,
         }));
 
         const { error: listError } = await supabase
           .from('contact_lists')
-          .insert(listMemberships);
+          .insert(memberships);
 
         if (listError) {
           console.error('❌ [CONTACTS-API] List membership error:', listError);
@@ -231,19 +175,12 @@ export async function PUT(
       }
     }
 
-    console.log('✅ [CONTACTS-API] Contact updated:', contactId);
-
-    return NextResponse.json({
-      success: true,
-      data: contact,
-    });
+    console.log('✅ [CONTACTS-API] Contact updated:', contact.id);
+    return successResponse(contact);
 
   } catch (error: any) {
     console.error('❌ [CONTACTS-API] Error:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Failed to update contact' },
-      { status: 500 }
-    );
+    return errorResponse(error.message || 'Failed to update contact');
   }
 }
 
@@ -256,21 +193,15 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
     
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const { user, supabase } = authResult;
 
-    const { id: contactId } = await params;
+    const contactId = (await params).id;
 
-    // Delete contact (cascade will handle contact_lists and emails)
+    // Delete contact (cascade will handle related records)
     const { error: deleteError } = await supabase
       .from('contacts')
       .delete()
@@ -283,18 +214,10 @@ export async function DELETE(
     }
 
     console.log('✅ [CONTACTS-API] Contact deleted:', contactId);
-
-    return NextResponse.json({
-      success: true,
-      message: 'Contact deleted successfully',
-    });
+    return successResponse({ message: 'Contact deleted successfully' });
 
   } catch (error: any) {
     console.error('❌ [CONTACTS-API] Error:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Failed to delete contact' },
-      { status: 500 }
-    );
+    return errorResponse(error.message || 'Failed to delete contact');
   }
 }
-

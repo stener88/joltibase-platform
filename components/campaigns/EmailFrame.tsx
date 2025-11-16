@@ -136,7 +136,7 @@ export function EmailFrame({
                         data-block-id={block.id}
                         data-block-type={block.type}
                         onClick={(e) => handleBlockClick(e, block)}
-                        className="relative hover:outline hover:outline-2 hover:outline-[#e9a589]/50 hover:outline-dashed outline-offset-[-2px] transition-all cursor-pointer"
+                        className="relative hover:outline hover:outline-2 hover:outline-[#e9a589]/50 hover:outline-dashed outline-offset-[-2px] hover:shadow-md transition-all cursor-pointer"
                       >
                         <div
                           dangerouslySetInnerHTML={{
@@ -160,6 +160,7 @@ export function EmailFrame({
               return (
                 <div
                   key={block.id}
+                  className="hover:shadow-lg transition-shadow duration-200"
                   dangerouslySetInnerHTML={{
                     __html: renderBlock(block, { globalSettings: config }),
                   }}

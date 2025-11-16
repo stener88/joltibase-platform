@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/api/auth';
+import { errorResponse, CommonErrors } from '@/lib/api/responses';
 import { generateCompletion, type AIProvider } from '@/lib/ai/client';
 import { 
-  EmailBlockSchema, 
   GlobalEmailSettingsSchema,
-  validateBlocks,
   type EmailBlockType,
   type GlobalEmailSettingsType 
 } from '@/lib/email/blocks/schemas';
+import { BlockSchema } from '@/lib/email/blocks/schemas-v2'; // Flexible schema for input validation
 import { renderBlocksToEmail } from '@/lib/email/blocks';
 import { z } from 'zod';
 
@@ -22,14 +22,14 @@ import { z } from 'zod';
  * with the original design and brand kit.
  */
 
-// Request validation schema
+// Request validation schema (use flexible schema for input)
 const RefineCampaignInputSchema = z.object({
   campaignId: z.string().uuid(),
   message: z.string().min(1).max(500),
   currentEmail: z.object({
     subject: z.string(),
     previewText: z.string().optional(),
-    blocks: z.array(EmailBlockSchema), // Block-based structure
+    blocks: z.array(BlockSchema), // Use flexible BlockSchema for existing blocks
     globalSettings: GlobalEmailSettingsSchema.partial(), // Allow partial settings
   }),
 });
@@ -37,12 +37,12 @@ const RefineCampaignInputSchema = z.object({
 type RefineCampaignInput = z.infer<typeof RefineCampaignInputSchema>;
 
 /**
- * Schema for AI refine response
+ * Schema for AI refine response (use flexible schema for AI output)
  */
 const RefineResponseSchema = z.object({
   subject: z.string().min(1).max(100),
   previewText: z.string().max(150).optional(),
-  blocks: z.array(EmailBlockSchema).min(1),
+  blocks: z.array(BlockSchema).min(1), // Use flexible BlockSchema for AI-generated blocks
   globalSettings: GlobalEmailSettingsSchema.optional(),
   changes: z.array(z.string()).optional(), // Technical tracking
   conversationalMessage: z.string().min(20).max(500), // Natural, colleague-like response for chat UI
@@ -78,34 +78,6 @@ interface ErrorResponse {
   success: false;
   error: string;
   code: string;
-}
-
-/**
- * Validate refined blocks structure
- */
-function validateRefinedBlocks(blocks: unknown[]): {
-  valid: boolean;
-  errors?: string[];
-} {
-  try {
-    const validation = validateBlocks(blocks);
-    if (!validation.success) {
-      // validation.error can be a ZodError or string
-      const errorMsg = typeof validation.error === 'string' 
-        ? validation.error 
-        : validation.error?.message || 'Validation failed';
-      return {
-        valid: false,
-        errors: [errorMsg],
-      };
-    }
-    return { valid: true };
-  } catch (error) {
-    return {
-      valid: false,
-      errors: [error instanceof Error ? error.message : 'Unknown validation error'],
-    };
-  }
 }
 
 /**
@@ -388,24 +360,10 @@ export async function POST(request: NextRequest) {
   
   try {
     // 1. Check authentication
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      console.error('🔐 [REFINE-API] Authentication failed:', authError);
-      return NextResponse.json<ErrorResponse>(
-        {
-          success: false,
-          error: 'Authentication required',
-          code: 'UNAUTHORIZED',
-        },
-        { status: 401 }
-      );
-    }
-
+    const authResult = await requireAuth();
+    if (authResult instanceof NextResponse) return authResult;
+    
+    const { user, supabase } = authResult;
     console.log('✅ [REFINE-API] User authenticated:', user.id);
 
     // 2. Parse and validate request body
@@ -418,14 +376,7 @@ export async function POST(request: NextRequest) {
       console.log('✅ [REFINE-API] Input validated');
     } catch (error) {
       console.error('❌ [REFINE-API] Validation error:', error);
-      return NextResponse.json<ErrorResponse>(
-        {
-          success: false,
-          error: 'Invalid request data. Ensure you are sending blocks array and globalSettings.',
-          code: 'VALIDATION_ERROR',
-        },
-        { status: 400 }
-      );
+      return CommonErrors.validationError('Invalid request data. Ensure you are sending blocks array and globalSettings.');
     }
 
     // 3. Verify campaign ownership (check campaigns table for both AI-generated and manually created campaigns)
@@ -528,22 +479,7 @@ Be conversational, enthusiastic, and helpful - like you're brainstorming with a 
       );
     }
 
-    // 7. Validate blocks structure (Structured Outputs guarantees compliance, but double-check)
-    console.log('🔍 [REFINE-API] Validating refined blocks...');
-    const blockValidation = validateRefinedBlocks(aiResponse.blocks);
-    
-    if (!blockValidation.valid) {
-      console.error('❌ [REFINE-API] Block validation failed:', blockValidation.errors);
-      return NextResponse.json<ErrorResponse>(
-        {
-          success: false,
-          error: 'Invalid block structure returned by AI: ' + (blockValidation.errors?.join(', ') || 'Unknown error'),
-          code: 'BLOCK_VALIDATION_ERROR',
-        },
-        { status: 400 }
-      );
-    }
-
+    // 7. Blocks already validated by RefineResponseSchema (using flexible BlockSchema)
     console.log('✅ [REFINE-API] Blocks validated successfully');
 
     // 8. Render blocks to HTML

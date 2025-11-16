@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase/server';
-import { NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/api/auth';
+import { successResponse, errorResponse } from '@/lib/api/responses';
 
 // ============================================
 // GET /api/lists - Fetch user's lists
@@ -7,17 +7,11 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
   try {
-    const supabase = await createClient();
-    
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
     
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const { user, supabase } = authResult;
 
     // Fetch all lists for user
     const { data: lists, error: fetchError } = await supabase
@@ -31,17 +25,10 @@ export async function GET(request: Request) {
       throw fetchError;
     }
 
-    return NextResponse.json({
-      success: true,
-      data: lists || [],
-    });
+    return successResponse(lists || []);
 
   } catch (error: any) {
     console.error('❌ [LISTS-API] Error:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Failed to fetch lists' },
-      { status: 500 }
-    );
+    return errorResponse(error.message || 'Failed to fetch lists');
   }
 }
-

@@ -18,19 +18,12 @@ import { LinkBarBlockSettings } from './blocks/LinkBarBlockSettings';
 import { AddressBlockSettings } from './blocks/AddressBlockSettings';
 import { LayoutBlockSettings } from './blocks/LayoutBlockSettings';
 import { LayoutVariationSelector } from './layouts/LayoutVariationSelector';
-import { SectionLibraryPanel } from './SectionLibraryPanel';
-
-// Layout variation settings (deprecated - now using LayoutBlockSettings)
-import { HeroCenterSettings } from './layouts/HeroCenterSettings';
-import { Stats3ColSettings } from './layouts/Stats3ColSettings';
-import { TwoColumn5050Settings } from './layouts/TwoColumn5050Settings';
 
 interface BlockSettingsPanelProps {
   selectedBlock: EmailBlock | null;
   designConfig: GlobalEmailSettings;
   onUpdateBlock: (blockId: string, updates: Partial<EmailBlock>) => void;
   onUpdateDesignConfig: (updates: Partial<GlobalEmailSettings>) => void;
-  onInsertSection?: (sectionId: string) => void;
   campaignId?: string;
 }
 
@@ -39,7 +32,6 @@ export function BlockSettingsPanel({
   designConfig,
   onUpdateBlock,
   onUpdateDesignConfig,
-  onInsertSection,
   campaignId,
 }: BlockSettingsPanelProps) {
   // Set default tab based on block type
@@ -165,32 +157,12 @@ export function BlockSettingsPanel({
       },
     ];
   } else {
-    // Other blocks have Block, Layout, and Link tabs
+    // Other blocks only have Block tab (removed legacy Layout/Link tabs)
     tabs = [
       {
         id: 'block',
         label: 'Block',
         content: renderBlockSettings(),
-      },
-      {
-        id: 'layout',
-        label: 'Layout',
-        content: onInsertSection ? (
-          <SectionLibraryPanel onInsertSection={onInsertSection} />
-        ) : (
-          <div className="p-6 space-y-4">
-            <p className="text-sm text-gray-500">Section library unavailable</p>
-          </div>
-        ),
-      },
-      {
-        id: 'link',
-        label: 'Link',
-        content: (
-          <div className="p-6 space-y-4">
-            <p className="text-sm text-gray-500">Link settings coming soon</p>
-          </div>
-        ),
       },
     ];
   }

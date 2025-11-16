@@ -4,6 +4,10 @@ import { FooterBlock } from '@/lib/email/blocks/types';
 import { ColorPicker } from '../../shared/ColorPicker';
 import { PaddingInput } from '../../shared/PaddingInput';
 import { AlignmentPicker } from '../../shared/AlignmentPicker';
+import { 
+  useBlockContentUpdates, 
+  useBlockSettingsUpdates 
+} from '@/hooks/use-block-updates';
 
 interface FooterBlockSettingsProps {
   block: FooterBlock;
@@ -11,13 +15,8 @@ interface FooterBlockSettingsProps {
 }
 
 export function FooterBlockSettings({ block, onUpdate }: FooterBlockSettingsProps) {
-  const updateContent = (updates: Partial<typeof block.content>) => {
-    onUpdate(block.id, { content: { ...block.content, ...updates } });
-  };
-
-  const updateSettings = (updates: Partial<typeof block.settings>) => {
-    onUpdate(block.id, { settings: { ...block.settings, ...updates } });
-  };
+  const updateContent = useBlockContentUpdates(block, onUpdate);
+  const updateSettings = useBlockSettingsUpdates(block, onUpdate);
 
   return (
     <div className="p-6 space-y-6">

@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase/server';
-import { NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/api/auth';
+import { successResponse, errorResponse } from '@/lib/api/responses';
 
 // ============================================
 // GET /api/analytics/overview - Overview Analytics
@@ -7,17 +7,11 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
   try {
-    const supabase = await createClient();
-    
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
     
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const { user, supabase } = authResult;
 
     const { searchParams } = new URL(request.url);
     const days = parseInt(searchParams.get('days') || '30');
@@ -126,38 +120,32 @@ export async function GET(request: Request) {
       .sort((a, b) => a.engagement_score - b.engagement_score)
       .slice(0, 5);
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        overview: {
-          totalSent,
-          totalDelivered,
-          totalOpened,
-          totalClicked,
-          totalBounced,
-          openRate,
-          clickRate,
-          bounceRate,
-          deliveryRate,
-          campaignCount: campaigns?.length || 0,
-        },
-        timeSeries: timeSeriesWithRates,
-        topCampaigns,
-        worstCampaigns,
-        dateRange: {
-          start: startDate.toISOString(),
-          end: endDate.toISOString(),
-          days,
-        },
+    return successResponse({
+      overview: {
+        totalSent,
+        totalDelivered,
+        totalOpened,
+        totalClicked,
+        totalBounced,
+        openRate,
+        clickRate,
+        bounceRate,
+        deliveryRate,
+        campaignCount: campaigns?.length || 0,
+      },
+      timeSeries: timeSeriesWithRates,
+      topCampaigns,
+      worstCampaigns,
+      dateRange: {
+        start: startDate.toISOString(),
+        end: endDate.toISOString(),
+        days,
       },
     });
 
   } catch (error: any) {
     console.error('❌ [ANALYTICS-OVERVIEW] Error:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Failed to fetch analytics' },
-      { status: 500 }
-    );
+    return errorResponse(error.message || 'Failed to fetch analytics');
   }
 }
 

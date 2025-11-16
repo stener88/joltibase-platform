@@ -1,11 +1,15 @@
 'use client';
 
-import { useState } from 'react';
 import { SocialLinksBlock } from '@/lib/email/blocks/types';
 import { PaddingInput } from '../../shared/PaddingInput';
 import { AlignmentPicker } from '../../shared/AlignmentPicker';
 import { ColorPicker } from '../../shared/ColorPicker';
 import { CollapsibleSection } from '../../shared/CollapsibleSection';
+import { 
+  useBlockContentUpdates, 
+  useBlockSettingsUpdates,
+  useCollapsibleSections 
+} from '@/hooks/use-block-updates';
 
 interface SocialLinksBlockSettingsProps {
   block: SocialLinksBlock;
@@ -13,27 +17,9 @@ interface SocialLinksBlockSettingsProps {
 }
 
 export function SocialLinksBlockSettings({ block, onUpdate }: SocialLinksBlockSettingsProps) {
-  const [openSections, setOpenSections] = useState<Set<string>>(new Set(['content']));
-
-  const toggleSection = (section: string) => {
-    setOpenSections(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(section)) {
-        newSet.delete(section);
-      } else {
-        newSet.add(section);
-      }
-      return newSet;
-    });
-  };
-
-  const updateContent = (updates: Partial<typeof block.content>) => {
-    onUpdate(block.id, { content: { ...block.content, ...updates } });
-  };
-
-  const updateSettings = (updates: Partial<typeof block.settings>) => {
-    onUpdate(block.id, { settings: { ...block.settings, ...updates } });
-  };
+  const { isOpen, toggleSection } = useCollapsibleSections(['content']);
+  const updateContent = useBlockContentUpdates(block, onUpdate);
+  const updateSettings = useBlockSettingsUpdates(block, onUpdate);
 
   const updateLink = (index: number, field: 'platform' | 'url', value: string) => {
     const newLinks = [...block.content.links];
@@ -57,7 +43,7 @@ export function SocialLinksBlockSettings({ block, onUpdate }: SocialLinksBlockSe
     <div className="pb-12">
       <CollapsibleSection 
         title="Content" 
-        isOpen={openSections.has('content')}
+        isOpen={isOpen('content')}
         onToggle={() => toggleSection('content')}
       >
         <div className="p-6 space-y-4">
@@ -105,7 +91,7 @@ export function SocialLinksBlockSettings({ block, onUpdate }: SocialLinksBlockSe
 
       <CollapsibleSection 
         title="Styling" 
-        isOpen={openSections.has('styling')}
+        isOpen={isOpen('styling')}
         onToggle={() => toggleSection('styling')}
       >
         <div className="p-6 space-y-4">

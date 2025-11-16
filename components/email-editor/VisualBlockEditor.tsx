@@ -7,7 +7,6 @@ import { createDefaultBlock, createLayoutBlock, createLinkBarBlock, createAddres
 import { BlockCanvas } from './BlockCanvas';
 import { BlockSettingsPanel } from './settings/BlockSettingsPanel';
 import { BlockPaletteModal } from './BlockPaletteModal';
-import { insertSectionRelativeToBlock } from '@/lib/email/sections/inserter';
 
 type DeviceMode = 'desktop' | 'mobile';
 
@@ -217,39 +216,6 @@ export function VisualBlockEditor({
     [blocks, triggerSave]
   );
 
-  // Insert section template
-  const insertSection = useCallback(
-    (sectionId: string) => {
-      const targetBlockId = selectedBlockId || blocks[blocks.length - 1]?.id;
-      
-      if (!targetBlockId) {
-        console.error('No target block found for section insertion');
-        return;
-      }
-      
-      const result = insertSectionRelativeToBlock(
-        sectionId,
-        blocks,
-        targetBlockId,
-        'after'
-      );
-      
-      if (result.success && result.blocks) {
-        setBlocks(result.blocks);
-        
-        // Select the first block of the newly inserted section
-        if (result.insertedBlockIds && result.insertedBlockIds.length > 0) {
-          setSelectedBlockId(result.insertedBlockIds[0]);
-        }
-        
-        triggerSave();
-      } else {
-        console.error('Failed to insert section:', result.error);
-      }
-    },
-    [blocks, selectedBlockId, triggerSave]
-  );
-
   // Update design config
   const updateDesignConfig = useCallback(
     (updates: Partial<GlobalEmailSettings>) => {
@@ -268,7 +234,6 @@ export function VisualBlockEditor({
           designConfig={designConfig}
           onUpdateBlock={updateBlock}
           onUpdateDesignConfig={updateDesignConfig}
-          onInsertSection={insertSection}
           campaignId={campaignId}
         />
       </div>

@@ -188,6 +188,7 @@ export function getLayoutVariationDisplayName(variation: LayoutVariation): strin
     'five-column-equal': 'Five Columns Equal',
     
     // Image layouts
+    'image-overlay': 'Image Overlay',
     'image-overlay-center': 'Image Overlay Center',
     'image-overlay-top-left': 'Image Overlay Top Left',
     'image-overlay-top-right': 'Image Overlay Top Right',
@@ -213,6 +214,10 @@ export function getLayoutVariationDisplayName(variation: LayoutVariation): strin
     'feature-grid-6-items': 'Feature Grid (6 Items)',
     'comparison-table-2-col': 'Comparison Table (2 Columns)',
     'comparison-table-3-col': 'Comparison Table (3 Columns)',
+    'card-centered': 'Card Centered',
+    'compact-image-text': 'Compact Image Text',
+    'two-column-text': 'Two Column Text',
+    'magazine-feature': 'Magazine Feature',
     
     // Interactive
     'carousel-2-slides': 'Carousel (2 Slides)',

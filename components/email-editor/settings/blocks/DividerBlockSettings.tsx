@@ -3,6 +3,10 @@
 import { DividerBlock } from '@/lib/email/blocks/types';
 import { ColorPicker } from '../../shared/ColorPicker';
 import { PaddingInput } from '../../shared/PaddingInput';
+import { 
+  useBlockContentUpdates, 
+  useBlockSettingsUpdates 
+} from '@/hooks/use-block-updates';
 
 interface DividerBlockSettingsProps {
   block: DividerBlock;
@@ -10,13 +14,8 @@ interface DividerBlockSettingsProps {
 }
 
 export function DividerBlockSettings({ block, onUpdate }: DividerBlockSettingsProps) {
-  const updateContent = (updates: Partial<typeof block.content>) => {
-    onUpdate(block.id, { content: { ...block.content, ...updates } });
-  };
-
-  const updateSettings = (updates: Partial<typeof block.settings>) => {
-    onUpdate(block.id, { settings: { ...block.settings, ...updates } });
-  };
+  const updateContent = useBlockContentUpdates(block, onUpdate);
+  const updateSettings = useBlockSettingsUpdates(block, onUpdate);
 
   return (
     <div className="p-6 space-y-6">
