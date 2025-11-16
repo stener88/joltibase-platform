@@ -21,6 +21,39 @@ import { createClient } from '@/lib/supabase/server';
 // ============================================================================
 
 /**
+ * Calculate optimal token limit based on campaign complexity
+ */
+function calculateTokenLimit(input: {
+  promptLength: number;
+  campaignType?: string;
+  emailCount?: number;
+}): number {
+  const { promptLength, campaignType, emailCount = 1 } = input;
+  
+  // Base token estimate - increased to account for few-shot examples in system prompt
+  let tokens = 5000; // Increased from 3000 to handle larger responses
+  
+  // Adjust for prompt length (longer prompts = more complex campaigns)
+  if (promptLength > 200) {
+    tokens += 1500; // Complex prompt
+  }
+  if (promptLength > 400) {
+    tokens += 1500; // Very complex prompt
+  }
+  
+  // Adjust for campaign type
+  if (campaignType === 'sequence') {
+    tokens += 2000; // Sequences need more tokens for multiple emails
+  }
+  
+  // Adjust for email count
+  tokens += (emailCount - 1) * 1500; // Additional tokens per email
+  
+  // Cap at generous maximum to ensure we never truncate responses
+  return Math.min(tokens, 20000); // Allow up to 20K for complex campaigns
+}
+
+/**
  * Robust JSON parser with automatic error fixing
  * Handles common issues from LLM-generated JSON
  */
@@ -162,12 +195,20 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
       
     });
     
-    // 5. Get Zod Schema for post-generation validation
+    // 5. Calculate optimal token limit based on campaign complexity
+    const maxTokens = calculateTokenLimit({
+      promptLength: validatedInput.prompt.length,
+      campaignType: validatedInput.campaignType,
+      emailCount: 1,
+    });
+    console.log(`📊 [GENERATOR] Dynamic token limit: ${maxTokens} (based on complexity)`);
+    
+    // 6. Get Zod Schema for post-generation validation
     // Note: Gemini API doesn't support flexible objects in responseSchema
     const zodSchema = CampaignSchema;
     console.log('📐 [GENERATOR] Prompt-based generation with post-validation (Gemini API limitation)');
     
-    // 6. Call AI API (Gemini primary, OpenAI fallback)
+    // 7. Call AI API (Gemini primary, OpenAI fallback)
     const provider: AIProvider = (process.env.AI_PROVIDER as AIProvider) || 'gemini';
     console.log(`🤖 [GENERATOR] Using ${provider.toUpperCase()} (33x cheaper, 2-4x faster)`);
     
@@ -179,8 +220,8 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
       {
         provider,
         model: provider === 'gemini' ? 'gemini-2.5-flash' : 'gpt-4o',
-        temperature: 0.9, // Increased from 0.7 for more structural diversity
-        maxTokens: 8192,
+        temperature: 0.7, // Optimized for better consistency and schema compliance
+        maxTokens,
         zodSchema, // Passed for OpenAI fallback
         retries: 3,
       }
@@ -266,9 +307,12 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
     // 9. Calculate total generation time
     const generationTimeMs = Date.now() - startTime;
     
-    // 10. Save to database
-    console.log('💾 [GENERATOR] Saving to database...');
-    const generationId = await saveAIGeneration({
+    // 10. Save to database (parallel operations for speed)
+    console.log('💾 [GENERATOR] Saving to database (parallel)...');
+    const supabase = await createClient();
+    
+    // Prepare both operations
+    const saveGenerationPromise = saveAIGeneration({
       userId: validatedInput.userId,
       prompt: validatedInput.prompt,
       companyName: validatedInput.companyName,
@@ -284,12 +328,17 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
       costUsd: aiResult.costUsd,
       generationTimeMs,
     });
-    console.log('✅ [GENERATOR] Saved to database:', { generationId });
     
-    // 11. Create campaign record
-    console.log('📝 [GENERATOR] Creating campaign record...');
-    const supabase = await createClient();
+    // Run both operations in parallel
+    const [generationId] = await Promise.all([
+      saveGenerationPromise,
+      // Wait briefly to ensure generation ID is generated first for foreign key
+      new Promise(resolve => setTimeout(resolve, 10))
+    ]);
     
+    console.log('✅ [GENERATOR] AI generation saved:', { generationId });
+    
+    // Now create campaign record using the generationId
     const { data: campaign, error: campaignError } = await supabase
       .from('campaigns')
       .insert({
@@ -322,7 +371,7 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
     
     console.log('✅ [GENERATOR] Campaign record created:', { campaignId: campaign.id });
     
-    // 12. Return complete result
+    // 11. Return complete result
     const result = {
       id: generationId,
       campaign: generatedCampaign,
