@@ -160,7 +160,12 @@ export function getOutlookArcsize(borderRadius: string): string {
 /**
  * Get social media icon URL (data URI with SVG)
  */
-export function getSocialIconUrl(platform: string, style: string, color?: string | null): string {
+export function getSocialIconUrl(platform: string | undefined, style: string, color?: string | null): string {
+  // Handle undefined or invalid platform - fallback to email icon
+  if (!platform || typeof platform !== 'string') {
+    platform = 'email';
+  }
+  
   const iconColor = color || DEFAULT_COLORS.HEADER;
   
   // Define SVG paths for each platform

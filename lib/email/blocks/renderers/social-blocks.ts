@@ -31,13 +31,17 @@ export function renderSocialLinksBlock(block: SocialLinksBlock): string {
   const iconSpacing = spacing || 24;
   const halfSpacing = Math.floor(iconSpacing / 2);
   
-  const socialIcons = (content.links || []).map((link, index) => {
+  // Filter out any links with missing platforms or URLs (defensive rendering)
+  const validLinks = (content.links || []).filter(link => link.platform && link.url);
+  
+  const socialIcons = validLinks.map((link, index) => {
     const iconUrl = getSocialIconUrl(link.platform, iconStyle, iconColor);
+    const altText = link.platform || 'social';
     
     return `
       <td style="padding: 0 ${halfSpacing}px; vertical-align: middle;">
-        <a href="${escapeHtml(link.url || '')}" style="text-decoration: none; display: inline-block;">
-          <img src="${iconUrl}" alt="${link.platform}" width="${iconSize}" height="${iconSize}" style="display: block; border: none;" />
+        <a href="${escapeHtml(link.url)}" style="text-decoration: none; display: inline-block;">
+          <img src="${iconUrl}" alt="${altText}" width="${iconSize}" height="${iconSize}" style="display: block; border: none;" />
         </a>
       </td>`;
   }).join('');

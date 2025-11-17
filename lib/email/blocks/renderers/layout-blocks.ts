@@ -137,9 +137,16 @@ export function renderTwoColumnLayout(variation: string, content: any, settings:
   // Calculate fixed pixel widths for columns
   const widths = calculateColumnWidths(variation);
   
+  // Column gap size (padding between columns)
+  const columnGap = 20;
+  
   // Determine which column gets the image and text
   const imageColumnWidth = settings.flip ? widths.rightPx : widths.leftPx;
   const textColumnWidth = settings.flip ? widths.leftPx : widths.rightPx;
+  
+  // Calculate content widths (subtract gap to create spacing)
+  const imageContentWidth = imageColumnWidth - columnGap;
+  const textContentWidth = textColumnWidth - columnGap;
   
   // Build text column - wrap in a constrained div
   const textElements: string[] = [];
@@ -153,15 +160,15 @@ export function renderTwoColumnLayout(variation: string, content: any, settings:
     textElements.push(renderLayoutButton(content.button, { ...settings, align: 'left' }, context));
   }
   
-  // Build image column with fixed width
+  // Build image column with fixed width (reduced by gap)
   const imageHtml = content.image?.url 
-    ? renderLayoutImage(content.image, settings, imageColumnWidth)
-    : `<img src="${getPlaceholderImage(imageColumnWidth, Math.floor(imageColumnWidth * EMAIL_DIMENSIONS.IMAGE_ASPECT_RATIO), 'image')}" alt="Placeholder" width="${imageColumnWidth}" style="display: block; width: ${imageColumnWidth}px; max-width: ${imageColumnWidth}px; height: auto; border-radius: 8px;" />`;
+    ? renderLayoutImage(content.image, settings, imageContentWidth)
+    : `<img src="${getPlaceholderImage(imageContentWidth, Math.floor(imageContentWidth * EMAIL_DIMENSIONS.IMAGE_ASPECT_RATIO), 'image')}" alt="Placeholder" width="${imageContentWidth}" style="display: block; width: ${imageContentWidth}px; max-width: ${imageContentWidth}px; height: auto; border-radius: 8px;" />`;
   
-  // Wrap text content in a fixed-width container
+  // Wrap text content in a fixed-width container (reduced by gap)
   const textColumnHtml = textElements.length > 0 
-    ? `<div style="width: ${textColumnWidth}px; max-width: ${textColumnWidth}px; word-wrap: break-word; overflow-wrap: break-word;">${textElements.join('\n')}</div>`
-    : `<div style="width: ${textColumnWidth}px; max-width: ${textColumnWidth}px;"><p style="color: #9ca3af; font-size: 14px;">Add content in settings</p></div>`;
+    ? `<div style="width: ${textContentWidth}px; max-width: ${textContentWidth}px; word-wrap: break-word; overflow-wrap: break-word;">${textElements.join('\n')}</div>`
+    : `<div style="width: ${textContentWidth}px; max-width: ${textContentWidth}px;"><p style="color: #9ca3af; font-size: 14px;">Add content in settings</p></div>`;
   
   // Apply flip if enabled
   const leftContent = settings.flip ? textColumnHtml : imageHtml;
