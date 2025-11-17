@@ -15,6 +15,7 @@ Generate email campaigns with our Flodesk-inspired block system. The schema is s
 - Hero sections: 70-80px padding | 60-80px spacers
 - Standard sections: 40-48px padding | 40px spacers  
 - Micro elements: 8-16px between related items
+- **CRITICAL:** All spacing MUST be multiples of 8px (8, 16, 24, 32, 40, 48, 64, 80)
 
 **Typography Scale:**
 - Hero headlines: 56-64px, weight 800-900, line-height 1.1
@@ -22,11 +23,45 @@ Generate email campaigns with our Flodesk-inspired block system. The schema is s
 - Subheadlines: 20-24px, weight 600, line-height 1.4, color #6b7280
 - Body text: 17-18px, weight 400, line-height 1.7
 - Small text/captions: 14-15px, weight 400, line-height 1.6, color #9ca3af
+- **CRITICAL:** Headings must be at least 1.5x larger than body text
 
 **Color Palette:**
 - Text: #1f2937 (headlines) | #374151 (body) | #6b7280 (secondary)
 - CTAs: #7c3aed (purple) | #2563eb (blue) | #16a34a (green)
 - Backgrounds: #f9fafb (page) | #ffffff (content) | Subtle tints (#faf5ff, #f0f9ff, #f0fdf4) for hero sections
+- **CRITICAL:** Text must have 4.5:1 contrast ratio with background (WCAG AA)
+
+## Composition Quality Standards (AUTO-ENFORCED)
+
+Your designs will be automatically validated and corrected by our composition engine. Follow these guidelines to avoid corrections:
+
+**1. Spacing Grid (8px):**
+- Use ONLY multiples of 8: 8px, 16px, 24px, 32px, 40px, 48px, 64px, 80px
+- Hero padding: 80px top/bottom, 40px left/right
+- Section padding: 40-48px top/bottom, 20px left/right
+- Content gaps: 16-24px between elements
+- Micro spacing: 8-12px for tight relationships
+
+**2. Typography Hierarchy:**
+- Minimum heading-to-body ratio: 1.5:1 (better: 2:1)
+- Example: If body is 16px, heading must be ≥24px (ideally 32px)
+- Line heights: 1.1-1.2 for headings, 1.5+ for body text
+
+**3. Color Contrast (WCAG AA):**
+- Dark text on light: #171717 or darker on white backgrounds
+- Light text on dark: #ffffff on #171717 or darker
+- Never use #6b7280 (gray) as primary text color - it fails contrast
+- Buttons: ensure text color contrasts 4.5:1 with button background
+
+**4. Touch Targets:**
+- Buttons must be ≥44px height (including padding)
+- Default button padding: 12-14px vertical, 32px horizontal
+- Large buttons: 16-20px vertical padding
+
+**5. White Space:**
+- Layouts need breathing room: minimum 60px total padding (15px per side)
+- Hero sections: 80px+ padding for impact
+- Don't cram content - generous spacing improves readability
 
 ## Content Quality Standards
 

@@ -2,6 +2,7 @@
  * Layout Helper Functions
  * 
  * Helper functions for rendering layout elements and calculating dimensions
+ * Now uses design token system for consistent styling
  */
 
 import type { RenderContext } from './index';
@@ -20,6 +21,14 @@ import {
   DEFAULT_FONT_WEIGHTS,
   DEFAULT_BORDER_RADIUS,
 } from '../constants';
+
+import {
+  designTokens,
+  getSpacingToken,
+  getColorToken,
+  getTypographyToken,
+  pxToNumber,
+} from '../../design-tokens';
 
 // ============================================================================
 // Column Width Calculations
@@ -113,14 +122,16 @@ export function renderLayoutImage(image: any, settings: any, width?: number): st
 
 /**
  * Render header text (small eyebrow text above title)
+ * Now uses semantic typography tokens
  */
 export function renderLayoutHeader(headerContent: any, settings: any): string {
   const text = typeof headerContent === 'string' ? headerContent : headerContent.text || '';
-  const fontSize = headerContent.fontSize || settings.headerFontSize || DEFAULT_FONT_SIZES.SMALL;
-  const fontWeight = headerContent.fontWeight || settings.headerFontWeight || DEFAULT_FONT_WEIGHTS.SEMIBOLD;
-  const color = headerContent.color || settings.headerColor || DEFAULT_COLORS.HEADER;
+  const labelStyle = getTypographyToken('label.default');
+  const fontSize = headerContent.fontSize || settings.headerFontSize || labelStyle.size;
+  const fontWeight = headerContent.fontWeight || settings.headerFontWeight || labelStyle.weight;
+  const color = headerContent.color || settings.headerColor || getColorToken('text.secondary');
   const align = settings.align || 'center';
-  const marginBottom = '12px';
+  const marginBottom = getSpacingToken('content.balanced');
   
   if (!text) return '';
   
@@ -139,15 +150,17 @@ export function renderLayoutHeader(headerContent: any, settings: any): string {
 
 /**
  * Render title/headline text
+ * Now uses semantic typography tokens
  */
 export function renderLayoutTitle(titleContent: any, settings: any): string {
   const text = typeof titleContent === 'string' ? titleContent : titleContent.text || '';
-  const fontSize = titleContent.fontSize || settings.titleFontSize || '48px';
-  const fontWeight = titleContent.fontWeight || settings.titleFontWeight || DEFAULT_FONT_WEIGHTS.BOLD;
-  const color = titleContent.color || settings.titleColor || DEFAULT_COLORS.HEADING;
+  const headingStyle = getTypographyToken('heading.primary');
+  const fontSize = titleContent.fontSize || settings.titleFontSize || headingStyle.size;
+  const fontWeight = titleContent.fontWeight || settings.titleFontWeight || headingStyle.weight;
+  const color = titleContent.color || settings.titleColor || getColorToken('text.primary');
   const align = settings.align || 'center';
-  const lineHeight = titleContent.lineHeight || '1.2';
-  const marginBottom = '16px';
+  const lineHeight = titleContent.lineHeight || headingStyle.lineHeight.toString();
+  const marginBottom = getSpacingToken('content.balanced');
   
   if (!text) return '';
   
@@ -160,14 +173,15 @@ export function renderLayoutTitle(titleContent: any, settings: any): string {
 
 /**
  * Render divider line
+ * Now uses semantic color tokens
  */
 export function renderLayoutDivider(dividerContent: any, settings: any): string {
-  const color = dividerContent?.color || settings.dividerColor || DEFAULT_COLORS.BORDER;
+  const color = dividerContent?.color || settings.dividerColor || getColorToken('border.default');
   const thickness = dividerContent?.thickness || settings.dividerThickness || 1;
   const width = dividerContent?.width || settings.dividerWidth || '60px';
   const align = settings.align || 'center';
-  const marginTop = '20px';
-  const marginBottom = '20px';
+  const marginTop = getSpacingToken('content.relaxed');
+  const marginBottom = getSpacingToken('content.relaxed');
   
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
@@ -182,15 +196,17 @@ export function renderLayoutDivider(dividerContent: any, settings: any): string 
 
 /**
  * Render paragraph/body text
+ * Now uses semantic typography tokens
  */
 export function renderLayoutParagraph(paragraphContent: any, settings: any): string {
   const text = typeof paragraphContent === 'string' ? paragraphContent : paragraphContent.text || '';
-  const fontSize = paragraphContent.fontSize || settings.paragraphFontSize || DEFAULT_FONT_SIZES.BODY;
-  const fontWeight = paragraphContent.fontWeight || settings.paragraphFontWeight || DEFAULT_FONT_WEIGHTS.NORMAL;
-  const color = paragraphContent.color || settings.paragraphColor || DEFAULT_COLORS.TEXT;
+  const bodyStyle = getTypographyToken('body.standard');
+  const fontSize = paragraphContent.fontSize || settings.paragraphFontSize || bodyStyle.size;
+  const fontWeight = paragraphContent.fontWeight || settings.paragraphFontWeight || bodyStyle.weight;
+  const color = paragraphContent.color || settings.paragraphColor || getColorToken('text.secondary');
   const align = settings.align || 'center';
-  const lineHeight = paragraphContent.lineHeight || '1.6';
-  const marginBottom = '24px';
+  const lineHeight = paragraphContent.lineHeight || bodyStyle.lineHeight.toString();
+  const marginBottom = getSpacingToken('content.relaxed');
   
   if (!text) return '';
   
@@ -203,17 +219,19 @@ export function renderLayoutParagraph(paragraphContent: any, settings: any): str
 
 /**
  * Render button/CTA
+ * Now uses semantic button component tokens
  */
 export function renderLayoutButton(buttonContent: any, settings: any, context: RenderContext): string {
   const text = buttonContent.text || 'Click Here';
   const url = buttonContent.url || '#';
-  const backgroundColor = buttonContent.backgroundColor || settings.buttonBackgroundColor || '#7c3aed';
-  const textColor = buttonContent.textColor || settings.buttonTextColor || DEFAULT_COLORS.BUTTON_TEXT;
-  const fontSize = buttonContent.fontSize || settings.buttonFontSize || DEFAULT_FONT_SIZES.BODY;
-  const fontWeight = buttonContent.fontWeight || settings.buttonFontWeight || DEFAULT_FONT_WEIGHTS.SEMIBOLD;
-  const borderRadius = buttonContent.borderRadius || settings.buttonBorderRadius || DEFAULT_BORDER_RADIUS.MEDIUM;
-  const paddingVertical = buttonContent.paddingVertical || 14;
-  const paddingHorizontal = buttonContent.paddingHorizontal || 32;
+  const buttonTokens = designTokens.component.button;
+  const backgroundColor = buttonContent.backgroundColor || settings.buttonBackgroundColor || buttonTokens.primary.background;
+  const textColor = buttonContent.textColor || settings.buttonTextColor || buttonTokens.primary.text;
+  const fontSize = buttonContent.fontSize || settings.buttonFontSize || buttonTokens.fontSize;
+  const fontWeight = buttonContent.fontWeight || settings.buttonFontWeight || buttonTokens.fontWeight;
+  const borderRadius = buttonContent.borderRadius || settings.buttonBorderRadius || buttonTokens.borderRadius;
+  const paddingVertical = buttonContent.paddingVertical || pxToNumber(buttonTokens.paddingY);
+  const paddingHorizontal = buttonContent.paddingHorizontal || pxToNumber(buttonTokens.paddingX);
   const align = settings.align || 'center';
   
   if (!text) return '';
@@ -229,7 +247,7 @@ export function renderLayoutButton(buttonContent: any, settings: any, context: R
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td align="${align}" style="padding-top: 8px;">
+        <td align="${align}" style="padding-top: ${getSpacingToken('content.tight')};">
           <table role="presentation" cellpadding="0" cellspacing="0">
             <tr>
               <td style="border-radius: ${borderRadius}; background-color: ${backgroundColor};">

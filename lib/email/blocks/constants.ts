@@ -3,7 +3,17 @@
  * 
  * Central location for all magic numbers, dimensions, and default values
  * used throughout the email rendering system.
+ * 
+ * NOTE: This file now uses design tokens as the source of truth.
+ * These constants are maintained for backward compatibility.
  */
+
+import { 
+  designTokens,
+  getColorToken,
+  getSpacingToken,
+  pxToNumber,
+} from '../design-tokens';
 
 // ============================================================================
 // Email Dimensions
@@ -66,66 +76,71 @@ export const COLUMN_WIDTHS = {
 
 /**
  * Default text colors
+ * Now aliases to design tokens for consistency
  */
 export const DEFAULT_COLORS = {
   /** Default body text color */
-  TEXT: '#374151',
+  TEXT: getColorToken('text.secondary'),
   /** Default heading color */
-  HEADING: '#111827',
+  HEADING: getColorToken('text.primary'),
   /** Default background color */
-  BACKGROUND: '#ffffff',
+  BACKGROUND: getColorToken('background.default'),
   /** Default border color */
-  BORDER: '#e5e7eb',
+  BORDER: getColorToken('border.default'),
   /** Default header/label text color */
-  HEADER: '#6b7280',
+  HEADER: designTokens.primitives.colors.neutral[500],
   /** Default button background color */
-  BUTTON_BG: '#3b82f6',
+  BUTTON_BG: getColorToken('action.primary'),
   /** Default button text color */
-  BUTTON_TEXT: '#ffffff',
+  BUTTON_TEXT: getColorToken('text.inverse'),
 } as const;
 
 /**
  * Default padding values
+ * Now uses design token spacing scale
  */
 export const DEFAULT_PADDING = {
-  top: 40,
-  right: 20,
-  bottom: 40,
-  left: 20,
+  top: pxToNumber(getSpacingToken('section.standard')),
+  right: pxToNumber(getSpacingToken('padding.standard')),
+  bottom: pxToNumber(getSpacingToken('section.standard')),
+  left: pxToNumber(getSpacingToken('padding.standard')),
 } as const;
 
 /**
  * Default font sizes
+ * Now aliases to design token typography scale
  */
 export const DEFAULT_FONT_SIZES = {
   /** Small text (labels, headers) */
-  SMALL: '14px',
+  SMALL: designTokens.primitives.typography.fontSizes.sm,
   /** Body text */
-  BODY: '16px',
+  BODY: designTokens.primitives.typography.fontSizes.base,
   /** Large text (titles) */
-  LARGE: '24px',
+  LARGE: designTokens.primitives.typography.fontSizes['2xl'],
   /** Extra large text (hero titles) */
-  XLARGE: '32px',
+  XLARGE: designTokens.primitives.typography.fontSizes['4xl'],
 } as const;
 
 /**
  * Default font weights
+ * Now aliases to design token typography weights
  */
 export const DEFAULT_FONT_WEIGHTS = {
-  NORMAL: 400,
-  MEDIUM: 500,
-  SEMIBOLD: 600,
-  BOLD: 700,
+  NORMAL: designTokens.primitives.typography.fontWeights.normal,
+  MEDIUM: designTokens.primitives.typography.fontWeights.medium,
+  SEMIBOLD: designTokens.primitives.typography.fontWeights.semibold,
+  BOLD: designTokens.primitives.typography.fontWeights.bold,
 } as const;
 
 /**
  * Default border radius values
+ * Now aliases to design token border radius scale
  */
 export const DEFAULT_BORDER_RADIUS = {
-  SMALL: '4px',
-  MEDIUM: '8px',
-  LARGE: '12px',
-  XLARGE: '16px',
+  SMALL: designTokens.primitives.borderRadius.sm,
+  MEDIUM: designTokens.primitives.borderRadius.md,
+  LARGE: designTokens.primitives.borderRadius.lg,
+  XLARGE: designTokens.primitives.borderRadius.xl,
 } as const;
 
 /**

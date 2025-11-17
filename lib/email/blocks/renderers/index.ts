@@ -3,6 +3,7 @@
  * 
  * Main entry point for rendering blocks to email-safe HTML.
  * Exports renderBlock and renderBlocksToEmail functions.
+ * Now includes composition engine integration for automatic quality improvements.
  */
 
 import type {
@@ -36,6 +37,12 @@ import {
   renderLayoutBlock,
 } from './layout-blocks';
 
+import {
+  defaultCompositionEngine,
+  scoreComposition,
+  type CompositionOptions,
+} from '../../composition';
+
 // ============================================================================
 // Type Exports
 // ============================================================================
@@ -43,6 +50,11 @@ import {
 export interface RenderContext {
   globalSettings: GlobalEmailSettings;
   mergeTags?: Record<string, string>;
+}
+
+export interface RenderOptions {
+  composition?: CompositionOptions;
+  includeMetadata?: boolean;
 }
 
 // ============================================================================
@@ -83,8 +95,61 @@ export function renderBlock(block: EmailBlock, context: RenderContext): string {
 
 /**
  * Render array of blocks to complete email HTML
+ * Now supports composition engine integration (opt-in)
  */
-export function renderBlocksToEmail(
+export async function renderBlocksToEmail(
+  blocks: EmailBlock[],
+  globalSettings: GlobalEmailSettings,
+  mergeTags?: Record<string, string>,
+  options?: RenderOptions
+): Promise<string> {
+  let processedBlocks = blocks;
+  let compositionMetadata = '';
+  
+  // Apply composition rules if enabled
+  if (options?.composition?.enabled !== false) {
+    try {
+      const result = await defaultCompositionEngine.execute(blocks, options?.composition);
+      processedBlocks = result.blocks;
+      
+      // Generate metadata HTML comment
+      if (options?.includeMetadata) {
+        const score = scoreComposition(result.blocks);
+        compositionMetadata = `
+<!-- 
+  Composition Metadata:
+  - Applied Rules: ${result.appliedRules.join(', ')}
+  - Corrections Made: ${result.correctionsMade}
+  - Quality Score: ${score.score}/100 (${score.grade})
+  - Violations: ${result.violations.length}
+-->`;
+      }
+    } catch (error) {
+      console.error('[Composition] Error applying rules:', error);
+      // Fall back to original blocks if composition fails
+      processedBlocks = blocks;
+    }
+  }
+  
+  const context: RenderContext = { globalSettings, mergeTags };
+  
+  // Sort blocks by position
+  const sortedBlocks = [...processedBlocks].sort((a, b) => a.position - b.position);
+  
+  // Render all blocks
+  const blocksHtml = sortedBlocks
+    .map(block => renderBlock(block, context))
+    .join('\n');
+  
+  // Wrap in email structure
+  return wrapInEmailStructure(blocksHtml + compositionMetadata, globalSettings);
+}
+
+/**
+ * Synchronous version of renderBlocksToEmail for backward compatibility
+ * Does not apply composition rules
+ */
+export function renderBlocksToEmailSync(
   blocks: EmailBlock[],
   globalSettings: GlobalEmailSettings,
   mergeTags?: Record<string, string>

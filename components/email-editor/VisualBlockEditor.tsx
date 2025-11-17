@@ -7,6 +7,9 @@ import { createDefaultBlock, createLayoutBlock, createLinkBarBlock, createAddres
 import { BlockCanvas } from './BlockCanvas';
 import { BlockSettingsPanel } from './settings/BlockSettingsPanel';
 import { BlockPaletteModal } from './BlockPaletteModal';
+import { CompositionScoreBadge } from './composition/CompositionScoreBadge';
+import { CompositionFeedback } from './composition/CompositionFeedback';
+import { useCompositionValidation } from '@/hooks/use-composition-validation';
 
 type DeviceMode = 'desktop' | 'mobile';
 
@@ -36,9 +39,16 @@ export function VisualBlockEditor({
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [showCompositionFeedback, setShowCompositionFeedback] = useState(false);
 
   // Get selected block
   const selectedBlock = blocks.find((b) => b.id === selectedBlockId) || null;
+  
+  // Composition validation
+  const { violations, score, autoFixAll } = useCompositionValidation(blocks, {
+    debounceMs: 1000, // Longer debounce for editor
+    autoValidate: true,
+  });
 
   // Debounced save
   useEffect(() => {
@@ -224,6 +234,17 @@ export function VisualBlockEditor({
     },
     [triggerSave]
   );
+  
+  // Handle auto-fix all
+  const handleAutoFixAll = useCallback(async () => {
+    try {
+      const fixedBlocks = await autoFixAll();
+      setBlocks(fixedBlocks);
+      triggerSave();
+    } catch (error) {
+      console.error('Auto-fix failed:', error);
+    }
+  }, [autoFixAll, triggerSave]);
 
   return (
     <div className="flex h-full bg-[#faf9f5]">
@@ -239,7 +260,7 @@ export function VisualBlockEditor({
       </div>
 
       {/* Right: Canvas (65% width) */}
-      <div className="flex-[0.65] overflow-hidden">
+      <div className="flex-[0.65] overflow-hidden relative">
         <BlockCanvas
           blocks={blocks}
           designConfig={designConfig}
@@ -254,6 +275,69 @@ export function VisualBlockEditor({
           onDuplicate={duplicateBlock}
           onDelete={deleteBlock}
         />
+        
+        {/* Composition Score Badge */}
+        <CompositionScoreBadge
+          blocks={blocks}
+          position="bottom-right"
+          onClick={() => setShowCompositionFeedback(!showCompositionFeedback)}
+        />
+        
+        {/* Composition Feedback Panel */}
+        {showCompositionFeedback && (
+          <div className="absolute top-4 right-4 w-96 bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-40 max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Composition Quality</h2>
+              <button
+                onClick={() => setShowCompositionFeedback(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            
+            {/* Score Display */}
+            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-3xl font-bold text-gray-900">{score.score}</div>
+                  <div className="text-sm text-gray-600">Grade: {score.grade}</div>
+                </div>
+                <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  score.passing ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }`}>
+                  {score.passing ? 'Passing' : 'Needs Work'}
+                </div>
+              </div>
+              
+              {/* Breakdown */}
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-gray-600">Spacing:</span>
+                  <span className="ml-1 font-medium">{score.breakdown.spacing}/25</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Hierarchy:</span>
+                  <span className="ml-1 font-medium">{score.breakdown.hierarchy}/25</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Contrast:</span>
+                  <span className="ml-1 font-medium">{score.breakdown.contrast}/25</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Balance:</span>
+                  <span className="ml-1 font-medium">{score.breakdown.balance}/25</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Violations */}
+            <CompositionFeedback
+              blocks={blocks}
+              onAutoFixAll={handleAutoFixAll}
+            />
+          </div>
+        )}
       </div>
 
       {/* Add Block Modal */}

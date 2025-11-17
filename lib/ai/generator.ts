@@ -246,6 +246,39 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
       template: generatedCampaign.design.template
     });
     
+    // 7.5. Apply composition rules to AI-generated blocks
+    console.log('🎨 [GENERATOR] Applying composition rules to ensure quality...');
+    const { defaultCompositionEngine, scoreComposition } = await import('../email/composition');
+    
+    for (let i = 0; i < generatedCampaign.emails.length; i++) {
+      const email = generatedCampaign.emails[i];
+      
+      try {
+        // Apply composition rules (type cast for compatibility)
+        const compositionResult = await defaultCompositionEngine.execute(email.blocks as any);
+        
+        // Calculate quality score
+        const qualityScore = scoreComposition(compositionResult.blocks);
+        
+        console.log(`  ✅ [GENERATOR] Email ${i + 1} composition:`, {
+          score: `${qualityScore.score}/100 (${qualityScore.grade})`,
+          correctionsMade: compositionResult.correctionsMade,
+          appliedRules: compositionResult.appliedRules.join(', '),
+        });
+        
+        // Log warning if score is below 70
+        if (qualityScore.score < 70) {
+          console.warn(`  ⚠️ [GENERATOR] Email ${i + 1} has low composition score:`, qualityScore.issues);
+        }
+        
+        // Replace with corrected blocks
+        email.blocks = compositionResult.blocks as any;
+      } catch (error) {
+        console.error(`  ❌ [GENERATOR] Failed to apply composition rules to email ${i + 1}:`, error);
+        // Continue with original blocks if composition fails
+      }
+    }
+    
     // 8. Render HTML emails using block renderer (parallelized)
     console.log('📧 [GENERATOR] Rendering emails with block renderer (parallel)...');
     console.log('📦 [GENERATOR] Campaign format: blocks');
@@ -276,8 +309,10 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
         // Store clean blocks back on email for later use
         (email as any).blocks = cleanBlocks;
         
-        // Render blocks to email-safe HTML (synchronous but wrapped for future async support)
-        const html = renderBlocksToEmail(cleanBlocks, globalSettings);
+        // Render blocks to email-safe HTML (now async)
+        const html = await renderBlocksToEmail(cleanBlocks, globalSettings, undefined, {
+          composition: { enabled: false }  // Composition already applied above
+        });
         
         // Generate plain text version (simplified)
         const plainText = cleanBlocks
