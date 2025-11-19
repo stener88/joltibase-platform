@@ -4,6 +4,8 @@ import { EmailBlock, GlobalEmailSettings, getBlockDisplayName } from '@/lib/emai
 import { renderBlock } from '@/lib/email/blocks';
 
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { SelectionOverlay } from './visual-edits/SelectionOverlay';
+import type { ElementDescriptor } from '@/lib/email/visual-edits/element-descriptor';
 
 interface EmailFrameProps {
   blocks: EmailBlock[];
@@ -14,6 +16,11 @@ interface EmailFrameProps {
   onCanvasClick?: () => void;
   chatMode?: boolean;
   onBlockClick?: (blockId: string, blockType: string, blockName: string) => void;
+  visualEditsMode?: boolean;
+  selectedElement?: ElementDescriptor | null;
+  onElementClick?: (element: HTMLElement) => void;
+  currentGlobalSettings?: GlobalEmailSettings;
+  onUpdateGlobalSettings?: (settings: Partial<GlobalEmailSettings>) => void;
 }
 
 /**
@@ -31,6 +38,11 @@ export function EmailFrame({
   onCanvasClick,
   chatMode = false,
   onBlockClick,
+  visualEditsMode = false,
+  selectedElement = null,
+  onElementClick,
+  currentGlobalSettings,
+  onUpdateGlobalSettings,
 }: EmailFrameProps) {
   
   // Default design config if not provided
@@ -88,6 +100,16 @@ export function EmailFrame({
     }
   };
 
+  const handleEmailContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Stop propagation to prevent canvas background click
+    e.stopPropagation();
+    
+    // Call the normal canvas click handler
+    if (onCanvasClick) {
+      onCanvasClick();
+    }
+  };
+
   return (
     <div className={`h-full flex flex-col ${className}`}>
       {/* Canvas with background color from design config */}
@@ -113,6 +135,7 @@ export function EmailFrame({
           >
             {/* Email Container - ALWAYS 600px wide (Fixed/Shrink approach) */}
             <div
+              data-email-frame
               className={`relative ${interactive ? 'cursor-default' : ''}`}
               style={{
                 backgroundColor: config.contentBackgroundColor,
@@ -120,14 +143,15 @@ export function EmailFrame({
                 width: emailWidth,
                 minWidth: emailWidth,
               }}
-              onClick={onCanvasClick}
+              onClick={handleEmailContainerClick}
             >
             {/* Render blocks individually (same as BlockCanvas) */}
             {sortedBlocks.map((block) => {
               const isSpacer = block.type === 'spacer';
               const displayName = getBlockDisplayName(block);
               
-              if (chatMode) {
+              // Chat mode (not visual edits): render with tooltip
+              if (chatMode && !visualEditsMode) {
                 return (
                   <Tooltip key={block.id}>
                     <TooltipTrigger asChild>
@@ -143,8 +167,8 @@ export function EmailFrame({
                             __html: renderBlock(block, { globalSettings: config }),
                           }}
                           style={{
-                            // Disable link clicks in preview
-                            pointerEvents: interactive ? 'auto' : 'none',
+                            // Enable pointer events in visual edits mode or when interactive
+                            pointerEvents: (interactive || visualEditsMode) ? 'auto' : 'none',
                           }}
                         />
                       </div>
@@ -156,7 +180,29 @@ export function EmailFrame({
                 );
               }
               
-              // Non-chat mode: render as before
+              // Visual edits mode: render with wrapper for block selection
+              if (visualEditsMode) {
+                return (
+                  <div
+                    key={block.id}
+                    data-block-wrapper
+                    data-block-id={block.id}
+                    data-block-type={block.type}
+                    className="relative"
+                  >
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: renderBlock(block, { globalSettings: config }),
+                      }}
+                      style={{
+                        pointerEvents: 'auto',
+                      }}
+                    />
+                  </div>
+                );
+              }
+              
+              // Default mode: render without wrapper
               return (
                 <div
                   key={block.id}
@@ -165,8 +211,8 @@ export function EmailFrame({
                     __html: renderBlock(block, { globalSettings: config }),
                   }}
                   style={{
-                    // Disable link clicks in preview
-                    pointerEvents: interactive ? 'auto' : 'none',
+                    // Enable pointer events in visual edits mode or when interactive
+                    pointerEvents: (interactive || visualEditsMode) ? 'auto' : 'none',
                   }}
                 />
               );
@@ -176,6 +222,14 @@ export function EmailFrame({
           </div>
         </div>
       </div>
+      
+      {/* Visual Edits Overlay */}
+      {visualEditsMode && onElementClick && (
+        <SelectionOverlay
+          selectedElementId={selectedElement?.elementId || null}
+          onElementClick={onElementClick}
+        />
+      )}
     </div>
   );
 }

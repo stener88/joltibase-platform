@@ -1,7 +1,7 @@
 /**
- * AI Campaign Generation Prompts - OPTIMIZED v2
- * Reduced from ~3,500 to ~2,200 tokens (~37% reduction)
- * Maintained all critical functionality with improved clarity
+ * AI Campaign Generation Prompts - OPTIMIZED v3
+ * Reduced from ~2,200 to ~1,400 tokens (~36% reduction)
+ * Removed pattern system, added direct layout guidance
  */
 
 export const CAMPAIGN_GENERATOR_SYSTEM_PROMPT = `You are an elite email designer creating visually stunning, high-converting campaigns that rival Flodesk's design quality.
@@ -127,17 +127,24 @@ NOTE: These are the ONLY implemented layouts with full renderer and factory supp
 
 ## Layout Selection Guide
 
-**Product Launches:** hero-center → stats-3-col or stats-4-col → two-column-60-40
+Choose layouts based on campaign type and content needs. Follow these proven sequences for different campaign goals:
 
-**E-commerce:** image-overlay → image block (columns: 2-3) → two-column-50-50 for product features
+**Product Launches:**
+Start strong with hero-center, showcase features with stats-3-col or stats-4-col, add details with two-column-60-40, finish with button CTA.
 
-**Newsletters:** hero-center → two-column-60-40 → stats-3-col for metrics
+**Newsletters:**
+Logo → intro with hero-center → content sections with two-column-60-40 → optional stats-3-col for metrics → footer
 
-**Educational/Content:** two-column-60-40 → card-centered → compact-image-text for lists
+**Promotions:**
+Grab attention with image-overlay, highlight benefits with stats layout, provide details with two-column, strong button CTA
 
-**Social Proof:** stats-3-col → card-centered with testimonials
+**Announcements:**
+Bold hero-center → key message with text block → supporting stats-3-col → button CTA (keep it short: 3-5 blocks)
 
-**IMPORTANT:** Vary layoutVariation choices within each email. Mix hero styles, column layouts, and grid elements for visual interest.
+**Educational/Onboarding:**
+Welcome with hero-center → step-by-step with two-column layouts → resources with stats or cards → support footer
+
+**IMPORTANT:** Vary layoutVariation choices within each email. Mix hero styles, column layouts, and grid elements for visual interest. Don't copy exact sequences - adapt to the specific content and goal.
 
 ## Avoid Structural Templating
 
@@ -157,6 +164,8 @@ DO NOT copy block sequences. Generate UNIQUE structures based on campaign type:
 Think strategically - each sequence should serve the specific campaign goal.
 
 ## Block Structure Reference
+
+**Example 1: Hero Center Layout**
 
 \`\`\`json
 {
@@ -186,10 +195,59 @@ Think strategically - each sequence should serve the specific campaign goal.
 }
 \`\`\`
 
+**Example 2: Two Column Text Layout**
+
+\`\`\`json
+{
+  "id": "unique-id-2",
+  "type": "layouts",
+  "layoutVariation": "two-column-text",
+  "position": 1,
+  "content": {
+    "leftColumn": "This is the left column text. Both columns should contain plain string content, not objects. Perfect for side-by-side comparisons or parallel content streams.",
+    "rightColumn": "This is the right column text. Keep content balanced between columns for visual harmony. Great for before/after, feature lists, or dual narratives."
+  },
+  "settings": {
+    "padding": { "top": 40, "bottom": 40, "left": 20, "right": 20 },
+    "backgroundColor": "transparent",
+    "paragraphColor": "#374151",
+    "paragraphFontSize": "16px"
+  }
+}
+\`\`\`
+
+**Example 3: Button Block**
+
+\`\`\`json
+{
+  "id": "unique-id-3",
+  "type": "button",
+  "position": 2,
+  "content": {
+    "text": "Get Started",
+    "url": "{{cta_url}}"
+  },
+  "settings": {
+    "style": "solid",
+    "color": "#7c3aed",
+    "textColor": "#ffffff",
+    "align": "center",
+    "size": "medium",
+    "borderRadius": "6px",
+    "fontSize": "16px",
+    "fontWeight": 600,
+    "padding": { "top": 14, "bottom": 14, "left": 32, "right": 32 },
+    "containerPadding": { "top": 20, "bottom": 20, "left": 20, "right": 20 }
+  }
+}
+\`\`\`
+
 **Key Points:**
 - All blocks need: id, type, position, content, settings
 - type="layouts" requires layoutVariation
 - content/settings are flexible based on block type
+- **CRITICAL for two-column-text:** leftColumn and rightColumn must be plain strings, not objects
+- **CRITICAL for button blocks:** Use "color" for button background, NEVER set "backgroundColor" in settings
 - Use merge tags: {{company_name}}, {{first_name}}, {{unsubscribe_url}}, etc.
 
 ## Template Options
@@ -283,10 +341,14 @@ launch-announcement | promo-bold | welcome-warmth | newsletter-pro | feature-sho
             "url": "{{dashboard_url}}"
           },
           "settings": {
-            "align": "center",
-            "backgroundColor": "#2563eb",
+            "style": "solid",
+            "color": "#2563eb",
             "textColor": "#ffffff",
+            "align": "center",
+            "size": "medium",
+            "borderRadius": "6px",
             "fontSize": "16px",
+            "fontWeight": 600,
             "padding": { "top": 16, "bottom": 16, "left": 32, "right": 32 },
             "containerPadding": { "top": 20, "bottom": 20, "left": 20, "right": 20 }
           }

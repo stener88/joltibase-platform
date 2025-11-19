@@ -32,6 +32,31 @@ export interface QualityScore {
   passing: boolean;
 }
 
+/**
+ * Enhanced composition score (rhythm analysis removed)
+ */
+export interface EnhancedCompositionScore {
+  overall: number;  // 0-100 combined score
+  grade: string;    // A+ to F
+  passing: boolean; // ≥70
+  
+  breakdown: {
+    spacing: number;      // 0-25 (from grammar engine)
+    hierarchy: number;    // 0-25 (from grammar engine)
+    contrast: number;     // 0-25 (from grammar engine)
+    balance: number;      // 0-25 (from grammar engine)
+  };
+  
+  categories: {
+    technical: number;    // spacing + hierarchy + contrast = 75 points
+    aesthetic: number;    // balance = 25 points
+  };
+  
+  issues: string[];
+  passedRules: string[];
+  failedRules: string[];
+}
+
 export interface CategoryScore {
   score: number;
   maxScore: number;
@@ -44,7 +69,72 @@ export interface CategoryScore {
 // ============================================================================
 
 /**
- * Calculate overall composition quality score
+  * Enhanced composition scoring (simplified - rhythm removed)
+*/
+export function scoreCompositionEnhanced(blocks: EmailBlock[]): EnhancedCompositionScore {
+  // Get existing technical scores (scaled down to fit new breakdown)
+  const spacingScore = scoreSpacing(blocks);
+  const hierarchyScore = scoreHierarchy(blocks);
+  const contrastScore = scoreContrast(blocks);
+  const balanceScore = scoreBalance(blocks);
+  
+  // Keep all scores at 25 points each for simplicity
+  const breakdown = {
+    spacing: spacingScore.score,
+    hierarchy: hierarchyScore.score,
+    contrast: contrastScore.score,
+    balance: balanceScore.score,
+  };
+  
+  // Calculate category scores
+  const technical = breakdown.spacing + breakdown.hierarchy + breakdown.contrast;
+  const aesthetic = breakdown.balance;
+  
+  // Calculate overall score
+  const overall = Math.round(technical + aesthetic);
+  
+  // Determine grade
+  const grade = calculateGrade(overall);
+  const passing = overall >= 70;
+  
+  // Collect all issues
+  const issues = [
+    ...spacingScore.issues,
+    ...hierarchyScore.issues,
+    ...contrastScore.issues,
+    ...balanceScore.issues,
+  ];
+  
+  // Track passed/failed rules
+  const passedRules: string[] = [];
+  const failedRules: string[] = [];
+  
+  if (breakdown.spacing >= 16) passedRules.push('spacing-grid');
+  else failedRules.push('spacing-grid');
+  
+  if (breakdown.hierarchy >= 16) passedRules.push('typography-hierarchy');
+  else failedRules.push('typography-hierarchy');
+  
+  if (breakdown.contrast >= 16) passedRules.push('contrast');
+  else failedRules.push('contrast');
+  
+  if (breakdown.balance >= 12) passedRules.push('balance');
+  else failedRules.push('balance');
+  
+  return {
+    overall,
+    grade,
+    passing,
+    breakdown,
+    categories: { technical, aesthetic },
+    issues,
+    passedRules,
+    failedRules
+  };
+}
+
+/**
+ * Calculate overall composition quality score (legacy compatibility)
  */
 export function scoreComposition(blocks: EmailBlock[]): QualityScore {
   const spacingScore = scoreSpacing(blocks);

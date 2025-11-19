@@ -34,7 +34,7 @@ import {
 /**
  * Render Logo Block
  */
-export function renderLogoBlock(block: LogoBlock, context: RenderContext): string {
+export function renderLogoBlock(block: LogoBlock, context: RenderContext, blockId?: string): string {
   const { settings, content } = block;
   const { align, width, height, backgroundColor, padding } = settings;
   
@@ -50,7 +50,9 @@ export function renderLogoBlock(block: LogoBlock, context: RenderContext): strin
   
   const isPlaceholder = /^\{\{.+\}\}$/.test(imageUrl);
   const minHeight = isPlaceholder ? ' min-height: 80px;' : '';
-  const imgHtml = `<img src="${escapeHtml(processedUrl)}" alt="${escapeHtml(content.altText || '')}" width="${width}" ${height ? `height="${height}"` : ''} style="display: block; width: ${width}; height: ${height || 'auto'}; border: none;${minHeight}" />`;
+  const id = blockId || block.id;
+  const dataAttrs = ` data-element-id="${id}-logo" data-element-type="logo" data-block-id="${id}"`;
+  const imgHtml = `<img${dataAttrs} src="${escapeHtml(processedUrl)}" alt="${escapeHtml(content.altText || '')}" width="${width}" ${height ? `height="${height}"` : ''} style="display: block; width: ${width}; height: ${height || 'auto'}; border: none;${minHeight}" />`;
   
   const imageContent = content.linkUrl
     ? `<a href="${escapeHtml(content.linkUrl)}" style="text-decoration: none;">${imgHtml}</a>`
@@ -73,14 +75,17 @@ export function renderLogoBlock(block: LogoBlock, context: RenderContext): strin
 /**
  * Render Spacer Block
  */
-export function renderSpacerBlock(block: SpacerBlock): string {
+export function renderSpacerBlock(block: SpacerBlock, blockId?: string): string {
   const { settings } = block;
   const { height, backgroundColor } = settings;
+  
+  const id = blockId || block.id;
+  const dataAttrs = ` data-element-id="${id}-spacer" data-element-type="spacer" data-block-id="${id}"`;
   
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td style="height: ${height}px; line-height: ${height}px; font-size: ${height}px;${backgroundColor ? ` background-color: ${backgroundColor};` : ''}">&nbsp;</td>
+        <td${dataAttrs} style="height: ${height}px; line-height: ${height}px; font-size: ${height}px;${backgroundColor ? ` background-color: ${backgroundColor};` : ''}">&nbsp;</td>
       </tr>
     </table>`;
 }
@@ -92,18 +97,20 @@ export function renderSpacerBlock(block: SpacerBlock): string {
 /**
  * Render Text Block
  */
-export function renderTextBlock(block: TextBlock): string {
+export function renderTextBlock(block: TextBlock, blockId?: string): string {
   const { settings, content } = block;
   const { fontSize, fontWeight, color, align, backgroundColor, padding, lineHeight, fontFamily } = settings;
   
   const fontFamilyStyle = fontFamily ? ` font-family: ${fontFamily};` : '';
+  const id = blockId || block.id;
+  const dataAttrs = ` data-element-id="${id}-text" data-element-type="text" data-block-id="${id}"`;
   
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td align="${align}" style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;${backgroundColor ? ` background-color: ${backgroundColor};` : ''}">
-          <p style="margin: 0; font-size: ${fontSize}; font-weight: ${fontWeight}; color: ${color}; line-height: ${lineHeight}; text-align: ${align};${fontFamilyStyle} word-wrap: break-word; overflow-wrap: break-word;">
-            ${content.text || ''}
+          <p${dataAttrs} style="margin: 0; font-size: ${fontSize}; font-weight: ${fontWeight}; color: ${color}; line-height: ${lineHeight}; text-align: ${align};${fontFamilyStyle} word-wrap: break-word; overflow-wrap: break-word;">
+${content.text || ''}
           </p>
         </td>
       </tr>
@@ -117,9 +124,12 @@ export function renderTextBlock(block: TextBlock): string {
 /**
  * Render Image Block (supports single images and grids)
  */
-export function renderImageBlock(block: ImageBlock): string {
+export function renderImageBlock(block: ImageBlock, blockId?: string): string {
   const { settings, content } = block;
   const { align, width, borderRadius, padding, columns, aspectRatio, gap, backgroundColor } = settings;
+  
+  const id = blockId || block.id;
+  const dataAttrs = ` data-element-id="${id}-image" data-element-type="image" data-block-id="${id}"`;
   
   // Legacy single image support
   if (content.imageUrl && !content.images?.length) {
@@ -130,7 +140,7 @@ export function renderImageBlock(block: ImageBlock): string {
     const isPlaceholder = /^\{\{.+\}\}$/.test(imageUrl);
     const minHeight = isPlaceholder ? ' min-height: 200px;' : '';
     const imgStyle = `display: block; width: ${width}; height: auto; border: none;${minHeight}${borderRadius ? ` border-radius: ${borderRadius};` : ''}`;
-    const imgHtml = `<img src="${escapeHtml(processedUrl)}" alt="${escapeHtml(content.altText || '')}" width="${width}" style="${imgStyle}" />`;
+    const imgHtml = `<img${dataAttrs} src="${escapeHtml(processedUrl)}" alt="${escapeHtml(content.altText || '')}" width="${width}" style="${imgStyle}" />`;
     
     const imageContent = content.linkUrl
       ? `<a href="${escapeHtml(content.linkUrl)}" style="text-decoration: none; display: inline-block;">${imgHtml}</a>`
@@ -240,7 +250,7 @@ export function renderImageBlock(block: ImageBlock): string {
 /**
  * Render Button Block (Bulletproof)
  */
-export function renderButtonBlock(block: ButtonBlock, context: RenderContext): string {
+export function renderButtonBlock(block: ButtonBlock, context: RenderContext, blockId?: string): string {
   const { settings, content } = block;
   const { style, color, textColor, align, borderRadius, size, fontWeight, padding, backgroundColor } = settings;
   const containerPadding = settings.containerPadding || { top: 32, right: 40, bottom: 32, left: 40 };
@@ -265,6 +275,8 @@ export function renderButtonBlock(block: ButtonBlock, context: RenderContext): s
   
   const buttonPaddingStr = `${buttonPadding.top}px ${buttonPadding.right}px ${buttonPadding.bottom}px ${buttonPadding.left}px`;
   const bgColor = backgroundColor && backgroundColor !== 'transparent' ? backgroundColor : '';
+  const id = blockId || block.id;
+  const dataAttrs = ` data-element-id="${id}-button" data-element-type="button" data-block-id="${id}"`;
   
   // Solid button (most common)
   if (style === 'solid') {
@@ -275,7 +287,7 @@ export function renderButtonBlock(block: ButtonBlock, context: RenderContext): s
           <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
             <tr>
               <td align="center" style="border-radius: ${borderRadius}; background-color: ${color};">
-                <a href="${escapeHtml(url)}" style="display: inline-block; padding: ${buttonPaddingStr}; font-size: ${fontSize}; font-weight: ${fontWeight}; color: ${textColor}; text-decoration: none; border-radius: ${borderRadius};">
+                <a${dataAttrs} href="${escapeHtml(url)}" style="display: inline-block; padding: ${buttonPaddingStr}; font-size: ${fontSize}; font-weight: ${fontWeight}; color: ${textColor}; text-decoration: none; border-radius: ${borderRadius};">
                   ${escapeHtml(content.text)}
                 </a>
               </td>
@@ -295,7 +307,7 @@ export function renderButtonBlock(block: ButtonBlock, context: RenderContext): s
           <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
             <tr>
               <td align="center" style="border-radius: ${borderRadius}; border: 2px solid ${color}; background-color: transparent;">
-                <a href="${escapeHtml(url)}" style="display: inline-block; padding: ${buttonPaddingStr}; font-size: ${fontSize}; font-weight: ${fontWeight}; color: ${color}; text-decoration: none; border-radius: ${borderRadius};">
+                <a${dataAttrs} href="${escapeHtml(url)}" style="display: inline-block; padding: ${buttonPaddingStr}; font-size: ${fontSize}; font-weight: ${fontWeight}; color: ${color}; text-decoration: none; border-radius: ${borderRadius};">
                   ${escapeHtml(content.text)}
                 </a>
               </td>
@@ -311,7 +323,7 @@ export function renderButtonBlock(block: ButtonBlock, context: RenderContext): s
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td align="${align}" style="padding: ${containerPadding.top}px ${containerPadding.right}px ${containerPadding.bottom}px ${containerPadding.left}px;${bgColor ? ` background-color: ${bgColor};` : ''}">
-          <a href="${escapeHtml(url)}" style="display: inline-block; font-size: ${fontSize}; font-weight: ${fontWeight}; color: ${color}; text-decoration: underline;">
+          <a${dataAttrs} href="${escapeHtml(url)}" style="display: inline-block; font-size: ${fontSize}; font-weight: ${fontWeight}; color: ${color}; text-decoration: underline;">
             ${escapeHtml(content.text)}
           </a>
         </td>
@@ -326,16 +338,19 @@ export function renderButtonBlock(block: ButtonBlock, context: RenderContext): s
 /**
  * Render Divider Block
  */
-export function renderDividerBlock(block: DividerBlock): string {
+export function renderDividerBlock(block: DividerBlock, blockId?: string): string {
   const { settings, content } = block;
   const { style, color, thickness, width, padding, align } = settings;
+  
+  const id = blockId || block.id;
+  const dataAttrs = ` data-element-id="${id}-divider" data-element-type="divider" data-block-id="${id}"`;
   
   // Decorative divider (emoji or symbol)
   if (style === 'decorative' && content.decorativeElement) {
     return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td align="${align || 'center'}" style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px; font-size: 32px; line-height: 1;">
+        <td${dataAttrs} align="${align || 'center'}" style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px; font-size: 32px; line-height: 1;">
           ${escapeHtml(content.decorativeElement || '')}
         </td>
       </tr>
@@ -350,7 +365,7 @@ export function renderDividerBlock(block: DividerBlock): string {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td align="${align || 'center'}" style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;">
-          <div style="width: ${dividerWidth}; height: 0; border-top: ${thickness || 1}px ${borderStyle} ${color || '#e5e7eb'}; margin: 0 auto;"></div>
+          <div${dataAttrs} style="width: ${dividerWidth}; height: 0; border-top: ${thickness || 1}px ${borderStyle} ${color || '#e5e7eb'}; margin: 0 auto;"></div>
         </td>
       </tr>
     </table>`;

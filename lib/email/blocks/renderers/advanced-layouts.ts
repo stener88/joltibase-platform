@@ -30,7 +30,7 @@ import {
  * Render image-overlay layout
  * Full-width background image with text overlay
  */
-export function renderImageOverlayLayout(content: any, settings: any, context: RenderContext): string {
+export function renderImageOverlayLayout(content: any, settings: any, context: RenderContext, blockId?: string): string {
   const imageUrl = content.image?.url || '';
   const processedUrl = imageUrl 
     ? processImageUrl(imageUrl, 'image') 
@@ -54,6 +54,11 @@ export function renderImageOverlayLayout(content: any, settings: any, context: R
   const badgeColor = '#ffffff';
   const badgeBackgroundColor = 'rgba(0, 0, 0, 0.7)';
   
+  // Data attributes
+  const badgeDataAttrs = blockId ? ` data-element-id="${blockId}-badge" data-element-type="badge" data-block-id="${blockId}"` : '';
+  const titleDataAttrs = blockId ? ` data-element-id="${blockId}-title" data-element-type="title" data-block-id="${blockId}"` : '';
+  const paragraphDataAttrs = blockId ? ` data-element-id="${blockId}-paragraph" data-element-type="paragraph" data-block-id="${blockId}"` : '';
+  
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: ${backgroundColor};">
       <tr>
@@ -71,21 +76,21 @@ export function renderImageOverlayLayout(content: any, settings: any, context: R
                     <tr>
                       <td valign="${verticalAlign}" style="padding: 40px;">
                         ${badge ? `
-                          <div style="display: inline-block; background-color: ${badgeBackgroundColor}; color: ${badgeColor}; font-size: ${badgeFontSize}; font-weight: 700; padding: 16px 20px; margin-bottom: 20px;">
+                          <div${badgeDataAttrs} style="display: inline-block; background-color: ${badgeBackgroundColor}; color: ${badgeColor}; font-size: ${badgeFontSize}; font-weight: 700; padding: 16px 20px; margin-bottom: 20px;">
                             ${escapeHtml(badge)}
                           </div>
                         ` : ''}
                         ${title ? `
-                          <h1 style="margin: 0; color: ${titleColor}; font-size: ${titleFontSize}; font-weight: 700; line-height: 1.2; max-width: 500px; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                          <h1${titleDataAttrs} style="margin: 0; color: ${titleColor}; font-size: ${titleFontSize}; font-weight: 700; line-height: 1.2; max-width: 500px; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                             ${escapeHtml(title)}
                           </h1>
                         ` : ''}
                         ${paragraph ? `
-                          <p style="margin: 16px 0 0 0; color: ${titleColor}; font-size: 16px; line-height: 1.6; max-width: 400px; text-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                          <p${paragraphDataAttrs} style="margin: 16px 0 0 0; color: ${titleColor}; font-size: 16px; line-height: 1.6; max-width: 400px; text-shadow: 0 1px 2px rgba(0,0,0,0.1);">
                             ${escapeHtml(paragraph)}
                           </p>
                         ` : ''}
-                        ${content.button && content.button.text ? renderLayoutButton(content.button, settings, context) : ''}
+                        ${content.button && content.button.text ? renderLayoutButton(content.button, settings, context, blockId, 'button') : ''}
                       </td>
                     </tr>
                   </table>
@@ -112,7 +117,7 @@ export function renderImageOverlayLayout(content: any, settings: any, context: R
  * Render card-centered layout
  * Centered card with large number, text, divider, and button
  */
-export function renderCardCenteredLayout(content: any, settings: any, context: RenderContext): string {
+export function renderCardCenteredLayout(content: any, settings: any, context: RenderContext, blockId?: string): string {
   const title = typeof content.title === 'string' ? content.title : content.title?.text || '';
   const subtitle = typeof content.subtitle === 'string' ? content.subtitle : content.subtitle?.text || '';
   const paragraph = typeof content.paragraph === 'string' ? content.paragraph : content.paragraph?.text || '';
@@ -127,6 +132,11 @@ export function renderCardCenteredLayout(content: any, settings: any, context: R
   const paragraphColor = content.paragraph?.color || '#6b7280';
   const dividerColor = settings.dividerColor || '#e5e7eb';
   
+  // Data attributes
+  const titleDataAttrs = blockId ? ` data-element-id="${blockId}-title" data-element-type="title" data-block-id="${blockId}"` : '';
+  const subtitleDataAttrs = blockId ? ` data-element-id="${blockId}-subtitle" data-element-type="subtitle" data-block-id="${blockId}"` : '';
+  const paragraphDataAttrs = blockId ? ` data-element-id="${blockId}-paragraph" data-element-type="paragraph" data-block-id="${blockId}"` : '';
+  
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: ${backgroundColor};">
       <tr>
@@ -136,7 +146,7 @@ export function renderCardCenteredLayout(content: any, settings: any, context: R
               <td style="padding: ${cardPadding.top}px ${cardPadding.right}px ${cardPadding.bottom}px ${cardPadding.left}px; text-align: center;">
                 ${title ? `
                   <div style="margin-bottom: 20px;">
-                    <h1 style="margin: 0; font-size: ${titleFontSize}; font-weight: 700; color: ${titleColor}; line-height: 1;">
+                    <h1${titleDataAttrs} style="margin: 0; font-size: ${titleFontSize}; font-weight: 700; color: ${titleColor}; line-height: 1;">
                       ${escapeHtml(title)}
                     </h1>
                   </div>
@@ -144,7 +154,7 @@ export function renderCardCenteredLayout(content: any, settings: any, context: R
                 
                 ${subtitle ? `
                   <div style="margin-bottom: 24px;">
-                    <h2 style="margin: 0; font-size: ${subtitleFontSize}; font-weight: 500; color: ${subtitleColor}; line-height: 1.3;">
+                    <h2${subtitleDataAttrs} style="margin: 0; font-size: ${subtitleFontSize}; font-weight: 500; color: ${subtitleColor}; line-height: 1.3;">
                       ${escapeHtml(subtitle)}
                     </h2>
                   </div>
@@ -156,7 +166,7 @@ export function renderCardCenteredLayout(content: any, settings: any, context: R
                 
                 ${paragraph ? `
                   <div style="margin-bottom: 32px;">
-                    <p style="margin: 0; font-size: 16px; color: ${paragraphColor}; line-height: 1.6; max-width: 400px; margin: 0 auto;">
+                    <p${paragraphDataAttrs} style="margin: 0; font-size: 16px; color: ${paragraphColor}; line-height: 1.6; max-width: 400px; margin: 0 auto;">
                       ${escapeHtml(paragraph)}
                     </p>
                   </div>
@@ -164,7 +174,7 @@ export function renderCardCenteredLayout(content: any, settings: any, context: R
                 
                 ${content.button && content.button.text ? `
                   <div style="margin-top: 32px;">
-                    ${renderLayoutButton(content.button, settings, context)}
+                    ${renderLayoutButton(content.button, settings, context, blockId, 'button')}
                   </div>
                 ` : ''}
               </td>
@@ -185,7 +195,7 @@ export function renderCardCenteredLayout(content: any, settings: any, context: R
  * Render compact-image-text layout - FIXED WIDTH
  * Small image on left, two text elements stacked on right
  */
-export function renderCompactImageTextLayout(content: any, settings: any, context: RenderContext): string {
+export function renderCompactImageTextLayout(content: any, settings: any, context: RenderContext, blockId?: string): string {
   const imageUrl = content.image?.url || '';
   const processedUrl = imageUrl 
     ? processImageUrl(imageUrl, 'image') 
@@ -200,6 +210,11 @@ export function renderCompactImageTextLayout(content: any, settings: any, contex
   const subtitleColor = content.subtitle?.color || '#111827';
   const borderRadius = settings.borderRadius || '8px';
   
+  // Data attributes
+  const imageDataAttrs = blockId ? ` data-element-id="${blockId}-image" data-element-type="image" data-block-id="${blockId}"` : '';
+  const titleDataAttrs = blockId ? ` data-element-id="${blockId}-title" data-element-type="title" data-block-id="${blockId}"` : '';
+  const subtitleDataAttrs = blockId ? ` data-element-id="${blockId}-subtitle" data-element-type="subtitle" data-block-id="${blockId}"` : '';
+  
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: ${backgroundColor};">
       <tr>
@@ -207,19 +222,19 @@ export function renderCompactImageTextLayout(content: any, settings: any, contex
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
             <tr>
               <td width="${COLUMN_WIDTHS.COMPACT_IMAGE}" valign="top" style="width: ${COLUMN_WIDTHS.COMPACT_IMAGE}px;">
-                <img src="${escapeHtml(processedUrl)}" alt="${escapeHtml(content.image?.altText || '')}" 
+                <img${imageDataAttrs} src="${escapeHtml(processedUrl)}" alt="${escapeHtml(content.image?.altText || '')}" 
                   width="${COLUMN_WIDTHS.COMPACT_IMAGE}"
                   style="display: block; width: ${COLUMN_WIDTHS.COMPACT_IMAGE}px; height: auto; border-radius: ${borderRadius}; border: 1px solid #e5e7eb;" />
               </td>
               <td width="20" style="width: 20px;"></td>
               <td valign="top">
                 ${title ? `
-                  <p style="margin: 0 0 8px 0; font-size: ${titleFontSize}; font-style: italic; color: ${titleColor}; line-height: 1.4;">
+                  <p${titleDataAttrs} style="margin: 0 0 8px 0; font-size: ${titleFontSize}; font-style: italic; color: ${titleColor}; line-height: 1.4;">
                     ${escapeHtml(title)}
                   </p>
                 ` : ''}
                 ${subtitle ? `
-                  <p style="margin: 0; font-size: ${subtitleFontSize}; font-weight: 500; color: ${subtitleColor}; line-height: 1.5;">
+                  <p${subtitleDataAttrs} style="margin: 0; font-size: ${subtitleFontSize}; font-weight: 500; color: ${subtitleColor}; line-height: 1.5;">
                     ${escapeHtml(subtitle)}
                   </p>
                 ` : ''}
@@ -240,7 +255,7 @@ export function renderCompactImageTextLayout(content: any, settings: any, contex
  * Render magazine-feature layout
  * Vertical layout: title on top, centered square image with number overlay, description below
  */
-export function renderMagazineFeatureLayout(content: any, settings: any, context: RenderContext): string {
+export function renderMagazineFeatureLayout(content: any, settings: any, context: RenderContext, blockId?: string): string {
   const imageUrl = content.image?.url || '';
   const processedUrl = imageUrl 
     ? processImageUrl(imageUrl, 'image') 
@@ -257,6 +272,12 @@ export function renderMagazineFeatureLayout(content: any, settings: any, context
   const paragraphColor = content.paragraph?.color || '#111827';
   const borderRadius = settings.borderRadius || '0px';
   
+  // Data attributes
+  const titleDataAttrs = blockId ? ` data-element-id="${blockId}-title" data-element-type="title" data-block-id="${blockId}"` : '';
+  const imageDataAttrs = blockId ? ` data-element-id="${blockId}-image" data-element-type="image" data-block-id="${blockId}"` : '';
+  const badgeDataAttrs = blockId ? ` data-element-id="${blockId}-badge" data-element-type="badge" data-block-id="${blockId}"` : '';
+  const paragraphDataAttrs = blockId ? ` data-element-id="${blockId}-paragraph" data-element-type="paragraph" data-block-id="${blockId}"` : '';
+  
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: ${backgroundColor};">
       <tr>
@@ -266,7 +287,7 @@ export function renderMagazineFeatureLayout(content: any, settings: any, context
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 <td align="center" style="padding-bottom: 40px;">
-                  <h1 style="margin: 0; font-size: ${titleFontSize}; font-weight: 400; color: ${titleColor}; line-height: 1.2; font-family: serif;">
+                  <h1${titleDataAttrs} style="margin: 0; font-size: ${titleFontSize}; font-weight: 400; color: ${titleColor}; line-height: 1.2; font-family: serif;">
                     ${escapeHtml(title)}
                   </h1>
                 </td>
@@ -279,11 +300,11 @@ export function renderMagazineFeatureLayout(content: any, settings: any, context
             <tr>
               <td align="center" style="padding-bottom: 40px; position: relative;">
                 <div style="position: relative; max-width: 500px;">
-                  <img src="${escapeHtml(processedUrl)}" alt="${escapeHtml(content.image?.altText || '')}" 
+                  <img${imageDataAttrs} src="${escapeHtml(processedUrl)}" alt="${escapeHtml(content.image?.altText || '')}" 
                     width="500"
                     style="display: block; width: 500px; height: auto; border-radius: ${borderRadius};" />
                   ${badge ? `
-                    <div style="position: absolute; bottom: -30px; right: 10%; font-size: ${badgeFontSize}; font-weight: 700; color: ${badgeColor}; line-height: 1; font-family: serif; text-shadow: 2px 2px 0px rgba(255,255,255,0.8);">
+                    <div${badgeDataAttrs} style="position: absolute; bottom: -30px; right: 10%; font-size: ${badgeFontSize}; font-weight: 700; color: ${badgeColor}; line-height: 1; font-family: serif; text-shadow: 2px 2px 0px rgba(255,255,255,0.8);">
                       ${escapeHtml(badge)}
                     </div>
                   ` : ''}
@@ -297,7 +318,7 @@ export function renderMagazineFeatureLayout(content: any, settings: any, context
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 <td align="left" style="padding: 0 10%; padding-top: ${badge ? '40px' : '0'};">
-                  <p style="margin: 0; font-size: 16px; color: ${paragraphColor}; line-height: 1.6; max-width: 600px;">
+                  <p${paragraphDataAttrs} style="margin: 0; font-size: 16px; color: ${paragraphColor}; line-height: 1.6; max-width: 600px;">
                     ${escapeHtml(paragraph)}
                   </p>
                 </td>

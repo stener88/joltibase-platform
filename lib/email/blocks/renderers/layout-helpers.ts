@@ -104,7 +104,7 @@ export function calculateMultiColumnWidth(columns: number): { width: string; wid
  * Render layout image - FIXED WIDTH
  * Accepts optional width parameter for nested images in columns
  */
-export function renderLayoutImage(image: any, settings: any, width?: number): string {
+export function renderLayoutImage(image: any, settings: any, width?: number, blockId?: string, contentKey?: string): string {
   const imageWidth = width || EMAIL_DIMENSIONS.MAX_WIDTH;
   const imageHeight = Math.floor(imageWidth * EMAIL_DIMENSIONS.IMAGE_ASPECT_RATIO);
   const imageUrl = image.url || '';
@@ -113,8 +113,12 @@ export function renderLayoutImage(image: any, settings: any, width?: number): st
     : getPlaceholderImage(imageWidth, imageHeight, 'image');
   const borderRadius = settings.borderRadius || DEFAULT_BORDER_RADIUS.MEDIUM;
   
+  const dataAttrs = blockId && contentKey
+    ? ` data-element-id="${blockId}-${contentKey}" data-element-type="image" data-block-id="${blockId}"`
+    : '';
+  
   return `
-    <img src="${escapeHtml(processedUrl)}" alt="${escapeHtml(image.altText || '')}" 
+    <img${dataAttrs} src="${escapeHtml(processedUrl)}" alt="${escapeHtml(image.altText || '')}" 
       width="${imageWidth}"
       style="display: block; width: ${imageWidth}px; max-width: ${imageWidth}px; height: auto; border-radius: ${borderRadius};" />
   `;
@@ -124,7 +128,7 @@ export function renderLayoutImage(image: any, settings: any, width?: number): st
  * Render header text (small eyebrow text above title)
  * Now uses semantic typography tokens
  */
-export function renderLayoutHeader(headerContent: any, settings: any): string {
+export function renderLayoutHeader(headerContent: any, settings: any, blockId?: string, contentKey?: string): string {
   const text = typeof headerContent === 'string' ? headerContent : headerContent.text || '';
   const labelStyle = getTypographyToken('label.default');
   const fontSize = headerContent.fontSize || settings.headerFontSize || labelStyle.size;
@@ -135,11 +139,15 @@ export function renderLayoutHeader(headerContent: any, settings: any): string {
   
   if (!text) return '';
   
+  const dataAttrs = blockId && contentKey 
+    ? ` data-element-id="${blockId}-${contentKey}" data-element-type="header" data-block-id="${blockId}"`
+    : '';
+  
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td align="${align}" style="padding-bottom: ${marginBottom};">
-          <p style="margin: 0; font-size: ${fontSize}; font-weight: ${fontWeight}; color: ${color}; line-height: 1.4; text-transform: uppercase; letter-spacing: 0.05em;">
+          <p${dataAttrs} style="margin: 0; font-size: ${fontSize}; font-weight: ${fontWeight}; color: ${color}; line-height: 1.4; text-transform: uppercase; letter-spacing: 0.05em;">
             ${escapeHtml(text)}
           </p>
         </td>
@@ -152,7 +160,7 @@ export function renderLayoutHeader(headerContent: any, settings: any): string {
  * Render title/headline text
  * Now uses semantic typography tokens
  */
-export function renderLayoutTitle(titleContent: any, settings: any): string {
+export function renderLayoutTitle(titleContent: any, settings: any, blockId?: string, contentKey?: string): string {
   const text = typeof titleContent === 'string' ? titleContent : titleContent.text || '';
   const headingStyle = getTypographyToken('heading.primary');
   const fontSize = titleContent.fontSize || settings.titleFontSize || headingStyle.size;
@@ -164,8 +172,12 @@ export function renderLayoutTitle(titleContent: any, settings: any): string {
   
   if (!text) return '';
   
+  const dataAttrs = blockId && contentKey 
+    ? ` data-element-id="${blockId}-${contentKey}" data-element-type="title" data-block-id="${blockId}"`
+    : '';
+  
   return `
-    <h1 style="margin: 0 0 ${marginBottom} 0; font-size: ${fontSize}; font-weight: ${fontWeight}; color: ${color}; line-height: ${lineHeight}; text-align: ${align}; word-wrap: break-word; overflow-wrap: break-word; width: 100%; max-width: 100%;">
+    <h1${dataAttrs} style="margin: 0 0 ${marginBottom} 0; font-size: ${fontSize}; font-weight: ${fontWeight}; color: ${color}; line-height: ${lineHeight}; text-align: ${align}; word-wrap: break-word; overflow-wrap: break-word; width: 100%; max-width: 100%;">
       ${escapeHtml(text)}
     </h1>
   `;
@@ -198,7 +210,7 @@ export function renderLayoutDivider(dividerContent: any, settings: any): string 
  * Render paragraph/body text
  * Now uses semantic typography tokens
  */
-export function renderLayoutParagraph(paragraphContent: any, settings: any): string {
+export function renderLayoutParagraph(paragraphContent: any, settings: any, blockId?: string, contentKey?: string): string {
   const text = typeof paragraphContent === 'string' ? paragraphContent : paragraphContent.text || '';
   const bodyStyle = getTypographyToken('body.standard');
   const fontSize = paragraphContent.fontSize || settings.paragraphFontSize || bodyStyle.size;
@@ -210,8 +222,12 @@ export function renderLayoutParagraph(paragraphContent: any, settings: any): str
   
   if (!text) return '';
   
+  const dataAttrs = blockId && contentKey 
+    ? ` data-element-id="${blockId}-${contentKey}" data-element-type="paragraph" data-block-id="${blockId}"`
+    : '';
+  
   return `
-    <p style="margin: 0 0 ${marginBottom} 0; font-size: ${fontSize}; font-weight: ${fontWeight}; color: ${color}; line-height: ${lineHeight}; text-align: ${align}; word-wrap: break-word; overflow-wrap: break-word; width: 100%; max-width: 100%;">
+    <p${dataAttrs} style="margin: 0 0 ${marginBottom} 0; font-size: ${fontSize}; font-weight: ${fontWeight}; color: ${color}; line-height: ${lineHeight}; text-align: ${align}; word-wrap: break-word; overflow-wrap: break-word; width: 100%; max-width: 100%;">
       ${escapeHtml(text)}
     </p>
   `;
@@ -221,7 +237,7 @@ export function renderLayoutParagraph(paragraphContent: any, settings: any): str
  * Render button/CTA
  * Now uses semantic button component tokens
  */
-export function renderLayoutButton(buttonContent: any, settings: any, context: RenderContext): string {
+export function renderLayoutButton(buttonContent: any, settings: any, context: RenderContext, blockId?: string, contentKey?: string): string {
   const text = buttonContent.text || 'Click Here';
   const url = buttonContent.url || '#';
   const buttonTokens = designTokens.component.button;
@@ -244,6 +260,10 @@ export function renderLayoutButton(buttonContent: any, settings: any, context: R
       )
     : url;
   
+  const dataAttrs = blockId && contentKey 
+    ? ` data-element-id="${blockId}-${contentKey}" data-element-type="button" data-block-id="${blockId}"`
+    : '';
+  
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
@@ -251,7 +271,7 @@ export function renderLayoutButton(buttonContent: any, settings: any, context: R
           <table role="presentation" cellpadding="0" cellspacing="0">
             <tr>
               <td style="border-radius: ${borderRadius}; background-color: ${backgroundColor};">
-                <a href="${processedUrl}" style="display: inline-block; padding: ${paddingVertical}px ${paddingHorizontal}px; font-size: ${fontSize}; font-weight: ${fontWeight}; color: ${textColor}; text-decoration: none; border-radius: ${borderRadius};">
+                <a${dataAttrs} href="${processedUrl}" style="display: inline-block; padding: ${paddingVertical}px ${paddingHorizontal}px; font-size: ${fontSize}; font-weight: ${fontWeight}; color: ${textColor}; text-decoration: none; border-radius: ${borderRadius};">
                   ${escapeHtml(text)}
                 </a>
               </td>

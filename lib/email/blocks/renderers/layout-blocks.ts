@@ -42,42 +42,43 @@ export function renderLayoutBlock(block: EmailBlock, context: RenderContext): st
   const variation = (block as any).layoutVariation || 'unknown';
   const settings = block.settings || {};
   const content = block.content || {};
+  const blockId = block.id;
   
   // Try factory-generated renderer first
   const { getFactoryRenderer } = require('./layout-factory');
   const factoryRenderer = getFactoryRenderer(variation);
   if (factoryRenderer) {
-    return factoryRenderer(content, settings, context);
+    return factoryRenderer(content, settings, context, blockId);
   }
   
   // Route to variation-specific renderer (legacy hand-written)
   switch (variation) {
     case 'hero-center':
     case 'hero-image-overlay':
-      return renderHeroCenterLayout(content, settings, context);
+      return renderHeroCenterLayout(content, settings, context, blockId);
     case 'two-column-50-50':
     case 'two-column-60-40':
     case 'two-column-40-60':
     case 'two-column-70-30':
     case 'two-column-30-70':
-      return renderTwoColumnLayout(variation, content, settings, context);
+      return renderTwoColumnLayout(variation, content, settings, context, blockId);
     case 'stats-2-col':
     case 'stats-3-col':
     case 'stats-4-col':
-      return renderStatsLayout(variation, content, settings, context);
+      return renderStatsLayout(variation, content, settings, context, blockId);
     case 'two-column-text':
-      return renderTwoColumnTextLayout(content, settings, context);
+      return renderTwoColumnTextLayout(content, settings, context, blockId);
     // Advanced layouts
     case 'image-overlay':
-      return require('./advanced-layouts').renderImageOverlayLayout(content, settings, context);
+      return require('./advanced-layouts').renderImageOverlayLayout(content, settings, context, blockId);
     case 'card-centered':
-      return require('./advanced-layouts').renderCardCenteredLayout(content, settings, context);
+      return require('./advanced-layouts').renderCardCenteredLayout(content, settings, context, blockId);
     case 'compact-image-text':
-      return require('./advanced-layouts').renderCompactImageTextLayout(content, settings, context);
+      return require('./advanced-layouts').renderCompactImageTextLayout(content, settings, context, blockId);
     case 'magazine-feature':
-      return require('./advanced-layouts').renderMagazineFeatureLayout(content, settings, context);
+      return require('./advanced-layouts').renderMagazineFeatureLayout(content, settings, context, blockId);
     default:
-      return renderGenericLayout(content, settings, context);
+      return renderGenericLayout(content, settings, context, blockId);
   }
 }
 
@@ -89,15 +90,15 @@ export function renderLayoutBlock(block: EmailBlock, context: RenderContext): st
  * Render Hero Center Layout
  * Vertically stacked: header, title, divider, paragraph, button
  */
-export function renderHeroCenterLayout(content: any, settings: any, context: RenderContext): string {
+export function renderHeroCenterLayout(content: any, settings: any, context: RenderContext, blockId?: string): string {
   const elements: string[] = [];
   
   if (settings.showHeader !== false && content.header) {
-    elements.push(renderLayoutHeader(content.header, settings));
+    elements.push(renderLayoutHeader(content.header, settings, blockId, 'header'));
   }
   
   if (settings.showTitle !== false && content.title) {
-    elements.push(renderLayoutTitle(content.title, settings));
+    elements.push(renderLayoutTitle(content.title, settings, blockId, 'title'));
   }
   
   if (settings.showDivider && (content.divider || settings.dividerColor)) {
@@ -105,11 +106,11 @@ export function renderHeroCenterLayout(content: any, settings: any, context: Ren
   }
   
   if (settings.showParagraph !== false && content.paragraph) {
-    elements.push(renderLayoutParagraph(content.paragraph, settings));
+    elements.push(renderLayoutParagraph(content.paragraph, settings, blockId, 'paragraph'));
   }
   
   if (settings.showButton !== false && content.button) {
-    elements.push(renderLayoutButton(content.button, settings, context));
+    elements.push(renderLayoutButton(content.button, settings, context, blockId, 'button'));
   }
   
   // If no child elements, show a placeholder
@@ -133,7 +134,7 @@ export function renderHeroCenterLayout(content: any, settings: any, context: Ren
  * Render Two Column Layout - FIXED WIDTH
  * Image on one side, content (title, paragraph, button) on other
  */
-export function renderTwoColumnLayout(variation: string, content: any, settings: any, context: RenderContext): string {
+export function renderTwoColumnLayout(variation: string, content: any, settings: any, context: RenderContext, blockId?: string): string {
   // Calculate fixed pixel widths for columns
   const widths = calculateColumnWidths(variation);
   
@@ -151,18 +152,18 @@ export function renderTwoColumnLayout(variation: string, content: any, settings:
   // Build text column - wrap in a constrained div
   const textElements: string[] = [];
   if (settings.showTitle !== false && content.title) {
-    textElements.push(renderLayoutTitle(content.title, { ...settings, align: 'left' }));
+    textElements.push(renderLayoutTitle(content.title, { ...settings, align: 'left' }, blockId, 'title'));
   }
   if (settings.showParagraph !== false && content.paragraph) {
-    textElements.push(renderLayoutParagraph(content.paragraph, { ...settings, align: 'left' }));
+    textElements.push(renderLayoutParagraph(content.paragraph, { ...settings, align: 'left' }, blockId, 'paragraph'));
   }
   if (settings.showButton !== false && content.button) {
-    textElements.push(renderLayoutButton(content.button, { ...settings, align: 'left' }, context));
+    textElements.push(renderLayoutButton(content.button, { ...settings, align: 'left' }, context, blockId, 'button'));
   }
   
   // Build image column with fixed width (reduced by gap)
   const imageHtml = content.image?.url 
-    ? renderLayoutImage(content.image, settings, imageContentWidth)
+    ? renderLayoutImage(content.image, settings, imageContentWidth, blockId, 'image')
     : `<img src="${getPlaceholderImage(imageContentWidth, Math.floor(imageContentWidth * EMAIL_DIMENSIONS.IMAGE_ASPECT_RATIO), 'image')}" alt="Placeholder" width="${imageContentWidth}" style="display: block; width: ${imageContentWidth}px; max-width: ${imageContentWidth}px; height: auto; border-radius: 8px;" />`;
   
   // Wrap text content in a fixed-width container (reduced by gap)
@@ -205,7 +206,7 @@ export function renderTwoColumnLayout(variation: string, content: any, settings:
  * Render Stats Layout - FIXED WIDTH
  * Multi-column layout with value, title, description items
  */
-export function renderStatsLayout(variation: string, content: any, settings: any, context: RenderContext): string {
+export function renderStatsLayout(variation: string, content: any, settings: any, context: RenderContext, blockId?: string): string {
   const items = content.items || [];
   const columns = variation === 'stats-2-col' ? 2 :
                   variation === 'stats-3-col' ? 3 : 4;
@@ -222,36 +223,52 @@ export function renderStatsLayout(variation: string, content: any, settings: any
   
   const titleColor = settings.titleColor || '#111827';
   const paragraphColor = settings.paragraphColor || '#374151';
+  const align = settings.align || 'center';
   
   // Calculate fixed pixel widths for each column
   const columnInfo = calculateMultiColumnWidth(columns);
   const columnWidth = columnInfo.width;
   
   // Build table cells - fixed width, text wraps vertically
-  const itemsHtml = items.map((item: any) => `
+  const itemsHtml = items.map((item: any, index: number) => {
+    const valueDataAttrs = blockId 
+      ? ` data-element-id="${blockId}-stat${index}-value" data-element-type="stat-value" data-block-id="${blockId}"`
+      : '';
+    const titleDataAttrs = blockId 
+      ? ` data-element-id="${blockId}-stat${index}-title" data-element-type="stat-title" data-block-id="${blockId}"`
+      : '';
+    const descDataAttrs = blockId 
+      ? ` data-element-id="${blockId}-stat${index}-description" data-element-type="stat-description" data-block-id="${blockId}"`
+      : '';
+    
+    return `
     <td width="${columnWidth}" valign="top" style="width: ${columnWidth}; max-width: ${columnWidth}; min-width: ${columnWidth}; text-align: center; padding: 0 10px 20px 10px; word-wrap: break-word;">
-      <div style="margin-bottom: 8px; font-size: 36px; font-weight: 700; color: ${titleColor}; line-height: 1.2;">
+      <div${valueDataAttrs} style="margin-bottom: 8px; font-size: 36px; font-weight: 700; color: ${titleColor}; line-height: 1.2;">
         ${escapeHtml(item.value || '')}
       </div>
-      <div style="margin-bottom: 4px; font-size: 16px; font-weight: 600; color: ${paragraphColor}; line-height: 1.4;">
+      <div${titleDataAttrs} style="margin-bottom: 4px; font-size: 16px; font-weight: 600; color: ${paragraphColor}; line-height: 1.4;">
         ${escapeHtml(item.title || '')}
       </div>
       ${item.description ? `
-        <div style="font-size: 14px; color: #6b7280; line-height: 1.5; word-wrap: break-word;">
+        <div${descDataAttrs} style="font-size: 14px; color: #6b7280; line-height: 1.5; word-wrap: break-word;">
           ${escapeHtml(item.description)}
         </div>
       ` : ''}
     </td>
-  `).join('');
+  `}).join('');
   
   const bgColor = settings.backgroundColor || 'transparent';
   const pad = settings.padding || { top: 40, right: 20, bottom: 40, left: 20 };
   
+  // Use auto-width table when centered, full-width when left-aligned
+  const tableWidth = align === 'center' ? '' : '100%';
+  const tableStyle = align === 'center' ? 'table-layout: fixed; margin: 0 auto;' : 'table-layout: fixed;';
+  
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: ${bgColor};">
       <tr>
-        <td style="padding: ${pad.top}px ${pad.right}px ${pad.bottom}px ${pad.left}px;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="table-layout: fixed;">
+        <td align="${align}" style="padding: ${pad.top}px ${pad.right}px ${pad.bottom}px ${pad.left}px;">
+          <table role="presentation" ${tableWidth ? `width="${tableWidth}"` : ''} cellpadding="0" cellspacing="0" style="${tableStyle}">
             <tr>
               ${itemsHtml}
             </tr>
@@ -270,7 +287,7 @@ export function renderStatsLayout(variation: string, content: any, settings: any
  * Render two-column-text layout - FIXED WIDTH
  * Two columns of text side-by-side with no images
  */
-export function renderTwoColumnTextLayout(content: any, settings: any, context: RenderContext): string {
+export function renderTwoColumnTextLayout(content: any, settings: any, context: RenderContext, blockId?: string): string {
   const leftColumn = content.leftColumn || '';
   const rightColumn = content.rightColumn || '';
   
@@ -284,6 +301,13 @@ export function renderTwoColumnTextLayout(content: any, settings: any, context: 
   const availableWidth = 600 - padding.left - padding.right - 20; // 20px gap between columns
   const columnWidth = Math.floor(availableWidth / 2);
   
+  const leftDataAttrs = blockId 
+    ? ` data-element-id="${blockId}-leftColumn" data-element-type="paragraph" data-block-id="${blockId}"`
+    : '';
+  const rightDataAttrs = blockId 
+    ? ` data-element-id="${blockId}-rightColumn" data-element-type="paragraph" data-block-id="${blockId}"`
+    : '';
+  
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: ${backgroundColor};">
       <tr>
@@ -291,12 +315,12 @@ export function renderTwoColumnTextLayout(content: any, settings: any, context: 
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="table-layout: fixed;">
             <tr>
               <td width="${columnWidth}" valign="top" style="width: ${columnWidth}px; max-width: ${columnWidth}px; padding-right: 10px; word-wrap: break-word;">
-                <p style="margin: 0; font-size: ${fontSize}; color: ${textColor}; line-height: ${lineHeight};">
+                <p${leftDataAttrs} style="margin: 0; font-size: ${fontSize}; color: ${textColor}; line-height: ${lineHeight};">
                   ${escapeHtml(leftColumn)}
                 </p>
               </td>
               <td width="${columnWidth}" valign="top" style="width: ${columnWidth}px; max-width: ${columnWidth}px; padding-left: 10px; word-wrap: break-word;">
-                <p style="margin: 0; font-size: ${fontSize}; color: ${textColor}; line-height: ${lineHeight};">
+                <p${rightDataAttrs} style="margin: 0; font-size: ${fontSize}; color: ${textColor}; line-height: ${lineHeight};">
                   ${escapeHtml(rightColumn)}
                 </p>
               </td>
@@ -315,7 +339,7 @@ export function renderTwoColumnTextLayout(content: any, settings: any, context: 
 /**
  * Generic layout renderer (fallback for unknown variations)
  */
-export function renderGenericLayout(content: any, settings: any, context: RenderContext): string {
+export function renderGenericLayout(content: any, settings: any, context: RenderContext, blockId?: string): string {
   const elements: string[] = [];
   
   if (settings.showHeader !== false && content.header) {

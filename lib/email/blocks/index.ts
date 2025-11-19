@@ -35,6 +35,7 @@ export { isBlockType } from './types';
 export {
   renderBlock,
   renderBlocksToEmail,
+  renderBlocksToEmailSync,
   type RenderContext,
 } from './renderers';
 

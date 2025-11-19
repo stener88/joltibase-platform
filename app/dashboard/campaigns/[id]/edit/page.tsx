@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useCampaignQuery, useCampaignMutation, useCampaignRefineMutation } from '@/hooks/use-campaign-query';
 import { useEditorHistory } from '@/hooks/use-editor-history';
-import { renderBlocksToEmail } from '@/lib/email/blocks';
+import { useVisualEditsState, getWorkingBlocks } from '@/hooks/use-visual-edits-state';
+import { renderBlocksToEmail, renderBlocksToEmailSync } from '@/lib/email/blocks';
+import { createDescriptorFromElement } from '@/lib/email/visual-edits/element-mapper';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import type { CampaignEditorControls } from '@/components/dashboard/DashboardHeader';
 import { SplitScreenLayout } from '@/components/campaigns/SplitScreenLayout';
@@ -91,6 +93,162 @@ export default function DashboardCampaignEditorPage() {
       design_config: state.globalSettings,
     });
   });
+  
+  // Visual edits state (for element-level editing)
+  const visualEdits = useVisualEditsState(editorHistory.state?.blocks || []);
+  const [isAIRefining, setIsAIRefining] = useState(false);
+  
+  // Get working blocks (with pending changes applied for preview)
+  const workingBlocks = useMemo(() => {
+    if (!editorHistory.state?.blocks) return [];
+    return getWorkingBlocks(editorHistory.state.blocks, visualEdits.state.pendingChanges);
+  }, [editorHistory.state?.blocks, visualEdits.state.pendingChanges]);
+  
+  // Handle element click from EmailFrame
+  const handleElementClick = useCallback((element: HTMLElement) => {
+    const descriptor = createDescriptorFromElement(element, editorHistory.state?.blocks || []);
+    
+    if (descriptor) {
+      visualEdits.selectElement(descriptor, element);
+    }
+  }, [editorHistory.state?.blocks, visualEdits]);
+  
+  // Handle element update (content/styles)
+  const handleUpdateElement = useCallback((elementId: string, changes: Record<string, any>) => {
+    if (visualEdits.state.selectedElement) {
+      const blockId = visualEdits.state.selectedElement.descriptor.blockId;
+      visualEdits.updatePendingChanges(blockId, elementId, changes);
+    }
+  }, [visualEdits]);
+  
+  // Handle element deletion
+  const handleDeleteElement = useCallback((elementId: string) => {
+    if (visualEdits.state.selectedElement) {
+      const success = visualEdits.deleteElement(visualEdits.state.selectedElement.descriptor);
+      
+      if (success) {
+        // Clear selection after successful delete
+        visualEdits.clearSelection();
+      } else {
+        console.error('Failed to delete element:', elementId);
+      }
+    }
+  }, [visualEdits]);
+  
+  // Handle save changes
+  const handleSaveChanges = useCallback(() => {
+    const updatedBlocks = visualEdits.applyChanges();
+    editorHistory.update({
+      blocks: updatedBlocks,
+      globalSettings: editorHistory.state?.globalSettings || {
+        backgroundColor: '#f3f4f6',
+        contentBackgroundColor: '#ffffff',
+        maxWidth: 600,
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        mobileBreakpoint: 480,
+      },
+    });
+  }, [visualEdits, editorHistory]);
+  
+  // Keyboard shortcuts for visual edits mode
+  useEffect(() => {
+    if (!visualEdits.state.isActive) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape - Deselect element
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        visualEdits.deselectElement();
+        return;
+      }
+      
+      // Delete/Backspace - Delete selected element
+      if ((e.key === 'Delete' || e.key === 'Backspace') && visualEdits.state.selectedElement) {
+        // Only if not in an input/textarea
+        if (document.activeElement?.tagName !== 'INPUT' && 
+            document.activeElement?.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          visualEdits.deleteElement(visualEdits.state.selectedElement.descriptor);
+          return;
+        }
+      }
+      
+      // Cmd+Z / Ctrl+Z - Undo (in visual mode)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        if (editorHistory.canUndo()) {
+          editorHistory.undo();
+        }
+        return;
+      }
+      
+      // Cmd+Shift+Z / Ctrl+Shift+Z - Redo (in visual mode)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) {
+        e.preventDefault();
+        if (editorHistory.canRedo()) {
+          editorHistory.redo();
+        }
+        return;
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [visualEdits, editorHistory]);
+  
+  // Handle discard changes
+  const handleDiscardChanges = useCallback(() => {
+    visualEdits.discardChanges();
+  }, [visualEdits]);
+  
+  // Handle global settings update
+  const handleGlobalSettingsUpdate = useCallback((settings: Partial<GlobalEmailSettings>) => {
+    if (editorHistory.state) {
+      editorHistory.update({
+        blocks: editorHistory.state.blocks,
+        globalSettings: {
+          ...editorHistory.state.globalSettings,
+          ...settings,
+        },
+      });
+    }
+  }, [editorHistory]);
+  
+  // Handle AI element refinement
+  const handleAIRefineElement = useCallback(async (prompt: string) => {
+    if (!visualEdits.state.selectedElement) return;
+    
+    setIsAIRefining(true);
+    try {
+      const { descriptor } = visualEdits.state.selectedElement;
+      
+      const response = await fetch('/api/ai/refine-element', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          campaignId,
+          blockId: descriptor.blockId,
+          elementId: descriptor.elementId,
+          elementType: descriptor.elementType,
+          currentValue: descriptor.currentValue,
+          currentSettings: descriptor.currentSettings, // ADD: Include settings
+          prompt,
+        }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success && result.data?.changes) {
+        handleUpdateElement(descriptor.elementId, result.data.changes);
+      } else {
+        console.error('AI refinement failed:', result.error);
+      }
+    } catch (error) {
+      console.error('AI refinement error:', error);
+    } finally {
+      setIsAIRefining(false);
+    }
+  }, [visualEdits.state.selectedElement, campaignId, handleUpdateElement]);
   
   // Load chat history from server on mount (only once per campaignId)
   useEffect(() => {
@@ -374,22 +532,25 @@ export default function DashboardCampaignEditorPage() {
   const currentEmail = useMemo(() => {
     if (!editorHistory.state) return null;
     
-    // Generate fresh HTML from current blocks
-    const html = renderBlocksToEmail(
-      editorHistory.state.blocks,
+    // Use working blocks (includes pending changes) for preview
+    const blocksToRender = visualEdits.state.isActive ? workingBlocks : editorHistory.state.blocks;
+    
+    // Generate fresh HTML from current blocks (using sync version for real-time preview)
+    const html = renderBlocksToEmailSync(
+      blocksToRender,
       editorHistory.state.globalSettings
     );
     
     // Generate plain text from text blocks
-    const plainText = editorHistory.state.blocks
-      .filter(block => block.type === 'text')
-      .map(block => {
+    const plainText = blocksToRender
+      .filter((block: EmailBlock) => block.type === 'text')
+      .map((block: EmailBlock) => {
         if (block.type === 'text' && 'text' in block.content) {
           return block.content.text;
         }
         return '';
       })
-      .filter(text => text)
+      .filter((text: string) => text)
       .join('\n\n');
     
     return {
@@ -399,10 +560,10 @@ export default function DashboardCampaignEditorPage() {
       plainText: plainText || campaign?.subject_line || '',
       ctaText: '',
       ctaUrl: '',
-      blocks: editorHistory.state.blocks,
+      blocks: blocksToRender,
       globalSettings: editorHistory.state.globalSettings,
     };
-  }, [editorHistory.state, campaign?.subject_line, campaign?.preview_text]);
+  }, [editorHistory.state, workingBlocks, visualEdits.state.isActive, campaign?.subject_line, campaign?.preview_text]);
 
   if (isLoading || !editorHistory.state || !currentEmail) {
     return (
@@ -597,6 +758,21 @@ export default function DashboardCampaignEditorPage() {
                     onRefine={handleRefine}
                     isRefining={refineMutation.isPending}
                     chatHistory={chatHistory}
+                    visualEditsMode={visualEdits.state.isActive}
+                    onVisualEditsToggle={visualEdits.toggleVisualEdits}
+                    selectedElement={visualEdits.state.selectedElement?.descriptor || null}
+                    pendingChangesCount={visualEdits.state.pendingChanges.size}
+                    showExitPrompt={visualEdits.state.showExitPrompt}
+                    currentGlobalSettings={editorHistory.state.globalSettings}
+                    onUpdateElement={handleUpdateElement}
+                    onDeleteElement={handleDeleteElement}
+                    onSaveChanges={handleSaveChanges}
+                    onDiscardChanges={handleDiscardChanges}
+                    onClearSelection={visualEdits.clearSelection}
+                    onUpdateGlobalSettings={handleGlobalSettingsUpdate}
+                    onAIRefineElement={handleAIRefineElement}
+                    isAIRefining={isAIRefining}
+                    isChatDisabled={visualEdits.state.isActive && visualEdits.state.pendingChanges.size > 0}
                   />
                 ) : (
                   <DirectEditor
@@ -617,7 +793,7 @@ export default function DashboardCampaignEditorPage() {
               }
               rightPanel={
                 <EmailPreview
-                  blocks={editorHistory.state.blocks}
+                  blocks={workingBlocks}
                   designConfig={editorHistory.state.globalSettings}
                   plainText={currentEmail.plainText}
                   subject={currentEmail.subject}
@@ -632,6 +808,10 @@ export default function DashboardCampaignEditorPage() {
                       chatInterfaceRef.current.insertText(reference);
                     }
                   }}
+                  visualEditsMode={visualEdits.state.isActive}
+                  selectedElement={visualEdits.state.selectedElement?.descriptor || null}
+                  onElementClick={handleElementClick}
+                  onUpdateGlobalSettings={handleGlobalSettingsUpdate}
                 />
               }
             />

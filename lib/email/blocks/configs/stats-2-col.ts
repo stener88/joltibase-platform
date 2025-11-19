@@ -40,7 +40,7 @@ export const stats2ColConfig: LayoutConfig = {
       { key: 'paragraphColor', label: 'Text Color', defaultValue: '#374151' },
     ],
     spacing: true,
-    alignment: false,
+    alignment: true,
     flip: false,
   },
   
@@ -52,6 +52,7 @@ export const stats2ColConfig: LayoutConfig = {
       bottom: 40,
       left: 20,
     },
+    align: 'center',
     titleColor: '#111827',
     paragraphColor: '#374151',
   },

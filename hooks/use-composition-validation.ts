@@ -1,6 +1,9 @@
 /**
  * Composition Validation Hook
  * 
+ * DISABLED: Scoring functionality has been intentionally disabled.
+ * This hook is kept for reference but is not functional without scoring.
+ * 
  * Provides real-time composition validation with debouncing and caching.
  * Exposes violations, score, and auto-fix functions.
  */
@@ -11,11 +14,33 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { EmailBlock } from '@/lib/email/blocks/types';
 import { 
   defaultCompositionEngine, 
-  scoreComposition,
+  // scoreComposition, // DISABLED - scoring functionality removed
+  // scoreCompositionEnhanced, // DISABLED - scoring functionality removed
   type RuleViolation,
-  type QualityScore,
+  // type QualityScore, // DISABLED - scoring functionality removed
+  // type EnhancedCompositionScore, // DISABLED - scoring functionality removed
   type CompositionResult,
 } from '@/lib/email/composition';
+
+// Placeholder types since scoring is disabled
+type QualityScore = {
+  score: number;
+  breakdown: { spacing: number; hierarchy: number; contrast: number; balance: number };
+  issues: string[];
+  grade: string;
+  passing: boolean;
+};
+
+type EnhancedCompositionScore = {
+  overall: number;
+  breakdown: { spacing: number; hierarchy: number; contrast: number; balance: number; rhythm: number };
+  categories: { technical: number; aesthetic: number };
+  issues: string[];
+  grade: string;
+  passing: boolean;
+  passedRules: string[];
+  failedRules: string[];
+};
 
 // ============================================================================
 // Types
@@ -23,7 +48,7 @@ import {
 
 export interface CompositionValidationState {
   violations: RuleViolation[];
-  score: QualityScore;
+  score: EnhancedCompositionScore | QualityScore;
   isValidating: boolean;
   lastValidated: Date | null;
   error: Error | null;
@@ -36,6 +61,8 @@ export interface UseCompositionValidationOptions {
   autoValidate?: boolean;
   /** Enable caching of validation results (default: true) */
   enableCache?: boolean;
+  /** Use enhanced scoring with rhythm analysis (default: false for compatibility) */
+  useEnhancedScoring?: boolean;
 }
 
 export interface UseCompositionValidationReturn extends CompositionValidationState {
@@ -54,7 +81,7 @@ export interface UseCompositionValidationReturn extends CompositionValidationSta
 // ============================================================================
 
 class ValidationCache {
-  private cache = new Map<string, { violations: RuleViolation[]; score: QualityScore; timestamp: number }>();
+  private cache = new Map<string, { violations: RuleViolation[]; score: QualityScore | EnhancedCompositionScore; timestamp: number }>();
   private maxAge = 5000; // 5 seconds
   
   get(key: string) {
@@ -70,7 +97,7 @@ class ValidationCache {
     return { violations: cached.violations, score: cached.score };
   }
   
-  set(key: string, violations: RuleViolation[], score: QualityScore) {
+  set(key: string, violations: RuleViolation[], score: QualityScore | EnhancedCompositionScore) {
     this.cache.set(key, { violations, score, timestamp: Date.now() });
   }
   
@@ -116,11 +143,21 @@ export function useCompositionValidation(
     debounceMs = 500,
     autoValidate = true,
     enableCache = true,
+    useEnhancedScoring = false,
   } = options;
   
   const [state, setState] = useState<CompositionValidationState>({
     violations: [],
-    score: {
+    score: options.useEnhancedScoring ? {
+      overall: 0,
+      breakdown: { spacing: 0, hierarchy: 0, contrast: 0, balance: 0, rhythm: 0 },
+      categories: { technical: 0, aesthetic: 0 },
+      issues: [],
+      grade: 'F',
+      passing: false,
+      passedRules: [],
+      failedRules: []
+    } as EnhancedCompositionScore : {
       score: 0,
       breakdown: { spacing: 0, hierarchy: 0, contrast: 0, balance: 0 },
       issues: [],
@@ -159,7 +196,25 @@ export function useCompositionValidation(
       
       // Validate blocks
       const violations = defaultCompositionEngine.validate(blocks);
-      const score = scoreComposition(blocks);
+      // DISABLED: Scoring functionality removed - return mock score
+      const score: QualityScore | EnhancedCompositionScore = useEnhancedScoring 
+        ? {
+            overall: 0,
+            breakdown: { spacing: 0, hierarchy: 0, contrast: 0, balance: 0, rhythm: 0 },
+            categories: { technical: 0, aesthetic: 0 },
+            issues: ['Scoring disabled'],
+            grade: 'N/A',
+            passing: false,
+            passedRules: [],
+            failedRules: []
+          }
+        : {
+            score: 0,
+            breakdown: { spacing: 0, hierarchy: 0, contrast: 0, balance: 0 },
+            issues: ['Scoring disabled'],
+            grade: 'N/A',
+            passing: false,
+          };
       
       // Cache results
       if (enableCache && cacheKey) {
@@ -244,21 +299,33 @@ export function useCompositionValidation(
 /**
  * Hook for simple composition score (no violations)
  * Lighter weight than full validation
+ * DISABLED: Returns mock score since scoring functionality is disabled
  */
-export function useCompositionScore(blocks: EmailBlock[]): QualityScore {
+export function useCompositionScore(
+  blocks: EmailBlock[],
+  useEnhanced: boolean = false
+): QualityScore | EnhancedCompositionScore {
   return useMemo(() => {
-    try {
-      return scoreComposition(blocks);
-    } catch (error) {
-      console.error('Composition scoring error:', error);
+    // DISABLED: Scoring functionality removed - return mock score
+    if (useEnhanced) {
       return {
-        score: 0,
-        breakdown: { spacing: 0, hierarchy: 0, contrast: 0, balance: 0 },
-        issues: ['Error calculating score'],
-        grade: 'F',
+        overall: 0,
+        breakdown: { spacing: 0, hierarchy: 0, contrast: 0, balance: 0, rhythm: 0 },
+        categories: { technical: 0, aesthetic: 0 },
+        issues: ['Scoring disabled'],
+        grade: 'N/A',
         passing: false,
-      };
+        passedRules: [],
+        failedRules: []
+      } as EnhancedCompositionScore;
     }
-  }, [blocks]);
+    return {
+      score: 0,
+      breakdown: { spacing: 0, hierarchy: 0, contrast: 0, balance: 0 },
+      issues: ['Scoring disabled'],
+      grade: 'N/A',
+      passing: false,
+    };
+  }, [blocks, useEnhanced]);
 }
 

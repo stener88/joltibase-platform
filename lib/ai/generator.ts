@@ -30,20 +30,20 @@ function calculateTokenLimit(input: {
 }): number {
   const { promptLength, campaignType, emailCount = 1 } = input;
   
-  // Base token estimate - increased to account for few-shot examples in system prompt
-  let tokens = 5000; // Increased from 3000 to handle larger responses
+  // Base token estimate - increased to prevent truncation for complex campaigns
+  let tokens = 16000; // Increased from 5000 to handle large newsletters with many blocks
   
   // Adjust for prompt length (longer prompts = more complex campaigns)
   if (promptLength > 200) {
-    tokens += 1500; // Complex prompt
+    tokens += 2000; // Complex prompt
   }
   if (promptLength > 400) {
-    tokens += 1500; // Very complex prompt
+    tokens += 2000; // Very complex prompt
   }
   
   // Adjust for campaign type
   if (campaignType === 'sequence') {
-    tokens += 2000; // Sequences need more tokens for multiple emails
+    tokens += 4000; // Sequences need more tokens for multiple emails
   }
   
   // Adjust for email count
@@ -185,6 +185,7 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
     
     // 3. Build prompts
     const systemPrompt = CAMPAIGN_GENERATOR_SYSTEM_PROMPT;
+    
     const userPrompt = buildCampaignPrompt({
       prompt: validatedInput.prompt,
       companyName: validatedInput.companyName,
@@ -192,10 +193,11 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
       targetAudience: validatedInput.targetAudience,
       tone: validatedInput.tone,
       campaignType: validatedInput.campaignType,
-      
     });
     
-    // 5. Calculate optimal token limit based on campaign complexity
+    console.log(`📝 [GENERATOR] User prompt length: ${userPrompt.length} chars`);
+    
+    // 4. Calculate optimal token limit based on campaign complexity
     const maxTokens = calculateTokenLimit({
       promptLength: validatedInput.prompt.length,
       campaignType: validatedInput.campaignType,
@@ -248,28 +250,22 @@ export async function generateCampaign(input: GenerateCampaignInput): Promise<Ge
     
     // 7.5. Apply composition rules to AI-generated blocks
     console.log('🎨 [GENERATOR] Applying composition rules to ensure quality...');
-    const { defaultCompositionEngine, scoreComposition } = await import('../email/composition');
+    const { defaultCompositionEngine } = await import('../email/composition');
     
     for (let i = 0; i < generatedCampaign.emails.length; i++) {
       const email = generatedCampaign.emails[i];
       
       try {
-        // Apply composition rules (type cast for compatibility)
-        const compositionResult = await defaultCompositionEngine.execute(email.blocks as any);
-        
-        // Calculate quality score
-        const qualityScore = scoreComposition(compositionResult.blocks);
+        // Apply composition rules (auto-fixes spacing, contrast, etc.)
+        const compositionResult = await defaultCompositionEngine.execute(
+          email.blocks as any,
+          {}
+        );
         
         console.log(`  ✅ [GENERATOR] Email ${i + 1} composition:`, {
-          score: `${qualityScore.score}/100 (${qualityScore.grade})`,
           correctionsMade: compositionResult.correctionsMade,
           appliedRules: compositionResult.appliedRules.join(', '),
         });
-        
-        // Log warning if score is below 70
-        if (qualityScore.score < 70) {
-          console.warn(`  ⚠️ [GENERATOR] Email ${i + 1} has low composition score:`, qualityScore.issues);
-        }
         
         // Replace with corrected blocks
         email.blocks = compositionResult.blocks as any;

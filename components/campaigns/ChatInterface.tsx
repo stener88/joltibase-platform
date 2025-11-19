@@ -3,6 +3,14 @@
 import { useState, useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { PromptInput } from './PromptInput';
+import { FloatingToolbar } from './visual-edits/FloatingToolbar';
+import { InlineContentPanel } from './visual-edits/InlineContentPanel';
+import { InlineStylesPanel } from './visual-edits/InlineStylesPanel';
+import { InlineSpacingPanel } from './visual-edits/InlineSpacingPanel';
+import { GlobalSettingsToolbar } from './visual-edits/GlobalSettingsToolbar';
+import { SaveDiscardBar } from './visual-edits/SaveDiscardBar';
+import type { ElementDescriptor } from '@/lib/email/visual-edits/element-descriptor';
+import type { GlobalEmailSettings } from '@/lib/email/blocks/types';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -20,6 +28,22 @@ interface ChatInterfaceProps {
   isRefining: boolean;
   chatHistory: ChatMessage[];
   chatInterfaceRef?: React.RefObject<ChatInterfaceRef>;
+  visualEditsMode?: boolean;
+  onVisualEditsToggle?: () => void;
+  // Visual edits state
+  selectedElement?: ElementDescriptor | null;
+  pendingChangesCount?: number;
+  showExitPrompt?: boolean;
+  currentGlobalSettings?: GlobalEmailSettings;
+  onUpdateElement?: (elementId: string, changes: Record<string, any>) => void;
+  onDeleteElement?: (elementId: string) => void;
+  onSaveChanges?: () => void;
+  onDiscardChanges?: () => void;
+  onClearSelection?: () => void;
+  onUpdateGlobalSettings?: (settings: Partial<GlobalEmailSettings>) => void;
+  onAIRefineElement?: (prompt: string) => Promise<void>;
+  isAIRefining?: boolean;
+  isChatDisabled?: boolean;
 }
 
 export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
@@ -27,12 +51,53 @@ export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
   onRefine,
   isRefining,
   chatHistory,
+  visualEditsMode = false,
+  onVisualEditsToggle,
+  selectedElement = null,
+  pendingChangesCount = 0,
+  showExitPrompt = false,
+  currentGlobalSettings,
+  onUpdateElement,
+  onDeleteElement,
+  onSaveChanges,
+  onDiscardChanges,
+  onClearSelection,
+  onUpdateGlobalSettings,
+  onAIRefineElement,
+  isAIRefining = false,
+  isChatDisabled = false,
 }, ref) => {
   const [message, setMessage] = useState('');
   const [chatOnly, setChatOnly] = useState(false);
   const [showChips, setShowChips] = useState(false);
+  const [activePanel, setActivePanel] = useState<'content' | 'styles' | 'spacing' | 'globalSettings' | null>(null);
+  const [toolbarPosition, setToolbarPosition] = useState({ x: 0, y: 0 });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Handle outside clicks to close toolbars in visual edits mode
+  useEffect(() => {
+    if (!visualEditsMode || (!selectedElement && !showExitPrompt)) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      // Check if click is outside the chat container (which includes the email preview)
+      if (chatContainerRef.current && !chatContainerRef.current.contains(event.target as Node)) {
+        // Clear selection and close panels
+        if (onClearSelection) {
+          onClearSelection();
+        }
+        setActivePanel(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [visualEditsMode, selectedElement, showExitPrompt, onClearSelection]);
   
   // Expose method to insert block reference
   useImperativeHandle(ref, () => ({
@@ -101,6 +166,52 @@ export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory]);
 
+  // Update toolbar position when element is selected
+  useEffect(() => {
+    if (selectedElement && visualEditsMode) {
+      const element = document.querySelector(`[data-element-id="${selectedElement.elementId}"]`);
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const viewportWidth = window.innerWidth;
+        const toolbarHeight = 200; // Estimated toolbar height
+        const toolbarWidth = 500; // Estimated toolbar width (centered, so 250 on each side)
+        
+        // Calculate available space above and below
+        const spaceBelow = viewportHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        
+        // Calculate horizontal position with viewport boundary detection
+        let xPos = rect.left + rect.width / 2 - 250; // Center toolbar by default
+        
+        // Check if toolbar would go off-screen on the left
+        if (xPos < 20) {
+          xPos = 20; // 20px margin from left edge
+        }
+        
+        // Check if toolbar would go off-screen on the right
+        if (xPos + toolbarWidth > viewportWidth - 20) {
+          xPos = viewportWidth - toolbarWidth - 20; // 20px margin from right edge
+        }
+        
+        // Smart vertical positioning: prefer below, fall back to above if not enough space
+        let yPos;
+        if (spaceBelow >= toolbarHeight) {
+          // Position below the element
+          yPos = rect.bottom + 10; // 10px below element
+        } else if (spaceAbove >= toolbarHeight) {
+          // Position above the element
+          yPos = rect.top - toolbarHeight - 10; // 10px above element
+        } else {
+          // Not enough space either way, prefer below and let it scroll
+          yPos = rect.bottom + 10; // 10px below element
+        }
+        
+        setToolbarPosition({ x: xPos, y: yPos });
+      }
+    }
+  }, [selectedElement, visualEditsMode]);
+
   const handleSubmit = async () => {
     if (!message.trim() || isRefining) return;
 
@@ -109,8 +220,75 @@ export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
     await onRefine(userMessage);
   };
 
+  const handleAISubmit = async (prompt: string) => {
+    if (onAIRefineElement) {
+      await onAIRefineElement(prompt);
+    }
+  };
+
+  const handleContentClick = () => {
+    setActivePanel(prev => prev === 'content' ? null : 'content');
+  };
+
+  const handleStylesClick = () => {
+    setActivePanel(prev => prev === 'styles' ? null : 'styles');
+  };
+
+  const handleSpacingClick = () => {
+    setActivePanel(prev => prev === 'spacing' ? null : 'spacing');
+  };
+
+  const handleGlobalSettingsClick = () => {
+    setActivePanel(prev => prev === 'globalSettings' ? null : 'globalSettings');
+  };
+
+  const handleDeleteClick = () => {
+    if (selectedElement && onDeleteElement) {
+      onDeleteElement(selectedElement.elementId);
+    }
+  };
+
+  const handleAddBlockClick = () => {
+    // TODO: Implement add block functionality
+    console.log('Add block clicked');
+  };
+
+  const handleClosePanel = () => {
+    setActivePanel(null);
+  };
+
   return (
-    <div className="flex flex-col h-full bg-[#faf9f5]">
+    <div ref={chatContainerRef} className="flex flex-col h-full bg-[#faf9f5]">
+      {/* Pending Changes Indicator */}
+      {visualEditsMode && pendingChangesCount > 0 && (
+        <div className="sticky top-0 z-10 px-4 py-2 bg-amber-50 border-b border-amber-200">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-amber-800 font-medium flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              {pendingChangesCount} {pendingChangesCount === 1 ? 'change' : 'changes'} pending
+            </p>
+            {onSaveChanges && onDiscardChanges && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={onDiscardChanges}
+                  className="px-3 py-1 text-sm text-amber-700 hover:text-amber-900 font-medium"
+                >
+                  Discard
+                </button>
+                <button
+                  onClick={onSaveChanges}
+                  className="px-3 py-1 text-sm bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium"
+                >
+                  Save
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
       {/* Chat Messages */}
       <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6 space-y-4">
         {chatHistory.length === 0 ? (
@@ -174,7 +352,7 @@ export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
                   setMessage(chip.prompt);
                   setShowChips(false);
                 }}
-                disabled={isRefining}
+                disabled={isRefining || isChatDisabled}
                 className="px-3 py-1.5 text-sm bg-[#f5f4ed] hover:bg-[#e9a589] hover:text-white rounded-full text-[#3d3d3a] transition-all disabled:opacity-50 font-medium border border-[#e8e7e5]"
               >
                 {chip.label}
@@ -188,6 +366,8 @@ export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
           onChange={setMessage}
           onSubmit={handleSubmit}
           isLoading={isRefining}
+          disabled={isChatDisabled}
+          disabledReason={isChatDisabled ? "Save or discard your visual changes to continue chatting" : undefined}
           placeholder="Ask Jolti..."
           compact
           disableAnimation
@@ -195,9 +375,86 @@ export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
           onChatOnlyToggle={() => setChatOnly(!chatOnly)}
           onLightningToggle={() => setShowChips(!showChips)}
           showLightningChips={showChips}
+          visualEditsMode={visualEditsMode}
+          onVisualEditsToggle={onVisualEditsToggle}
           inputRef={inputRef}
         />
       </div>
+      
+      {/* Visual Edits UI */}
+      {visualEditsMode && selectedElement && (
+        <>
+          {/* Compact Icon Toolbar */}
+          <FloatingToolbar
+            descriptor={selectedElement}
+            position={toolbarPosition}
+            onAISubmit={handleAISubmit}
+            onContentClick={handleContentClick}
+            onStylesClick={handleStylesClick}
+            onSpacingClick={handleSpacingClick}
+            onGlobalSettingsClick={handleGlobalSettingsClick}
+            onDeleteClick={handleDeleteClick}
+            isAILoading={isAIRefining}
+          />
+          
+          {/* Inline Content Panel - Appears below toolbar */}
+          {activePanel === 'content' && onUpdateElement && (
+            <InlineContentPanel
+              descriptor={selectedElement}
+              position={{
+                x: toolbarPosition.x + 150,
+                y: toolbarPosition.y + 60,
+              }}
+              onUpdate={(changes) => onUpdateElement(selectedElement.elementId, changes)}
+            />
+          )}
+          
+          {/* Inline Styles Panel - Appears below toolbar */}
+          {activePanel === 'styles' && onUpdateElement && (
+            <InlineStylesPanel
+              descriptor={selectedElement}
+              position={{
+                x: toolbarPosition.x + 150,
+                y: toolbarPosition.y + 60,
+              }}
+              onUpdate={(changes) => onUpdateElement(selectedElement.elementId, changes)}
+            />
+          )}
+
+          {/* Inline Spacing Panel - Appears below toolbar */}
+          {activePanel === 'spacing' && onUpdateElement && (
+            <InlineSpacingPanel
+              descriptor={selectedElement}
+              position={{
+                x: toolbarPosition.x + 150,
+                y: toolbarPosition.y + 60,
+              }}
+              onUpdate={(changes) => onUpdateElement(selectedElement.elementId, changes)}
+            />
+          )}
+
+          {/* Inline Global Settings Panel - Appears below toolbar */}
+          {activePanel === 'globalSettings' && currentGlobalSettings && onUpdateGlobalSettings && (
+            <GlobalSettingsToolbar
+              position={{
+                x: toolbarPosition.x + 150,
+                y: toolbarPosition.y + 60,
+              }}
+              currentSettings={currentGlobalSettings}
+              onUpdate={onUpdateGlobalSettings}
+            />
+          )}
+        </>
+      )}
+      
+      {/* Save/Discard Bar - Only show when trying to exit with pending changes */}
+      {showExitPrompt && pendingChangesCount > 0 && (
+        <SaveDiscardBar
+          changesCount={pendingChangesCount}
+          onSave={onSaveChanges || (() => {})}
+          onDiscard={onDiscardChanges || (() => {})}
+        />
+      )}
     </div>
   );
 });

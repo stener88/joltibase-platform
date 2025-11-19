@@ -5,6 +5,8 @@
  * Optimized for Gemini's native Zod support and flexible content structure.
  */
 
+import type { Padding } from './schemas-common';
+
 // ============================================================================
 // Base Block Types
 // ============================================================================
@@ -58,6 +60,12 @@ export interface EmailBlock {
   layoutVariation?: LayoutVariation;
   settings: Record<string, any>;
   content: Record<string, any>;
+  _patternMeta?: {
+    patternId: string;
+    beat: string;
+    visualWeight: string;
+    spacingStrategy: string;
+  };
 }
 
 export interface GlobalEmailSettings {
@@ -104,10 +112,56 @@ export type { ButtonBlockType as ButtonBlock } from './schemas';
 export type { DividerBlockType as DividerBlock } from './schemas';
 export type { SocialLinksBlockType as SocialLinksBlock } from './schemas';
 export type { FooterBlockType as FooterBlock } from './schemas';
-// V2 blocks (link-bar, address, layouts to be added later)
-export type LinkBarBlock = any; // Placeholder
-export type AddressBlock = any; // Placeholder
-export type LayoutsBlock = any; // Placeholder
+
+// V2 blocks - Properly typed based on Block schema structure
+export type LinkBarBlock = {
+  id: string;
+  type: 'link-bar';
+  position: number;
+  settings: {
+    align?: 'left' | 'center' | 'right';
+    padding?: Padding;
+    backgroundColor?: string;
+    linkColor?: string;
+    linkHoverColor?: string;
+  };
+  content: {
+    links: Array<{
+      text: string;
+      url: string;
+    }>;
+  };
+};
+
+export type AddressBlock = {
+  id: string;
+  type: 'address';
+  position: number;
+  settings: {
+    align?: 'left' | 'center' | 'right';
+    fontSize?: number;
+    color?: string;
+    padding?: Padding;
+  };
+  content: {
+    companyName?: string;
+    addressLine1?: string;
+    addressLine2?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+  };
+};
+
+export type LayoutsBlock = {
+  id: string;
+  type: 'layouts';
+  position: number;
+  layoutVariation: LayoutVariation;
+  settings: Record<string, any>; // Flexible settings - varies by layout
+  content: Record<string, any>;  // Flexible content - varies by layout
+};
 
 // ============================================================================
 // V2 Block System - Display Name Helpers
@@ -184,14 +238,10 @@ export function isV2Block(block: any): block is EmailBlock {
 
 // ============================================================================
 // Common Type Exports (used across the system)
+// Padding imported from schemas-common
 // ============================================================================
 
-export interface Padding {
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
-}
+export type { Padding } from './schemas-common';
 
 export type Alignment = 'left' | 'center' | 'right';
 

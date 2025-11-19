@@ -19,6 +19,7 @@ export interface CompositionOptions {
   rules?: string[]; // Rule IDs to apply (default: all)
   accessibility?: 'WCAG-AA' | 'WCAG-AAA';
   viewport?: 'mobile' | 'tablet' | 'desktop';
+  pattern?: string; // Pattern ID for rhythm validation
 }
 
 export interface CompositionResult {
@@ -26,6 +27,7 @@ export interface CompositionResult {
   appliedRules: string[];
   violations: RuleViolation[];
   correctionsMade: number;
+  metadata?: any;
 }
 
 export interface CompositionMetadata {
@@ -33,6 +35,8 @@ export interface CompositionMetadata {
   violations: RuleViolation[];
   correctionsMade: number;
   timestamp: Date;
+  rhythmAnalysis?: any;
+  patternValidation?: any;
 }
 
 // Middleware type
@@ -95,6 +99,7 @@ export class CompositionEngine {
       tokens: designTokens,
       viewport: options.viewport || 'desktop',
       accessibility: options.accessibility || 'WCAG-AA',
+      metadata: {},
     };
     
     // Filter rules if specific rules requested
@@ -104,12 +109,17 @@ export class CompositionEngine {
     }
     
     // Apply middlewares
-    let processedBlocks = await this.applyMiddlewares(blocks, context);
+    const processedBlocks = await this.applyMiddlewares(blocks, context);
     
     // Apply composition rules
     const result = await this.applyRules(processedBlocks, rulesToApply, context);
     
-    return result;
+    return {
+      ...result,
+      ...(context.metadata && Object.keys(context.metadata).length > 0 && {
+        metadata: context.metadata
+      })
+    } as any;
   }
   
   /**

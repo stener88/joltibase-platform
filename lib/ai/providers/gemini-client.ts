@@ -180,11 +180,60 @@ export async function generateGeminiCompletion(
       });
 
       const response = result.response;
-      let text = response.text();
+      
+      // Check if response has candidates
+      if (!response.candidates || response.candidates.length === 0) {
+        console.error('❌ [GEMINI] No candidates in response:', JSON.stringify(response, null, 2));
+        throw new Error('Gemini API returned no candidates. Response may have been blocked by safety filters.');
+      }
+      
+      const candidate = response.candidates[0];
+      
+      // Check for finish reason issues
+      if (candidate.finishReason && candidate.finishReason !== 'STOP') {
+        console.error('❌ [GEMINI] Unexpected finish reason:', candidate.finishReason);
+        console.error('📄 [GEMINI] Candidate details:', JSON.stringify(candidate, null, 2));
+        
+        if (candidate.finishReason === 'SAFETY') {
+          throw new Error('Gemini API blocked response due to safety filters.');
+        } else if (candidate.finishReason === 'MAX_TOKENS') {
+          throw new Error('Gemini API response truncated due to max tokens limit.');
+        } else if (candidate.finishReason === 'RECITATION') {
+          throw new Error('Gemini API blocked response due to recitation detection.');
+        } else {
+          throw new Error(`Gemini API stopped with reason: ${candidate.finishReason}`);
+        }
+      }
+      
+      // Extract text from candidate parts
+      let text = '';
+      if (candidate.content?.parts) {
+        text = candidate.content.parts
+          .filter((part: any) => part.text)
+          .map((part: any) => part.text)
+          .join('');
+      }
+      
+      // Fallback to response.text() if parts extraction failed
+      if (!text) {
+        try {
+          text = response.text();
+        } catch (textError) {
+          console.error('❌ [GEMINI] Failed to extract text:', textError);
+          console.error('📄 [GEMINI] Full response:', JSON.stringify(response, null, 2));
+          throw new Error('Failed to extract text from Gemini response');
+        }
+      }
 
       // Post-process JSON to ensure it's valid
       // Gemini sometimes adds markdown code blocks or extra whitespace
       text = text.trim();
+      
+      if (!text) {
+        console.error('❌ [GEMINI] Empty response text after extraction');
+        console.error('📄 [GEMINI] Full response:', JSON.stringify(response, null, 2));
+        throw new Error('Gemini API returned empty response');
+      }
       
       // Remove markdown code blocks if present
       if (text.startsWith('```json')) {

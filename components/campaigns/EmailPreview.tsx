@@ -2,6 +2,7 @@
 
 import { EmailFrame } from './EmailFrame';
 import { EmailBlock, GlobalEmailSettings } from '@/lib/email/blocks/types';
+import type { ElementDescriptor } from '@/lib/email/visual-edits/element-descriptor';
 
 export type DeviceMode = 'desktop' | 'mobile';
 export type ViewMode = 'html' | 'text';
@@ -17,6 +18,10 @@ interface EmailPreviewProps {
   onViewModeChange?: (mode: ViewMode) => void;
   chatMode?: boolean;
   onBlockClick?: (blockId: string, blockType: string, blockName: string) => void;
+  visualEditsMode?: boolean;
+  selectedElement?: ElementDescriptor | null;
+  onElementClick?: (element: HTMLElement) => void;
+  onUpdateGlobalSettings?: (settings: Partial<GlobalEmailSettings>) => void;
 }
 
 /**
@@ -37,6 +42,10 @@ export function EmailPreview({
   onViewModeChange,
   chatMode = false,
   onBlockClick,
+  visualEditsMode = false,
+  selectedElement = null,
+  onElementClick,
+  onUpdateGlobalSettings,
 }: EmailPreviewProps) {
   return (
     <div className="flex flex-col h-full">
@@ -48,6 +57,11 @@ export function EmailPreview({
           interactive={false}
           chatMode={chatMode}
           onBlockClick={onBlockClick}
+          visualEditsMode={visualEditsMode}
+          selectedElement={selectedElement}
+          onElementClick={onElementClick}
+          currentGlobalSettings={designConfig}
+          onUpdateGlobalSettings={onUpdateGlobalSettings}
         />
       ) : (
         <div className="flex-1 overflow-y-auto bg-[#f9fafb] p-8">

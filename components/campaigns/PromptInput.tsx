@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ArrowUp, MessageSquare } from 'lucide-react';
+import { ArrowUp, MessageSquare, MousePointer2 } from 'lucide-react';
 import { useTypingAnimation } from '@/hooks/useTypingAnimation';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
@@ -10,6 +10,8 @@ interface PromptInputProps {
   onChange: (value: string) => void;
   onSubmit: () => void;
   isLoading?: boolean;
+  disabled?: boolean;
+  disabledReason?: string; // NEW: Explain why disabled
   placeholder?: string;
   compact?: boolean;
   disableAnimation?: boolean;
@@ -18,6 +20,9 @@ interface PromptInputProps {
   onLightningToggle?: () => void;
   showLightningChips?: boolean;
   inputRef?: React.RefObject<HTMLTextAreaElement | null>;
+  noBackground?: boolean;
+  visualEditsMode?: boolean;
+  onVisualEditsToggle?: () => void;
 }
 
 const TYPING_EXAMPLES = [
@@ -34,6 +39,8 @@ export function PromptInput({
   onChange,
   onSubmit,
   isLoading = false,
+  disabled = false,
+  disabledReason,
   placeholder = "Describe your email campaign...",
   compact = false,
   disableAnimation = false,
@@ -42,6 +49,9 @@ export function PromptInput({
   onLightningToggle,
   showLightningChips = false,
   inputRef,
+  noBackground = false,
+  visualEditsMode = false,
+  onVisualEditsToggle,
 }: PromptInputProps) {
   const internalTextareaRef = useRef<HTMLTextAreaElement>(null);
   const textareaRef = inputRef || internalTextareaRef;
@@ -95,7 +105,7 @@ export function PromptInput({
               onBlur={() => setIsFocused(false)}
               onKeyDown={handleKeyDown}
               placeholder={dynamicPlaceholder || "Build SaaS Dashboard..."}
-              disabled={isLoading}
+              disabled={isLoading || disabled}
               className="w-full min-h-[180px] max-h-[300px] pl-6 pr-20 py-6 text-lg font-normal text-white placeholder-gray-400 bg-transparent border-none outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ 
                 lineHeight: '1.6',
@@ -108,14 +118,14 @@ export function PromptInput({
             {/* Send button - coral square with arrow */}
             <button
               onClick={handleSubmitClick}
-              disabled={!value.trim() || isLoading}
+              disabled={!value.trim() || isLoading || disabled}
               className="absolute right-4 bottom-4 w-12 h-12 text-white rounded-lg flex items-center justify-center transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed group"
               style={{
                 backgroundColor: '#e9a589',
                 boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
               }}
               onMouseEnter={(e) => {
-                if (!isLoading && value.trim()) {
+                if (!isLoading && !disabled && value.trim()) {
                   e.currentTarget.style.backgroundColor = '#d89478';
                 }
               }}
@@ -138,7 +148,19 @@ export function PromptInput({
   // Compact mode (chat interface) - light Claude-style
   return (
     <div className="w-full">
-      <div className="relative bg-white rounded-2xl border border-[#e8e7e5] shadow-sm">
+      {/* Disabled Reason Message */}
+      {disabled && disabledReason && (
+        <div className="mb-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm text-amber-800 flex items-center gap-2">
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {disabledReason}
+          </p>
+        </div>
+      )}
+      
+      <div className={`relative ${noBackground ? '' : 'bg-white rounded-2xl border border-[#e8e7e5] shadow-sm'}`}>
         {/* Input container */}
         <div className="relative flex items-start">
           {/* Textarea */}
@@ -150,7 +172,7 @@ export function PromptInput({
             onBlur={() => setIsFocused(false)}
             onKeyDown={handleKeyDown}
             placeholder={dynamicPlaceholder || "Reply..."}
-            disabled={isLoading}
+            disabled={isLoading || disabled}
             className="w-full min-h-[80px] px-4 pt-4 font-normal text-[#3d3d3a] placeholder-[#6b6b6b]/40 bg-transparent border-none outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ 
               fontSize: '15px',
@@ -167,7 +189,7 @@ export function PromptInput({
               <TooltipTrigger asChild>
                 <button
                   onClick={onLightningToggle}
-                  disabled={isLoading}
+                  disabled={isLoading || disabled}
                   className="absolute left-2 bottom-4 w-8 h-8 rounded-lg bg-transparent border border-[#e8e7e5] text-[#6b6b6b] hover:border-[#3d3d3a] hover:bg-black/[0.03] flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed z-10"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -181,13 +203,39 @@ export function PromptInput({
             </Tooltip>
           )}
 
+          {/* Visual Edits toggle button (only in compact mode with toggle handler) */}
+          {onVisualEditsToggle && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onVisualEditsToggle}
+                  disabled={isLoading}
+                  className={`
+                    absolute left-12 bottom-4 w-8 h-8
+                    rounded-lg
+                    flex items-center justify-center
+                    transition-all duration-200
+                    disabled:opacity-40 disabled:cursor-not-allowed
+                    border border-[#e8e7e5]
+                    ${visualEditsMode ? 'bg-[#e9a589] text-white border-[#e9a589]' : 'bg-transparent text-[#6b6b6b] hover:bg-black/[0.03] hover:border-[#3d3d3a]'}
+                  `}
+                >
+                  <MousePointer2 className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>Visual Edits - Click elements to edit</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+
           {/* Chat mode toggle button (only in compact mode with toggle handler) */}
           {onChatOnlyToggle && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   onClick={onChatOnlyToggle}
-                  disabled={isLoading}
+                  disabled={isLoading || disabled}
                   className={`
                     absolute right-14 bottom-4 w-8 h-8
                     rounded-lg
@@ -210,7 +258,7 @@ export function PromptInput({
           {/* Send button */}
           <button
             onClick={handleSubmitClick}
-            disabled={!value.trim() || isLoading}
+            disabled={!value.trim() || isLoading || disabled}
             className="absolute right-4 bottom-4 w-8 h-8 bg-[#e9a589] text-white rounded-lg flex items-center justify-center transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#d89478] group"
           >
             {isLoading ? (

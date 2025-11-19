@@ -51,7 +51,7 @@ export const BlockSchema = z.object({
     z.null(),
     z.undefined(),
   ]).optional().describe(
-    'Layout variation - REQUIRED when type is "layouts". Must be one of the 60+ valid variations.'
+    'Layout variation - REQUIRED when type is "layouts". Must be one of the 14 valid variations.'
   ),
   
   // Flexible settings (structure varies by type and variation)

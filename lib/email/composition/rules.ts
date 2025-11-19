@@ -16,6 +16,7 @@ export interface RuleContext {
   tokens: typeof designTokens;
   viewport: 'mobile' | 'tablet' | 'desktop';
   accessibility: 'WCAG-AA' | 'WCAG-AAA';
+  metadata?: any; // Optional metadata for analysis results
 }
 
 export interface RuleViolation {

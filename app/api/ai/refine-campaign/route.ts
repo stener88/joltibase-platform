@@ -228,7 +228,63 @@ ${requestType === 'major' ? `2. **MAJOR REDESIGN EXECUTION** (for major requests
    - Maintain email best practices (footer, spacing, readability)
    - After executing, suggest additional improvements in conversational message` : ''}
 
-3. **COMMON REFINEMENT PATTERNS:**
+3. **AVAILABLE LAYOUT VARIATIONS (ONLY USE THESE 14):**
+
+   When type="layouts", you MUST set layoutVariation to one of these:
+
+   **a) HERO LAYOUTS:**
+      - "hero-center": Centered hero with headline, subheadline, optional button
+        Use for: Opening section, announcements, main message
+
+   **b) TWO-COLUMN LAYOUTS (text + image combinations):**
+      - "two-column-50-50": Equal width columns
+        Use for: Balanced content, feature highlights
+      - "two-column-60-40": 60% left, 40% right
+        Use for: Text-heavy content with supporting image
+      - "two-column-40-60": 40% left, 60% right
+        Use for: Large image with supporting text
+      - "two-column-70-30": 70% left, 30% right
+        Use for: Long-form content with small image/icon
+      - "two-column-30-70": 30% left, 70% right
+        Use for: Small icon/image with large content area
+      - "two-column-text": Two text columns side-by-side
+        Use for: Comparisons, before/after, dual messaging
+
+   **c) STATS LAYOUTS (for numbers/metrics/PRICING):**
+      - "stats-2-col": 2 statistics side-by-side
+        Use for: Two key metrics, comparisons
+      - "stats-3-col": 3 statistics in a row
+        Use for: **PRICING TABLES (3 tiers)**, three key metrics
+        Each stat item: value="$X/mo", title="Tier Name", description="Features..."
+      - "stats-4-col": 4 statistics in a row
+        Use for: **PRICING TABLES (4 tiers)**, four metrics, comprehensive dashboard
+
+   **d) ADVANCED LAYOUTS:**
+      - "image-overlay": Full-width image with text overlay
+        Use for: Dramatic visuals, hero images with text
+      - "card-centered": Centered card with all content
+        Use for: Focused message, single CTA, announcement
+      - "compact-image-text": Compact image + text side-by-side
+        Use for: Product features, small announcements
+      - "magazine-feature": Editorial-style layout
+        Use for: Long-form content, articles, stories
+
+   **CRITICAL LAYOUT RULES:**
+   - NEVER invent new layoutVariation names (e.g., "pricing-3-col" is INVALID)
+   - For pricing tables: Use "stats-3-col" or "stats-4-col"
+   - For feature comparisons: Use "two-column-text" or stats layouts
+   - Each stat item can have: value, title, description, icon
+   - Stats layouts are flexible - perfect for pricing, metrics, features
+
+   **USER REQUEST MAPPING EXAMPLES:**
+   - "Add pricing section with 3 tiers" → Use "stats-3-col"
+     (Each stat = one pricing tier: value="$X/mo", title="Tier Name", description="Features list")
+   - "Compare features side-by-side" → Use "two-column-text" or "stats-2-col"
+   - "Show 4 key metrics" → Use "stats-4-col"
+   - "Add hero section" → Use "hero-center"
+   - "Product feature with image" → Use "two-column-60-40" or "two-column-40-60"
+
+4. **COMMON REFINEMENT PATTERNS:**
 
    **a) Change text content:**
       - Find the text/heading block with matching content
@@ -265,7 +321,7 @@ ${requestType === 'major' ? `2. **MAJOR REDESIGN EXECUTION** (for major requests
       - For spacer blocks: update "settings.height" (number)
       - For other blocks: update "settings.padding" (object with top/bottom/left/right)
 
-4. **VALIDATION REQUIREMENTS (CRITICAL):**
+5. **VALIDATION REQUIREMENTS (CRITICAL):**
    - Every block MUST have: id (string), type (string), position (number), content (object), settings (object)
    - Positions MUST be sequential integers starting at 0 (0, 1, 2, 3...)
    - **ALL blocks (except spacer) MUST have "padding" in settings**: OBJECT with { top: number, bottom: number, left: number, right: number }
@@ -274,6 +330,7 @@ ${requestType === 'major' ? `2. **MAJOR REDESIGN EXECUTION** (for major requests
    - align = STRING ("left", "center", or "right")
    
    **Special Requirements by Block Type:**
+   - **layouts (with layoutVariation)**: MUST use one of the 14 valid layoutVariation values listed above
    - **stats**: Must have "layout" ("2-col", "3-col", "4-col") and "labelFontWeight" (number)
    - **testimonial**: Must have in content: "quote" (string) and "author" (string, person's name); optional: "role", "company", "avatarUrl". Must have in settings: "quoteFontSize" (string like "20px"), "quoteColor" (hex), "quoteFontStyle" ("normal" or "italic"), "authorFontSize" (string like "15px"), "authorColor" (hex), and "authorFontWeight" (number)
    - **feature-grid**: Must have in settings: "layout" ("2-col", "3-col", "single-col"), "align" ("left", "center", "right"), "iconSize" (string like "48px"), "titleFontSize" (string like "19px"), "titleFontWeight" (number like 700), "titleColor" (hex), "descriptionFontSize" (string like "15px"), "descriptionColor" (hex), "padding" (object), "spacing" (number). Must have in content: "features" (array of objects with icon (single emoji character, optional), title, description)
@@ -284,11 +341,12 @@ ${requestType === 'major' ? `2. **MAJOR REDESIGN EXECUTION** (for major requests
    - **social-links**: Must have in content: "links" (array of objects with "platform" and "url"). Platform must be one of: "twitter", "linkedin", "facebook", "instagram", "youtube", "github", "tiktok". URLs must be valid (e.g., "https://twitter.com/company") or merge tag placeholders (e.g., "{{twitter_url}}")
    - **footer**: Always keep at end with position = last
 
-5. **VALIDATION CHECK (Before responding):**
+6. **VALIDATION CHECK (Before responding):**
    ${requestType === 'major' ? '- Did I execute the full redesign as requested?' : '- Did I change ONLY what was requested?'}
    - Are all required fields present for each block?
    - Are positions sequential (0, 1, 2...)?
    - Are data types correct (lineHeight=STRING, fontWeight=NUMBER)?
+   - For layouts blocks: Did I use a valid layoutVariation from the 14 available options?
    ${requestType === 'major' ? '' : '- Did I preserve everything else exactly?'}
 
 **Examples of CORRECT Refinements:**
@@ -446,7 +504,7 @@ Be conversational, enthusiastic, and helpful - like you're brainstorming with a 
         provider,
         model: provider === 'gemini' ? 'gemini-2.5-flash' : 'gpt-4o',
         temperature: 0.7,
-        maxTokens: 8192,
+        maxTokens: 16000, // Increased from 8192 to allow for large campaigns with many blocks
         zodSchema, // Passed for OpenAI fallback
       }
     );
@@ -467,6 +525,26 @@ Be conversational, enthusiastic, and helpful - like you're brainstorming with a 
       // Validate with Zod (mainly for type checking since structured outputs guarantee compliance)
       aiResponse = RefineResponseSchema.parse(parsed);
       console.log('✅ [REFINE-API] Structured response parsed and validated');
+      
+      // Validate layout variations - warn if invalid variations are used
+      const validVariations = [
+        'hero-center',
+        'two-column-50-50', 'two-column-60-40', 'two-column-40-60',
+        'two-column-70-30', 'two-column-30-70', 'two-column-text',
+        'stats-2-col', 'stats-3-col', 'stats-4-col',
+        'image-overlay', 'card-centered', 'compact-image-text', 'magazine-feature',
+      ];
+
+      aiResponse.blocks.forEach((block, index) => {
+        if (block.type === 'layouts' && block.layoutVariation) {
+          if (!validVariations.includes(block.layoutVariation)) {
+            console.warn(
+              `⚠️ [REFINE-API] Block ${index} has invalid layoutVariation: "${block.layoutVariation}". ` +
+              `Valid options: ${validVariations.join(', ')}`
+            );
+          }
+        }
+      });
     } catch (error) {
       console.error('❌ [REFINE-API] Failed to parse AI response:', error);
       return NextResponse.json<ErrorResponse>(
@@ -485,7 +563,7 @@ Be conversational, enthusiastic, and helpful - like you're brainstorming with a 
     // 8. Render blocks to HTML
     console.log('📧 [REFINE-API] Rendering blocks to HTML...');
     const globalSettings = aiResponse.globalSettings || validatedInput.currentEmail.globalSettings as GlobalEmailSettingsType;
-    const renderedHtml = renderBlocksToEmail(
+    const renderedHtml = await renderBlocksToEmail(
       aiResponse.blocks as EmailBlockType[],
       globalSettings
     );

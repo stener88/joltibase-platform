@@ -39,7 +39,6 @@ import {
 
 import {
   defaultCompositionEngine,
-  scoreComposition,
   type CompositionOptions,
 } from '../../composition';
 
@@ -67,21 +66,21 @@ export interface RenderOptions {
 export function renderBlock(block: EmailBlock, context: RenderContext): string {
   switch (block.type) {
     case 'logo':
-      return renderLogoBlock(block as LogoBlock, context);
+      return renderLogoBlock(block as LogoBlock, context, block.id);
     case 'spacer':
-      return renderSpacerBlock(block as SpacerBlock);
+      return renderSpacerBlock(block as SpacerBlock, block.id);
     case 'text':
-      return renderTextBlock(block as TextBlock);
+      return renderTextBlock(block as TextBlock, block.id);
     case 'image':
-      return renderImageBlock(block as ImageBlock);
+      return renderImageBlock(block as ImageBlock, block.id);
     case 'button':
-      return renderButtonBlock(block as ButtonBlock, context);
+      return renderButtonBlock(block as ButtonBlock, context, block.id);
     case 'divider':
-      return renderDividerBlock(block as DividerBlock);
+      return renderDividerBlock(block as DividerBlock, block.id);
     case 'social-links':
-      return renderSocialLinksBlock(block as SocialLinksBlock);
+      return renderSocialLinksBlock(block as SocialLinksBlock, block.id);
     case 'footer':
-      return renderFooterBlock(block as FooterBlock, context);
+      return renderFooterBlock(block as FooterBlock, context, block.id);
     case 'link-bar':
       return `<p style="padding: 20px; text-align: center; color: #666;">Link Bar - rendering coming soon</p>`;
     case 'address':
@@ -114,13 +113,11 @@ export async function renderBlocksToEmail(
       
       // Generate metadata HTML comment
       if (options?.includeMetadata) {
-        const score = scoreComposition(result.blocks);
         compositionMetadata = `
 <!-- 
   Composition Metadata:
   - Applied Rules: ${result.appliedRules.join(', ')}
   - Corrections Made: ${result.correctionsMade}
-  - Quality Score: ${score.score}/100 (${score.grade})
   - Violations: ${result.violations.length}
 -->`;
       }

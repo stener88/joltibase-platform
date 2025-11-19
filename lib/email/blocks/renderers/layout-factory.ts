@@ -39,38 +39,49 @@ import { magazineFeatureConfig } from '../configs/magazine-feature';
 /**
  * Get layout configuration by variation name
  * 
- * All 14 layouts have configs that generate settings components.
- * Only simple layouts (hero-center) use factory-generated renderers.
- * Complex layouts use hand-written renderers for special positioning/structure.
+ * ALL 14 LAYOUTS HAVE CONFIGS ✅
+ * - Configs drive factory-generated settings components (ALL 14 use this)
+ * - Simple layouts (hero-center) also use factory-generated renderers
+ * - Complex layouts use hand-written renderers for precise control
+ * 
+ * This hybrid approach gives us:
+ * - Consistent settings UI across all layouts (via factory)
+ * - Optimized rendering for complex layouts (hand-written)
+ * - Easy to add new layouts (< 30 min with config file)
  */
 export function getLayoutConfig(variation: string): LayoutConfig | null {
   const configs: Record<string, LayoutConfig> = {
-    // Simple layout - factory renderer ✅
+    // CONTENT LAYOUTS (1)
     'hero-center': heroCenterConfig,
     
-    // Two-column layouts - hand-written renderers (width calculations)
+    // TWO-COLUMN LAYOUTS (6)
     'two-column-50-50': twoColumn5050Config,
     'two-column-60-40': twoColumn6040Config,
     'two-column-40-60': twoColumn4060Config,
     'two-column-70-30': twoColumn7030Config,
     'two-column-30-70': twoColumn3070Config,
+    'two-column-text': twoColumnTextConfig,
     
-    // Stats layouts - hand-written renderers (items arrays)
+    // STATS LAYOUTS (3)
     'stats-2-col': stats2ColConfig,
     'stats-3-col': stats3ColConfig,
     'stats-4-col': stats4ColConfig,
     
-    // Text layout - hand-written renderer (special columns)
-    'two-column-text': twoColumnTextConfig,
-    
-    // Advanced layouts - hand-written renderers (custom designs)
+    // ADVANCED LAYOUTS (4)
     'image-overlay': imageOverlayConfig,
     'card-centered': cardCenteredConfig,
     'compact-image-text': compactImageTextConfig,
     'magazine-feature': magazineFeatureConfig,
   };
   
-  return configs[variation] || null;
+  const config = configs[variation];
+  
+  if (!config) {
+    console.warn(`[FACTORY] No config found for layout variation: ${variation}`);
+    return null;
+  }
+  
+  return config;
 }
 
 // ============================================================================
@@ -89,7 +100,7 @@ export function getLayoutConfig(variation: string): LayoutConfig | null {
  * @returns Renderer function that generates HTML
  */
 export function createLayoutRenderer(config: LayoutConfig): LayoutRendererFunction {
-  return function generatedRenderer(content: any, settings: any, context: RenderContext): string {
+  return function generatedRenderer(content: any, settings: any, context: RenderContext, blockId?: string): string {
     const elements: string[] = [];
     
     // Render each element in the config
@@ -123,11 +134,11 @@ export function createLayoutRenderer(config: LayoutConfig): LayoutRendererFuncti
       // Render based on element type
       switch (element.type) {
         case 'header':
-          elements.push(renderLayoutHeader(contentValue, settings));
+          elements.push(renderLayoutHeader(contentValue, settings, blockId, element.contentKey));
           break;
           
         case 'title':
-          elements.push(renderLayoutTitle(contentValue, settings));
+          elements.push(renderLayoutTitle(contentValue, settings, blockId, element.contentKey));
           break;
           
         case 'divider':
@@ -135,11 +146,11 @@ export function createLayoutRenderer(config: LayoutConfig): LayoutRendererFuncti
           break;
           
         case 'paragraph':
-          elements.push(renderLayoutParagraph(contentValue, settings));
+          elements.push(renderLayoutParagraph(contentValue, settings, blockId, element.contentKey));
           break;
           
         case 'button':
-          elements.push(renderLayoutButton(contentValue, settings, context));
+          elements.push(renderLayoutButton(contentValue, settings, context, blockId, element.contentKey));
           break;
           
         // Additional element types can be added here
@@ -170,25 +181,30 @@ export function createLayoutRenderer(config: LayoutConfig): LayoutRendererFuncti
 /**
  * Get a renderer function for a specific layout variation
  * 
- * Only returns factory-generated renderers for simple layouts.
- * Complex layouts (two-column, stats, advanced) use hand-written renderers.
+ * Returns factory-generated renderers for simple single-column layouts.
+ * Complex layouts (two-column, stats, advanced) use hand-written renderers
+ * for precise control over column widths, grids, and special positioning.
  * 
  * @param variation - Layout variation name (e.g., 'hero-center')
  * @returns Renderer function or null if should use hand-written renderer
  */
 export function getFactoryRenderer(variation: string): LayoutRendererFunction | null {
-  // Only hero-center uses factory-generated renderer
-  // All other layouts use hand-written renderers for complex positioning/structure
-  if (variation !== 'hero-center') {
-    return null;
-  }
-  
   const config = getLayoutConfig(variation);
   if (!config) {
     return null;
   }
   
-  return createLayoutRenderer(config);
+  // Use factory renderer ONLY for simple single-column layouts
+  // These have straightforward vertical stacking with no complex positioning
+  if (config.structure === 'single-column' && config.category !== 'advanced') {
+    return createLayoutRenderer(config);
+  }
+  
+  // All other layouts use hand-written renderers:
+  // - two-column: Need precise column width calculations
+  // - multi-column: Need stats grid layout
+  // - advanced: Need special positioning (overlays, cards, etc.)
+  return null;
 }
 
 // ============================================================================

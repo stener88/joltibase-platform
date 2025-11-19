@@ -1,12 +1,14 @@
 /**
  * Composition System
  * 
- * Central export for all composition-related functionality
+ * Central export for composition engine and rules.
+ * Scoring functionality removed - can be re-enabled later if needed.
  */
 
 export * from './rules';
 export * from './engine';
-export * from './scoring';
+// Scoring removed - kept file for future use
+// export * from './scoring';
 
 // Re-export commonly used types and functions
 export {
@@ -18,15 +20,18 @@ export {
   type CompositionMetadata,
 } from './engine';
 
-export {
-  scoreComposition,
-  scoreCompositionWithViolations,
-  quickScore,
-  compareScores,
-  getScoringRecommendations,
-  type QualityScore,
-  type CategoryScore,
-} from './scoring';
+// Scoring exports commented out - can be re-enabled if needed
+// export {
+//   scoreComposition,
+//   scoreCompositionEnhanced,
+//   scoreCompositionWithViolations,
+//   quickScore,
+//   compareScores,
+//   getScoringRecommendations,
+//   type QualityScore,
+//   type EnhancedCompositionScore,
+//   type CategoryScore,
+// } from './scoring';
 
 export {
   allCompositionRules,
