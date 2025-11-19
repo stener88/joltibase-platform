@@ -13,11 +13,14 @@ import { SplitScreenLayout } from '@/components/campaigns/SplitScreenLayout';
 import { ChatInterface, type ChatMessage, type ChatInterfaceRef } from '@/components/campaigns/ChatInterface';
 import { DirectEditor } from '@/components/campaigns/DirectEditor';
 import { EmailPreview, type DeviceMode, type ViewMode } from '@/components/campaigns/EmailPreview';
-import { VisualBlockEditor } from '@/components/email-editor/VisualBlockEditor';
 import type { EmailBlock, GlobalEmailSettings } from '@/lib/email/blocks/types';
-import { MessageSquare, Edit3, Edit2, Save, RotateCcw, Monitor, Smartphone, Layers } from 'lucide-react';
+import { MessageSquare, Edit3, Edit2, Save, RotateCcw, Monitor, Smartphone } from 'lucide-react';
+// V2 React Email imports
+import { V2ChatEditor } from '@/components/email-editor/V2ChatEditor';
+import { EmailV2Frame } from '@/components/email-editor/EmailV2Frame';
+import type { EmailComponent, GlobalEmailSettings as V2GlobalSettings } from '@/lib/email-v2/types';
 
-type EditorMode = 'chat' | 'edit' | 'visual';
+type EditorMode = 'chat' | 'edit';
 
 /**
  * Generate a meaningful placeholder name from campaign content
@@ -71,10 +74,13 @@ export default function DashboardCampaignEditorPage() {
   const saveMutation = useCampaignMutation(campaignId);
   const refineMutation = useCampaignRefineMutation(campaignId);
   
+  // Detect V2 campaign
+  const isV2Campaign = campaign?.version === 'v2' && campaign?.root_component;
+  
   // Check for initial mode from query params
   const initialMode = searchParams.get('mode') as EditorMode | null;
   const [editorMode, setEditorMode] = useState<EditorMode>(
-    initialMode === 'visual' || initialMode === 'edit' ? initialMode : 'chat'
+    initialMode === 'edit' ? initialMode : 'chat'
   );
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [chatVersions, setChatVersions] = useState<any[]>([]);
@@ -152,7 +158,8 @@ export default function DashboardCampaignEditorPage() {
   
   // Keyboard shortcuts for visual edits mode
   useEffect(() => {
-    if (!visualEdits.state.isActive) return;
+    // Skip keyboard shortcuts for V2 campaigns (they handle their own)
+    if (!visualEdits.state.isActive || isV2Campaign) return;
     
     const handleKeyDown = (e: KeyboardEvent) => {
       // Escape - Deselect element
@@ -176,7 +183,7 @@ export default function DashboardCampaignEditorPage() {
       // Cmd+Z / Ctrl+Z - Undo (in visual mode)
       if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
-        if (editorHistory.canUndo()) {
+        if (editorHistory.canUndo) {
           editorHistory.undo();
         }
         return;
@@ -185,7 +192,7 @@ export default function DashboardCampaignEditorPage() {
       // Cmd+Shift+Z / Ctrl+Shift+Z - Redo (in visual mode)
       if ((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) {
         e.preventDefault();
-        if (editorHistory.canRedo()) {
+        if (editorHistory.canRedo) {
           editorHistory.redo();
         }
         return;
@@ -194,7 +201,7 @@ export default function DashboardCampaignEditorPage() {
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [visualEdits, editorHistory]);
+  }, [visualEdits, editorHistory, isV2Campaign]);
   
   // Handle discard changes
   const handleDiscardChanges = useCallback(() => {
@@ -482,11 +489,6 @@ export default function DashboardCampaignEditorPage() {
     }
   };
   
-  // Handle visual editor updates
-  const handleVisualUpdate = async (blocks: EmailBlock[], globalSettings: GlobalEmailSettings) => {
-    editorHistory.update({ blocks, globalSettings });
-  };
-  
   // Handle direct editor updates
   const handleEmailUpdate = (updates: Partial<{ blocks: EmailBlock[]; globalSettings: GlobalEmailSettings; subject: string; previewText: string; html: string; plainText: string }>) => {
     if (updates.blocks || updates.globalSettings) {
@@ -612,17 +614,6 @@ export default function DashboardCampaignEditorPage() {
           Chat
         </button>
         <button
-          onClick={() => setEditorMode('visual')}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
-            editorMode === 'visual'
-              ? 'bg-[#e9a589]/10 text-[#e9a589] font-medium'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          <Layers className="w-4 h-4" />
-          Visual Editor
-        </button>
-        <button
           onClick={() => setEditorMode('edit')}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
             editorMode === 'edit'
@@ -663,8 +654,8 @@ export default function DashboardCampaignEditorPage() {
           </button>
         </div>
 
-        {/* Undo/Redo (Visual & Text modes) */}
-        {(editorMode === 'visual' || editorMode === 'edit') && (
+        {/* Undo/Redo (Code editor mode) */}
+        {editorMode === 'edit' && (
           <div className="flex items-center gap-2">
             <button
               onClick={editorHistory.undo}
@@ -737,18 +728,23 @@ export default function DashboardCampaignEditorPage() {
     <DashboardLayout campaignEditor={campaignEditorControls}>
       <div className="flex flex-col h-full">
         {/* Editor content */}
-        {editorMode === 'visual' ? (
-          <div className="flex-1 overflow-hidden">
-            <VisualBlockEditor
-              initialBlocks={editorHistory.state.blocks}
-              initialDesignConfig={editorHistory.state.globalSettings}
+        <div className="flex-1 overflow-hidden">
+          {/* V2 Campaign uses simplified editor */}
+          {isV2Campaign ? (
+            <V2ChatEditor
+              initialRootComponent={campaign.root_component as EmailComponent}
+              initialGlobalSettings={
+                campaign.global_settings || {
+                  fontFamily: 'system-ui, sans-serif',
+                  primaryColor: '#7c3aed',
+                  maxWidth: '600px',
+                }
+              }
               campaignId={campaignId}
               deviceMode={deviceMode}
-              onSave={handleVisualUpdate}
             />
-          </div>
-        ) : (
-          <div className="flex-1 overflow-hidden">
+          ) : (
+            /* V1 Campaign - existing code */
             <SplitScreenLayout
               leftPanel={
                 editorMode === 'chat' ? (
@@ -815,8 +811,8 @@ export default function DashboardCampaignEditorPage() {
                 />
               }
             />
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </DashboardLayout>
   );

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { EmailBlock, GlobalEmailSettings } from '@/lib/email/blocks/types';
+import type { EmailComponent, GlobalEmailSettings as V2GlobalSettings } from '@/lib/email-v2/types';
 
 interface CampaignData {
   id: string;
@@ -11,6 +12,10 @@ interface CampaignData {
   campaign: any;
   renderedEmails: any[];
   metadata: any;
+  // V2 React Email fields
+  version?: 'v1' | 'v2';
+  root_component?: EmailComponent;
+  global_settings?: V2GlobalSettings;
 }
 
 interface CampaignUpdate {

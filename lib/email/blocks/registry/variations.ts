@@ -34,17 +34,9 @@ export const LAYOUT_VARIATION_DEFINITIONS: Partial<Record<LayoutVariation, Layou
     variation: 'hero-center',
     name: 'Hero Center',
     description: 'Centered hero with headline and subheadline',
-    category: 'hero',
+    category: 'content',
     icon: '⭐',
     aiHints: ['email opening', 'major announcement', 'centered headline'],
-  },
-  'hero-image-overlay': {
-    variation: 'hero-image-overlay',
-    name: 'Hero Image Overlay',
-    description: 'Full-width image with text overlay',
-    category: 'hero',
-    icon: '🎭',
-    aiHints: ['dramatic opening', 'visual-first', 'background image'],
   },
   'stats-2-col': {
     variation: 'stats-2-col',

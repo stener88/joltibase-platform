@@ -218,10 +218,10 @@ export class SemanticCompositionMapper {
     const emphasis = hierarchy?.emphasis || 'balanced';
     
     const emphasisMap = {
-      header: { primary: 3, secondary: 1.5, tertiary: 1 },
-      content: { primary: 1.5, secondary: 2.5, tertiary: 1 },
-      actions: { primary: 1, secondary: 1, tertiary: 3 },
-      balanced: { primary: 2, secondary: 2, tertiary: 2 },
+      header: { primaryWeight: 3, secondaryWeight: 1.5, tertiaryWeight: 1 },
+      content: { primaryWeight: 1.5, secondaryWeight: 2.5, tertiaryWeight: 1 },
+      actions: { primaryWeight: 1, secondaryWeight: 1, tertiaryWeight: 3 },
+      balanced: { primaryWeight: 2, secondaryWeight: 2, tertiaryWeight: 2 },
     };
     
     return emphasisMap[emphasis];

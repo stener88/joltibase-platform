@@ -14,25 +14,19 @@ export const twoColumnTextConfig: LayoutConfig = {
   structure: 'two-column',
   category: 'two-column',
   
-  // Two text-area elements for left and right columns
+  // Two paragraph elements for left and right columns
   elements: [
     {
-      type: 'text-area',
+      type: 'paragraph',
       contentKey: 'leftColumn',
       label: 'Left Column Text',
       required: false,
-      options: {
-        rows: 6,
-      },
     },
     {
-      type: 'text-area',
+      type: 'paragraph',
       contentKey: 'rightColumn',
       label: 'Right Column Text',
       required: false,
-      options: {
-        rows: 6,
-      },
     },
   ],
   
