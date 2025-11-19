@@ -36,8 +36,6 @@ export const stats2ColConfig: LayoutConfig = {
     toggles: [],
     colors: [
       { key: 'backgroundColor', label: 'Background Color', defaultValue: 'transparent' },
-      { key: 'titleColor', label: 'Value Color', defaultValue: '#111827' },
-      { key: 'paragraphColor', label: 'Text Color', defaultValue: '#374151' },
     ],
     spacing: true,
     alignment: true,
@@ -53,8 +51,6 @@ export const stats2ColConfig: LayoutConfig = {
       left: 20,
     },
     align: 'center',
-    titleColor: '#111827',
-    paragraphColor: '#374151',
   },
   
   aiHints: [

@@ -40,7 +40,6 @@ export const twoColumnTextConfig: LayoutConfig = {
     toggles: [],
     colors: [
       { key: 'backgroundColor', label: 'Background Color', defaultValue: 'transparent' },
-      { key: 'paragraphColor', label: 'Text Color', defaultValue: '#374151' },
     ],
     spacing: true,
     alignment: false,
@@ -65,8 +64,6 @@ export const twoColumnTextConfig: LayoutConfig = {
       left: 20,
     },
     align: 'left',
-    paragraphColor: '#374151',
-    paragraphFontSize: '16px',
   },
   
   aiHints: [

@@ -265,23 +265,7 @@ export const LayoutsBlockSettingsSchema = z.object({
   // Layout-specific settings
   flip: z.boolean().optional(), // For two-column layouts
   columns: z.number().int().min(2).max(4).optional(), // For multi-column stats
-  
-  // Child element styling overrides
-  headerFontSize: PixelValueSchema.optional(),
-  headerColor: HexColorSchema.optional(),
-  headerFontWeight: z.number().int().min(100).max(900).optional(),
-  titleFontSize: PixelValueSchema.optional(),
-  titleColor: HexColorSchema.optional(),
-  titleFontWeight: z.number().int().min(100).max(900).optional(),
-  paragraphFontSize: PixelValueSchema.optional(),
-  paragraphColor: HexColorSchema.optional(),
-  paragraphFontWeight: z.number().int().min(100).max(900).optional(),
-  dividerColor: HexColorSchema.optional(),
-  dividerWidth: PixelValueSchema.optional(),
-  dividerThickness: z.number().int().min(1).max(10).optional(),
-  buttonBackgroundColor: HexColorSchema.optional(),
-  buttonTextColor: HexColorSchema.optional(),
-  buttonBorderRadius: PixelValueSchema.optional(),
+  verticalAlign: z.enum(['top', 'middle', 'bottom']).optional(), // For two-column vertical alignment
   borderRadius: PixelValueSchema.optional(), // For images
 });
 

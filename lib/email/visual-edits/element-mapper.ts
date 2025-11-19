@@ -166,25 +166,6 @@ export function createDescriptorFromMetadata(
     }
   });
   
-  // Extract style properties from content object for text-based elements and buttons
-  if (typeof rawContentValue === 'object' && rawContentValue !== null) {
-    // For layout elements, they can have style properties directly in content
-    // e.g., content.title = { text: "...", color: "#000", fontSize: "24px" }
-    // e.g., content.button = { text: "...", textColor: "#fff", backgroundColor: "#000", fontSize: "16px" }
-    const styleProps = [
-      'color', 'textColor', 'backgroundColor', 
-      'fontSize', 'fontWeight', 'fontFamily', 
-      'align', 'lineHeight', 'borderRadius',
-      'paddingVertical', 'paddingHorizontal'
-    ];
-    styleProps.forEach(prop => {
-      // Only include if it's an editable property for this element type
-      if (rawContentValue[prop] !== undefined && editableKeys.includes(prop)) {
-        currentSettings[prop] = rawContentValue[prop];
-      }
-    });
-  }
-  
   // Cast elementType to ElementType for the descriptor
   return createElementDescriptor(elementId, elementType as ElementType, blockId, flattenedValue, currentSettings);
 }

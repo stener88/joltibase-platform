@@ -130,7 +130,24 @@ export async function POST(request: NextRequest) {
         {
           role: 'system',
           content: isSimple 
-            ? `You are a precise email element editor. Make the requested change using correct camelCase property names. Respond concisely in JSON format.`
+            ? `You are a precise email element editor. Make the requested change using correct camelCase property names.
+
+**CRITICAL RULES:**
+1. Use camelCase property names: backgroundColor, textColor, fontSize (NOT background-color, text-color, font-size)
+2. ALL colors MUST be valid hex codes starting with # (e.g., #ffffff, #90ee90, #000000)
+3. Do NOT use color names like "white", "green", "blue" - convert to hex
+4. Do NOT add HTML tags like <b> or <strong> - use fontWeight property instead
+5. Only modify the specific property requested
+
+Common color conversions:
+- white = #ffffff
+- black = #000000
+- green = #00ff00
+- light green = #90ee90
+- blue = #0000ff
+- red = #ff0000
+
+Respond concisely in JSON format.`
             : `You are a focused email element editor. You only modify the specific element the user requests. Be concise and explain what you changed.`,
         },
         {
@@ -160,6 +177,41 @@ export async function POST(request: NextRequest) {
         { success: false, error: 'AI response parsing failed', code: 'PARSE_ERROR' },
         { status: 500 }
       );
+    }
+    
+    // Normalize color values (convert color names to hex codes)
+    function normalizeColor(color: string): string {
+      const colorMap: Record<string, string> = {
+        'white': '#ffffff',
+        'black': '#000000',
+        'light green': '#90ee90',
+        'dark green': '#006400',
+        'green': '#00ff00',
+        'blue': '#0000ff',
+        'light blue': '#add8e6',
+        'red': '#ff0000',
+        'yellow': '#ffff00',
+        'orange': '#ffa500',
+        'purple': '#800080',
+        'pink': '#ffc0cb',
+        'gray': '#808080',
+        'grey': '#808080',
+      };
+      
+      if (color.startsWith('#')) return color;
+      return colorMap[color.toLowerCase()] || color;
+    }
+    
+    // Apply color normalization to all color properties in changes
+    if (refinedElement?.changes) {
+      Object.keys(refinedElement.changes).forEach(key => {
+        if (key.includes('Color') || key === 'color' || key === 'backgroundColor' || key === 'textColor') {
+          const value = refinedElement.changes[key];
+          if (typeof value === 'string') {
+            refinedElement.changes[key] = normalizeColor(value);
+          }
+        }
+      });
     }
 
     // 7. Track usage
@@ -315,6 +367,12 @@ const SIMPLE_CHANGE_PATTERNS = [
   /font.*size|bigger|smaller|larger/i,  // "make font bigger", "increase size"
   /change.*(text|words|wording|copy)/i,  // "change the words", "update text", "change copy"
   /^(add|set|update|change)\s+(to\s+)?[\w#]+$/i,  // "change to X", "set X"
+  /center/i,  // "center it", "center items"
+  /align/i,  // "align left", "align center"
+  /change.*back/i,  // "change it back", "change back"
+  /revert/i,  // "revert", "revert it"
+  /undo/i,  // "undo", "undo that"
+  /reset/i,  // "reset", "reset it"
 ];
 
 function isSimplePropertyChange(prompt: string): boolean {

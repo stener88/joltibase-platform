@@ -48,8 +48,6 @@ export const magazineFeatureConfig: LayoutConfig = {
     toggles: [],
     colors: [
       { key: 'backgroundColor', label: 'Background Color', defaultValue: '#9CADB7' },
-      { key: 'titleColor', label: 'Title Color', defaultValue: '#111827' },
-      { key: 'paragraphColor', label: 'Text Color', defaultValue: '#111827' },
     ],
     spacing: true,
     alignment: false,
@@ -64,9 +62,6 @@ export const magazineFeatureConfig: LayoutConfig = {
       bottom: 60,
       left: 40,
     },
-    titleColor: '#111827',
-    paragraphColor: '#111827',
-    titleFontSize: '48px',
   },
   
   aiHints: [

@@ -119,9 +119,9 @@ export function createLayoutRenderer(config: LayoutConfig): LayoutRendererFuncti
       // Check if content exists
       const contentValue = content[element.contentKey];
       
-      // Special case: divider can be shown with just settings.dividerColor
+      // Special case: divider can be shown even without content
       if (element.type === 'divider') {
-        if (!contentValue && !settings.dividerColor) {
+        if (!contentValue) {
           continue;
         }
       } else {

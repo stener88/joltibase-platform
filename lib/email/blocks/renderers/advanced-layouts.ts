@@ -22,6 +22,10 @@ import {
   PLACEHOLDER_DIMENSIONS,
 } from '../constants';
 
+import {
+  getColorToken,
+} from '../../design-tokens';
+
 // ============================================================================
 // Image Overlay Layout
 // ============================================================================
@@ -49,7 +53,7 @@ export function renderImageOverlayLayout(content: any, settings: any, context: R
   
   // Font settings
   const titleFontSize = content.title?.fontSize || settings.titleFontSize || '32px';
-  const titleColor = content.title?.color || settings.titleColor || '#111827';
+  const titleColor = content.title?.color || getColorToken('text.primary');
   const badgeFontSize = '20px';
   const badgeColor = '#ffffff';
   const badgeBackgroundColor = 'rgba(0, 0, 0, 0.7)';
@@ -126,11 +130,10 @@ export function renderCardCenteredLayout(content: any, settings: any, context: R
   const backgroundColor = settings.backgroundColor || '#f9fafb';
   const cardPadding = { top: 60, right: 40, bottom: 60, left: 40 };
   const titleFontSize = content.title?.fontSize || settings.titleFontSize || '72px';
-  const titleColor = content.title?.color || settings.titleColor || '#111827';
+  const titleColor = content.title?.color || getColorToken('text.primary');
   const subtitleFontSize = content.subtitle?.fontSize || '24px';
-  const subtitleColor = content.subtitle?.color || '#374151';
-  const paragraphColor = content.paragraph?.color || '#6b7280';
-  const dividerColor = settings.dividerColor || '#e5e7eb';
+  const subtitleColor = content.subtitle?.color || getColorToken('text.secondary');
+  const paragraphColor = content.paragraph?.color || getColorToken('text.muted');
   
   // Data attributes
   const titleDataAttrs = blockId ? ` data-element-id="${blockId}-title" data-element-type="title" data-block-id="${blockId}"` : '';
@@ -161,7 +164,7 @@ export function renderCardCenteredLayout(content: any, settings: any, context: R
                 ` : ''}
                 
                 ${showDivider ? `
-                  <div style="margin: 24px auto; width: 60px; height: 2px; background-color: ${dividerColor};"></div>
+                  <div style="margin: 24px auto; width: 60px; height: 2px; background-color: ${getColorToken('border.default')};"></div>
                 ` : ''}
                 
                 ${paragraph ? `
@@ -205,9 +208,9 @@ export function renderCompactImageTextLayout(content: any, settings: any, contex
   
   const backgroundColor = settings.backgroundColor || 'transparent';
   const titleFontSize = content.title?.fontSize || '14px';
-  const titleColor = content.title?.color || '#9ca3af';
+  const titleColor = content.title?.color || getColorToken('text.muted');
   const subtitleFontSize = content.subtitle?.fontSize || '16px';
-  const subtitleColor = content.subtitle?.color || '#111827';
+  const subtitleColor = content.subtitle?.color || getColorToken('text.primary');
   const borderRadius = settings.borderRadius || '8px';
   
   // Data attributes
@@ -266,10 +269,10 @@ export function renderMagazineFeatureLayout(content: any, settings: any, context
   
   const backgroundColor = settings.backgroundColor || '#9CADB7';
   const titleFontSize = content.title?.fontSize || settings.titleFontSize || '48px';
-  const titleColor = content.title?.color || settings.titleColor || '#111827';
+  const titleColor = content.title?.color || getColorToken('text.primary');
   const badgeFontSize = '120px';
   const badgeColor = '#000000';
-  const paragraphColor = content.paragraph?.color || '#111827';
+  const paragraphColor = content.paragraph?.color || getColorToken('text.primary');
   const borderRadius = settings.borderRadius || '0px';
   
   // Data attributes

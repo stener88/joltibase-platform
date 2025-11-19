@@ -27,6 +27,10 @@ import {
   PLACEHOLDER_DIMENSIONS,
 } from '../constants';
 
+import {
+  getColorToken,
+} from '../../design-tokens';
+
 // ============================================================================
 // Logo Block
 // ============================================================================
@@ -152,7 +156,7 @@ export function renderImageBlock(block: ImageBlock, blockId?: string): string {
           <td align="${align}" style="padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px;${backgroundColor && backgroundColor !== 'transparent' ? ` background-color: ${backgroundColor};` : ''}">
             ${imageContent}
             ${content.caption ? `
-            <p style="margin: 8px 0 0; font-size: 14px; color: #6b7280; text-align: ${align};">
+            <p style="margin: 8px 0 0; font-size: 14px; color: ${getColorToken('text.muted')}; text-align: ${align};">
               ${escapeHtml(content.caption)}
             </p>` : ''}
           </td>

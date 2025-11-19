@@ -55,11 +55,6 @@ export const cardCenteredConfig: LayoutConfig = {
     toggles: [],
     colors: [
       { key: 'backgroundColor', label: 'Background Color', defaultValue: '#f9fafb' },
-      { key: 'titleColor', label: 'Title Color', defaultValue: '#111827' },
-      { key: 'paragraphColor', label: 'Text Color', defaultValue: '#6b7280' },
-      { key: 'dividerColor', label: 'Divider Color', defaultValue: '#e5e7eb' },
-      { key: 'buttonBackgroundColor', label: 'Button Background', defaultValue: '#9ca3af' },
-      { key: 'buttonTextColor', label: 'Button Text Color', defaultValue: '#ffffff' },
     ],
     spacing: true,
     alignment: false,
@@ -74,11 +69,6 @@ export const cardCenteredConfig: LayoutConfig = {
       bottom: 40,
       left: 20,
     },
-    titleColor: '#111827',
-    paragraphColor: '#6b7280',
-    dividerColor: '#e5e7eb',
-    buttonBackgroundColor: '#9ca3af',
-    buttonTextColor: '#ffffff',
   },
   
   aiHints: [

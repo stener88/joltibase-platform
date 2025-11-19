@@ -209,9 +209,7 @@ Think strategically - each sequence should serve the specific campaign goal.
   },
   "settings": {
     "padding": { "top": 40, "bottom": 40, "left": 20, "right": 20 },
-    "backgroundColor": "transparent",
-    "paragraphColor": "#374151",
-    "paragraphFontSize": "16px"
+    "backgroundColor": "transparent"
   }
 }
 \`\`\`
@@ -248,6 +246,10 @@ Think strategically - each sequence should serve the specific campaign goal.
 - content/settings are flexible based on block type
 - **CRITICAL for two-column-text:** leftColumn and rightColumn must be plain strings, not objects
 - **CRITICAL for button blocks:** Use "color" for button background, NEVER set "backgroundColor" in settings
+- **CRITICAL for layout elements:** Set colors and font sizes DIRECTLY on content elements (title, paragraph, button), NOT in settings
+  - ✅ CORRECT: \`"title": { "text": "Hello", "color": "#111827", "fontSize": "32px" }\`
+  - ❌ WRONG: \`"settings": { "titleColor": "#111827", "titleFontSize": "32px" }\`
+  - Button colors go on button object: \`"button": { "text": "Click", "url": "#", "backgroundColor": "#7c3aed", "textColor": "#ffffff" }\`
 - Use merge tags: {{company_name}}, {{first_name}}, {{unsubscribe_url}}, etc.
 
 ## Template Options

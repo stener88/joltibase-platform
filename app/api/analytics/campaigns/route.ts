@@ -1,5 +1,6 @@
 import { requireAuth } from '@/lib/api/auth';
 import { successResponse, errorResponse } from '@/lib/api/responses';
+import { NextResponse } from 'next/server';
 
 // ============================================
 // GET /api/analytics/campaigns - Campaign Analytics

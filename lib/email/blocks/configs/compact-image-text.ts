@@ -42,8 +42,6 @@ export const compactImageTextConfig: LayoutConfig = {
     toggles: [],
     colors: [
       { key: 'backgroundColor', label: 'Background Color', defaultValue: 'transparent' },
-      { key: 'titleColor', label: 'Title Color', defaultValue: '#9ca3af' },
-      { key: 'paragraphColor', label: 'Subtitle Color', defaultValue: '#111827' },
     ],
     spacing: true,
     alignment: false,
@@ -58,8 +56,6 @@ export const compactImageTextConfig: LayoutConfig = {
       bottom: 20,
       left: 20,
     },
-    titleColor: '#9ca3af',
-    paragraphColor: '#111827',
   },
   
   aiHints: [

@@ -30,6 +30,10 @@ import {
   COLUMN_WIDTHS,
 } from '../constants';
 
+import {
+  getColorToken,
+} from '../../design-tokens';
+
 // ============================================================================
 // Main Layout Block Router
 // ============================================================================
@@ -101,7 +105,7 @@ export function renderHeroCenterLayout(content: any, settings: any, context: Ren
     elements.push(renderLayoutTitle(content.title, settings, blockId, 'title'));
   }
   
-  if (settings.showDivider && (content.divider || settings.dividerColor)) {
+  if (settings.showDivider && content.divider) {
     elements.push(renderLayoutDivider(content.divider, settings));
   }
   
@@ -221,8 +225,6 @@ export function renderStatsLayout(variation: string, content: any, settings: any
     );
   }
   
-  const titleColor = settings.titleColor || '#111827';
-  const paragraphColor = settings.paragraphColor || '#374151';
   const align = settings.align || 'center';
   
   // Calculate fixed pixel widths for each column
@@ -243,14 +245,14 @@ export function renderStatsLayout(variation: string, content: any, settings: any
     
     return `
     <td width="${columnWidth}" valign="top" style="width: ${columnWidth}; max-width: ${columnWidth}; min-width: ${columnWidth}; text-align: center; padding: 0 10px 20px 10px; word-wrap: break-word;">
-      <div${valueDataAttrs} style="margin-bottom: 8px; font-size: 36px; font-weight: 700; color: ${titleColor}; line-height: 1.2;">
+      <div${valueDataAttrs} style="margin-bottom: 8px; font-size: 36px; font-weight: 700; color: ${getColorToken('text.primary')}; line-height: 1.2;">
         ${escapeHtml(item.value || '')}
       </div>
-      <div${titleDataAttrs} style="margin-bottom: 4px; font-size: 16px; font-weight: 600; color: ${paragraphColor}; line-height: 1.4;">
+      <div${titleDataAttrs} style="margin-bottom: 4px; font-size: 16px; font-weight: 600; color: ${getColorToken('text.secondary')}; line-height: 1.4;">
         ${escapeHtml(item.title || '')}
       </div>
       ${item.description ? `
-        <div${descDataAttrs} style="font-size: 14px; color: #6b7280; line-height: 1.5; word-wrap: break-word;">
+        <div${descDataAttrs} style="font-size: 14px; color: ${getColorToken('text.muted')}; line-height: 1.5; word-wrap: break-word;">
           ${escapeHtml(item.description)}
         </div>
       ` : ''}
@@ -292,8 +294,7 @@ export function renderTwoColumnTextLayout(content: any, settings: any, context: 
   const rightColumn = content.rightColumn || '';
   
   const backgroundColor = settings.backgroundColor || 'transparent';
-  const textColor = settings.paragraphColor || '#374151';
-  const fontSize = settings.paragraphFontSize || '16px';
+  const fontSize = '16px';
   const lineHeight = '1.6';
   
   // Account for padding: 600px container - left padding (20) - right padding (20) - column gap (20) = 540px / 2 = 270px per column
@@ -315,12 +316,12 @@ export function renderTwoColumnTextLayout(content: any, settings: any, context: 
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="table-layout: fixed;">
             <tr>
               <td width="${columnWidth}" valign="top" style="width: ${columnWidth}px; max-width: ${columnWidth}px; padding-right: 10px; word-wrap: break-word;">
-                <p${leftDataAttrs} style="margin: 0; font-size: ${fontSize}; color: ${textColor}; line-height: ${lineHeight};">
+                <p${leftDataAttrs} style="margin: 0; font-size: ${fontSize}; color: ${getColorToken('text.secondary')}; line-height: ${lineHeight};">
                   ${escapeHtml(leftColumn)}
                 </p>
               </td>
               <td width="${columnWidth}" valign="top" style="width: ${columnWidth}px; max-width: ${columnWidth}px; padding-left: 10px; word-wrap: break-word;">
-                <p${rightDataAttrs} style="margin: 0; font-size: ${fontSize}; color: ${textColor}; line-height: ${lineHeight};">
+                <p${rightDataAttrs} style="margin: 0; font-size: ${fontSize}; color: ${getColorToken('text.secondary')}; line-height: ${lineHeight};">
                   ${escapeHtml(rightColumn)}
                 </p>
               </td>
@@ -350,7 +351,7 @@ export function renderGenericLayout(content: any, settings: any, context: Render
     elements.push(renderLayoutTitle(content.title, settings));
   }
   
-  if (settings.showDivider && (content.divider || settings.dividerColor)) {
+  if (settings.showDivider && content.divider) {
     elements.push(renderLayoutDivider(content.divider, settings));
   }
   

@@ -131,9 +131,9 @@ export function renderLayoutImage(image: any, settings: any, width?: number, blo
 export function renderLayoutHeader(headerContent: any, settings: any, blockId?: string, contentKey?: string): string {
   const text = typeof headerContent === 'string' ? headerContent : headerContent.text || '';
   const labelStyle = getTypographyToken('label.default');
-  const fontSize = headerContent.fontSize || settings.headerFontSize || labelStyle.size;
-  const fontWeight = headerContent.fontWeight || settings.headerFontWeight || labelStyle.weight;
-  const color = headerContent.color || settings.headerColor || getColorToken('text.secondary');
+  const fontSize = headerContent.fontSize || labelStyle.size;
+  const fontWeight = headerContent.fontWeight || labelStyle.weight;
+  const color = headerContent.color || getColorToken('text.secondary');
   const align = settings.align || 'center';
   const marginBottom = getSpacingToken('content.balanced');
   
@@ -163,9 +163,9 @@ export function renderLayoutHeader(headerContent: any, settings: any, blockId?: 
 export function renderLayoutTitle(titleContent: any, settings: any, blockId?: string, contentKey?: string): string {
   const text = typeof titleContent === 'string' ? titleContent : titleContent.text || '';
   const headingStyle = getTypographyToken('heading.primary');
-  const fontSize = titleContent.fontSize || settings.titleFontSize || headingStyle.size;
-  const fontWeight = titleContent.fontWeight || settings.titleFontWeight || headingStyle.weight;
-  const color = titleContent.color || settings.titleColor || getColorToken('text.primary');
+  const fontSize = titleContent.fontSize || headingStyle.size;
+  const fontWeight = titleContent.fontWeight || headingStyle.weight;
+  const color = titleContent.color || getColorToken('text.primary');
   const align = settings.align || 'center';
   const lineHeight = titleContent.lineHeight || headingStyle.lineHeight.toString();
   const marginBottom = getSpacingToken('content.balanced');
@@ -188,9 +188,9 @@ export function renderLayoutTitle(titleContent: any, settings: any, blockId?: st
  * Now uses semantic color tokens
  */
 export function renderLayoutDivider(dividerContent: any, settings: any): string {
-  const color = dividerContent?.color || settings.dividerColor || getColorToken('border.default');
-  const thickness = dividerContent?.thickness || settings.dividerThickness || 1;
-  const width = dividerContent?.width || settings.dividerWidth || '60px';
+  const color = dividerContent?.color || getColorToken('border.default');
+  const thickness = dividerContent?.thickness || 1;
+  const width = dividerContent?.width || '60px';
   const align = settings.align || 'center';
   const marginTop = getSpacingToken('content.relaxed');
   const marginBottom = getSpacingToken('content.relaxed');
@@ -213,9 +213,9 @@ export function renderLayoutDivider(dividerContent: any, settings: any): string 
 export function renderLayoutParagraph(paragraphContent: any, settings: any, blockId?: string, contentKey?: string): string {
   const text = typeof paragraphContent === 'string' ? paragraphContent : paragraphContent.text || '';
   const bodyStyle = getTypographyToken('body.standard');
-  const fontSize = paragraphContent.fontSize || settings.paragraphFontSize || bodyStyle.size;
-  const fontWeight = paragraphContent.fontWeight || settings.paragraphFontWeight || bodyStyle.weight;
-  const color = paragraphContent.color || settings.paragraphColor || getColorToken('text.secondary');
+  const fontSize = paragraphContent.fontSize || bodyStyle.size;
+  const fontWeight = paragraphContent.fontWeight || bodyStyle.weight;
+  const color = paragraphContent.color || getColorToken('text.secondary');
   const align = settings.align || 'center';
   const lineHeight = paragraphContent.lineHeight || bodyStyle.lineHeight.toString();
   const marginBottom = getSpacingToken('content.relaxed');
@@ -241,11 +241,11 @@ export function renderLayoutButton(buttonContent: any, settings: any, context: R
   const text = buttonContent.text || 'Click Here';
   const url = buttonContent.url || '#';
   const buttonTokens = designTokens.component.button;
-  const backgroundColor = buttonContent.backgroundColor || settings.buttonBackgroundColor || buttonTokens.primary.background;
-  const textColor = buttonContent.textColor || settings.buttonTextColor || buttonTokens.primary.text;
-  const fontSize = buttonContent.fontSize || settings.buttonFontSize || buttonTokens.fontSize;
-  const fontWeight = buttonContent.fontWeight || settings.buttonFontWeight || buttonTokens.fontWeight;
-  const borderRadius = buttonContent.borderRadius || settings.buttonBorderRadius || buttonTokens.borderRadius;
+  const backgroundColor = buttonContent.backgroundColor || buttonTokens.primary.background;
+  const textColor = buttonContent.textColor || buttonTokens.primary.text;
+  const fontSize = buttonContent.fontSize || buttonTokens.fontSize;
+  const fontWeight = buttonContent.fontWeight || buttonTokens.fontWeight;
+  const borderRadius = buttonContent.borderRadius || buttonTokens.borderRadius;
   const paddingVertical = buttonContent.paddingVertical || pxToNumber(buttonTokens.paddingY);
   const paddingHorizontal = buttonContent.paddingHorizontal || pxToNumber(buttonTokens.paddingX);
   const align = settings.align || 'center';

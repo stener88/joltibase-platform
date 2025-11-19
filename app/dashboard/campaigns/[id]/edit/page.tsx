@@ -158,7 +158,7 @@ export default function DashboardCampaignEditorPage() {
       // Escape - Deselect element
       if (e.key === 'Escape') {
         e.preventDefault();
-        visualEdits.deselectElement();
+        visualEdits.selectElement(null as any, null as any); // Deselect
         return;
       }
       

@@ -57,9 +57,6 @@ export const imageOverlayConfig: LayoutConfig = {
     toggles: [],
     colors: [
       { key: 'backgroundColor', label: 'Background Color', defaultValue: '#f9fafb' },
-      { key: 'titleColor', label: 'Text Color', defaultValue: '#111827' },
-      { key: 'buttonBackgroundColor', label: 'Button Background', defaultValue: '#7c3aed' },
-      { key: 'buttonTextColor', label: 'Button Text Color', defaultValue: '#ffffff' },
     ],
     spacing: true,
     alignment: false,
@@ -74,9 +71,6 @@ export const imageOverlayConfig: LayoutConfig = {
       bottom: 0,
       left: 0,
     },
-    titleColor: '#111827',
-    buttonBackgroundColor: '#7c3aed',
-    buttonTextColor: '#ffffff',
   },
   
   aiHints: [

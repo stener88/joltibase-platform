@@ -57,10 +57,6 @@ export const twoColumn3070Config: LayoutConfig = {
     toggles: ['showTitle', 'showParagraph', 'showButton'],
     colors: [
       { key: 'backgroundColor', label: 'Background Color', defaultValue: 'transparent' },
-      { key: 'titleColor', label: 'Title Color', defaultValue: '#111827' },
-      { key: 'paragraphColor', label: 'Text Color', defaultValue: '#374151' },
-      { key: 'buttonBackgroundColor', label: 'Button Background', defaultValue: '#7c3aed' },
-      { key: 'buttonTextColor', label: 'Button Text Color', defaultValue: '#ffffff' },
     ],
     spacing: true,
     alignment: false,
@@ -85,10 +81,6 @@ export const twoColumn3070Config: LayoutConfig = {
       left: 20,
     },
     align: 'left',
-    titleColor: '#111827',
-    paragraphColor: '#374151',
-    buttonBackgroundColor: '#7c3aed',
-    buttonTextColor: '#ffffff',
   },
   
   aiHints: [

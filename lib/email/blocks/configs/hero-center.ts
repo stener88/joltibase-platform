@@ -64,11 +64,6 @@ export const heroCenterConfig: LayoutConfig = {
     toggles: ['showHeader', 'showTitle', 'showDivider', 'showParagraph', 'showButton'],
     colors: [
       { key: 'backgroundColor', label: 'Background Color', defaultValue: 'transparent' },
-      { key: 'titleColor', label: 'Title Color', defaultValue: '#111827' },
-      { key: 'paragraphColor', label: 'Text Color', defaultValue: '#374151' },
-      { key: 'dividerColor', label: 'Divider Color', defaultValue: '#e5e7eb' },
-      { key: 'buttonBackgroundColor', label: 'Button Background', defaultValue: '#7c3aed' },
-      { key: 'buttonTextColor', label: 'Button Text Color', defaultValue: '#ffffff' },
     ],
     spacing: true,
     alignment: true,
@@ -84,13 +79,6 @@ export const heroCenterConfig: LayoutConfig = {
       left: 40,
     },
     align: 'center',
-    titleColor: '#111827',
-    paragraphColor: '#374151',
-    dividerColor: '#e5e7eb',
-    titleFontSize: '32px',
-    paragraphFontSize: '16px',
-    buttonBackgroundColor: '#7c3aed',
-    buttonTextColor: '#ffffff',
   },
   
   aiHints: [
