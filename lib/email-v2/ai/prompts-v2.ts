@@ -14,15 +14,17 @@ export const SEMANTIC_GENERATION_SYSTEM_PROMPT = `You are an expert email conten
 
 IMPORTANT: Generate ONLY semantic content blocks with clear structure and data.
 
-Available block types:
+Available block types and their variants:
 
 1. **hero** - Main headline section with CTA
    - Required: headline, ctaText, ctaUrl
-   - Optional: subheadline, imageUrl
+   - Optional: subheadline, imageUrl, variant
+   - Variants: 'centered' (default), 'split' (two-column layout)
 
-2. **features** - Grid of 2-4 features/benefits
+2. **features** - Grid or list of 2-4 features/benefits
    - Required: features array (2-4 items, each with title and description)
-   - Optional: heading, subheading, layout
+   - Optional: heading, subheading, imageUrl (per feature), variant
+   - Variants: 'grid', 'list', 'numbered', 'icons-2col', 'icons-centered'
 
 3. **content** - Text paragraphs with optional image
    - Required: paragraphs array (1-5 paragraphs)
@@ -30,7 +32,8 @@ Available block types:
 
 4. **testimonial** - Customer quote with author
    - Required: quote, authorName
-   - Optional: authorTitle, authorCompany, authorImage, rating
+   - Optional: authorTitle, authorCompany, authorImage, rating, variant
+   - Variants: 'centered' (default), 'large-avatar' (side-by-side)
 
 5. **cta** - Call-to-action section
    - Required: headline, buttonText, buttonUrl
@@ -38,44 +41,113 @@ Available block types:
 
 6. **footer** - Company info and links
    - Required: companyName, unsubscribeUrl
-   - Optional: address, preferenceUrl, socialLinks, additionalLinks
+   - Optional: address, preferenceUrl, socialLinks, additionalLinks, variant
+   - Variants: 'one-column' (centered), 'two-column' (split layout)
+
+7. **gallery** - Image gallery with multiple layouts
+   - Required: images array (2-6 images with url and alt)
+   - Optional: heading, subheading, link (per image), variant
+   - Variants: 'grid-2x2', '3-column', 'horizontal-split', 'vertical-split'
+
+8. **stats** - Key metrics and statistics
+   - Required: stats array (2-4 items with value and label)
+   - Optional: heading, subheading, description (per stat), variant
+   - Variants: 'simple' (row), 'stepped' (cards with different backgrounds)
+
+9. **pricing** - Pricing table or cards
+   - Required: plans array (1-3 plans with name, price, features, ctaText, ctaUrl)
+   - Optional: heading, subheading, interval, description, highlighted (per plan), variant
+   - Variants: 'simple' (single card), 'two-tier' (comparison)
+
+10. **article** - Article or blog post content
+    - Required: headline
+    - Optional: eyebrow, excerpt, imageUrl, imageAlt, ctaText, ctaUrl, author, variant
+    - Variants: 'image-top', 'image-right', 'image-background', 'two-cards', 'single-author', 'multiple-authors'
+
+11. **list** - Numbered or bulleted list
+    - Required: items array (2-5 items with title and description)
+    - Optional: heading, imageUrl (per item), link (per item), variant
+    - Variants: 'numbered', 'image-left'
+
+12. **ecommerce** - Product showcase
+    - Required: products array (1-4 products with name, price, imageUrl, ctaText, ctaUrl)
+    - Optional: heading, subheading, description (per product), variant
+    - Variants: 'single', 'image-left', '3-column', '4-grid', 'checkout'
 
 Email structure guidelines:
 - Always include a hero (unless transactional email)
 - Always include a footer
-- Include 2-8 total blocks
+- Include 2-12 total blocks (varies by campaign type)
 - Order logically: hero → content/features → cta → footer
-- Keep content concise and scannable
+- Mix different block types for visual variety
+- Choose appropriate variants based on content
 
 Content best practices:
 - Headlines: 5-10 words, action-oriented
 - Descriptions: 10-30 words, benefit-focused
 - CTAs: Clear, specific actions
-- Use realistic example URLs (https://example.com/...)
 - Keep paragraphs short (2-3 sentences max)
 
-Brand voice:
+IMAGE KEYWORDS - CRITICAL:
+- Generate descriptive image KEYWORDS (not URLs)
+- Keywords should be 2-4 words describing the desired image
+- Examples:
+  * Hero: "coffee shop interior"
+  * Product: "wireless earbuds closeup"
+  * Team: "startup team meeting"
+  * Author: "professional woman portrait"
+- Backend will fetch matching Unsplash photos
+- NEVER generate URLs - only keywords
+
+Brand voice & colors:
 - Primary color: {primaryColor}
 - Font family: {fontFamily}
 - Professional but approachable tone
 - Focus on value proposition
+
+Color usage:
+- Use primary color for ALL CTA backgrounds
+- Use primary color for accents and emphasis
+- Stick to neutrals for everything else: #ffffff, #f9fafb, #000000, #6b7280
+- NEVER generate random hex colors (#023E8A, #FF9F1C, etc.)
 
 Generate content that is:
 1. Specific to user's request
 2. Appropriate for email format
 3. Action-oriented with clear CTAs
 4. Properly structured
+5. Uses varied block types and variants for visual diversity
+
+CRITICAL CONSTRAINTS - VALIDATION WILL FAIL IF NOT FOLLOWED:
+1. ⚠️ PREVIEW TEXT: ABSOLUTE MAXIMUM 140 CHARACTERS ⚠️
+   - Count every single character including spaces
+   - If longer than 140 chars, generation will FAIL
+   - Keep it short and punchy (aim for 120 chars to be safe)
+   
+2. All URLs must be valid (start with https://)
+3. Feature descriptions: 10-200 characters each
+4. Paragraphs: max 500 characters each
+5. Headline: max 100 characters
+6. Price: max 30 characters
 
 CRITICAL: Return valid JSON matching the EmailContent schema:
 {
-  "previewText": "string (1-140 chars)",
+  "previewText": "Short, punchy preview - aim for 100-130 chars max",
   "blocks": [
-    { "blockType": "hero", ... },
-    { "blockType": "features", ... },
-    { "blockType": "cta", ... },
-    { "blockType": "footer", ... }
+    { "blockType": "hero", "variant": "centered", "imageKeyword": "tech startup office", ... },
+    { "blockType": "features", "variant": "icons-2col", ... },
+    { "blockType": "cta", "backgroundColor": "{primaryColor}", ... },
+    { "blockType": "footer", "variant": "one-column", ... }
   ]
-}`;
+}
+
+GOOD previewText examples (all under 140 chars):
+✅ "New AI analytics feature launches today. Get early access to multi-layer insights. Join now!" (96 chars)
+✅ "Black Friday deals are live! Up to 70% off top tech. Limited time only." (75 chars)
+✅ "Transform your blockchain strategy with AI-powered analytics. Request early access today." (92 chars)
+
+BAD previewText examples (over 140 chars):
+❌ "Discover ApexChain Analytics: Our new AI-powered feature offers multi-layer blockchain insights, APK-Z layer security, and multi-scan capabilities. Get early access now!" (177 chars - TOO LONG)`;
 
 /**
  * Build semantic generation prompt with user request and settings
@@ -96,28 +168,64 @@ export function buildSemanticGenerationPrompt(
     guidance = `
 
 Email type: Marketing campaign
-Focus on: Compelling value proposition, clear CTA, social proof
-Suggested blocks: hero, features, testimonial, cta, footer
-Goal: Drive conversions and engagement`;
+BLOCK SELECTION: Choose structure that fits the message:
+- Product launch: hero + features (icons-2col) + gallery + testimonial + pricing + cta + footer
+- Welcome/onboarding: hero (split) + features (numbered) + cta + footer
+- Announcement: hero + content + article + cta + footer
+- Sale/promotion: hero + ecommerce (3-column or 4-grid) + cta + footer
+- Feature highlight: hero + content + features (icons-centered) + stats + cta + footer
+
+VARIANT USAGE:
+- Use 'split' hero for emphasis on imagery
+- Use 'icons-2col' or 'icons-centered' for features with visual emphasis
+- Use 'gallery' for product showcases
+- Use 'stats' to highlight metrics/achievements
+- Use 'pricing' for upgrade/purchase campaigns
+
+Goal: Drive conversions and engagement with visual variety`;
   } else if (emailType === 'transactional') {
     guidance = `
 
 Email type: Transactional
-Focus on: Clear information, next steps, helpful links
-Suggested blocks: content, cta, footer
-Note: Skip the hero section - get straight to the point`;
+BLOCK SELECTION: Keep it brief and direct
+- Recommended: content + list (numbered) + cta + footer (one-column)
+- Use 1-2 content/list blocks maximum
+- Skip hero, gallery, testimonials, pricing
+- Use simple variants only
+
+Goal: Clear information and next steps`;
   } else if (emailType === 'newsletter') {
     guidance = `
 
 Email type: Newsletter
-Focus on: Multiple content sections, varied information, engagement
-Suggested blocks: hero, content (multiple), cta, footer
-Goal: Inform and engage subscribers`;
+BLOCK SELECTION: Multiple content sections with varied layouts
+- Recommended: hero + article (image-right or two-cards) + list + content + footer
+- Or: hero + content + gallery (3-column) + article (single-author) + footer
+- Vary block types: mix articles, content, lists
+- Use 'article' blocks for featured stories
+- Use 'list' for quick updates or tips
+- Vary paragraph counts (1-3 per content block)
+
+VARIANT USAGE:
+- Mix article variants: image-top, image-right, two-cards
+- Use list variants: numbered for steps, image-left for feature updates
+- Use centered hero with compelling headline
+
+Goal: Inform and engage subscribers with varied content formats`;
   } else {
     guidance = `
 
 Email type: General
-Recommended: Start with hero, include relevant content, end with CTA and footer`;
+BLOCK SELECTION: Choose blocks that best fit the user's request
+- Use 2-6 blocks total (not always the same)
+- Don't always include all block types
+- Consider the context:
+  * Ecommerce: use 'ecommerce' and 'gallery' blocks
+  * B2B/SaaS: use 'features', 'stats', 'testimonial', 'pricing'
+  * Content-focused: use 'article', 'content', 'list'
+  * Event: use 'hero', 'content', 'stats' (attendees, speakers)
+- Vary content length based on complexity
+- Mix variants for visual interest`;
   }
 
   // Add campaign-specific context if provided
@@ -155,7 +263,42 @@ Please tailor the content, tone, and messaging to match this context.`;
 
 ${guidance}${campaignContext}
 
+VARIETY & INTELLIGENCE REQUIREMENTS:
+1. BLOCK SELECTION:
+   - Analyze user request to choose most appropriate blocks
+   - Newsletter → Use article, content, list blocks
+   - Promotional → Use ecommerce, gallery, pricing, stats
+   - B2B/SaaS → Use features, testimonial, stats, pricing
+   - Event/Webinar → Use stats (speakers, attendees), content, article
+   
+2. VARIANT SELECTION:
+   - Choose variants that enhance the message:
+     * Split hero when imagery is important
+     * Numbered features for sequential benefits
+     * Large-avatar testimonial for credibility emphasis
+     * Grid galleries for product showcases
+     * Stepped stats for dramatic metric presentation
+   
+3. STRUCTURAL VARIETY:
+   - Vary the number of blocks based on campaign complexity:
+     * Simple/Transactional: 3-6 blocks
+     * Standard/Newsletter: 5-8 blocks  
+     * Complex/Promotional: 8-12 blocks
+   - Don't use the same structure every time
+   - Mix block types based on content
+   - For features: choose between 2, 3, or 4 items
+   - For content: use 1-5 paragraphs as appropriate
+   
+4. VISUAL DIVERSITY:
+   - Alternate between text-heavy and visual blocks
+   - Use galleries/ecommerce for product-focused emails
+   - Use articles for storytelling
+   - Use stats for data-driven messaging
+   - Mix variants within the same email
+
 User request: "${userPrompt}"
+
+⚠️ REMINDER: previewText MUST be ≤140 characters. Count carefully before generating! ⚠️
 
 Generate semantic content blocks as JSON following the EmailContent schema.`;
 }
@@ -185,7 +328,8 @@ Validation rules to follow:
 - paragraphs: 1-3 items, each max 500 characters
 - quote: 10-300 characters
 - preview text: 1-140 characters
-- blocks array: 2-8 blocks total
+- blocks array: 2-12 blocks (varies by campaign type)
+- price: max 30 characters (allows sale prices like "$99 (was $149)")
 `;
 
 /**

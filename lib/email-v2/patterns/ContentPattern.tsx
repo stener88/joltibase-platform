@@ -8,6 +8,7 @@
 import { Section, Heading, Text, Row, Column, Img } from '@react-email/components';
 import type { ContentBlock } from '../ai/blocks';
 import type { GlobalEmailSettings } from '../types';
+import { isValidImageUrl, MarkdownText } from './utils';
 
 interface ContentPatternProps {
   block: ContentBlock;
@@ -16,7 +17,7 @@ interface ContentPatternProps {
 
 export function ContentPattern({ block, settings }: ContentPatternProps) {
   // For left/right layouts, use Row with Columns
-  const hasImage = !!block.imageUrl;
+  const hasImage = isValidImageUrl(block.imageUrl);
   const isHorizontalLayout = hasImage && (block.imagePosition === 'left' || block.imagePosition === 'right');
 
   if (isHorizontalLayout) {
@@ -65,7 +66,7 @@ export function ContentPattern({ block, settings }: ContentPatternProps) {
                   fontFamily: settings.fontFamily,
                 }}
               >
-                {paragraph}
+                <MarkdownText>{paragraph}</MarkdownText>
               </Text>
             ))}
           </Column>
@@ -133,7 +134,7 @@ export function ContentPattern({ block, settings }: ContentPatternProps) {
             fontFamily: settings.fontFamily,
           }}
         >
-          {paragraph}
+          <MarkdownText>{paragraph}</MarkdownText>
         </Text>
       ))}
 

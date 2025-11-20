@@ -19,6 +19,8 @@ import { MessageSquare, Edit3, Edit2, Save, RotateCcw, Monitor, Smartphone } fro
 import { V2ChatEditor } from '@/components/email-editor/V2ChatEditor';
 import { EmailV2Frame } from '@/components/email-editor/EmailV2Frame';
 import type { EmailComponent, GlobalEmailSettings as V2GlobalSettings } from '@/lib/email-v2/types';
+import { semanticBlocksToEmailComponent } from '@/lib/email-v2/blocks-converter';
+import type { SemanticBlock } from '@/lib/email-v2/ai/blocks';
 
 type EditorMode = 'chat' | 'edit';
 
@@ -74,8 +76,36 @@ export default function DashboardCampaignEditorPage() {
   const saveMutation = useCampaignMutation(campaignId);
   const refineMutation = useCampaignRefineMutation(campaignId);
   
-  // Detect V2 campaign
-  const isV2Campaign = campaign?.version === 'v2' && campaign?.root_component;
+  // Detect V2 campaign and lazily generate EmailComponent from semantic blocks if needed
+  const isV2Campaign = campaign?.version === 'v2';
+  const [v2RootComponent, setV2RootComponent] = useState<EmailComponent | null>(null);
+  
+  // Lazily convert semantic blocks to EmailComponent when editor opens
+  useEffect(() => {
+    if (isV2Campaign && campaign) {
+      // If root_component already exists, use it
+      if ((campaign as any).root_component) {
+        setV2RootComponent((campaign as any).root_component as EmailComponent);
+        return;
+      }
+      
+      // If semantic_blocks exist, convert them to EmailComponent
+      if ((campaign as any).semantic_blocks && (campaign as any).global_settings) {
+        console.log('[Editor] Lazily converting semantic blocks to EmailComponent tree');
+        const emailComponent = semanticBlocksToEmailComponent(
+          (campaign as any).semantic_blocks.blocks as SemanticBlock[],
+          (campaign as any).global_settings as V2GlobalSettings,
+          (campaign as any).semantic_blocks.previewText
+        );
+        setV2RootComponent(emailComponent);
+        
+        // Save the generated root_component back to database for future opens
+        saveMutation.mutate({
+          root_component: emailComponent,
+        } as any);
+      }
+    }
+  }, [isV2Campaign, campaign, saveMutation]);
   
   // Check for initial mode from query params
   const initialMode = searchParams.get('mode') as EditorMode | null;
@@ -730,9 +760,9 @@ export default function DashboardCampaignEditorPage() {
         {/* Editor content */}
         <div className="flex-1 overflow-hidden">
           {/* V2 Campaign uses simplified editor */}
-          {isV2Campaign ? (
+          {isV2Campaign && v2RootComponent ? (
             <V2ChatEditor
-              initialRootComponent={campaign.root_component as EmailComponent}
+              initialRootComponent={v2RootComponent}
               initialGlobalSettings={
                 campaign.global_settings || {
                   fontFamily: 'system-ui, sans-serif',
@@ -743,6 +773,14 @@ export default function DashboardCampaignEditorPage() {
               campaignId={campaignId}
               deviceMode={deviceMode}
             />
+          ) : isV2Campaign ? (
+            /* Loading V2 component tree */
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e9a589] mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading editor...</p>
+              </div>
+            </div>
           ) : (
             /* V1 Campaign - existing code */
             <SplitScreenLayout

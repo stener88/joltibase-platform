@@ -78,6 +78,18 @@ export function transformBlockToEmail(
       return createCtaSection(block, settings);
     case 'footer':
       return createFooterSection(block, settings);
+    case 'article':
+      return createArticleSection(block, settings);
+    case 'gallery':
+      return createGallerySection(block, settings);
+    case 'stats':
+      return createStatsSection(block, settings);
+    case 'pricing':
+      return createPricingSection(block, settings);
+    case 'list':
+      return createListSection(block, settings);
+    case 'ecommerce':
+      return createEcommerceSection(block, settings);
     default:
       throw new Error(`Unknown block type: ${(block as any).blockType}`);
   }
@@ -726,6 +738,182 @@ function createFooterSection(block: any, settings: GlobalEmailSettings): EmailCo
       },
     },
     children,
+  };
+}
+
+// New block type helpers for editor compatibility
+
+function createArticleSection(block: any, settings: GlobalEmailSettings): EmailComponent {
+  return {
+    id: 'article-section',
+    component: 'Section',
+    props: {
+      style: {
+        padding: '48px 24px',
+        backgroundColor: '#ffffff',
+      },
+    },
+    children: [{
+      id: 'article-heading',
+      component: 'Heading',
+      props: {
+        as: 'h2',
+        style: {
+          fontSize: '32px',
+          fontWeight: 700,
+          margin: '0 0 16px 0',
+          fontFamily: settings.fontFamily,
+        },
+      },
+      content: block.headline || 'Article',
+    }, {
+      id: 'article-text',
+      component: 'Text',
+      props: {
+        style: {
+          fontSize: '16px',
+          lineHeight: '1.5',
+          fontFamily: settings.fontFamily,
+        },
+      },
+      content: block.excerpt || '',
+    }],
+  };
+}
+
+function createGallerySection(block: any, settings: GlobalEmailSettings): EmailComponent {
+  return {
+    id: 'gallery-section',
+    component: 'Section',
+    props: {
+      style: {
+        padding: '48px 24px',
+        backgroundColor: '#ffffff',
+      },
+    },
+    children: [{
+      id: 'gallery-heading',
+      component: 'Heading',
+      props: {
+        as: 'h2',
+        style: {
+          fontSize: '32px',
+          fontWeight: 700,
+          margin: '0 0 16px 0',
+          textAlign: 'center',
+          fontFamily: settings.fontFamily,
+        },
+      },
+      content: block.heading || 'Gallery',
+    }],
+  };
+}
+
+function createStatsSection(block: any, settings: GlobalEmailSettings): EmailComponent {
+  return {
+    id: 'stats-section',
+    component: 'Section',
+    props: {
+      style: {
+        padding: '48px 24px',
+        backgroundColor: '#ffffff',
+      },
+    },
+    children: [{
+      id: 'stats-text',
+      component: 'Text',
+      props: {
+        style: {
+          fontSize: '16px',
+          textAlign: 'center',
+          fontFamily: settings.fontFamily,
+        },
+      },
+      content: 'Stats Section',
+    }],
+  };
+}
+
+function createPricingSection(block: any, settings: GlobalEmailSettings): EmailComponent {
+  return {
+    id: 'pricing-section',
+    component: 'Section',
+    props: {
+      style: {
+        padding: '48px 24px',
+        backgroundColor: '#ffffff',
+      },
+    },
+    children: [{
+      id: 'pricing-heading',
+      component: 'Heading',
+      props: {
+        as: 'h2',
+        style: {
+          fontSize: '32px',
+          fontWeight: 700,
+          margin: '0 0 16px 0',
+          textAlign: 'center',
+          fontFamily: settings.fontFamily,
+        },
+      },
+      content: block.heading || 'Pricing',
+    }],
+  };
+}
+
+function createListSection(block: any, settings: GlobalEmailSettings): EmailComponent {
+  return {
+    id: 'list-section',
+    component: 'Section',
+    props: {
+      style: {
+        padding: '48px 24px',
+        backgroundColor: '#ffffff',
+      },
+    },
+    children: [{
+      id: 'list-heading',
+      component: 'Heading',
+      props: {
+        as: 'h2',
+        style: {
+          fontSize: '32px',
+          fontWeight: 700,
+          margin: '0 0 16px 0',
+          fontFamily: settings.fontFamily,
+        },
+      },
+      content: block.heading || 'List',
+    }],
+  };
+}
+
+function createEcommerceSection(block: any, settings: GlobalEmailSettings): EmailComponent {
+  return {
+    id: 'ecommerce-section',
+    component: 'Section',
+    props: {
+      style: {
+        padding: '48px 24px',
+        backgroundColor: '#ffffff',
+      },
+    },
+    children: [{
+      id: 'ecommerce-heading',
+      component: 'Heading',
+      props: {
+        as: 'h2',
+        style: {
+          fontSize: '32px',
+          fontWeight: 700,
+          margin: '0 0 16px 0',
+          textAlign: 'center',
+          fontFamily: settings.fontFamily,
+        },
+      },
+      content: block.heading || 'Products',
+    }],
   };
 }
 
