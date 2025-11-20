@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import type { EmailComponent, GlobalEmailSettings } from '@/lib/email-v2/types';
+import type { SemanticBlock } from '@/lib/email-v2/ai/blocks';
 import { getComponentPath, findComponentById, deleteComponentById, updateComponentById } from '@/lib/email-v2';
 import { ChatInterface, type ChatMessage, type ChatInterfaceRef } from '@/components/campaigns/ChatInterface';
 import { EmailV2Frame } from './EmailV2Frame';
@@ -14,9 +15,16 @@ import type { ElementDescriptor } from '@/lib/email/visual-edits/element-descrip
 import { SplitScreenLayout } from '@/components/campaigns/SplitScreenLayout';
 import { getToolbarConfig } from '@/lib/email-v2/toolbar-config';
 import { getComponentDescriptor } from '@/lib/email-v2/component-descriptor';
+import { semanticBlocksToEmailComponent } from '@/lib/email-v2/blocks-converter';
+import { renderEmailComponent } from '@/lib/email-v2/renderer';
+import { Button } from '@/components/ui/button';
+import { AlertCircle } from 'lucide-react';
 
 interface V2ChatEditorProps {
-  initialRootComponent: EmailComponent;
+  initialRootComponent?: EmailComponent;
+  htmlContent?: string;
+  semanticBlocks?: SemanticBlock[];
+  previewText?: string;
   initialGlobalSettings: GlobalEmailSettings;
   campaignId: string;
   deviceMode?: 'desktop' | 'mobile';
@@ -32,12 +40,23 @@ interface SelectedComponent {
 
 export function V2ChatEditor({
   initialRootComponent,
+  htmlContent,
+  semanticBlocks,
+  previewText,
   initialGlobalSettings,
   campaignId,
   deviceMode = 'desktop',
   renderMode = 'both',
 }: V2ChatEditorProps) {
-  const [rootComponent, setRootComponent] = useState(initialRootComponent);
+  // Visual edit mode state
+  const [visualEditMode, setVisualEditMode] = useState(false);
+  const [rootComponent, setRootComponent] = useState<EmailComponent | null>(initialRootComponent || null);
+  const [originalRootComponent, setOriginalRootComponent] = useState<EmailComponent | null>(null);
+  const [isTransforming, setIsTransforming] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [currentHtmlContent, setCurrentHtmlContent] = useState(htmlContent || '');
+  
   const [globalSettings, setGlobalSettings] = useState(initialGlobalSettings);
   const [selectedComponent, setSelectedComponent] = useState<SelectedComponent | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -45,29 +64,113 @@ export function V2ChatEditor({
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [showComponentEditor, setShowComponentEditor] = useState(false);
   const [toolbarPosition, setToolbarPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [visualEditsMode, setVisualEditsMode] = useState(false); // Toggle for visual edits
   const [activePanel, setActivePanel] = useState<'content' | 'styles' | 'spacing' | null>(null);
   const chatInterfaceRef = useRef<ChatInterfaceRef>(null);
 
-  // Toggle visual edits mode
-  const handleVisualEditsToggle = useCallback(() => {
-    setVisualEditsMode(prev => {
-      const newMode = !prev;
+  // Handle enter visual edit mode (lazy transformation)
+  const handleEnterVisualEdit = useCallback(async () => {
+    if (!semanticBlocks) {
+      console.error('No semantic blocks available for editing');
+      alert('No semantic blocks available for editing');
+      return;
+    }
+
+    setIsTransforming(true);
+    
+    try {
+      const component = semanticBlocksToEmailComponent(
+        semanticBlocks,
+        globalSettings,
+        previewText
+      );
       
-      // Clear selection when turning off visual edits
-      if (!newMode) {
-        setSelectedComponent(null);
-        setShowComponentEditor(false);
-        setActivePanel(null);
-      }
-      return newMode;
-    });
+      setRootComponent(component);
+      setOriginalRootComponent(component); // Keep original for discard
+      setVisualEditMode(true);
+      setHasUnsavedChanges(false);
+    } catch (error) {
+      console.error('Transform failed:', error);
+      alert('Failed to enter visual edit mode');
+    } finally {
+      setIsTransforming(false);
+    }
+  }, [semanticBlocks, globalSettings, previewText]);
+
+  // Handle exit visual edit mode
+  const handleExitVisualEdit = useCallback(() => {
+    if (hasUnsavedChanges) {
+      setShowSaveDialog(true);
+    } else {
+      // No changes, exit immediately
+      setVisualEditMode(false);
+      setRootComponent(null);
+    }
+  }, [hasUnsavedChanges]);
+
+  // Handle save and exit
+  const handleSaveAndExit = useCallback(async () => {
+    if (!rootComponent) return;
+    
+    setShowSaveDialog(false);
+    
+    try {
+      // Re-render EmailComponent to HTML
+      const { html } = await renderEmailComponent(rootComponent, globalSettings);
+      
+      // Update database
+      await fetch(`/api/campaigns/${campaignId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          root_component: rootComponent,
+          html_content: html,
+        }),
+      });
+      
+      // Update local state
+      setCurrentHtmlContent(html);
+      
+      // Exit visual edit mode
+      setVisualEditMode(false);
+      setRootComponent(null);
+      setHasUnsavedChanges(false);
+      
+      console.log('✓ Changes saved successfully!');
+    } catch (error) {
+      console.error('Save failed:', error);
+      alert('Failed to save changes');
+    }
+  }, [rootComponent, globalSettings, campaignId]);
+
+  // Handle discard and exit
+  const handleDiscardAndExit = useCallback(() => {
+    setShowSaveDialog(false);
+    setVisualEditMode(false);
+    setRootComponent(null);
+    setHasUnsavedChanges(false);
+    
+    console.log('Changes discarded');
   }, []);
+
+  // Track component updates
+  const handleRootComponentUpdate = useCallback((updatedComponent: EmailComponent) => {
+    setRootComponent(updatedComponent);
+    setHasUnsavedChanges(true);
+  }, []);
+
+  // Toggle visual edits mode (legacy function, now redirects to enter visual edit)
+  const handleVisualEditsToggle = useCallback(() => {
+    if (visualEditMode) {
+      handleExitVisualEdit();
+    } else {
+      handleEnterVisualEdit();
+    }
+  }, [visualEditMode, handleEnterVisualEdit, handleExitVisualEdit]);
 
   // Better toolbar positioning using viewport bounds
   const handleComponentClick = useCallback((id: string, bounds: DOMRect) => {
-    // Only allow clicks when visual edits mode is active
-    if (!visualEditsMode) return;
+    // Only allow clicks when visual edit mode is active
+    if (!visualEditMode || !rootComponent) return;
     
     const component = findComponentById(rootComponent, id);
     const path = getComponentPath(rootComponent, id);
@@ -116,7 +219,7 @@ export function V2ChatEditor({
         y: toolbarY,
       });
     }
-  }, [rootComponent, visualEditsMode]);
+  }, [rootComponent, visualEditMode]);
 
   // Handle chat submit - full email generation
   const handleChatSubmit = useCallback(async (message: string) => {
@@ -194,7 +297,7 @@ export function V2ChatEditor({
 
   // Handle manual component updates from panels (apply button)
   const handleManualUpdate = useCallback(async (updates: { props?: Record<string, any>; content?: string }) => {
-    if (!selectedComponent) return;
+    if (!selectedComponent || !rootComponent) return;
 
     // Merge updates into component
     const updatedComponent: EmailComponent = {
@@ -207,6 +310,7 @@ export function V2ChatEditor({
     const newRoot = updateComponentById(rootComponent, selectedComponent.id, updatedComponent);
     if (newRoot) {
       setRootComponent(newRoot);
+      setHasUnsavedChanges(true); // Mark as changed
       
       // Update selected component with new data
       setSelectedComponent(prev => prev ? {
@@ -214,43 +318,24 @@ export function V2ChatEditor({
         component: updatedComponent,
       } : null);
       
-      // Save to database immediately
-      await fetch(`/api/campaigns/${campaignId}/v2`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          rootComponent: newRoot,
-          globalSettings,
-        }),
-      });
-      
       // Close panel after applying
       setActivePanel(null);
     }
-  }, [selectedComponent, rootComponent, campaignId, globalSettings]);
+  }, [selectedComponent, rootComponent]);
 
   // Handle component deletion
   const handleDeleteComponent = useCallback(async () => {
-    if (!selectedComponent) return;
+    if (!selectedComponent || !rootComponent) return;
 
     const newRoot = deleteComponentById(rootComponent, selectedComponent.id);
     if (newRoot) {
       setRootComponent(newRoot);
+      setHasUnsavedChanges(true); // Mark as changed
       setSelectedComponent(null);
       setShowComponentEditor(false);
       setActivePanel(null);
-      
-      // Save to database
-      await fetch(`/api/campaigns/${campaignId}/v2`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          rootComponent: newRoot,
-          globalSettings,
-        }),
-      });
     }
-  }, [selectedComponent, rootComponent, campaignId, globalSettings]);
+  }, [selectedComponent, rootComponent]);
 
   // Handle toolbar AI submit
   const handleToolbarAISubmit = useCallback(async (prompt: string) => {
@@ -260,7 +345,7 @@ export function V2ChatEditor({
 
   // Handle click outside to deselect or select next component
   useEffect(() => {
-    if (!visualEditsMode) return;
+    if (!visualEditMode) return;
 
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -282,7 +367,7 @@ export function V2ChatEditor({
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [visualEditsMode]);
+  }, [visualEditMode]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -356,16 +441,7 @@ export function V2ChatEditor({
 
       if (result.success && result.rootComponent) {
         setRootComponent(result.rootComponent);
-        
-        // Save to database
-        await fetch(`/api/campaigns/${campaignId}/v2`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            rootComponent: result.rootComponent,
-            globalSettings,
-          }),
-        });
+        setHasUnsavedChanges(true); // Mark as changed
         
         // Add success message to chat
         const assistantMessage: ChatMessage = {
@@ -389,7 +465,7 @@ export function V2ChatEditor({
     } finally {
       setIsRefining(false);
     }
-  }, [selectedComponent, campaignId, globalSettings]);
+  }, [selectedComponent, campaignId]);
 
   // Render split-screen layout
   const chatPanel = (
@@ -397,7 +473,7 @@ export function V2ChatEditor({
       ref={chatInterfaceRef}
       campaignId={campaignId}
       onRefine={async (message) => {
-        if (selectedComponent && showComponentEditor && visualEditsMode) {
+        if (selectedComponent && showComponentEditor && visualEditMode) {
           // If component is selected, refine that component
           await handleComponentRefinement(message);
         } else {
@@ -407,7 +483,7 @@ export function V2ChatEditor({
       }}
       isRefining={isGenerating || isRefining}
       chatHistory={chatHistory}
-      visualEditsMode={visualEditsMode}
+      visualEditsMode={visualEditMode}
       onVisualEditsToggle={handleVisualEditsToggle}
       selectedElement={null}
       onClearSelection={() => {
@@ -417,14 +493,95 @@ export function V2ChatEditor({
     />
   );
 
-  const previewPanel = (
-    <EmailV2Frame
-      rootComponent={rootComponent}
-      globalSettings={globalSettings}
-      selectedComponentId={visualEditsMode ? selectedComponent?.id : undefined}
-      onComponentClick={visualEditsMode ? handleComponentClick : undefined}
-      deviceMode={deviceMode}
-    />
+  // Save dialog
+  if (showSaveDialog) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200]">
+        <div className="bg-[#2d2d2d] rounded-xl shadow-2xl border border-gray-700 p-6 max-w-md mx-4">
+          <h2 className="text-xl font-semibold text-white mb-2">Save Changes?</h2>
+          <p className="text-gray-300 mb-6">
+            You have unsaved changes to this email. What would you like to do?
+          </p>
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={handleDiscardAndExit}
+              className="px-4 py-2 bg-[#3d3d3d] hover:bg-[#4d4d4d] text-white rounded-lg transition-colors"
+            >
+              Discard Changes
+            </button>
+            <button
+              onClick={handleSaveAndExit}
+              className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Preview mode (default - show HTML)
+  if (!visualEditMode) {
+    const previewPanel = (
+      <div className="flex flex-col h-full">
+        <div className="flex-1 overflow-auto bg-gray-50">
+          <iframe
+            srcDoc={currentHtmlContent}
+            className="w-full h-full border-0"
+            title="Email Preview"
+            style={{ minHeight: '100%' }}
+          />
+        </div>
+      </div>
+    );
+
+    return (
+      <div className="h-full flex flex-col">
+        {renderMode === 'both' ? (
+          <SplitScreenLayout
+            leftPanel={chatPanel}
+            rightPanel={previewPanel}
+          />
+        ) : renderMode === 'preview-only' ? (
+          <div className="flex-1 overflow-hidden">{previewPanel}</div>
+        ) : (
+          <div className="flex-1 overflow-hidden">{chatPanel}</div>
+        )}
+      </div>
+    );
+  }
+
+  // Loading state during transformation
+  if (isTransforming) {
+    return (
+      <div className="h-full flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600 mx-auto mb-4" />
+          <p className="text-lg font-medium text-gray-900">Preparing editor...</p>
+          <p className="text-sm text-gray-600 mt-2">Transforming email structure</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Visual edit mode
+  const previewPanel = rootComponent ? (
+    <div className="flex flex-col h-full">
+      <div className="flex-1 overflow-auto">
+        <EmailV2Frame
+          rootComponent={rootComponent}
+          globalSettings={globalSettings}
+          selectedComponentId={selectedComponent?.id}
+          onComponentClick={handleComponentClick}
+          deviceMode={deviceMode}
+        />
+      </div>
+    </div>
+  ) : (
+    <div className="flex items-center justify-center h-full">
+      <p className="text-gray-500">No email component loaded</p>
+    </div>
   );
 
   return (
@@ -441,7 +598,7 @@ export function V2ChatEditor({
       )}
       
       {/* FloatingToolbar - render at root with viewport coords */}
-      {visualEditsMode && selectedComponent && toolbarDescriptor && toolbarConfig && (
+      {visualEditMode && selectedComponent && toolbarDescriptor && toolbarConfig && (
         <>
           {/* Component Label Badge */}
           <ComponentLabel

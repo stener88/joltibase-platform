@@ -76,36 +76,8 @@ export default function DashboardCampaignEditorPage() {
   const saveMutation = useCampaignMutation(campaignId);
   const refineMutation = useCampaignRefineMutation(campaignId);
   
-  // Detect V2 campaign and lazily generate EmailComponent from semantic blocks if needed
+  // Detect V2 campaign
   const isV2Campaign = campaign?.version === 'v2';
-  const [v2RootComponent, setV2RootComponent] = useState<EmailComponent | null>(null);
-  
-  // Lazily convert semantic blocks to EmailComponent when editor opens
-  useEffect(() => {
-    if (isV2Campaign && campaign) {
-      // If root_component already exists, use it
-      if ((campaign as any).root_component) {
-        setV2RootComponent((campaign as any).root_component as EmailComponent);
-        return;
-      }
-      
-      // If semantic_blocks exist, convert them to EmailComponent
-      if ((campaign as any).semantic_blocks && (campaign as any).global_settings) {
-        console.log('[Editor] Lazily converting semantic blocks to EmailComponent tree');
-        const emailComponent = semanticBlocksToEmailComponent(
-          (campaign as any).semantic_blocks.blocks as SemanticBlock[],
-          (campaign as any).global_settings as V2GlobalSettings,
-          (campaign as any).semantic_blocks.previewText
-        );
-        setV2RootComponent(emailComponent);
-        
-        // Save the generated root_component back to database for future opens
-        saveMutation.mutate({
-          root_component: emailComponent,
-        } as any);
-      }
-    }
-  }, [isV2Campaign, campaign, saveMutation]);
   
   // Check for initial mode from query params
   const initialMode = searchParams.get('mode') as EditorMode | null;
@@ -759,12 +731,15 @@ export default function DashboardCampaignEditorPage() {
       <div className="flex flex-col h-full">
         {/* Editor content */}
         <div className="flex-1 overflow-hidden">
-          {/* V2 Campaign uses simplified editor */}
-          {isV2Campaign && v2RootComponent ? (
+          {/* V2 Campaign uses lazy-loading editor */}
+          {isV2Campaign && campaign ? (
             <V2ChatEditor
-              initialRootComponent={v2RootComponent}
+              initialRootComponent={(campaign as any).root_component as EmailComponent | undefined}
+              htmlContent={(campaign as any).html_content}
+              semanticBlocks={(campaign as any).semantic_blocks?.blocks}
+              previewText={(campaign as any).semantic_blocks?.previewText}
               initialGlobalSettings={
-                campaign.global_settings || {
+                (campaign as any).global_settings || {
                   fontFamily: 'system-ui, sans-serif',
                   primaryColor: '#7c3aed',
                   maxWidth: '600px',
@@ -774,11 +749,11 @@ export default function DashboardCampaignEditorPage() {
               deviceMode={deviceMode}
             />
           ) : isV2Campaign ? (
-            /* Loading V2 component tree */
+            /* Loading V2 campaign */
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e9a589] mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading editor...</p>
+                <p className="text-gray-600">Loading campaign...</p>
               </div>
             </div>
           ) : (
