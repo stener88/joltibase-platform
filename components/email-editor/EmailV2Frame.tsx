@@ -351,24 +351,16 @@ export function EmailV2Frame({
       )}
 
       {!isRendering && !error && (
-        <div className="h-full overflow-auto bg-gray-100 p-8">
-          <div
-            className="mx-auto bg-white shadow-lg"
-            style={{
-              width: deviceMode === 'mobile' ? '375px' : '600px',
-              minHeight: '400px',
-            }}
-          >
-            <iframe
-              key={onComponentClick ? 'interactive' : 'static'}
-              ref={iframeRef}
-              title="Email Preview"
-              srcDoc={interactiveHtml}
-              className="w-full h-full border-0"
-              style={{ minHeight: '600px' }}
-              sandbox="allow-scripts allow-same-origin"
-            />
-          </div>
+        <div className="h-full overflow-auto">
+          <iframe
+            key={onComponentClick ? 'interactive' : 'static'}
+            ref={iframeRef}
+            title="Email Preview"
+            srcDoc={interactiveHtml}
+            className="w-full h-full border-0"
+            style={{ minHeight: '100%' }}
+            sandbox="allow-scripts allow-same-origin"
+          />
         </div>
       )}
     </div>

@@ -68,10 +68,10 @@ export function HeroPattern({ block, settings }: HeroPatternProps) {
           alt={block.headline}
           style={{
             width: '100%',
-            maxWidth: '600px',
+            maxWidth: '550px',
             height: 'auto',
-            margin: '0 auto 32px',
-            borderRadius: '8px',
+            margin: '0 auto 48px',
+            borderRadius: '12px',
             display: 'block',
           }}
         />

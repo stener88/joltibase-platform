@@ -17,8 +17,7 @@ import { getToolbarConfig } from '@/lib/email-v2/toolbar-config';
 import { getComponentDescriptor } from '@/lib/email-v2/component-descriptor';
 import { semanticBlocksToEmailComponent } from '@/lib/email-v2/blocks-converter';
 import { renderEmailComponent } from '@/lib/email-v2/renderer';
-import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
+
 
 interface V2ChatEditorProps {
   initialRootComponent?: EmailComponent;
@@ -524,15 +523,13 @@ export function V2ChatEditor({
   // Preview mode (default - show HTML)
   if (!visualEditMode) {
     const previewPanel = (
-      <div className="flex flex-col h-full">
-        <div className="flex-1 overflow-auto bg-gray-50">
-          <iframe
-            srcDoc={currentHtmlContent}
-            className="w-full h-full border-0"
-            title="Email Preview"
-            style={{ minHeight: '100%' }}
-          />
-        </div>
+      <div className="flex flex-col h-full overflow-auto">
+        <iframe
+          srcDoc={currentHtmlContent}
+          className="w-full border-0"
+          title="Email Preview"
+          style={{ minHeight: '100%' }}
+        />
       </div>
     );
 

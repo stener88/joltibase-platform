@@ -23,6 +23,62 @@ interface ImageFetchResult {
 }
 
 /**
+ * Simplify keyword by removing overly descriptive adjectives and keeping core nouns
+ * 
+ * Strips out descriptive adjectives (dark, mysterious, epic, etc.) and action words
+ * to create broader, more searchable keywords for Unsplash (1-3 words max)
+ * 
+ * @param keyword - Original keyword from AI
+ * @returns Simplified keyword (1-3 core words)
+ */
+function simplifyKeyword(keyword: string): string {
+  if (!keyword || keyword.trim().length === 0) {
+    return keyword;
+  }
+  
+  // Words to remove (descriptive adjectives and action words)
+  const wordsToRemove = new Set([
+    // Descriptive adjectives
+    'dark', 'mysterious', 'epic', 'dramatic', 'cinematic', 'vivid', 'moody',
+    'dramatic', 'stunning', 'breathtaking', 'spectacular', 'magnificent',
+    'gorgeous', 'beautiful', 'striking', 'powerful', 'intense', 'eerie',
+    'haunting', 'atmospheric', 'ethereal', 'surreal', 'dramatic', 'heroic',
+    'determined', 'fierce', 'bold', 'vibrant', 'lush', 'pristine', 'serene',
+    // Action/state words
+    'glowing', 'shimmering', 'sparkling', 'radiant', 'illuminated', 'lit',
+    'running', 'jumping', 'flying', 'standing', 'sitting', 'walking',
+    // Overly specific descriptors
+    'close', 'up', 'closeup', 'macro', 'wide', 'angle', 'shot', 'scene',
+    'norwegian', 'swedish', 'finnish', 'icelandic', // Specific locations can be too narrow
+    // Common filler words
+    'the', 'a', 'an', 'in', 'on', 'at', 'with', 'and', 'or', 'of', 'for',
+  ]);
+  
+  // Split keyword into words
+  const words = keyword.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+  
+  // Filter out words to remove and keep only meaningful nouns/adjectives
+  const coreWords = words.filter(word => {
+    // Remove if it's in the exclusion list
+    if (wordsToRemove.has(word)) {
+      return false;
+    }
+    // Keep nouns and simple descriptors (2+ characters)
+    return word.length >= 2;
+  });
+  
+  // Limit to 1-3 words for better Unsplash matches
+  const simplified = coreWords.slice(0, 3).join(' ');
+  
+  // If we removed everything, fall back to first 2 words of original
+  if (simplified.length === 0 && words.length > 0) {
+    return words.slice(0, 2).join(' ');
+  }
+  
+  return simplified || keyword; // Fallback to original if something went wrong
+}
+
+/**
  * Extract all image keywords from semantic blocks
  */
 function extractImageKeywords(blocks: SemanticBlock[]): Set<string> {
@@ -151,9 +207,16 @@ export async function fetchImagesForBlocks(blocks: SemanticBlock[]): Promise<Ima
   const fetchPromises = Array.from(keywords).map(async (keyword) => {
     const { width, height, orientation } = getImageDimensions(keyword);
     
-    // Try Unsplash first
+    // Simplify keyword for better Unsplash search results
+    const simplifiedKeyword = simplifyKeyword(keyword);
+    
+    if (simplifiedKeyword !== keyword) {
+      console.log(`[ImageFetcher] Simplifying keyword: "${keyword}" → "${simplifiedKeyword}"`);
+    }
+    
+    // Try Unsplash first with simplified keyword
     const unsplashResult = await fetchUnsplashImage({
-      query: keyword,
+      query: simplifiedKeyword,
       orientation,
       width,
       height,

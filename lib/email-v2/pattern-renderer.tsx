@@ -22,6 +22,9 @@ import { PricingPattern } from './patterns/PricingPattern';
 import { ArticlePattern } from './patterns/ArticlePattern';
 import { ListPattern } from './patterns/ListPattern';
 import { EcommercePattern } from './patterns/EcommercePattern';
+import { MarketingPattern } from './patterns/MarketingPattern';
+import { HeaderPattern } from './patterns/HeaderPattern';
+import { FeedbackPattern } from './patterns/FeedbackPattern';
 
 /**
  * Map semantic block to Pattern component
@@ -63,6 +66,15 @@ function renderBlock(block: SemanticBlock, settings: GlobalEmailSettings): React
     
     case 'ecommerce':
       return React.createElement(EcommercePattern, { key: `block-${block.blockType}`, block, settings });
+    
+    case 'marketing':
+      return React.createElement(MarketingPattern, { key: `block-${block.blockType}`, block, settings });
+    
+    case 'header':
+      return React.createElement(HeaderPattern, { key: `block-${block.blockType}`, block, settings });
+    
+    case 'feedback':
+      return React.createElement(FeedbackPattern, { key: `block-${block.blockType}`, block, settings });
     
     default:
       console.warn(`[PatternRenderer] Unknown block type: ${(block as any).blockType}`);

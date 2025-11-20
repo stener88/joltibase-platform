@@ -155,7 +155,7 @@ function ThreeColumnProducts({ block }: { block: EcommerceBlock }) {
               {product.price}
             </Text>
             <Button
-              className="mt-[16px] rounded-[8px] bg-indigo-600 px-[24px] py-[12px] font-semibold text-white"
+              className="mt-[16px] mb-[24px] rounded-[8px] bg-indigo-600 px-[24px] py-[12px] font-semibold text-white"
               href={product.ctaUrl}
             >
               {product.ctaText}
@@ -206,7 +206,7 @@ function FourGridProducts({ block }: { block: EcommerceBlock }) {
                   {product.price}
                 </Text>
                 <Button
-                  className="mt-[16px] rounded-[8px] bg-indigo-600 px-[24px] py-[12px] font-semibold text-white"
+                  className="mt-[16px] mb-[24px] rounded-[8px] bg-indigo-600 px-[24px] py-[12px] font-semibold text-white"
                   href={product.ctaUrl}
                 >
                   {product.ctaText}
@@ -239,7 +239,7 @@ function FourGridProducts({ block }: { block: EcommerceBlock }) {
                   {product.price}
                 </Text>
                 <Button
-                  className="mt-[16px] rounded-[8px] bg-indigo-600 px-[24px] py-[12px] font-semibold text-white"
+                  className="mt-[16px] mb-[24px] rounded-[8px] bg-indigo-600 px-[24px] py-[12px] font-semibold text-white"
                   href={product.ctaUrl}
                 >
                   {product.ctaText}

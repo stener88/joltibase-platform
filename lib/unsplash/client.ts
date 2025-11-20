@@ -97,6 +97,22 @@ export async function fetchUnsplashImage(
     
     const photo = await response.json() as UnsplashPhoto;
     
+    // Validate response structure
+    if (!photo || !photo.urls || !photo.urls.regular) {
+      console.error('[Unsplash] Invalid response structure - missing urls');
+      return null;
+    }
+    
+    if (!photo.user || !photo.user.name) {
+      console.error('[Unsplash] Invalid response structure - missing user info');
+      return null;
+    }
+    
+    if (!photo.links || !photo.links.download_location) {
+      console.error('[Unsplash] Invalid response structure - missing download location');
+      return null;
+    }
+    
     // Construct image URL with optional dimensions
     let imageUrl = photo.urls.regular;
     if (width || height) {

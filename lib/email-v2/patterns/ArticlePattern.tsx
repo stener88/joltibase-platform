@@ -60,7 +60,7 @@ function ImageTop({ block }: { block: ArticleBlock }) {
         )}
         {block.ctaText && block.ctaUrl && (
           <Button
-            className="mt-[16px] rounded-[8px] bg-indigo-600 px-[40px] py-[12px] font-semibold text-white"
+            className="mt-[16px] mb-[32px] rounded-[8px] bg-indigo-600 px-[40px] py-[12px] font-semibold text-white"
             href={block.ctaUrl}
           >
             {block.ctaText}
@@ -144,7 +144,7 @@ function ImageBackground({ block }: { block: ArticleBlock }) {
             )}
             {block.ctaText && block.ctaUrl && (
               <Button
-                className="mt-[24px] rounded-[8px] border border-gray-200 border-solid bg-white px-[40px] py-[12px] font-semibold text-gray-900"
+                className="mt-[24px] mb-[32px] rounded-[8px] border border-gray-200 border-solid bg-white px-[40px] py-[12px] font-semibold text-gray-900"
                 href={block.ctaUrl}
               >
                 {block.ctaText}

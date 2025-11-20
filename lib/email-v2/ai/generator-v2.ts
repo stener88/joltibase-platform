@@ -17,6 +17,7 @@ import { renderPatternsToEmail } from '../pattern-renderer';
 import { fetchImagesForBlocks } from './image-fetcher';
 import { replaceImageKeywords, addCreditsToFooter } from './image-helpers';
 import { enforceColorConsistency } from './color-enforcer';
+import { semanticBlocksToEmailComponent } from '../blocks-converter';
 
 // Initialize Google AI with API key
 const getGoogleModel = (model: string) => {
@@ -95,6 +96,20 @@ export interface CampaignGenerationOptions extends GenerationOptions {
   
   /** Target audience description */
   targetAudience?: string;
+  
+  /** Structure hints from prompt analysis */
+  structureHints?: {
+    gridLayout?: { columns: number; rows: number };
+    itemCount?: number;
+    needsTable?: boolean;
+    needsLogo?: boolean;
+  };
+  
+  /** Tone for content generation */
+  tone?: 'formal' | 'casual' | 'friendly' | 'professional' | 'urgent' | 'playful';
+  
+  /** Content type for structure guidance */
+  contentType?: 'press-release' | 'announcement' | 'sale' | 'update' | 'story' | 'product-launch' | 'event' | 'newsletter' | 'transactional';
 }
 
 /**
@@ -106,6 +121,9 @@ export interface GenerationResult {
   
   /** Rendered HTML */
   html: string;
+  
+  /** EmailComponent tree for editor */
+  rootComponent: EmailComponent;
   
   /** Generation metadata */
   metadata: {
@@ -164,10 +182,11 @@ export async function generateSemanticBlocks(
     campaignType,
     companyName,
     targetAudience,
+    structureHints,
   } = options;
   
-  // Determine max blocks based on campaign type and prompt content
-  const maxBlocks = getMaxBlocksForCampaign(campaignType, prompt);
+  // Determine max blocks based on campaign type, prompt content, and structure hints
+  const maxBlocks = getMaxBlocksForCampaign(campaignType, prompt, structureHints);
   const dynamicSchema = createEmailContentSchema(maxBlocks);
   
   console.log('🤖 [SEMANTIC-GEN] Generating semantic content blocks');
@@ -184,6 +203,9 @@ export async function generateSemanticBlocks(
         campaignType,
         companyName,
         targetAudience,
+        structureHints: structureHints,
+        tone: options.tone,
+        contentType: options.contentType,
       }),
       temperature,
     });
@@ -272,6 +294,16 @@ export async function generateEmailSemantic(
   
   console.log(`✅ [EMAIL-GEN-V2] Rendered ${blocksWithImages.length} blocks to HTML`);
   
+  // Phase 6: Generate EmailComponent tree for editor
+  console.log('🌳 [EMAIL-GEN-V2] Generating EmailComponent tree for editor');
+  const rootComponent = semanticBlocksToEmailComponent(
+    blocksWithImages,
+    settings,
+    content.previewText
+  );
+  
+  console.log('✅ [EMAIL-GEN-V2] EmailComponent tree generated');
+  
   const timeMs = Date.now() - startTime;
   
   console.log('✅ [EMAIL-GEN-V2] Email generation complete');
@@ -283,6 +315,7 @@ export async function generateEmailSemantic(
       blocks: blocksWithImages,
     },
     html,
+    rootComponent,
     metadata: {
       model: options.model || 'gemini-2.5-flash',
       tokens: usage?.totalTokens || 0,

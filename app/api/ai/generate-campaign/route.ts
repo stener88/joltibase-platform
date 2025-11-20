@@ -13,6 +13,14 @@ import { renderEmailComponent } from '@/lib/email-v2/renderer';
 import { RateLimitError } from '@/lib/ai/rate-limit';
 import { enforceRateLimit } from '@/lib/ai/rate-limit';
 import { saveAIGeneration } from '@/lib/ai/usage-tracker';
+import { 
+  detectEmailType, 
+  parseColorPreferences, 
+  parseStructureHints,
+  detectFontPreferences,
+  detectTone,
+  detectContentType,
+} from '@/lib/email-v2/ai/prompt-intelligence';
 
 // ============================================================================
 // API Response Types
@@ -208,25 +216,64 @@ export async function POST(request: NextRequest) {
     }
     console.log('✅ [API-V2] Rate limit check passed');
     
-    // 5. Prepare global settings
-    // If no colors specified, randomly select from curated palettes
+    // 5. Parse prompt intelligence (email type, colors, structure, fonts, tone, content type)
+    const detectedEmailType = detectEmailType(validatedInput.prompt);
+    const colorPreferences = parseColorPreferences(validatedInput.prompt);
+    const structureHints = parseStructureHints(validatedInput.prompt);
+    const fontPreferences = detectFontPreferences(validatedInput.prompt);
+    const tone = detectTone(validatedInput.prompt);
+    const contentType = detectContentType(validatedInput.prompt);
+    
+    console.log('🔍 [API-V2] Prompt analysis:', {
+      emailType: detectedEmailType,
+      hasColorPreferences: !!colorPreferences,
+      hasStructureHints: !!structureHints,
+      hasFontPreferences: !!fontPreferences,
+      tone,
+      contentType,
+      itemCount: structureHints?.itemCount,
+      gridLayout: structureHints?.gridLayout,
+    });
+    
+    // 5.5. Prepare global settings
+    // Priority: API params > Prompt parsing > Random palette
     let colors;
     if (validatedInput.primaryColor) {
+      // User explicitly provided colors via API
       colors = {
         primaryColor: validatedInput.primaryColor,
         secondaryColor: validatedInput.secondaryColor || validatedInput.primaryColor,
         backgroundColor: validatedInput.backgroundColor || '#f9fafb',
       };
       console.log('🎨 [API-V2] Using user-specified colors:', colors.primaryColor);
+    } else if (colorPreferences) {
+      // Colors detected from prompt
+      colors = {
+        primaryColor: colorPreferences.primaryColor || '#000000',
+        secondaryColor: colorPreferences.primaryColor || '#000000',
+        backgroundColor: colorPreferences.backgroundColor || '#ffffff',
+      };
+      console.log('🎨 [API-V2] Using colors from prompt:', colors);
     } else {
+      // Fallback to random palette
       colors = getRandomColorPalette();
       console.log('🎨 [API-V2] Using random palette:', colors.name);
+    }
+    
+    // Determine font family based on detected preferences
+    let fontFamily = 'system-ui, -apple-system, sans-serif';
+    if (fontPreferences?.fontFamily) {
+      fontFamily = fontPreferences.fontFamily;
+    } else if (fontPreferences?.fontStyle === 'elegant' || fontPreferences?.fontStyle === 'classic') {
+      fontFamily = 'Georgia, serif';
+    } else if (fontPreferences?.fontStyle === 'modern') {
+      fontFamily = 'system-ui, -apple-system, sans-serif';
     }
     
     const globalSettings: GlobalEmailSettings = {
       primaryColor: colors.primaryColor,
       secondaryColor: colors.secondaryColor,
-      fontFamily: 'system-ui, -apple-system, sans-serif',
+      fontFamily,
       maxWidth: '600px',
       backgroundColor: colors.backgroundColor,
     };
@@ -245,7 +292,10 @@ export async function POST(request: NextRequest) {
           campaignType: validatedInput.campaignType as any,
           companyName: validatedInput.companyName,
           targetAudience: validatedInput.targetAudience,
-          emailType: 'marketing',
+          emailType: detectedEmailType, // AUTO-DETECTED from prompt!
+          structureHints: structureHints, // Pass structure hints for dynamic block limits
+          tone: tone, // AUTO-DETECTED tone (formal, casual, etc.)
+          contentType: contentType, // AUTO-DETECTED content type (press-release, etc.)
           // Model and temperature use generator defaults (gemini-2.5-flash, 0.5)
           // Override here only if needed for specific campaigns
         }
@@ -346,11 +396,11 @@ export async function POST(request: NextRequest) {
         from_name: validatedInput.companyName || 'My Company',
         from_email: 'noreply@example.com',
         html_content: htmlContent,
-        // V2-specific fields - store semantic blocks instead of EmailComponent
+        // V2-specific fields - store semantic blocks and root component
         version: 'v2',
-        semantic_blocks: result.blocks, // NEW: Store semantic blocks
+        semantic_blocks: result.blocks,
         global_settings: globalSettings,
-        root_component: null, // Will be generated lazily when editor opens
+        root_component: result.rootComponent, // Generated during campaign creation
         ai_metadata: {
           campaignMetadata: result.campaignMetadata,
           generationMetadata: result.metadata,

@@ -71,7 +71,7 @@ function NumberedList({ items }: { items: ListBlock['items'] }) {
               {item.link && (
                 <Link
                   href={item.link}
-                  className="mt-[12px] block font-semibold text-indigo-600 text-[14px] no-underline"
+                  className="mt-[12px] mb-[24px] block font-semibold text-indigo-600 text-[14px] no-underline"
                 >
                   Learn more →
                 </Link>
@@ -130,7 +130,7 @@ function ImageLeftList({ items }: { items: ListBlock['items'] }) {
               {item.link && (
                 <Link
                   href={item.link}
-                  className="mt-[12px] block font-semibold text-indigo-600 text-[14px] no-underline"
+                  className="mt-[12px] mb-[24px] block font-semibold text-indigo-600 text-[14px] no-underline"
                 >
                   Learn more →
                 </Link>

@@ -17,7 +17,7 @@ export const HeroBlockSchema = z.object({
   subheadline: z.string().max(200, 'Subheadline too long').optional(),
   ctaText: z.string().min(1, 'CTA text is required').max(50, 'CTA text too long'),
   ctaUrl: z.string().url('Invalid CTA URL'),
-  imageKeyword: z.string().max(50, 'Image keyword too long').optional(),
+  imageKeyword: z.string().max(60, 'Image keyword too long').optional(),
   imageUrl: z.string().url('Invalid image URL').optional(),
   variant: z.enum(['centered', 'split']).default('centered'),
 });
@@ -34,7 +34,7 @@ export const FeaturesBlockSchema = z.object({
     title: z.string().min(1, 'Feature title is required').max(50, 'Feature title too long'),
     description: z.string().min(1, 'Feature description is required').max(200, 'Feature description too long'),
     icon: z.enum(['check', 'star', 'heart', 'lightning', 'shield', 'lock', 'clock', 'globe']).optional(),
-    imageKeyword: z.string().max(50, 'Image keyword too long').optional(),
+    imageKeyword: z.string().max(60, 'Image keyword too long').optional(),
     imageUrl: z.string().url('Invalid image URL').optional(),
   })).min(2, 'At least 2 features required').max(4, 'Maximum 4 features allowed'),
   layout: z.enum(['grid', 'list']).default('grid'),
@@ -51,7 +51,7 @@ export const ContentBlockSchema = z.object({
   paragraphs: z.array(z.string().min(1, 'Paragraph cannot be empty').max(500, 'Paragraph too long'))
     .min(1, 'At least 1 paragraph required')
     .max(5, 'Maximum 5 paragraphs allowed'),
-  imageKeyword: z.string().max(50, 'Image keyword too long').optional(),
+  imageKeyword: z.string().max(60, 'Image keyword too long').optional(),
   imageUrl: z.string().url('Invalid image URL').optional(),
   imageAlt: z.string().max(100, 'Image alt text too long').optional(),
   imagePosition: z.enum(['left', 'right', 'top', 'bottom']).default('top'),
@@ -118,7 +118,7 @@ export const GalleryBlockSchema = z.object({
   heading: z.string().max(100, 'Heading too long').optional(),
   subheading: z.string().max(200, 'Subheading too long').optional(),
   images: z.array(z.object({
-    keyword: z.string().max(50, 'Image keyword too long').optional(),
+    keyword: z.string().max(60, 'Image keyword too long').optional(),
     url: z.string().url('Invalid image URL'),
     alt: z.string().max(100, 'Image alt text too long'),
     link: z.string().url('Invalid link URL').optional(),
@@ -172,7 +172,7 @@ export const ArticleBlockSchema = z.object({
   eyebrow: z.string().max(50, 'Eyebrow too long').optional(),
   headline: z.string().min(1, 'Headline is required').max(150, 'Headline too long'),
   excerpt: z.string().max(500, 'Excerpt too long').optional(),
-  imageKeyword: z.string().max(50, 'Image keyword too long').optional(),
+  imageKeyword: z.string().max(60, 'Image keyword too long').optional(),
   imageUrl: z.string().url('Invalid image URL').optional(),
   imageAlt: z.string().max(100, 'Image alt text too long').optional(),
   ctaText: z.string().max(30, 'CTA text too long').optional(),
@@ -180,7 +180,7 @@ export const ArticleBlockSchema = z.object({
   author: z.object({
     name: z.string().max(100, 'Author name too long'),
     title: z.string().max(100, 'Author title too long').optional(),
-    imageKeyword: z.string().max(50, 'Author image keyword too long').optional(),
+    imageKeyword: z.string().max(60, 'Author image keyword too long').optional(),
     imageUrl: z.string().url('Invalid author image URL').optional(),
     socialLinks: z.array(z.object({
       platform: z.enum(['twitter', 'linkedin']),
@@ -200,7 +200,7 @@ export const ListBlockSchema = z.object({
   items: z.array(z.object({
     title: z.string().max(100, 'Item title too long'),
     description: z.string().max(300, 'Item description too long'),
-    imageKeyword: z.string().max(50, 'Image keyword too long').optional(),
+    imageKeyword: z.string().max(60, 'Image keyword too long').optional(),
     imageUrl: z.string().url('Invalid image URL').optional(),
     link: z.string().url('Invalid link URL').optional(),
   })).min(2, 'At least 2 items required').max(5, 'Maximum 5 items allowed'),
@@ -219,12 +219,85 @@ export const EcommerceBlockSchema = z.object({
     name: z.string().max(100, 'Product name too long'),
     description: z.string().max(300, 'Product description too long').optional(),
     price: z.string().max(30, 'Price too long'),
-    imageKeyword: z.string().max(50, 'Image keyword too long').optional(),
+    imageKeyword: z.string().max(60, 'Image keyword too long').optional(),
     imageUrl: z.string().url('Invalid image URL'),
     ctaText: z.string().max(30, 'CTA text too long'),
     ctaUrl: z.string().url('Invalid CTA URL'),
   })).min(1, 'At least 1 product required').max(4, 'Maximum 4 products allowed'),
   variant: z.enum(['single', 'image-left', '3-column', '4-grid', 'checkout']).default('single'),
+});
+
+/**
+ * Marketing Block (Bento Grid)
+ * Featured product showcase with asymmetric grid layout
+ */
+export const MarketingBlockSchema = z.object({
+  blockType: z.literal('marketing'),
+  heading: z.string().max(100, 'Heading too long').optional(),
+  subheading: z.string().max(200, 'Subheading too long').optional(),
+  featuredItem: z.object({
+    title: z.string().max(100, 'Title too long'),
+    description: z.string().max(300, 'Description too long').optional(),
+    imageKeyword: z.string().max(60, 'Image keyword too long').optional(),
+    imageUrl: z.string().url('Invalid image URL').optional(),
+    imageAlt: z.string().max(100, 'Image alt text too long').optional(),
+    ctaText: z.string().max(30, 'CTA text too long').optional(),
+    ctaUrl: z.string().url('Invalid CTA URL').optional(),
+  }),
+  items: z.array(z.object({
+    title: z.string().max(100, 'Title too long'),
+    description: z.string().max(300, 'Description too long').optional(),
+    imageKeyword: z.string().max(60, 'Image keyword too long').optional(),
+    imageUrl: z.string().url('Invalid image URL').optional(),
+    imageAlt: z.string().max(100, 'Image alt text too long').optional(),
+    ctaText: z.string().max(30, 'CTA text too long').optional(),
+    ctaUrl: z.string().url('Invalid CTA URL').optional(),
+  })).min(2, 'At least 2 items required').max(4, 'Maximum 4 items allowed'),
+  variant: z.enum(['bento-grid']).default('bento-grid'),
+});
+
+/**
+ * Header Block
+ * Newsletter header with logo and navigation
+ */
+export const HeaderBlockSchema = z.object({
+  blockType: z.literal('header'),
+  logoUrl: z.string().url('Invalid logo URL').optional(),
+  logoAlt: z.string().max(100, 'Logo alt text too long').optional(),
+  companyName: z.string().max(100, 'Company name too long').optional(),
+  menuItems: z.array(z.object({
+    label: z.string().max(50, 'Menu label too long'),
+    url: z.string().url('Invalid menu URL'),
+  })).max(6, 'Maximum 6 menu items allowed').optional(),
+  socialLinks: z.array(z.object({
+    platform: z.enum(['twitter', 'facebook', 'instagram', 'linkedin']),
+    url: z.string().url('Invalid social URL'),
+    icon: z.boolean().optional(),
+  })).max(5, 'Maximum 5 social links allowed').optional(),
+  variant: z.enum(['centered-menu', 'side-menu', 'social-icons']).default('centered-menu'),
+});
+
+/**
+ * Feedback Block
+ * Customer feedback collection and display
+ */
+export const FeedbackBlockSchema = z.object({
+  blockType: z.literal('feedback'),
+  heading: z.string().max(100, 'Heading too long').optional(),
+  subheading: z.string().max(200, 'Subheading too long').optional(),
+  ctaText: z.string().max(50, 'CTA text too long').optional(),
+  ctaUrl: z.string().url('Invalid CTA URL').optional(),
+  questions: z.array(z.object({
+    text: z.string().max(200, 'Question text too long'),
+    options: z.array(z.string().max(100, 'Option text too long')).optional(),
+  })).max(5, 'Maximum 5 questions allowed').optional(),
+  reviews: z.array(z.object({
+    text: z.string().max(500, 'Review text too long'),
+    authorName: z.string().max(100, 'Author name too long'),
+    authorTitle: z.string().max(100, 'Author title too long').optional(),
+    rating: z.number().int().min(1).max(5).optional(),
+  })).max(4, 'Maximum 4 reviews allowed').optional(),
+  variant: z.enum(['simple-rating', 'survey', 'customer-reviews']).default('simple-rating'),
 });
 
 /**
@@ -244,6 +317,9 @@ export const SemanticBlockSchema = z.discriminatedUnion('blockType', [
   ArticleBlockSchema,
   ListBlockSchema,
   EcommerceBlockSchema,
+  MarketingBlockSchema,
+  HeaderBlockSchema,
+  FeedbackBlockSchema,
 ]);
 
 /**
@@ -276,8 +352,28 @@ export function createEmailContentSchema(maxBlocks: number = 8) {
 
 /**
  * Get appropriate max blocks based on campaign type and prompt context
+ * 
+ * @param campaignType - Campaign type (one-time, sequence, newsletter, etc.)
+ * @param prompt - User's prompt text
+ * @param structureHints - Optional structure hints from prompt analysis (item count, grid layout, etc.)
+ * @returns Maximum number of blocks allowed
  */
-export function getMaxBlocksForCampaign(campaignType?: string, prompt?: string): number {
+export function getMaxBlocksForCampaign(
+  campaignType?: string, 
+  prompt?: string,
+  structureHints?: { itemCount?: number; gridLayout?: { columns: number; rows: number } }
+): number {
+  // NEW: If structure hints suggest many items, increase block limit
+  if (structureHints?.itemCount) {
+    if (structureHints.itemCount > 20) {
+      return 15; // Very large grids need more blocks
+    } else if (structureHints.itemCount > 12) {
+      return 12; // Large grids
+    } else if (structureHints.itemCount > 8) {
+      return 10; // Medium grids
+    }
+  }
+  
   // Check prompt for promotional keywords
   const promotionalKeywords = ['black friday', 'sale', 'discount', 'promotion', 'deal', 'offer', 'limited time', 'flash sale', 'cyber monday', 'holiday sale', 'launch'];
   const isPromotional = prompt ? promotionalKeywords.some(keyword => prompt.toLowerCase().includes(keyword)) : false;
@@ -323,6 +419,9 @@ export type PricingBlock = z.infer<typeof PricingBlockSchema>;
 export type ArticleBlock = z.infer<typeof ArticleBlockSchema>;
 export type ListBlock = z.infer<typeof ListBlockSchema>;
 export type EcommerceBlock = z.infer<typeof EcommerceBlockSchema>;
+export type MarketingBlock = z.infer<typeof MarketingBlockSchema>;
+export type HeaderBlock = z.infer<typeof HeaderBlockSchema>;
+export type FeedbackBlock = z.infer<typeof FeedbackBlockSchema>;
 export type SemanticBlock = z.infer<typeof SemanticBlockSchema>;
 export type EmailContent = z.infer<typeof EmailContentSchema>;
 

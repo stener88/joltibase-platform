@@ -41,15 +41,15 @@ function OneColumnFooter({ block, settings }: FooterPatternProps) {
             <td align="center">
               <Text className="my-[8px] font-semibold text-[16px] text-gray-900 leading-[24px]">
                 {block.companyName}
-              </Text>
-              {block.address && (
+      </Text>
+      {block.address && (
                 <Text className="mt-[4px] mb-0 text-[16px] text-gray-500 leading-[24px]">
-                  {block.address}
-                </Text>
-              )}
+          {block.address}
+        </Text>
+      )}
             </td>
           </tr>
-          {block.socialLinks && block.socialLinks.length > 0 && (
+      {block.socialLinks && block.socialLinks.length > 0 && (
             <tr>
               <td align="center">
                 <Row className="table-cell h-[44px] w-[56px] align-bottom">
@@ -57,12 +57,12 @@ function OneColumnFooter({ block, settings }: FooterPatternProps) {
                     <Column key={index} className="pr-[8px]">
                       <Link href={social.url}>
                         <Text className="text-gray-600">
-                          {social.platform.charAt(0).toUpperCase() + social.platform.slice(1)}
+                {social.platform.charAt(0).toUpperCase() + social.platform.slice(1)}
                         </Text>
-                      </Link>
+              </Link>
                     </Column>
-                  ))}
-                </Row>
+            ))}
+        </Row>
               </td>
             </tr>
           )}
@@ -87,14 +87,14 @@ function OneColumnFooter({ block, settings }: FooterPatternProps) {
                 <Link href={block.unsubscribeUrl} className="text-gray-600">
                   Unsubscribe
                 </Link>
-                {block.preferenceUrl && (
-                  <>
+        {block.preferenceUrl && (
+          <>
                     {' • '}
                     <Link href={block.preferenceUrl} className="text-gray-600">
-                      Preferences
-                    </Link>
-                  </>
-                )}
+              Preferences
+            </Link>
+          </>
+        )}
               </Text>
             </td>
           </tr>
@@ -108,7 +108,7 @@ function OneColumnFooter({ block, settings }: FooterPatternProps) {
 function TwoColumnFooter({ block, settings }: FooterPatternProps) {
   return (
     <Section
-      style={{
+          style={{
         backgroundColor: '#f9fafb',
         padding: '32px 24px',
         borderTop: '1px solid #e5e7eb',
@@ -143,8 +143,8 @@ function TwoColumnFooter({ block, settings }: FooterPatternProps) {
             <Row>
               <Text className="my-[8px] font-semibold text-[16px] text-gray-500 leading-[24px]">
                 <Link href={block.unsubscribeUrl} className="text-gray-600">
-                  Unsubscribe
-                </Link>
+          Unsubscribe
+        </Link>
                 {block.preferenceUrl && (
                   <>
                     {' • '}
@@ -157,14 +157,14 @@ function TwoColumnFooter({ block, settings }: FooterPatternProps) {
               {block.additionalLinks && block.additionalLinks.length > 0 && (
                 <Text className="mt-[4px] mb-[0px] font-semibold text-[16px] text-gray-500 leading-[24px]">
                   {block.additionalLinks.map((link, index) => (
-                    <span key={index}>
+          <span key={index}>
                       {index > 0 && ' • '}
                       <Link href={link.url} className="text-gray-600">
-                        {link.text}
-                      </Link>
-                    </span>
-                  ))}
-                </Text>
+              {link.text}
+            </Link>
+          </span>
+        ))}
+      </Text>
               )}
             </Row>
             {block.photoCredits && block.photoCredits.length > 0 && (

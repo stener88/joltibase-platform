@@ -74,6 +74,21 @@ Available block types and their variants:
     - Optional: heading, subheading, description (per product), variant
     - Variants: 'single', 'image-left', '3-column', '4-grid', 'checkout'
 
+13. **marketing** - Bento Grid for featured product showcase
+    - Required: featuredItem (title, imageUrl), items array (2-4 items with title, imageUrl)
+    - Optional: heading, subheading, description (per item), ctaText/ctaUrl (per item), variant
+    - Variants: 'bento-grid' (asymmetric grid with large featured item + smaller items)
+
+14. **header** - Newsletter header with logo and navigation
+    - Required: one of (logoUrl, companyName)
+    - Optional: logoAlt, menuItems array (label, url), socialLinks array (platform, url), variant
+    - Variants: 'centered-menu' (logo centered, menu below), 'side-menu' (logo left, menu right), 'social-icons' (logo centered, social icons below)
+
+15. **feedback** - Customer feedback collection and display
+    - Required: one of (ctaUrl for rating/survey, reviews array for customer-reviews)
+    - Optional: heading, subheading, ctaText, questions array (for survey variant), reviews array (for customer-reviews variant), variant
+    - Variants: 'simple-rating' (quick star rating), 'survey' (multi-question form), 'customer-reviews' (display testimonials)
+
 Email structure guidelines:
 - Always include a hero (unless transactional email)
 - Always include a footer
@@ -81,6 +96,9 @@ Email structure guidelines:
 - Order logically: hero → content/features → cta → footer
 - Mix different block types for visual variety
 - Choose appropriate variants based on content
+- Header block: Use at top of newsletter-style emails (optional, goes before hero)
+- Marketing block: Use for featured product/offer showcases
+- Feedback block: Use at end of emails requesting customer input/reviews
 
 Content best practices:
 - Headlines: 5-10 words, action-oriented
@@ -90,14 +108,31 @@ Content best practices:
 
 IMAGE KEYWORDS - CRITICAL:
 - Generate descriptive image KEYWORDS (not URLs)
-- Keywords should be 2-4 words describing the desired image
-- Examples:
+- Keywords should be 1-3 CORE words describing the desired image (nouns only, avoid adjectives)
+- MAXIMUM 60 characters per keyword (keep it concise!)
+- Use GENERIC, BROAD terms that Unsplash can match - avoid overly specific descriptions
+- Examples of GOOD keywords:
   * Hero: "coffee shop interior"
-  * Product: "wireless earbuds closeup"
-  * Team: "startup team meeting"
-  * Author: "professional woman portrait"
-- Backend will fetch matching Unsplash photos
+  * Product: "wireless earbuds"
+  * Team: "team meeting"
+  * Author: "woman portrait"
+  * Landscape: "mountains forest"
+  * Person: "person rain"
+  * Creature: "forest creature"
+- Examples of BAD keywords (too specific - will fail to find images):
+  ❌ "dark Norwegian mountains forest" → Use: "mountains forest"
+  ❌ "mysterious forest creature glowing eyes" → Use: "forest creature"
+  ❌ "epic mountain landscape mist" → Use: "mountain landscape"
+  ❌ "action scene dark forest" → Use: "forest"
+  ❌ "troll creature close up" → Use: "troll"
+  ❌ "hero determined in rain" → Use: "person rain"
+  ❌ "cinematic Norwegian mountains dark forest green hues" → Use: "mountains forest"
+- AVOID: descriptive adjectives (dark, mysterious, epic, dramatic, cinematic, vivid, moody, etc.)
+- AVOID: action words (determined, glowing, shimmering, etc.)
+- AVOID: overly specific locations (Norwegian, Swedish, etc.) unless essential
+- Backend will fetch matching Unsplash photos - overly specific keywords will FAIL
 - NEVER generate URLs - only keywords
+- Keep keywords SHORT - 1-3 core words maximum, under 60 characters
 
 Brand voice & colors:
 - Primary color: {primaryColor}
@@ -160,14 +195,75 @@ export function buildSemanticGenerationPrompt(
     campaignType?: string;
     companyName?: string;
     targetAudience?: string;
+    structureHints?: {
+      gridLayout?: { columns: number; rows: number };
+      itemCount?: number;
+      needsTable?: boolean;
+      needsLogo?: boolean;
+    };
+    tone?: 'formal' | 'casual' | 'friendly' | 'professional' | 'urgent' | 'playful';
+    contentType?: 'press-release' | 'announcement' | 'sale' | 'update' | 'story' | 'product-launch' | 'event' | 'newsletter' | 'transactional';
   }
 ): string {
   let guidance = '';
 
   if (emailType === 'marketing') {
+    // Content type specific guidance
+    let contentTypeGuidance = '';
+    if (campaignOptions?.contentType === 'press-release') {
+      contentTypeGuidance = `
+CONTENT TYPE: Press Release
+STRUCTURE: Formal announcement format
+- Recommended: header (with logo) + hero (centered, formal headline) + content (2-3 paragraphs) + features (key points) + cta + footer
+- Tone: Professional, formal, newsworthy
+- Use formal language, third-person perspective
+- Include key facts: who, what, when, where, why
+- Block selection: header + hero + content + features + cta + footer`;
+    } else if (campaignOptions?.contentType === 'product-launch') {
+      contentTypeGuidance = `
+CONTENT TYPE: Product Launch
+STRUCTURE: Excitement-building format
+- Recommended: hero + features (icons-2col) + gallery + testimonial + pricing + cta + footer
+- Tone: Exciting, benefit-focused
+- Emphasize new features and benefits`;
+    } else if (campaignOptions?.contentType === 'sale') {
+      contentTypeGuidance = `
+CONTENT TYPE: Sale/Promotion
+STRUCTURE: Urgency-driven format
+- Recommended: hero + ecommerce (3-column or 4-grid) + stats (discount highlights) + cta + footer
+- Tone: Urgent, value-focused
+- Emphasize savings and limited time`;
+    }
+    
+    // Tone-specific guidance
+    let toneGuidance = '';
+    if (campaignOptions?.tone === 'formal') {
+      toneGuidance = `
+TONE: Formal
+- Use professional language, avoid contractions
+- Third-person perspective preferred
+- Formal greetings and closings
+- Structured, clear messaging`;
+    } else if (campaignOptions?.tone === 'urgent') {
+      toneGuidance = `
+TONE: Urgent
+- Emphasize time sensitivity
+- Use action-oriented language
+- Multiple CTAs acceptable
+- Highlight scarcity/limited availability`;
+    } else if (campaignOptions?.tone === 'playful') {
+      toneGuidance = `
+TONE: Playful
+- Use casual, fun language
+- Emojis acceptable in appropriate contexts
+- Engaging, conversational style
+- Creative, energetic messaging`;
+    }
+    
     guidance = `
 
 Email type: Marketing campaign
+${contentTypeGuidance}${toneGuidance}
 BLOCK SELECTION: Choose structure that fits the message:
 - Product launch: hero + features (icons-2col) + gallery + testimonial + pricing + cta + footer
 - Welcome/onboarding: hero (split) + features (numbered) + cta + footer
@@ -297,6 +393,16 @@ VARIETY & INTELLIGENCE REQUIREMENTS:
    - Mix variants within the same email
 
 User request: "${userPrompt}"
+${campaignOptions?.structureHints ? `
+
+STRUCTURE REQUIREMENTS DETECTED:
+${campaignOptions.structureHints.gridLayout ? `- Grid layout: ${campaignOptions.structureHints.gridLayout.columns} columns × ${campaignOptions.structureHints.gridLayout.rows} rows (${campaignOptions.structureHints.itemCount} total items)` : ''}
+${campaignOptions.structureHints.itemCount && !campaignOptions.structureHints.gridLayout ? `- Item count: ${campaignOptions.structureHints.itemCount} items` : ''}
+${campaignOptions.structureHints.needsTable ? `- Table/grid layout required for structured data` : ''}
+${campaignOptions.structureHints.needsLogo ? `- Logo required in header section` : ''}
+
+IMPORTANT: For grid layouts with many items, use multiple 'list' blocks (each can hold 2-5 items) or 'gallery' blocks (each can hold 2-6 images) to accommodate all items.
+` : ''}
 
 ⚠️ REMINDER: previewText MUST be ≤140 characters. Count carefully before generating! ⚠️
 
