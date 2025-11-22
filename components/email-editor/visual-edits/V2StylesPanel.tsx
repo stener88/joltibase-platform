@@ -16,6 +16,7 @@ interface V2StylesPanelProps {
   component: EmailComponent;
   position: { x: number; y: number };
   onUpdate: (updates: { props?: Record<string, any> }) => void;
+  onLivePreview?: (updates: any) => void; // NEW: For live preview without React re-renders
 }
 
 const FONT_SIZES = ['12px', '14px', '16px', '18px', '20px', '24px', '30px', '36px', '48px', '60px', '72px'];
@@ -27,25 +28,24 @@ const FONT_WEIGHTS = [
   { label: 'Bold', value: '700' },
 ];
 
-export function V2StylesPanel({ component, position, onUpdate }: V2StylesPanelProps) {
+export function V2StylesPanel({ component, position, onUpdate, onLivePreview }: V2StylesPanelProps) {
   const styleProperties = getPropertiesByCategory(component.component, 'style');
   const [values, setValues] = useState<Record<string, any>>(component.props?.style || {});
 
   useEffect(() => {
     setValues(component.props?.style || {});
-  }, [component.id, component.props]);
+  }, [component.id, JSON.stringify(component.props?.style)]);
 
   const handleChange = (key: string, value: any) => {
     const newStyleValues = { ...values, [key]: value };
     setValues(newStyleValues);
     
-    // Auto-save on change
-    onUpdate({
-      props: {
-        ...component.props,
-        style: newStyleValues,
-      },
-    });
+    // Send live preview instead of onUpdate (prevents iframe reload)
+    if (onLivePreview) {
+      onLivePreview({ [key]: value });
+    }
+    
+    // Don't call onUpdate here - only on Save button
   };
 
   if (styleProperties.length === 0) {

@@ -15,50 +15,38 @@ interface V2SpacingPanelProps {
   component: EmailComponent;
   position: { x: number; y: number };
   onUpdate: (updates: { props?: Record<string, any> }) => void;
+  onLivePreview?: (updates: any) => void; // NEW: For live preview without React re-renders
 }
 
-export function V2SpacingPanel({ component, position, onUpdate }: V2SpacingPanelProps) {
+// Helper function to extract spacing properties from style
+function extractSpacing(style: Record<string, any> = {}): Record<string, any> {
+  // Spacing properties are typically: padding, margin, width, height, etc.
+  // These are already in the style object, so we just return it
+  return { ...style };
+}
+
+export function V2SpacingPanel({ component, position, onUpdate, onLivePreview }: V2SpacingPanelProps) {
   const spacingProperties = getPropertiesByCategory(component.component, 'spacing');
-  const [values, setValues] = useState<Record<string, any>>({
-    ...(component.props?.style || {}),
-    ...(component.props || {}),
-  });
+  const [values, setValues] = useState<Record<string, any>>(
+    extractSpacing(component.props?.style || {})
+  );
 
   useEffect(() => {
-    setValues({
-      ...(component.props?.style || {}),
-      ...(component.props || {}),
-    });
-  }, [component.id, component.props]);
+    setValues(extractSpacing(component.props?.style || {}));
+  }, [component.id, JSON.stringify(component.props?.style)]);
 
   const handleChange = (key: string, value: any) => {
     const newValues = { ...values, [key]: value };
     setValues(newValues);
     
-    // Auto-save on change
-    const styleUpdates: Record<string, any> = {};
-    const propUpdates: Record<string, any> = {};
+    // Send live preview instead of onUpdate (prevents iframe reload)
+    if (onLivePreview) {
+      const spacingUpdates: Record<string, any> = {};
+      spacingUpdates[key] = value;
+      onLivePreview(spacingUpdates);
+    }
     
-    Object.keys(newValues).forEach(k => {
-      if (['padding', 'margin', 'width', 'height', 'maxWidth'].includes(k)) {
-        styleUpdates[k] = newValues[k];
-      } else {
-        propUpdates[k] = newValues[k];
-      }
-    });
-    
-    onUpdate({
-      props: {
-        ...component.props,
-        ...(Object.keys(styleUpdates).length > 0 && {
-          style: {
-            ...(component.props?.style || {}),
-            ...styleUpdates,
-          },
-        }),
-        ...propUpdates,
-      },
-    });
+    // Don't call onUpdate here - only on Save button
   };
 
   if (spacingProperties.length === 0) {

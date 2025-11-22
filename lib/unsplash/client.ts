@@ -95,7 +95,16 @@ export async function fetchUnsplashImage(
       return null;
     }
     
-    const photo = await response.json() as UnsplashPhoto;
+    const responseData = await response.json();
+    
+    // Unsplash /photos/random returns an array even when count=1
+    const photos = Array.isArray(responseData) ? responseData : [responseData];
+    if (photos.length === 0) {
+      console.error('[Unsplash] No photos returned');
+      return null;
+    }
+    
+    const photo = photos[0] as UnsplashPhoto;
     
     // Validate response structure
     if (!photo || !photo.urls || !photo.urls.regular) {

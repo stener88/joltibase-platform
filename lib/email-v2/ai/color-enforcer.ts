@@ -29,21 +29,8 @@ export function enforceColorConsistency(
   ]);
   
   return blocks.map(block => {
-    if (block.blockType === 'cta') {
-      // If backgroundColor is set and not primary or neutral, replace it
-      if (block.backgroundColor && 
-          block.backgroundColor !== primaryColor && 
-          !neutralColors.has(block.backgroundColor.toLowerCase())) {
-        
-        console.log(`[ColorEnforcer] Replacing CTA color ${block.backgroundColor} with ${primaryColor}`);
-        
-        return {
-          ...block,
-          backgroundColor: primaryColor,
-        };
-      }
-    }
-    
+    // Color enforcement is now handled globally via settings
+    // Individual blocks no longer have backgroundColor fields
     return block;
   });
 }

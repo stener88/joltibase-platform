@@ -59,7 +59,7 @@ export function CtaPattern({ block, settings }: CtaPatternProps) {
   return (
     <Section
       style={{
-        backgroundColor: block.backgroundColor || '#f9fafb',
+        backgroundColor: '#f9fafb', // CtaBlock doesn't have backgroundColor property
         padding: '60px 24px',
         textAlign: 'center' as const,
       }}

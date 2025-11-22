@@ -15,15 +15,19 @@ interface FeaturesPatternProps {
 }
 
 export function FeaturesPattern({ block, settings }: FeaturesPatternProps) {
-  const { variant = 'grid' } = block;
+  const { variant = 'numbered-list', layout = 'grid' } = block;
 
   return (
     <Tailwind>
-      {variant === 'grid' && <GridVariant block={block} settings={settings} />}
-      {variant === 'list' && <ListVariant block={block} settings={settings} />}
-      {variant === 'numbered' && <NumberedVariant block={block} settings={settings} />}
-      {variant === 'icons-2col' && <Icons2ColVariant block={block} settings={settings} />}
-      {variant === 'icons-centered' && <IconsCenteredVariant block={block} settings={settings} />}
+      {variant === 'list-items' && <ListVariant block={block} settings={settings} />}
+      {variant === 'numbered-list' && <NumberedVariant block={block} settings={settings} />}
+      {variant === 'four-paragraphs-two-columns' && <GridVariant block={block} settings={settings} />}
+      {variant === 'four-paragraphs' && <GridVariant block={block} settings={settings} />}
+      {variant === 'three-centered-paragraphs' && <IconsCenteredVariant block={block} settings={settings} />}
+      {/* Fallback to numbered-list if variant doesn't match */}
+      {!['list-items', 'numbered-list', 'four-paragraphs-two-columns', 'four-paragraphs', 'three-centered-paragraphs'].includes(variant) && (
+        <NumberedVariant block={block} settings={settings} />
+      )}
     </Tailwind>
   );
 }

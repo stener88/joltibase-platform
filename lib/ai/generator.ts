@@ -5,7 +5,7 @@
  * brand kits, rate limiting, and database tracking
  */
 
-import { generateCompletion, type AIProvider } from './client';
+import { generateCompletion, type AIProvider, MAX_TOKENS_GLOBAL } from './client';
 import { CAMPAIGN_GENERATOR_SYSTEM_PROMPT, buildCampaignPrompt } from './prompts';
 import { validateCampaignInput, parseStructuredCampaign, type GeneratedCampaign } from './validator';
 import { enforceRateLimit } from './rate-limit';
@@ -49,8 +49,8 @@ function calculateTokenLimit(input: {
   // Adjust for email count
   tokens += (emailCount - 1) * 1500; // Additional tokens per email
   
-  // Cap at generous maximum to ensure we never truncate responses
-  return Math.min(tokens, 20000); // Allow up to 20K for complex campaigns
+  // Cap at global maximum for cost control
+  return Math.min(tokens, MAX_TOKENS_GLOBAL);
 }
 
 /**

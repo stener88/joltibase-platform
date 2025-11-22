@@ -97,7 +97,7 @@ export async function POST(req: Request) {
     console.log(`⏱️  [GENERATE-EMAIL-V2] Time: ${result.metadata.timeMs}ms`);
 
     // Validate generated structure
-    const treeValidation = validateComponentTree(result.email);
+    const treeValidation = validateComponentTree(result.rootComponent);
     if (!treeValidation.valid) {
       console.error('❌ [GENERATE-EMAIL-V2] Invalid component tree:', treeValidation.errors);
       return NextResponse.json(
@@ -116,7 +116,7 @@ export async function POST(req: Request) {
       .from('campaigns')
       .update({
         version: 'v2',
-        root_component: result.email,
+        root_component: result.rootComponent,
         updated_at: new Date().toISOString(),
       })
       .eq('id', campaignId)
@@ -137,7 +137,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      rootComponent: result.email,
+      rootComponent: result.rootComponent,
       metadata: {
         ...result.metadata,
         totalTimeMs: totalTime,

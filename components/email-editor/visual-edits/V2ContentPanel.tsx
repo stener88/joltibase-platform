@@ -15,16 +15,26 @@ interface V2ContentPanelProps {
   component: EmailComponent;
   position: { x: number; y: number };
   onUpdate: (updates: { props?: Record<string, any>; content?: string }) => void;
+  onLivePreview?: (updates: any) => void; // NEW: For live preview without React re-renders
 }
 
-export function V2ContentPanel({ component, position, onUpdate }: V2ContentPanelProps) {
+export function V2ContentPanel({ component, position, onUpdate, onLivePreview }: V2ContentPanelProps) {
   const contentProperties = getPropertiesByCategory(component.component, 'content');
   const [values, setValues] = useState<Record<string, any>>({
     content: component.content || '',
     ...component.props,
   });
 
+  console.log('=== V2ContentPanel Render ===');
+  console.log('component prop:', JSON.parse(JSON.stringify(component)));
+  console.log('values state:', values);
+
   useEffect(() => {
+    console.log('=== V2ContentPanel useEffect triggered ===');
+    console.log('Resetting values to component:', {
+      content: component.content,
+      props: component.props,
+    });
     setValues({
       content: component.content || '',
       ...component.props,
@@ -32,18 +42,22 @@ export function V2ContentPanel({ component, position, onUpdate }: V2ContentPanel
   }, [component.id, component.content, component.props]);
 
   const handleChange = (key: string, value: any) => {
+    console.log(`[V2ContentPanel] handleChange: ${key} = ${value}`);
     setValues({ ...values, [key]: value });
     
-    // Auto-save on change
-    const updates: { props?: Record<string, any>; content?: string } = {};
-    
-    if (key === 'content') {
-      updates.content = value;
-    } else {
-      updates.props = { [key]: value };
+    // Send live preview instead of onUpdate (prevents iframe reload)
+    if (onLivePreview) {
+      const updates: any = {};
+      if (key === 'content') {
+        updates.content = value;
+      } else {
+        updates.props = { [key]: value };
+      }
+      console.log('[V2ContentPanel] Sending live preview:', updates);
+      onLivePreview(updates);
     }
     
-    onUpdate(updates);
+    // Don't call onUpdate here - only on Save button
   };
 
   if (contentProperties.length === 0) {

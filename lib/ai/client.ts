@@ -20,6 +20,16 @@ import {
 } from './providers/gemini-client';
 
 // ============================================================================
+// Global Constants
+// ============================================================================
+
+/**
+ * Global maximum token limit for all AI generations
+ * Set to 16000 for cost control - prevents runaway generations
+ */
+export const MAX_TOKENS_GLOBAL = 16000;
+
+// ============================================================================
 // Provider Types
 // ============================================================================
 
@@ -109,7 +119,7 @@ async function generateOpenAICompletion(
   const {
     model = 'gpt-4o',
     temperature = 0.7,
-    maxTokens = 2000,
+    maxTokens = MAX_TOKENS_GLOBAL,
     jsonMode = true,
     jsonSchema,
     retries = 3,
@@ -262,7 +272,14 @@ export async function generateCompletion(
   messages: ChatCompletionMessageParam[],
   options: GenerationOptions = {}
 ): Promise<GenerationResult> {
-  const provider = options.provider || getDefaultProvider();
+  // Enforce global token limit for cost control
+  const safeMaxTokens = options.maxTokens 
+    ? Math.min(options.maxTokens, MAX_TOKENS_GLOBAL)
+    : MAX_TOKENS_GLOBAL;
+  
+  const finalOptions = { ...options, maxTokens: safeMaxTokens };
+  
+  const provider = finalOptions.provider || getDefaultProvider();
   const normalizedMessages = normalizeMessages(messages);
 
   console.log(`🤖 [AI-CLIENT] Using provider: ${provider.toUpperCase()}`);
@@ -271,11 +288,11 @@ export async function generateCompletion(
     if (provider === 'gemini') {
       // Use Gemini with prompt-based generation (Zod validates after)
       const geminiResult = await generateGeminiCompletion(normalizedMessages, {
-        model: (options.model as GeminiModel) || 'gemini-2.5-flash',
-        temperature: options.temperature,
-        maxTokens: options.maxTokens,
-        zodSchema: options.zodSchema,
-        retries: options.retries,
+        model: (finalOptions.model as GeminiModel) || 'gemini-2.5-flash',
+        temperature: finalOptions.temperature,
+        maxTokens: finalOptions.maxTokens,
+        zodSchema: finalOptions.zodSchema,
+        retries: finalOptions.retries,
       });
 
       return {
@@ -284,7 +301,7 @@ export async function generateCompletion(
       };
     } else {
       // Use OpenAI as fallback
-      return await generateOpenAICompletion(messages, options);
+      return await generateOpenAICompletion(messages, finalOptions);
     }
   } catch (error: any) {
     // If primary provider fails and it's retryable, try fallback
@@ -293,7 +310,7 @@ export async function generateCompletion(
       
       try {
         return await generateOpenAICompletion(messages, {
-          ...options,
+          ...finalOptions,
           model: 'gpt-4o',
         });
       } catch (fallbackError: any) {

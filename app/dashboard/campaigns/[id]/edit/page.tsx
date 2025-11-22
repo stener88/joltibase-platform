@@ -19,7 +19,6 @@ import { MessageSquare, Edit3, Edit2, Save, RotateCcw, Monitor, Smartphone } fro
 import { V2ChatEditor } from '@/components/email-editor/V2ChatEditor';
 import { EmailV2Frame } from '@/components/email-editor/EmailV2Frame';
 import type { EmailComponent, GlobalEmailSettings as V2GlobalSettings } from '@/lib/email-v2/types';
-import { semanticBlocksToEmailComponent } from '@/lib/email-v2/blocks-converter';
 import type { SemanticBlock } from '@/lib/email-v2/ai/blocks';
 
 type EditorMode = 'chat' | 'edit';

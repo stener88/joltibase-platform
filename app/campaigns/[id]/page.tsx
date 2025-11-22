@@ -271,9 +271,14 @@ export default function CampaignEditorPage() {
           let transformedData: CampaignData;
           if (rawCampaign.ai_generated && rawCampaign.ai_metadata) {
             const aiMetadata = rawCampaign.ai_metadata as any;
+            
+            // V2 campaigns use semantic_blocks, V1 campaigns use blocks
+            const campaignBlocks = rawCampaign.semantic_blocks || rawCampaign.blocks || [];
+            const campaignDesignConfig = rawCampaign.global_settings || rawCampaign.design_config || null;
+            
             transformedData = {
               id: rawCampaign.id,
-              campaign: aiMetadata.campaign || {
+              campaign: aiMetadata.campaign || aiMetadata.campaignMetadata || {
                 campaignName: rawCampaign.name,
                 campaignType: rawCampaign.type,
                 design: { template: 'modern' },
@@ -282,8 +287,8 @@ export default function CampaignEditorPage() {
                 successMetrics: ''
               },
               renderedEmails: aiMetadata.renderedEmails || [],
-              blocks: rawCampaign.blocks || [],
-              design_config: rawCampaign.design_config || null,
+              blocks: campaignBlocks,
+              design_config: campaignDesignConfig,
               metadata: {
                 model: rawCampaign.ai_model || 'gpt-4-turbo-preview',
                 tokensUsed: 0,
@@ -322,7 +327,14 @@ export default function CampaignEditorPage() {
           }
           
           setCampaignData(transformedData);
-          setEditedEmails(transformedData.renderedEmails);
+          
+          // Initialize editedEmails with blocks from campaign level if not present in each email
+          const initializedEmails = transformedData.renderedEmails.map(email => ({
+            ...email,
+            blocks: email.blocks || transformedData.blocks || [],
+            globalSettings: email.globalSettings || transformedData.design_config || {},
+          }));
+          setEditedEmails(initializedEmails);
           
           // Chat history is loaded separately via useEffect hook above (triggered when campaignData changes)
         } else {

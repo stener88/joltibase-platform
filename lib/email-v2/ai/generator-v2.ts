@@ -13,11 +13,11 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import type { EmailComponent, GlobalEmailSettings } from '../types';
 import { EmailContentSchema, createEmailContentSchema, getMaxBlocksForCampaign, type EmailContent } from './blocks';
 import { buildSemanticGenerationPrompt } from './prompts-v2';
-import { renderPatternsToEmail } from '../pattern-renderer';
+import { renderEmailComponent } from '../renderer';
 import { fetchImagesForBlocks } from './image-fetcher';
 import { replaceImageKeywords, addCreditsToFooter } from './image-helpers';
 import { enforceColorConsistency } from './color-enforcer';
-import { semanticBlocksToEmailComponent } from '../blocks-converter';
+import { transformBlocksToEmail } from './transforms';
 
 // Initialize Google AI with API key
 const getGoogleModel = (model: string) => {
@@ -160,8 +160,9 @@ export interface CampaignGenerationResult extends GenerationResult {
 /**
  * Generate semantic email content blocks from user prompt
  * 
- * Phase 1: AI generates semantic blocks (hero, features, cta, footer, etc.)
- * This is the core semantic generation that replaces direct component generation
+ * Uses two-pass generation to avoid schema complexity errors:
+ * - Pass 1: Generate structure (block types + order)
+ * - Pass 2: Generate content for each block individually
  * 
  * @param prompt - User's natural language prompt
  * @param settings - Global email settings (colors, fonts, etc.)
@@ -176,65 +177,66 @@ export async function generateSemanticBlocks(
   const startTime = Date.now();
   
   const {
-    temperature = 0.5,
     model = 'gemini-2.5-flash',
     emailType,
     campaignType,
-    companyName,
-    targetAudience,
     structureHints,
   } = options;
   
-  // Determine max blocks based on campaign type, prompt content, and structure hints
-  const maxBlocks = getMaxBlocksForCampaign(campaignType, prompt, structureHints);
-  const dynamicSchema = createEmailContentSchema(maxBlocks);
-  
-  console.log('🤖 [SEMANTIC-GEN] Generating semantic content blocks');
+  console.log('🤖 [SEMANTIC-GEN] Using two-pass generation');
   console.log('📝 [SEMANTIC-GEN] Prompt:', prompt);
   console.log('📧 [SEMANTIC-GEN] Email type:', emailType || 'auto');
-  console.log('📦 [SEMANTIC-GEN] Max blocks:', maxBlocks);
   console.log('⚙️  [SEMANTIC-GEN] Model:', model);
   
   try {
-    const { object, usage } = await generateObject({
-      model: getGoogleModel(model),
-      schema: dynamicSchema,
-      prompt: buildSemanticGenerationPrompt(prompt, settings, emailType, {
-        campaignType,
-        companyName,
-        targetAudience,
-        structureHints: structureHints,
-        tone: options.tone,
-        contentType: options.contentType,
-      }),
-      temperature,
-    });
+    // Import and use two-pass generator
+    const { generateSemanticBlocks: twoPassGenerator } = await import('./generator-two-pass');
+    
+    const result = await twoPassGenerator(
+      prompt,
+      settings,
+      emailType || campaignType || 'newsletter',
+      structureHints || {},
+      model
+    );
     
     const timeMs = Date.now() - startTime;
     
-    // Calculate cost
-    const cost = calculateTokenCost(model, usage);
-    const usageAny = usage as any;
-    const inputTokens = usageAny?.promptTokens || usageAny?.inputTokens || 0;
-    const outputTokens = usageAny?.completionTokens || usageAny?.outputTokens || 0;
-    
     console.log('✅ [SEMANTIC-GEN] Content generated successfully');
-    console.log(`📊 [SEMANTIC-GEN] Tokens: ${usage?.totalTokens || 'unknown'} (in: ${inputTokens}, out: ${outputTokens})`);
-    console.log(`💰 [SEMANTIC-GEN] Cost: $${cost.totalCost.toFixed(6)} (in: $${cost.inputCost.toFixed(6)}, out: $${cost.outputCost.toFixed(6)})`);
     console.log(`⏱️  [SEMANTIC-GEN] Time: ${timeMs}ms`);
-    console.log(`📦 [SEMANTIC-GEN] Blocks: ${object.blocks.length}`);
+    console.log(`📦 [SEMANTIC-GEN] Blocks: ${result.blocks.length}`);
     
     // Log block types for debugging
-    const blockTypes = object.blocks.map(b => b.blockType);
+    const blockTypes = result.blocks.map(b => b.blockType);
     console.log(`🎯 [SEMANTIC-GEN] Block types: ${blockTypes.join(', ')}`);
     
     // Validate we have essential blocks
-    const hasFooter = object.blocks.some(b => b.blockType === 'footer');
+    const hasFooter = result.blocks.some(b => b.blockType === 'footer');
+    
+    return {
+      content: {
+        previewText: result.previewText,
+        blocks: result.blocks,
+      },
+      usage: result.usage || {},
+    };
+    
     if (!hasFooter) {
       console.warn('⚠️  [SEMANTIC-GEN] Warning: No footer block generated');
     }
     
-    return { content: object, usage };
+    // Return with usage data from two-pass generator
+    return { 
+      content: {
+        previewText: result.previewText,
+        blocks: result.blocks,
+      },
+      usage: result.usage || {
+        totalTokens: 0,
+        promptTokens: 0,
+        completionTokens: 0,
+      }
+    };
     
   } catch (error) {
     console.error('❌ [SEMANTIC-GEN] Generation failed:', error);
@@ -288,21 +290,62 @@ export async function generateEmailSemantic(
     blocksWithImages = addCreditsToFooter(blocksWithImages, credits);
   }
   
-  // Phase 5: Render patterns directly to HTML
-  console.log('🔄 [EMAIL-GEN-V2] Rendering patterns directly to HTML');
-  const html = await renderPatternsToEmail(blocksWithImages, settings, content.previewText);
+  // Phase 5: Generate EmailComponent tree directly (no template engine needed!)
+  console.log('🌳 [EMAIL-GEN-V2] Generating EmailComponent tree directly');
+  const components = transformBlocksToEmail(blocksWithImages, settings);
   
-  console.log(`✅ [EMAIL-GEN-V2] Rendered ${blocksWithImages.length} blocks to HTML`);
-  
-  // Phase 6: Generate EmailComponent tree for editor
-  console.log('🌳 [EMAIL-GEN-V2] Generating EmailComponent tree for editor');
-  const rootComponent = semanticBlocksToEmailComponent(
-    blocksWithImages,
-    settings,
-    content.previewText
-  );
+  // Wrap components in root structure with Container (standard 600px email width)
+  const rootComponent: EmailComponent = {
+    id: 'root',
+    component: 'Html',
+    props: { lang: 'en' },
+    children: [
+      {
+        id: 'head',
+        component: 'Head',
+        props: {},
+        children: content.previewText ? [{
+          id: 'preview',
+          component: 'Preview',
+          props: {},
+          content: content.previewText
+        }] : undefined,
+      },
+      {
+        id: 'body',
+        component: 'Body',
+        props: {
+          style: {
+            fontFamily: settings.fontFamily,
+            backgroundColor: settings.backgroundColor || '#ffffff',
+            margin: 0,
+            padding: 0,
+          }
+        },
+        children: [
+          {
+            id: 'main-container',
+            component: 'Container',
+            props: {
+              style: {
+                maxWidth: settings.maxWidth || '600px',
+                margin: '0 auto',
+              },
+            },
+            children: components,
+          },
+        ],
+      },
+    ],
+  };
   
   console.log('✅ [EMAIL-GEN-V2] EmailComponent tree generated');
+  
+  // Phase 6: Render EmailComponent to HTML (single source of truth)
+  console.log('🔄 [EMAIL-GEN-V2] Rendering EmailComponent to HTML');
+  const { html } = await renderEmailComponent(rootComponent, settings);
+  
+  console.log(`✅ [EMAIL-GEN-V2] Rendered ${blocksWithImages.length} blocks to HTML`);
   
   const timeMs = Date.now() - startTime;
   

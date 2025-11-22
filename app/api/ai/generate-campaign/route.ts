@@ -395,12 +395,12 @@ export async function POST(request: NextRequest) {
         preview_text: previewText,
         from_name: validatedInput.companyName || 'My Company',
         from_email: 'noreply@example.com',
-        html_content: htmlContent,
-        // V2-specific fields - store semantic blocks and root component
+        // html_content and root_component saved lazily when user enters visual edit mode
+        // V2-specific fields - store semantic blocks (root_component saved on visual edit)
         version: 'v2',
         semantic_blocks: result.blocks,
         global_settings: globalSettings,
-        root_component: result.rootComponent, // Generated during campaign creation
+        // root_component: result.rootComponent, // Lazy save - saved when visual edit is clicked
         ai_metadata: {
           campaignMetadata: result.campaignMetadata,
           generationMetadata: result.metadata,

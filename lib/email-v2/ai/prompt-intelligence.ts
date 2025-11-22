@@ -633,33 +633,15 @@ export function preprocessPrompt(
   if (tone !== 'professional') features.push(`tone: ${tone}`);
   if (contentType) features.push(`content type: ${contentType}`);
   
-  // Calculate suggested max blocks
-  let suggestedMaxBlocks = 8; // default
+  // Calculate suggested max blocks - capped at 8 for visual focus
+  let suggestedMaxBlocks = 8; // Maximum 8 blocks - prioritize visual/styling over text density
   
-  // Adjust based on email type
-  if (emailType === 'newsletter') {
-    suggestedMaxBlocks = 10;
-  } else if (emailType === 'transactional') {
-    suggestedMaxBlocks = 6;
+  // Adjust based on email type (but never exceed 8)
+  if (emailType === 'transactional') {
+    suggestedMaxBlocks = 6; // Simpler for transactional
   }
   
-  // Adjust based on item count
-  if (structure?.itemCount) {
-    if (structure.itemCount > 20) {
-      suggestedMaxBlocks = 15;
-    } else if (structure.itemCount > 12) {
-      suggestedMaxBlocks = 12;
-    } else if (structure.itemCount > 8) {
-      suggestedMaxBlocks = 10;
-    }
-  }
-  
-  // Check for promotional keywords
-  const promotionalKeywords = ['black friday', 'sale', 'discount', 'promotion', 'deal', 'offer', 'limited time'];
-  const isPromotional = promotionalKeywords.some(keyword => prompt.toLowerCase().includes(keyword));
-  if (isPromotional) {
-    suggestedMaxBlocks = Math.max(suggestedMaxBlocks, 12);
-  }
+  // Note: No longer increasing for item count or promotional - keep it visual and concise
   
   // Build enhanced prompt with detected metadata
   let enhancedPrompt = prompt;

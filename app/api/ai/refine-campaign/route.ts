@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/api/auth';
 import { errorResponse, CommonErrors } from '@/lib/api/responses';
-import { generateCompletion, type AIProvider } from '@/lib/ai/client';
+import { generateCompletion, type AIProvider, MAX_TOKENS_GLOBAL } from '@/lib/ai/client';
 import { 
   GlobalEmailSettingsSchema,
   type EmailBlockType,
@@ -504,7 +504,7 @@ Be conversational, enthusiastic, and helpful - like you're brainstorming with a 
         provider,
         model: provider === 'gemini' ? 'gemini-2.5-flash' : 'gpt-4o',
         temperature: 0.7,
-        maxTokens: 16000, // Increased from 8192 to allow for large campaigns with many blocks
+        maxTokens: MAX_TOKENS_GLOBAL,
         zodSchema, // Passed for OpenAI fallback
       }
     );

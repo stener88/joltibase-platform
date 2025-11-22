@@ -11,6 +11,7 @@ import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 import { z } from 'zod';
 import { zodToGoogleAISchema } from './zod-to-gemini-schema';
 import { AIGenerationError } from '../types';
+import { MAX_TOKENS_GLOBAL } from '../client';
 
 // Lazy initialization of Gemini client
 let geminiClient: GoogleGenerativeAI | null = null;
@@ -132,7 +133,7 @@ export async function generateGeminiCompletion(
   const {
     model = 'gemini-1.5-flash',
     temperature = 0.7,
-    maxTokens = 8192,
+    maxTokens = MAX_TOKENS_GLOBAL,
     zodSchema,
     retries = 3,
   } = options;

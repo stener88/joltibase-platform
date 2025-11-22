@@ -19,7 +19,7 @@ export const HeroBlockSchema = z.object({
   ctaUrl: z.string().url('Invalid CTA URL'),
   imageKeyword: z.string().max(60, 'Image keyword too long').optional(),
   imageUrl: z.string().url('Invalid image URL').optional(),
-  variant: z.enum(['centered', 'split']).default('centered'),
+  variant: z.enum(['centered', 'split', 'simple']).default('simple'),
 });
 
 /**
@@ -38,7 +38,7 @@ export const FeaturesBlockSchema = z.object({
     imageUrl: z.string().url('Invalid image URL').optional(),
   })).min(2, 'At least 2 features required').max(4, 'Maximum 4 features allowed'),
   layout: z.enum(['grid', 'list']).default('grid'),
-  variant: z.enum(['grid', 'list', 'numbered', 'icons-2col', 'icons-centered']).default('grid'),
+  variant: z.enum(['list-items', 'numbered-list', 'four-paragraphs', 'four-paragraphs-two-columns', 'three-centered-paragraphs']).default('numbered-list'),
 });
 
 /**
@@ -70,7 +70,7 @@ export const TestimonialBlockSchema = z.object({
   authorImageKeyword: z.string().max(50, 'Author image keyword too long').optional(),
   authorImage: z.string().url('Invalid author image URL').optional(),
   rating: z.number().int().min(1).max(5).optional(),
-  variant: z.enum(['centered', 'large-avatar']).default('centered'),
+  variant: z.enum(['centered', 'large-avatar', 'simple-centered']).default('centered'),
 });
 
 /**
@@ -84,7 +84,7 @@ export const CtaBlockSchema = z.object({
   buttonText: z.string().min(1, 'Button text is required').max(50, 'Button text too long'),
   buttonUrl: z.string().url('Invalid button URL'),
   style: z.enum(['primary', 'secondary', 'outline']).default('primary'),
-  backgroundColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').optional(),
+  // backgroundColor removed - colors are applied globally via settings
 });
 
 /**
@@ -105,7 +105,7 @@ export const FooterBlockSchema = z.object({
     text: z.string().max(50, 'Link text too long'),
     url: z.string().url('Invalid link URL'),
   })).max(5, 'Maximum 5 additional links allowed').optional(),
-  variant: z.enum(['one-column', 'two-column']).default('one-column'),
+  variant: z.enum(['one-column', 'two-column', 'simple']).default('simple'),
   photoCredits: z.array(z.string()).optional(),
 });
 
@@ -123,7 +123,7 @@ export const GalleryBlockSchema = z.object({
     alt: z.string().max(100, 'Image alt text too long'),
     link: z.string().url('Invalid link URL').optional(),
   })).min(2, 'At least 2 images required').max(6, 'Maximum 6 images required'),
-  variant: z.enum(['grid-2x2', '3-column', 'horizontal-split', 'vertical-split']).default('grid-2x2'),
+  variant: z.enum(['grid-2x2', '3-column', 'horizontal-split', 'vertical-split', 'four-images-grid', 'three-columns', 'horizontal-grid', 'vertical-grid']).optional().default('grid-2x2'),
 });
 
 /**
@@ -160,7 +160,7 @@ export const PricingBlockSchema = z.object({
     ctaUrl: z.string().url('Invalid CTA URL'),
     highlighted: z.boolean().default(false),
   })).min(1, 'At least 1 plan required').max(3, 'Maximum 3 plans allowed'),
-  variant: z.enum(['simple', 'two-tier']).default('simple'),
+  variant: z.enum(['simple', 'simple-pricing-table', 'two-tier']).default('simple'),
 });
 
 /**
@@ -187,7 +187,125 @@ export const ArticleBlockSchema = z.object({
       url: z.string().url('Invalid social URL'),
     })).max(2, 'Maximum 2 social links').optional(),
   }).optional(),
-  variant: z.enum(['image-top', 'image-right', 'image-background', 'two-cards', 'single-author', 'multiple-authors']).default('image-top'),
+  variant: z.enum(['image-top', 'image-right', 'image-background', 'two-cards', 'single-author', 'multiple-authors']).optional().default('image-top'),
+});
+
+/**
+ * Heading Block
+ * Simple or multiple heading elements
+ */
+export const HeadingBlockSchema = z.object({
+  blockType: z.literal('heading'),
+  heading: z.string().max(200, 'Heading too long').optional(),
+  headings: z.array(z.object({
+    text: z.string().min(1, 'Heading text is required').max(200, 'Heading text too long'),
+    level: z.enum(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']).default('h2'),
+  })).optional(),
+  variant: z.enum(['multiple-headings', 'simple-heading', 'multiple-headings-alt']).default('simple-heading'),
+});
+
+/**
+ * Text Block
+ * Plain text or styled text content
+ */
+export const TextBlockSchema = z.object({
+  blockType: z.literal('text'),
+  content: z.string().min(1, 'Text content is required').max(2000, 'Text content too long'),
+  variant: z.enum(['simple-text', 'text-with-styling']).default('simple-text'),
+});
+
+/**
+ * Link Block
+ * Simple or inline link elements
+ */
+export const LinkBlockSchema = z.object({
+  blockType: z.literal('link'),
+  text: z.string().min(1, 'Link text is required').max(100, 'Link text too long'),
+  url: z.string().url('Invalid link URL'),
+  variant: z.enum(['simple-link', 'inline-link']).default('simple-link'),
+});
+
+/**
+ * Buttons Block
+ * Single or multiple button elements
+ */
+export const ButtonsBlockSchema = z.object({
+  blockType: z.literal('buttons'),
+  buttons: z.array(z.object({
+    text: z.string().min(1, 'Button text is required').max(50, 'Button text too long'),
+    url: z.string().url('Invalid button URL'),
+    style: z.enum(['primary', 'secondary', 'outline']).optional(),
+  })).min(1, 'At least 1 button required').max(4, 'Maximum 4 buttons allowed'),
+  variant: z.enum(['single-button', 'two-buttons', 'download-buttons']).default('single-button'),
+});
+
+/**
+ * Image Block
+ * Single image with various styling options
+ */
+export const ImageBlockSchema = z.object({
+  blockType: z.literal('image'),
+  imageKeyword: z.string().max(60, 'Image keyword too long').optional(),
+  imageUrl: z.string().url('Invalid image URL').optional(),
+  alt: z.string().max(100, 'Image alt text too long'),
+  caption: z.string().max(200, 'Caption too long').optional(),
+  variant: z.enum(['simple-image', 'rounded-image', 'varying-sizes']).default('simple-image'),
+});
+
+/**
+ * Avatars Block
+ * Display of user avatars in various layouts
+ */
+export const AvatarsBlockSchema = z.object({
+  blockType: z.literal('avatars'),
+  avatars: z.array(z.object({
+    imageUrl: z.string().url('Invalid avatar URL'),
+    name: z.string().max(100, 'Name too long').optional(),
+    title: z.string().max(100, 'Title too long').optional(),
+  })).min(1, 'At least 1 avatar required').max(10, 'Maximum 10 avatars allowed'),
+  variant: z.enum(['group-stacked', 'with-text', 'circular']).default('group-stacked'),
+});
+
+/**
+ * Code Block
+ * Code snippets with syntax highlighting options
+ */
+export const CodeBlockSchema = z.object({
+  blockType: z.literal('code'),
+  code: z.string().min(1, 'Code content is required').max(5000, 'Code content too long'),
+  language: z.string().max(50, 'Language too long').optional(),
+  variant: z.enum(['inline-simple', 'inline-colors', 'block-no-theme', 'predefined-theme', 'custom-theme', 'line-numbers']).optional().default('inline-simple'),
+});
+
+/**
+ * Markdown Block
+ * Markdown content rendered as HTML
+ */
+export const MarkdownBlockSchema = z.object({
+  blockType: z.literal('markdown'),
+  content: z.string().min(1, 'Markdown content is required').max(5000, 'Markdown content too long'),
+  variant: z.enum(['simple', 'container-styles', 'custom-styles']).default('simple'),
+});
+
+/**
+ * Articles Block (separate from article)
+ * Article listings with various layouts
+ */
+export const ArticlesBlockSchema = z.object({
+  blockType: z.literal('articles'),
+  articles: z.array(z.object({
+    title: z.string().min(1, 'Article title is required').max(150, 'Article title too long'),
+    excerpt: z.string().max(300, 'Excerpt too long').optional(),
+    imageKeyword: z.string().max(60, 'Image keyword too long').optional(),
+    imageUrl: z.string().url('Invalid image URL').optional(),
+    url: z.string().url('Invalid article URL'),
+    author: z.object({
+      name: z.string().max(100, 'Author name too long'),
+      imageKeyword: z.string().max(60, 'Author image keyword too long').optional(),
+      imageUrl: z.string().url('Invalid author image URL').optional(),
+    }).optional(),
+  })).min(1, 'At least 1 article required').max(4, 'Maximum 4 articles allowed'),
+  variant: z.enum(['with-image', 'image-right', 'image-background', 'two-cards', 'single-author']).default('with-image'),
 });
 
 /**
@@ -204,7 +322,7 @@ export const ListBlockSchema = z.object({
     imageUrl: z.string().url('Invalid image URL').optional(),
     link: z.string().url('Invalid link URL').optional(),
   })).min(2, 'At least 2 items required').max(5, 'Maximum 5 items allowed'),
-  variant: z.enum(['numbered', 'image-left']).default('numbered'),
+  variant: z.enum(['numbered', 'image-left', 'simple-list']).default('numbered'),
 });
 
 /**
@@ -224,7 +342,7 @@ export const EcommerceBlockSchema = z.object({
     ctaText: z.string().max(30, 'CTA text too long'),
     ctaUrl: z.string().url('Invalid CTA URL'),
   })).min(1, 'At least 1 product required').max(4, 'Maximum 4 products allowed'),
-  variant: z.enum(['single', 'image-left', '3-column', '4-grid', 'checkout']).default('single'),
+  variant: z.enum(['single', 'one-product', 'image-left', 'one-product-left', '3-column', 'three-cards-row', '4-grid', 'four-cards', 'checkout']).optional().default('single'),
 });
 
 /**
@@ -297,7 +415,7 @@ export const FeedbackBlockSchema = z.object({
     authorTitle: z.string().max(100, 'Author title too long').optional(),
     rating: z.number().int().min(1).max(5).optional(),
   })).max(4, 'Maximum 4 reviews allowed').optional(),
-  variant: z.enum(['simple-rating', 'survey', 'customer-reviews']).default('simple-rating'),
+  variant: z.enum(['simple-rating', 'survey', 'survey-section', 'customer-reviews']).default('simple-rating'),
 });
 
 /**
@@ -315,11 +433,20 @@ export const SemanticBlockSchema = z.discriminatedUnion('blockType', [
   StatsBlockSchema,
   PricingBlockSchema,
   ArticleBlockSchema,
+  ArticlesBlockSchema,
   ListBlockSchema,
   EcommerceBlockSchema,
   MarketingBlockSchema,
   HeaderBlockSchema,
   FeedbackBlockSchema,
+  HeadingBlockSchema,
+  TextBlockSchema,
+  LinkBlockSchema,
+  ButtonsBlockSchema,
+  ImageBlockSchema,
+  AvatarsBlockSchema,
+  CodeBlockSchema,
+  MarkdownBlockSchema,
 ]);
 
 /**
@@ -363,47 +490,9 @@ export function getMaxBlocksForCampaign(
   prompt?: string,
   structureHints?: { itemCount?: number; gridLayout?: { columns: number; rows: number } }
 ): number {
-  // NEW: If structure hints suggest many items, increase block limit
-  if (structureHints?.itemCount) {
-    if (structureHints.itemCount > 20) {
-      return 15; // Very large grids need more blocks
-    } else if (structureHints.itemCount > 12) {
-      return 12; // Large grids
-    } else if (structureHints.itemCount > 8) {
-      return 10; // Medium grids
-    }
-  }
-  
-  // Check prompt for promotional keywords
-  const promotionalKeywords = ['black friday', 'sale', 'discount', 'promotion', 'deal', 'offer', 'limited time', 'flash sale', 'cyber monday', 'holiday sale', 'launch'];
-  const isPromotional = prompt ? promotionalKeywords.some(keyword => prompt.toLowerCase().includes(keyword)) : false;
-  
-  // If promotional content detected in prompt, use higher limit
-  if (isPromotional) {
-    return 12;
-  }
-  
-  // Otherwise check campaign type
-  switch (campaignType?.toLowerCase()) {
-    case 'promotional':
-    case 'sale':
-    case 'black-friday':
-    case 'holiday':
-    case 'launch':
-      return 12; // Complex promotional campaigns
-    
-    case 'newsletter':
-    case 'announcement':
-      return 10; // Medium complexity
-    
-    case 'transactional':
-    case 'welcome':
-    case 'notification':
-      return 6; // Simple transactional emails
-    
-    default:
-      return 8; // Standard campaigns
-  }
+  // Capped at 8 blocks maximum - focus on visual/styling over text density
+  // Use visual blocks (gallery, stats, features with images) instead of many text blocks
+  return 8;
 }
 
 // TypeScript type exports
@@ -417,11 +506,20 @@ export type GalleryBlock = z.infer<typeof GalleryBlockSchema>;
 export type StatsBlock = z.infer<typeof StatsBlockSchema>;
 export type PricingBlock = z.infer<typeof PricingBlockSchema>;
 export type ArticleBlock = z.infer<typeof ArticleBlockSchema>;
+export type ArticlesBlock = z.infer<typeof ArticlesBlockSchema>;
 export type ListBlock = z.infer<typeof ListBlockSchema>;
 export type EcommerceBlock = z.infer<typeof EcommerceBlockSchema>;
 export type MarketingBlock = z.infer<typeof MarketingBlockSchema>;
 export type HeaderBlock = z.infer<typeof HeaderBlockSchema>;
 export type FeedbackBlock = z.infer<typeof FeedbackBlockSchema>;
+export type HeadingBlock = z.infer<typeof HeadingBlockSchema>;
+export type TextBlock = z.infer<typeof TextBlockSchema>;
+export type LinkBlock = z.infer<typeof LinkBlockSchema>;
+export type ButtonsBlock = z.infer<typeof ButtonsBlockSchema>;
+export type ImageBlock = z.infer<typeof ImageBlockSchema>;
+export type AvatarsBlock = z.infer<typeof AvatarsBlockSchema>;
+export type CodeBlock = z.infer<typeof CodeBlockSchema>;
+export type MarkdownBlock = z.infer<typeof MarkdownBlockSchema>;
 export type SemanticBlock = z.infer<typeof SemanticBlockSchema>;
 export type EmailContent = z.infer<typeof EmailContentSchema>;
 

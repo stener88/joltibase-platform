@@ -1,8 +1,13 @@
 /**
  * Convert semantic blocks to EmailComponent tree
  * 
- * This is used lazily when the editor opens a V2 campaign
- * that was generated with pattern-based rendering
+ * ⚠️ SERVER-SIDE ONLY: Uses Node.js fs module via template engine
+ * 
+ * This is used server-side when generating campaigns or when
+ * server components need to convert semantic blocks.
+ * 
+ * For client components, the EmailComponent tree should be passed
+ * from the server (e.g., from the API or server component props)
  */
 
 import type { EmailComponent, GlobalEmailSettings } from './types';
@@ -12,6 +17,8 @@ import { createEmailWrapper, insertContentIntoWrapper, addPreviewToEmail } from 
 
 /**
  * Convert semantic blocks array to EmailComponent tree
+ * 
+ * ⚠️ SERVER-SIDE ONLY
  * 
  * @param blocks - Semantic blocks from AI generation
  * @param settings - Global email settings
@@ -23,6 +30,14 @@ export function semanticBlocksToEmailComponent(
   settings: GlobalEmailSettings,
   previewText?: string
 ): EmailComponent {
+  // Ensure we're running server-side
+  if (typeof window !== 'undefined') {
+    throw new Error(
+      '[BlocksConverter] semanticBlocksToEmailComponent can only be called server-side. ' +
+      'The EmailComponent tree should be generated on the server and passed to the client.'
+    );
+  }
+  
   console.log('[BlocksConverter] Converting', blocks.length, 'semantic blocks to EmailComponent tree');
   
   // Transform semantic blocks to EmailComponent sections

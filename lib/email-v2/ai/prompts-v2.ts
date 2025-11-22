@@ -8,181 +8,72 @@
 import type { GlobalEmailSettings } from '../types';
 
 /**
- * System prompt for semantic email content generation
+ * Minimal system prompt for Pass 1 (structure generation only)
+ * Reduced from ~2,000 tokens to ~300 tokens
  */
-export const SEMANTIC_GENERATION_SYSTEM_PROMPT = `You are an expert email content strategist. Generate email content as semantic blocks, NOT as HTML or React components.
+export const STRUCTURE_GENERATION_SYSTEM_PROMPT = `You are an email structure strategist. Generate email structure (block types + order), NOT content.
 
-IMPORTANT: Generate ONLY semantic content blocks with clear structure and data.
+Rules:
+- previewText: ≤140 chars
+- Choose 2-12 blocks from: header, hero, heading, text, features, testimonial, gallery, stats, pricing, ecommerce, article, articles, list, marketing, feedback, buttons, image, avatars, link, code, markdown, cta, footer
+- Each block needs: blockType + purpose (max 150 chars)
+- Order: header→content→cta→footer
+- Return valid JSON with previewText and blocks array`;
 
-Available block types and their variants:
+/**
+ * Full system prompt for Pass 2 (content generation)
+ * Condensed from ~2,000 tokens to ~800 tokens by removing verbose examples
+ */
+export const SEMANTIC_GENERATION_SYSTEM_PROMPT = `You are an expert email content strategist. Generate email content as semantic blocks, NOT HTML or React components.
 
-1. **hero** - Main headline section with CTA
-   - Required: headline, ctaText, ctaUrl
-   - Optional: subheadline, imageUrl, variant
-   - Variants: 'centered' (default), 'split' (two-column layout)
+⚠️ VALIDATION:
+- previewText: ≤140 chars
+- URLs: Valid https:// format
+- JSON: Valid schema match
 
-2. **features** - Grid or list of 2-4 features/benefits
-   - Required: features array (2-4 items, each with title and description)
-   - Optional: heading, subheading, imageUrl (per feature), variant
-   - Variants: 'grid', 'list', 'numbered', 'icons-2col', 'icons-centered'
+Block types: hero, features, content, testimonial, cta, footer, gallery, stats, pricing, article, articles, list, ecommerce, marketing, header, feedback, heading, text, link, buttons, image, avatars, code, markdown.
 
-3. **content** - Text paragraphs with optional image
-   - Required: paragraphs array (1-5 paragraphs)
-   - Optional: heading, imageUrl, imageAlt, imagePosition
+## Design System
 
-4. **testimonial** - Customer quote with author
-   - Required: quote, authorName
-   - Optional: authorTitle, authorCompany, authorImage, rating, variant
-   - Variants: 'centered' (default), 'large-avatar' (side-by-side)
+**Spacing:** 8px grid (8,16,24,32,40,48,64,80). Hero: 80px padding. Sections: 40-48px padding.
 
-5. **cta** - Call-to-action section
-   - Required: headline, buttonText, buttonUrl
-   - Optional: subheadline, style, backgroundColor
+**Typography:** Hero: 56-64px/800-900/1.1. Headers: 36-40px/700-800/1.2. Subheads: 20-24px/600/#6b7280. Body: 17-18px/400/1.7. Headings ≥1.5x body size.
 
-6. **footer** - Company info and links
-   - Required: companyName, unsubscribeUrl
-   - Optional: address, preferenceUrl, socialLinks, additionalLinks, variant
-   - Variants: 'one-column' (centered), 'two-column' (split layout)
+**Colors:** Text: #1f2937 (headlines), #374151 (body), #6b7280 (secondary). CTAs: {primaryColor}. Backgrounds: #f9fafb (page), #ffffff (content). Never use #6b7280 as primary text.
 
-7. **gallery** - Image gallery with multiple layouts
-   - Required: images array (2-6 images with url and alt)
-   - Optional: heading, subheading, link (per image), variant
-   - Variants: 'grid-2x2', '3-column', 'horizontal-split', 'vertical-split'
+**Accessibility:** Buttons ≥44px height. Text contrast 4.5:1 minimum.
 
-8. **stats** - Key metrics and statistics
-   - Required: stats array (2-4 items with value and label)
-   - Optional: heading, subheading, description (per stat), variant
-   - Variants: 'simple' (row), 'stepped' (cards with different backgrounds)
+## Content Quality
 
-9. **pricing** - Pricing table or cards
-   - Required: plans array (1-3 plans with name, price, features, ctaText, ctaUrl)
-   - Optional: heading, subheading, interval, description, highlighted (per plan), variant
-   - Variants: 'simple' (single card), 'two-tier' (comparison)
+**Writing:** Conversational, brand-specific. Include specifics/numbers. Active voice. Paragraphs: 2-3 sentences max.
 
-10. **article** - Article or blog post content
-    - Required: headline
-    - Optional: eyebrow, excerpt, imageUrl, imageAlt, ctaText, ctaUrl, author, variant
-    - Variants: 'image-top', 'image-right', 'image-background', 'two-cards', 'single-author', 'multiple-authors'
+**Headlines:** 8-15 words, action-oriented. ❌ "Welcome" → ✅ "Your analytics dashboard is ready. Here's what's new."
 
-11. **list** - Numbered or bulleted list
-    - Required: items array (2-5 items with title and description)
-    - Optional: heading, imageUrl (per item), link (per item), variant
-    - Variants: 'numbered', 'image-left'
+**Body:** Lead with benefits. Use "you/your" > "we/our". Descriptions: 15-30 words minimum.
 
-12. **ecommerce** - Product showcase
-    - Required: products array (1-4 products with name, price, imageUrl, ctaText, ctaUrl)
-    - Optional: heading, subheading, description (per product), variant
-    - Variants: 'single', 'image-left', '3-column', '4-grid', 'checkout'
+**Image Keywords:** 1-3 core words (nouns only), max 60 chars. Generic terms: "coffee shop", "team meeting", "mountains forest". Avoid adjectives.
 
-13. **marketing** - Bento Grid for featured product showcase
-    - Required: featuredItem (title, imageUrl), items array (2-4 items with title, imageUrl)
-    - Optional: heading, subheading, description (per item), ctaText/ctaUrl (per item), variant
-    - Variants: 'bento-grid' (asymmetric grid with large featured item + smaller items)
+## Content Requirements
 
-14. **header** - Newsletter header with logo and navigation
-    - Required: one of (logoUrl, companyName)
-    - Optional: logoAlt, menuItems array (label, url), socialLinks array (platform, url), variant
-    - Variants: 'centered-menu' (logo centered, menu below), 'side-menu' (logo left, menu right), 'social-icons' (logo centered, social icons below)
+**Minimum Lengths:**
+- Headlines: 8+ words
+- Subheadlines: 15+ words (if field exists, REQUIRED)
+- Descriptions: 15+ words
+- CTA text: 2+ words
 
-15. **feedback** - Customer feedback collection and display
-    - Required: one of (ctaUrl for rating/survey, reviews array for customer-reviews)
-    - Optional: heading, subheading, ctaText, questions array (for survey variant), reviews array (for customer-reviews variant), variant
-    - Variants: 'simple-rating' (quick star rating), 'survey' (multi-question form), 'customer-reviews' (display testimonials)
+**Required Fields:**
+- Hero: headline, subheadline, ctaText, ctaUrl, imageKeyword
+- Features: heading, subheading, features[3-4] each: title, description, imageKeyword
+- List: heading, items[4+] each: title, description
+- CTA: headline, subheadline, buttonText, buttonUrl
 
-Email structure guidelines:
-- Always include a hero (unless transactional email)
-- Always include a footer
-- Include 2-12 total blocks (varies by campaign type)
-- Order logically: hero → content/features → cta → footer
-- Mix different block types for visual variety
-- Choose appropriate variants based on content
-- Header block: Use at top of newsletter-style emails (optional, goes before hero)
-- Marketing block: Use for featured product/offer showcases
-- Feedback block: Use at end of emails requesting customer input/reviews
+**DO NOT:** Empty strings, placeholders, generic content ("Welcome", "Check it out"), single-word headlines.
 
-Content best practices:
-- Headlines: 5-10 words, action-oriented
-- Descriptions: 10-30 words, benefit-focused
-- CTAs: Clear, specific actions
-- Keep paragraphs short (2-3 sentences max)
+**Brand:** Primary color: {primaryColor}. Font: {fontFamily}. Tone: Professional but approachable.
 
-IMAGE KEYWORDS - CRITICAL:
-- Generate descriptive image KEYWORDS (not URLs)
-- Keywords should be 1-3 CORE words describing the desired image (nouns only, avoid adjectives)
-- MAXIMUM 60 characters per keyword (keep it concise!)
-- Use GENERIC, BROAD terms that Unsplash can match - avoid overly specific descriptions
-- Examples of GOOD keywords:
-  * Hero: "coffee shop interior"
-  * Product: "wireless earbuds"
-  * Team: "team meeting"
-  * Author: "woman portrait"
-  * Landscape: "mountains forest"
-  * Person: "person rain"
-  * Creature: "forest creature"
-- Examples of BAD keywords (too specific - will fail to find images):
-  ❌ "dark Norwegian mountains forest" → Use: "mountains forest"
-  ❌ "mysterious forest creature glowing eyes" → Use: "forest creature"
-  ❌ "epic mountain landscape mist" → Use: "mountain landscape"
-  ❌ "action scene dark forest" → Use: "forest"
-  ❌ "troll creature close up" → Use: "troll"
-  ❌ "hero determined in rain" → Use: "person rain"
-  ❌ "cinematic Norwegian mountains dark forest green hues" → Use: "mountains forest"
-- AVOID: descriptive adjectives (dark, mysterious, epic, dramatic, cinematic, vivid, moody, etc.)
-- AVOID: action words (determined, glowing, shimmering, etc.)
-- AVOID: overly specific locations (Norwegian, Swedish, etc.) unless essential
-- Backend will fetch matching Unsplash photos - overly specific keywords will FAIL
-- NEVER generate URLs - only keywords
-- Keep keywords SHORT - 1-3 core words maximum, under 60 characters
+**Visual Focus:** Prioritize visual blocks (gallery, stats, features with images, ecommerce) over text-heavy blocks. Use images, icons, and visual elements. Keep text concise and impactful.
 
-Brand voice & colors:
-- Primary color: {primaryColor}
-- Font family: {fontFamily}
-- Professional but approachable tone
-- Focus on value proposition
-
-Color usage:
-- Use primary color for ALL CTA backgrounds
-- Use primary color for accents and emphasis
-- Stick to neutrals for everything else: #ffffff, #f9fafb, #000000, #6b7280
-- NEVER generate random hex colors (#023E8A, #FF9F1C, etc.)
-
-Generate content that is:
-1. Specific to user's request
-2. Appropriate for email format
-3. Action-oriented with clear CTAs
-4. Properly structured
-5. Uses varied block types and variants for visual diversity
-
-CRITICAL CONSTRAINTS - VALIDATION WILL FAIL IF NOT FOLLOWED:
-1. ⚠️ PREVIEW TEXT: ABSOLUTE MAXIMUM 140 CHARACTERS ⚠️
-   - Count every single character including spaces
-   - If longer than 140 chars, generation will FAIL
-   - Keep it short and punchy (aim for 120 chars to be safe)
-   
-2. All URLs must be valid (start with https://)
-3. Feature descriptions: 10-200 characters each
-4. Paragraphs: max 500 characters each
-5. Headline: max 100 characters
-6. Price: max 30 characters
-
-CRITICAL: Return valid JSON matching the EmailContent schema:
-{
-  "previewText": "Short, punchy preview - aim for 100-130 chars max",
-  "blocks": [
-    { "blockType": "hero", "variant": "centered", "imageKeyword": "tech startup office", ... },
-    { "blockType": "features", "variant": "icons-2col", ... },
-    { "blockType": "cta", "backgroundColor": "{primaryColor}", ... },
-    { "blockType": "footer", "variant": "one-column", ... }
-  ]
-}
-
-GOOD previewText examples (all under 140 chars):
-✅ "New AI analytics feature launches today. Get early access to multi-layer insights. Join now!" (96 chars)
-✅ "Black Friday deals are live! Up to 70% off top tech. Limited time only." (75 chars)
-✅ "Transform your blockchain strategy with AI-powered analytics. Request early access today." (92 chars)
-
-BAD previewText examples (over 140 chars):
-❌ "Discover ApexChain Analytics: Our new AI-powered feature offers multi-layer blockchain insights, APK-Z layer security, and multi-scan capabilities. Get early access now!" (177 chars - TOO LONG)`;
+Generate: 1) Specific to request, 2) Email-appropriate, 3) Action-oriented, 4) Visual and styled, 5) Complete with all fields populated.`;
 
 /**
  * Build semantic generation prompt with user request and settings
@@ -410,6 +301,40 @@ Generate semantic content blocks as JSON following the EmailContent schema.`;
 }
 
 /**
+ * Get block-specific variant guidance (for dynamic injection in Pass 2)
+ * This reduces prompt size by only including relevant variant info per block
+ */
+export function getBlockVariantGuidance(blockType: string): string {
+  const guidance: Record<string, string> = {
+    articles: 'Variants: with-image, image-right, image-background, two-cards, single-author. Choose most appropriate.',
+    article: 'Variants: multiple-authors. Use this variant.',
+    features: 'Variants: list-items, numbered-list, four-paragraphs, four-paragraphs-two-columns, three-centered-paragraphs. Choose based on content structure.',
+    testimonial: 'Variants: simple-centered, large-avatar. Use simple-centered for short quotes, large-avatar for emphasis.',
+    ecommerce: 'Variants: checkout, four-cards, one-product, one-product-left, three-cards-row. Choose based on product count.',
+    gallery: 'Variants: four-images-grid, horizontal-grid, three-columns, vertical-grid. Choose based on image count.',
+    stats: 'Variants: simple, stepped. Use simple for basic stats, stepped for dramatic presentation.',
+    list: 'Variants: simple-list, image-left. Use simple-list for text-only, image-left when images needed.',
+    marketing: 'Variants: bento-grid. Use this variant.',
+    feedback: 'Variants: simple-rating, survey-section. Use simple-rating for quick feedback, survey-section for detailed surveys.',
+    buttons: 'Variants: single-button, two-buttons, download-buttons. Choose based on CTA count.',
+    image: 'Variants: simple-image, rounded-image, varying-sizes. Use simple-image for standard, rounded-image for avatars/products.',
+    avatars: 'Variants: group-stacked, with-text, circular. Use group-stacked for teams, with-text for testimonials.',
+    link: 'Variants: simple-link, inline-link. Use simple-link for standalone, inline-link for text within paragraphs.',
+    code: 'Variants: inline-simple, inline-colors, block-no-theme, predefined-theme, custom-theme, line-numbers. Use inline for short snippets.',
+    markdown: 'Variants: simple, container-styles, custom-styles. Use simple for basic, container-styles for styled containers.',
+    heading: 'Variants: simple-heading, multiple-headings, multiple-headings-alt. Use simple-heading for single headline.',
+    text: 'Variants: simple-text, text-with-styling. Use simple-text for plain paragraphs.',
+    header: 'Variants: centered-menu. Use this variant.',
+    pricing: 'Variants: simple-pricing-table. Use this variant.',
+    hero: 'Variants: simple. Use this variant.',
+    cta: 'Variants: simple. Use this variant.',
+    footer: 'Variants: simple, one-column, two-column. Use simple for basic, one-column for centered, two-column for split.',
+  };
+  
+  return guidance[blockType] || '';
+}
+
+/**
  * Example prompts for different email types (for testing)
  */
 export const EXAMPLE_PROMPTS = {
@@ -443,7 +368,7 @@ Validation rules to follow:
  */
 export const COMPONENT_EDIT_PATTERNS: Record<string, string> = {
   Button: `Common Button edits:
-- Change color: Update style.backgroundColor and style.color
+- Change color: Update style.color (colors applied globally via settings)
 - Change text: Update content field
 - Change link: Update href prop
 - Make larger: Increase style.padding and style.fontSize
@@ -463,7 +388,7 @@ export const COMPONENT_EDIT_PATTERNS: Record<string, string> = {
 - Change alignment: Update style.textAlign`,
   
   Section: `Common Section edits:
-- Change background: Update style.backgroundColor
+- Change background: Background colors are applied globally via settings
 - Add padding: Update style.padding
 - Center content: Set style.textAlign to "center"`,
   

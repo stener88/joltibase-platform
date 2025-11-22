@@ -16,6 +16,7 @@ import {
 import { 
   buildEnhancedRefinementPrompt,
 } from './prompts-v2';
+import { MAX_TOKENS_GLOBAL } from '@/lib/ai/client';
 
 // Initialize Google AI with API key
 const getGoogleModel = (model: string) => {
@@ -81,7 +82,7 @@ export async function refineComponent(
   
   const {
     temperature = 0.7,
-    maxTokens = 800,
+    maxTokens = Math.min(800, MAX_TOKENS_GLOBAL),
     model = 'gemini-2.5-flash',
   } = options;
   

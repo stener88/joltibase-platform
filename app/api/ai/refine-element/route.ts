@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/api/auth';
-import { generateCompletion, type AIProvider } from '@/lib/ai/client';
+import { generateCompletion, type AIProvider, MAX_TOKENS_GLOBAL } from '@/lib/ai/client';
 
 // ============================================================================
 // Request Schema
@@ -120,7 +120,10 @@ export async function POST(request: NextRequest) {
     // 5. Call AI with element-specific context
     // Detect if simple change for token optimization
     const isSimple = isSimplePropertyChange(validatedInput.prompt);
-    const maxTokens = isSimple ? 400 : 1000;
+    const maxTokens = Math.min(
+      isSimple ? 400 : 1000,
+      MAX_TOKENS_GLOBAL
+    );
     console.log(`🎯 [REFINE-ELEMENT-API] Request type: ${isSimple ? 'SIMPLE' : 'COMPLEX'} (maxTokens: ${maxTokens})`);
     
     const provider: AIProvider = (process.env.AI_PROVIDER as AIProvider) || 'gemini';

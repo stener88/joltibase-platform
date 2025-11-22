@@ -208,7 +208,18 @@ export function PromptInput({
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={onVisualEditsToggle}
+                  type="button"
+                  onClick={(e) => {
+                    console.log('[PromptInput] Visual Edit button clicked', { isLoading, visualEditsMode, hasHandler: !!onVisualEditsToggle });
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!isLoading && onVisualEditsToggle) {
+                      console.log('[PromptInput] Calling onVisualEditsToggle');
+                      onVisualEditsToggle();
+                    } else {
+                      console.warn('[PromptInput] Button click ignored', { isLoading, hasHandler: !!onVisualEditsToggle });
+                    }
+                  }}
                   disabled={isLoading}
                   className={`
                     absolute left-12 bottom-4 w-8 h-8

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import type { EmailComponent, GlobalEmailSettings } from '@/lib/email-v2/types';
 import { renderEmailComponent } from '@/lib/email-v2';
 import { Loader2 } from 'lucide-react';
@@ -14,7 +14,7 @@ interface EmailV2FrameProps {
   className?: string;
 }
 
-export function EmailV2Frame({
+function EmailV2FrameComponent({
   rootComponent,
   globalSettings,
   selectedComponentId,
@@ -28,13 +28,10 @@ export function EmailV2Frame({
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Render email HTML
+  // Remounting is controlled via key prop change in parent
+  // During editing, postMessage handles live updates without re-rendering
   useEffect(() => {
-    console.log('[EmailV2Frame] rootComponent changed:', {
-      id: rootComponent.id,
-      component: rootComponent.component,
-      childrenCount: rootComponent.children?.length,
-      hasChildren: !!rootComponent.children,
-    });
+    console.log('[EmailV2Frame] Rendering email HTML');
 
     // Defer expensive tree inspection to avoid blocking render
     setTimeout(() => {
@@ -69,7 +66,7 @@ export function EmailV2Frame({
     };
 
     render();
-  }, [rootComponent, globalSettings]);
+  }, [rootComponent, globalSettings]); // Keep dependencies - key prop controls when component remounts
 
   // Add selection and click handling with bounds
   useEffect(() => {
@@ -102,6 +99,8 @@ export function EmailV2Frame({
 
   // Inject interactive script for component selection with bounds
   // Only add hover/click when onComponentClick is provided (visual edits mode)
+  // IMPORTANT: This HTML is only regenerated when rootComponent or globalSettings change
+  // Selection styling is updated via postMessage to avoid reloading iframe
   const interactiveHtml = html
     ? html.replace(
         '</body>',
@@ -149,86 +148,62 @@ export function EmailV2Frame({
       return list;
     }
     
-    // Try to match components to DOM elements by count and structure
+    // OPTIMIZED APPROACH: Components already have data-component-id injected during rendering
+    // Use component registry for O(1) lookups and single delegated event listener
     function matchAndApplyAttributes() {
+      console.log('[V2] Starting component matching for visual edit mode');
+      
+      // Build component registry from rootComponent tree (O(n) once, then O(1) lookups)
+      const componentRegistry = new Map();
       const rootData = ${JSON.stringify(rootComponent)};
-      const components = collectComponents(rootData);
       
-      console.log('[V2] Found', components.length, 'components:', 
-        components.map(c => ({id: c.id, type: c.component})));
+      function addToRegistry(component) {
+        if (component && component.id) {
+          componentRegistry.set(component.id, component);
+        }
+        if (component && component.children) {
+          component.children.forEach(addToRegistry);
+        }
+      }
       
-      // Get all DOM elements
-      const rootElement = document.body.firstElementChild;
-      if (!rootElement) {
-        console.error('[V2] No root element found');
+      addToRegistry(rootData);
+      console.log('[V2] Built component registry with', componentRegistry.size, 'components');
+      
+      // Find all elements with data-component-id (injected during rendering)
+      const elementsWithIds = Array.from(document.querySelectorAll('[data-component-id]'));
+      console.log('[V2] Found', elementsWithIds.length, 'elements with data-component-id');
+      
+      if (elementsWithIds.length === 0) {
+        console.warn('[V2] No elements with data-component-id found - attributes may not have been injected during rendering');
         return;
       }
       
-      const domElements = collectDOMElements(rootElement);
-      console.log('[V2] Found', domElements.length, 'DOM elements:', 
-        domElements.map(el => el.tagName));
+      const componentToDom = new Map();
       
-      // Strategy: For each component, find a matching DOM element
-      // Match by looking for specific patterns (TABLE for Container, etc)
-      const componentToDom = [];
-      
-      components.forEach(component => {
-        // Find a DOM element that hasn't been assigned yet
-        let matchedElement = null;
-        
-        if (component.component === 'Container') {
-          // Container should be the root TABLE
-          matchedElement = domElements.find(el => 
-            el.tagName === 'TABLE' && !componentToDom.some(entry => entry.domElement === el)
-          );
-        } else if (component.component === 'Section') {
-          // Section could be TABLE or TBODY
-          matchedElement = domElements.find(el => 
-            (el.tagName === 'TABLE' || el.tagName === 'TBODY') && 
-            !componentToDom.some(entry => entry.domElement === el)
-          );
-        } else if (component.component === 'Heading') {
-          // Heading should match to the actual H1/H2/H3/H4/H5/H6 element first, fallback to TD
-          matchedElement = domElements.find(el => 
-            (el.tagName === 'H1' || el.tagName === 'H2' || el.tagName === 'H3' || 
-             el.tagName === 'H4' || el.tagName === 'H5' || el.tagName === 'H6') && 
-            !componentToDom.some(entry => entry.domElement === el)
-          ) || domElements.find(el => 
-            el.tagName === 'TD' && 
-            !componentToDom.some(entry => entry.domElement === el)
-          );
-        } else if (component.component === 'Text') {
-          // Text should match to P element first, fallback to TD
-          matchedElement = domElements.find(el => 
-            el.tagName === 'P' && 
-            !componentToDom.some(entry => entry.domElement === el)
-          ) || domElements.find(el => 
-            el.tagName === 'TD' && 
-            !componentToDom.some(entry => entry.domElement === el)
-          );
-        } else if (component.component === 'Button') {
-          // Button should match to A tag first, fallback to TD
-          matchedElement = domElements.find(el => 
-            el.tagName === 'A' && 
-            !componentToDom.some(entry => entry.domElement === el)
-          ) || domElements.find(el => 
-            el.tagName === 'TD' && 
-            !componentToDom.some(entry => entry.domElement === el)
-          );
-        }
-        
-        if (matchedElement) {
-          componentToDom.push({ componentId: component.id, domElement: matchedElement, component });
-          console.log('[V2] Matched', component.id, '(' + component.component + ') to', matchedElement.tagName);
-        } else {
-          console.warn('[V2] Could not match component:', component.id, component.component);
+      // Build mapping from component ID to DOM elements (use outermost element for nested structures)
+      elementsWithIds.forEach(element => {
+        const componentId = element.getAttribute('data-component-id');
+        if (componentId && !componentToDom.has(componentId)) {
+          // Find the outermost element with this ID (parent table if nested)
+          let targetElement = element;
+          
+          // For table cells/rows, prefer the containing table if it also has the same ID
+          if (element.tagName === 'TD' || element.tagName === 'TR') {
+            const table = element.closest('table');
+            if (table && table.hasAttribute('data-component-id') && 
+                table.getAttribute('data-component-id') === componentId) {
+              targetElement = table;
+            }
+          }
+          
+          componentToDom.set(componentId, targetElement);
         }
       });
       
-      // Apply attributes in normal order - parents first
-      componentToDom.forEach(({ componentId, domElement }) => {
-        domElement.setAttribute('data-component-id', componentId);
-        
+      console.log('[V2] Built DOM mapping for', componentToDom.size, 'components');
+      
+      // Ensure all descendants also have the data-component-id for click handling
+      componentToDom.forEach((domElement, componentId) => {
         const allDescendants = domElement.querySelectorAll('*');
         allDescendants.forEach(desc => {
           if (!desc.hasAttribute('data-component-id')) {
@@ -237,32 +212,34 @@ export function EmailV2Frame({
         });
       });
       
-      // Single click handler using event delegation
+      // Single delegated click handler (event delegation pattern)
       document.body.addEventListener('click', (e) => {
         e.stopPropagation();
         e.preventDefault();
         
-        // Find component - check target element first, then search ancestors
-        let target = e.target;
-        if (!target.hasAttribute('data-component-id')) {
-          target = target.closest('[data-component-id]');
-        }
+        // Find component using .closest() - naturally finds nearest component boundary
+        const target = e.target.closest('[data-component-id]');
         if (!target) return;
         
         const clickedId = target.getAttribute('data-component-id');
-        const entry = componentToDom.find(c => c.componentId === clickedId);
+        const componentType = target.getAttribute('data-component-type');
         
-        if (entry) {
+        // O(1) lookup in component registry
+        const component = componentRegistry.get(clickedId);
+        const domElement = componentToDom.get(clickedId);
+        
+        if (domElement && component) {
           console.log('[V2 Frame] Component clicked:', {
             id: clickedId,
-            type: entry.component.component,
+            type: componentType,
             element: target.tagName
           });
           
-          const bounds = entry.domElement.getBoundingClientRect();
+          const bounds = domElement.getBoundingClientRect();
           window.parent.postMessage({ 
             type: 'component-click', 
             componentId: clickedId,
+            componentType: componentType,
             bounds: {
               x: bounds.x,
               y: bounds.y,
@@ -277,8 +254,74 @@ export function EmailV2Frame({
         }
       });
       
-      console.log('[V2 Frame] Applied attributes to', componentToDom.length, 'elements');
+      console.log('[V2 Frame] Applied attributes and click handlers to', componentToDom.size, 'components');
     }
+    
+    // Listen for selection updates from parent (prevents iframe reload)
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'update-selection') {
+        const selectedId = event.data.selectedComponentId;
+        
+        // Remove all selections
+        document.querySelectorAll('[data-component-id]').forEach(el => {
+          el.classList.remove('selected');
+        });
+        
+        // Add selection to specified component
+        if (selectedId) {
+          const selected = document.querySelector(\`[data-component-id="\${selectedId}"]\`);
+          if (selected) {
+            selected.classList.add('selected');
+            // Don't scroll - preserve user's scroll position
+          }
+        }
+      }
+      
+      // Listen for live edit updates (prevents iframe reload during editing)
+      if (event.data.type === 'LIVE_EDIT_UPDATE') {
+        const { componentId, updates } = event.data;
+        const element = document.querySelector(\`[data-component-id="\${componentId}"]\`);
+        
+        if (!element) return;
+        
+        // Apply content updates
+        if (updates.content !== undefined) {
+          element.textContent = updates.content;
+        }
+        
+        // Apply style updates
+        if (updates.styles) {
+          Object.assign(element.style, updates.styles);
+        }
+        
+        // Apply spacing updates (padding/margin)
+        if (updates.spacing) {
+          Object.assign(element.style, updates.spacing);
+        }
+        
+        // Apply prop updates
+        if (updates.props) {
+          Object.entries(updates.props).forEach(([key, value]) => {
+            if (key === 'href') element.setAttribute('href', value);
+            if (key === 'src') element.setAttribute('src', value);
+            if (key === 'alt') element.setAttribute('alt', value);
+            // Add more prop mappings as needed
+          });
+        }
+      }
+      
+      // Listen for delete component (prevents iframe reload)
+      if (event.data.type === 'DELETE_COMPONENT') {
+        const { componentId } = event.data;
+        const element = document.querySelector(\`[data-component-id="\${componentId}"]\`);
+        
+        if (element) {
+          // Hide element instead of removing (so we can restore on discard)
+          element.style.display = 'none';
+          element.setAttribute('data-deleted', 'true');
+        }
+      }
+    });
     
     // Initialize when DOM ready
     matchAndApplyAttributes();
@@ -311,24 +354,25 @@ export function EmailV2Frame({
     }
   </script>
   `}
-  
-  <script>
-    // Update selection styling (always present)
-    const selectedId = ${JSON.stringify(selectedComponentId)};
-    if (selectedId) {
-      document.querySelectorAll('[data-component-id]').forEach(el => {
-        el.classList.remove('selected');
-      });
-      const selected = document.querySelector(\`[data-component-id="\${selectedId}"]\`);
-      if (selected) {
-        selected.classList.add('selected');
-        selected.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
-    }
-  </script>
 </body>`
       )
     : '';
+
+  // Update selection styling via postMessage (doesn't reload iframe)
+  useEffect(() => {
+    if (!html || !iframeRef.current || !onComponentClick) return;
+    
+    const iframe = iframeRef.current;
+    const iframeWindow = iframe.contentWindow;
+    
+    if (iframeWindow) {
+      // Send message to update selection without reloading iframe
+      iframeWindow.postMessage({
+        type: 'update-selection',
+        selectedComponentId: selectedComponentId,
+      }, '*');
+    }
+  }, [selectedComponentId, html, onComponentClick]);
 
   return (
     <div className={`h-full overflow-hidden ${className}`} data-email-frame>
@@ -366,4 +410,7 @@ export function EmailV2Frame({
     </div>
   );
 }
+
+// Export component directly - remounting is controlled via key prop in parent
+export const EmailV2Frame = EmailV2FrameComponent;
 
