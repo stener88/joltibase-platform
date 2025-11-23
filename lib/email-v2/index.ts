@@ -55,10 +55,7 @@ export {
   type GenerationResult,
 } from './ai/generator-v2';
 
-// AI generation (Legacy - kept for refineComponent)
-export {
-  refineComponent,
-} from './ai/generator';
+
 
 // Semantic block types
 export type {

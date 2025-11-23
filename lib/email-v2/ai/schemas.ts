@@ -6,7 +6,6 @@
  */
 
 import { z } from 'zod';
-import { jsonSchema } from 'ai';
 
 /**
  * DEPRECATED: Old direct component generation schema
@@ -16,30 +15,20 @@ import { jsonSchema } from 'ai';
  */
 
 /**
- * JSON Schema for component refinement
+ * Zod schema for component refinement
+ * Converted from JSON Schema to Zod for native Gemini client compatibility
  */
-export const componentRefinementJsonSchema = jsonSchema<{
-  props?: Record<string, any>;
-  content?: string;
-  explanation?: string;
-}>({
-  type: 'object',
-  properties: {
-    props: {
-      type: 'object',
-      description: 'Updated props (only include changed props)',
-      additionalProperties: true
-    },
-    content: {
-      type: 'string',
-      description: 'Updated content (only if content changed)'
-    },
-    explanation: {
-      type: 'string',
-      description: 'Brief explanation of changes made'
-    },
-  },
+export const componentRefinementSchema = z.object({
+  props: z.record(z.string(), z.any()).optional().describe('Updated props (only include changed props)'),
+  content: z.string().optional().describe('Updated content (only if content changed)'),
+  explanation: z.string().optional().describe('Brief explanation of changes made'),
 });
+
+/**
+ * Legacy export name for backwards compatibility
+ * @deprecated Use componentRefinementSchema instead
+ */
+export const componentRefinementJsonSchema = componentRefinementSchema;
 
 /**
  * Schema for AI generation request

@@ -8,7 +8,7 @@
 
 import { useState, useEffect } from 'react';
 import { AlignLeft, AlignCenter, AlignRight, AlignJustify } from 'lucide-react';
-import { ElementDescriptor, getStyleProperties } from '@/lib/email/visual-edits/element-descriptor';
+import { ElementDescriptor, getStyleProperties } from '@/lib/email-v2/visual-edits/element-descriptor';
 import { ColorPicker } from '@/components/email-editor/shared/ColorPicker';
 
 interface InlineStylesPanelProps {
@@ -62,12 +62,12 @@ export function InlineStylesPanel({ descriptor, position, onUpdate }: InlineStyl
   };
 
   // Check which style properties are available
-  const hasFontSize = styleProperties.some(p => p.key === 'fontSize');
-  const hasFontWeight = styleProperties.some(p => p.key === 'fontWeight');
-  const hasFontFamily = styleProperties.some(p => p.key === 'fontFamily');
-  const hasTextColor = styleProperties.some(p => p.key === 'textColor');
-  const hasBackgroundColor = styleProperties.some(p => p.key === 'backgroundColor');
-  const hasAlign = styleProperties.some(p => p.key === 'align');
+  const hasFontSize = styleProperties.includes('fontSize');
+  const hasFontWeight = styleProperties.includes('fontWeight');
+  const hasFontFamily = styleProperties.includes('fontFamily');
+  const hasTextColor = styleProperties.includes('color');
+  const hasBackgroundColor = styleProperties.includes('backgroundColor');
+  const hasAlign = styleProperties.includes('textAlign');
 
   return (
     <div
@@ -132,8 +132,8 @@ export function InlineStylesPanel({ descriptor, position, onUpdate }: InlineStyl
           <div className="flex items-center justify-between">
             <label className="text-xs font-medium text-gray-300">Text Color</label>
             <ColorPicker
-              value={values.textColor || '#ffffff'}
-              onChange={(color) => handleChange('textColor', color)}
+              value={values.color || '#ffffff'}
+              onChange={(color) => handleChange('color', color)}
             />
           </div>
         )}

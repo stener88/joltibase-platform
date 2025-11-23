@@ -10,7 +10,7 @@
 
 import { useState, useRef } from 'react';
 import { Type, Palette, Trash2, ArrowUp, Settings, MoveHorizontal } from 'lucide-react';
-import { ElementDescriptor, getDeleteBehavior } from '@/lib/email/visual-edits/element-descriptor';
+import { ElementDescriptor, getDeleteBehavior } from '@/lib/email-v2/visual-edits/element-descriptor';
 import type { ToolbarConfig } from '@/lib/email-v2/toolbar-config';
 import type { ComponentType } from '@/lib/email-v2/types';
 

@@ -13,9 +13,9 @@ import { z } from 'zod';
  */
 export const HeroBlockSchema = z.object({
   blockType: z.literal('hero'),
-  headline: z.string().min(1, 'Headline is required').max(100, 'Headline too long'),
-  subheadline: z.string().max(200, 'Subheadline too long').optional(),
-  ctaText: z.string().min(1, 'CTA text is required').max(50, 'CTA text too long'),
+  headline: z.string().min(1, 'Headline is required').max(80, 'Headline too long'),
+  subheadline: z.string().max(140, 'Subheadline too long').optional(),
+  ctaText: z.string().min(1, 'CTA text is required').max(30, 'CTA text too long'),
   ctaUrl: z.string().url('Invalid CTA URL'),
   imageKeyword: z.string().max(60, 'Image keyword too long').optional(),
   imageUrl: z.string().url('Invalid image URL').optional(),
@@ -28,11 +28,11 @@ export const HeroBlockSchema = z.object({
  */
 export const FeaturesBlockSchema = z.object({
   blockType: z.literal('features'),
-  heading: z.string().max(100, 'Heading too long').optional(),
-  subheading: z.string().max(200, 'Subheading too long').optional(),
+  heading: z.string().max(80, 'Heading too long').optional(),
+  subheading: z.string().max(140, 'Subheading too long').optional(),
   features: z.array(z.object({
-    title: z.string().min(1, 'Feature title is required').max(50, 'Feature title too long'),
-    description: z.string().min(1, 'Feature description is required').max(200, 'Feature description too long'),
+    title: z.string().min(1, 'Feature title is required').max(40, 'Feature title too long'),
+    description: z.string().min(1, 'Feature description is required').max(90, 'Feature description too long'),
     icon: z.enum(['check', 'star', 'heart', 'lightning', 'shield', 'lock', 'clock', 'globe']).optional(),
     imageKeyword: z.string().max(60, 'Image keyword too long').optional(),
     imageUrl: z.string().url('Invalid image URL').optional(),
@@ -79,9 +79,9 @@ export const TestimonialBlockSchema = z.object({
  */
 export const CtaBlockSchema = z.object({
   blockType: z.literal('cta'),
-  headline: z.string().min(1, 'Headline is required').max(100, 'Headline too long'),
-  subheadline: z.string().max(200, 'Subheadline too long').optional(),
-  buttonText: z.string().min(1, 'Button text is required').max(50, 'Button text too long'),
+  headline: z.string().min(1, 'Headline is required').max(80, 'Headline too long'),
+  subheadline: z.string().max(140, 'Subheadline too long').optional(),
+  buttonText: z.string().min(1, 'Button text is required').max(30, 'Button text too long'),
   buttonUrl: z.string().url('Invalid button URL'),
   style: z.enum(['primary', 'secondary', 'outline']).default('primary'),
   // backgroundColor removed - colors are applied globally via settings
@@ -314,10 +314,10 @@ export const ArticlesBlockSchema = z.object({
  */
 export const ListBlockSchema = z.object({
   blockType: z.literal('list'),
-  heading: z.string().max(100, 'Heading too long').optional(),
+  heading: z.string().max(80, 'Heading too long').optional(),
   items: z.array(z.object({
-    title: z.string().max(100, 'Item title too long'),
-    description: z.string().max(300, 'Item description too long'),
+    title: z.string().max(40, 'Item title too long'),
+    description: z.string().max(90, 'Item description too long'),
     imageKeyword: z.string().max(60, 'Image keyword too long').optional(),
     imageUrl: z.string().url('Invalid image URL').optional(),
     link: z.string().url('Invalid link URL').optional(),
@@ -331,11 +331,11 @@ export const ListBlockSchema = z.object({
  */
 export const EcommerceBlockSchema = z.object({
   blockType: z.literal('ecommerce'),
-  heading: z.string().max(100, 'Heading too long').optional(),
-  subheading: z.string().max(200, 'Subheading too long').optional(),
+  heading: z.string().max(80, 'Heading too long').optional(),
+  subheading: z.string().max(140, 'Subheading too long').optional(),
   products: z.array(z.object({
-    name: z.string().max(100, 'Product name too long'),
-    description: z.string().max(300, 'Product description too long').optional(),
+    name: z.string().max(40, 'Product name too long'),
+    description: z.string().max(90, 'Product description too long').optional(),
     price: z.string().max(30, 'Price too long'),
     imageKeyword: z.string().max(60, 'Image keyword too long').optional(),
     imageUrl: z.string().url('Invalid image URL'),

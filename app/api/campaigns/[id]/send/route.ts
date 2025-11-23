@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
-import { queueEmail } from '@/lib/email/queue';
+import { queueEmail } from '@/lib/email-sending/queue';
 
 // ============================================
 // POST /api/campaigns/[id]/send - Send Campaign

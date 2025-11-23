@@ -47,9 +47,27 @@ function convertZodToGemini(schema: z.ZodType<any, any, any>): any {
 
   // Handle ZodString
   if (schema instanceof z.ZodString) {
-    return {
+    const checks = (schema as any)._def?.checks || [];
+    const maxCheck = checks.find((c: any) => c.kind === 'max');
+    const minCheck = checks.find((c: any) => c.kind === 'min');
+    
+    const result: any = {
       type: SchemaType.STRING,
     };
+    
+    // Extract maxLength constraint from ZodString.max()
+    if (maxCheck && typeof maxCheck.value === 'number') {
+      // Gemini doesn't support maxLength in schema, but we can add it to description
+      result.description = `Maximum length: ${maxCheck.value} characters`;
+    }
+    
+    // Extract minLength constraint from ZodString.min()
+    if (minCheck && typeof minCheck.value === 'number') {
+      const desc = result.description || '';
+      result.description = desc ? `${desc}. Minimum length: ${minCheck.value} characters` : `Minimum length: ${minCheck.value} characters`;
+    }
+    
+    return result;
   }
 
   // Handle ZodNumber
@@ -104,9 +122,11 @@ function convertZodToGemini(schema: z.ZodType<any, any, any>): any {
 
   // Handle ZodEnum
   if (schema instanceof z.ZodEnum) {
+    const enumValues = schema.options;
     return {
       type: SchemaType.STRING,
-      enum: schema.options,
+      enum: enumValues,
+      description: `Must be EXACTLY one of: ${enumValues.join(', ')}. Do not invent new values.`,
     };
   }
 

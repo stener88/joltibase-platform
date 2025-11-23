@@ -2,7 +2,7 @@
 
 import { EmailFrame } from './EmailFrame';
 import { EmailBlock, GlobalEmailSettings } from '@/lib/email/blocks/types';
-import type { ElementDescriptor } from '@/lib/email/visual-edits/element-descriptor';
+import type { ElementDescriptor } from '@/lib/email-v2/visual-edits/element-descriptor';
 
 export type DeviceMode = 'desktop' | 'mobile';
 export type ViewMode = 'html' | 'text';

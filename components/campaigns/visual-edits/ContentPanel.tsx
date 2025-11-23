@@ -7,7 +7,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ElementDescriptor, getContentProperties } from '@/lib/email/visual-edits/element-descriptor';
+import { ElementDescriptor, getContentProperties } from '@/lib/email-v2/visual-edits/element-descriptor';
 
 interface ContentPanelProps {
   descriptor: ElementDescriptor;

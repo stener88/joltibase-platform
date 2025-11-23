@@ -9,7 +9,7 @@ import { InlineStylesPanel } from './visual-edits/InlineStylesPanel';
 import { InlineSpacingPanel } from './visual-edits/InlineSpacingPanel';
 import { GlobalSettingsToolbar } from './visual-edits/GlobalSettingsToolbar';
 import { SaveDiscardBar } from './visual-edits/SaveDiscardBar';
-import type { ElementDescriptor } from '@/lib/email/visual-edits/element-descriptor';
+import type { ElementDescriptor } from '@/lib/email-v2/visual-edits/element-descriptor';
 import type { GlobalEmailSettings } from '@/lib/email/blocks/types';
 
 export interface ChatMessage {

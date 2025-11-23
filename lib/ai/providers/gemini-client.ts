@@ -1,380 +1,439 @@
 /**
- * Google Gemini 2.5 Flash Client
+ * Native Gemini Client
  * 
- * Prompt-based generation with Zod validation for complex schemas
- * 33x cheaper and 2-4x faster than OpenAI GPT-4o
- * 
- * Pricing (gemini-2.5-flash): $0.075 per 1M input tokens, $0.30 per 1M output tokens
+ * Uses Google's native @google/generative-ai SDK with proper responseSchema support
+ * This bypasses Vercel AI SDK's broken schema enforcement and uses Gemini's native structured output
  */
 
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { z } from 'zod';
 import { zodToGoogleAISchema } from './zod-to-gemini-schema';
-import { AIGenerationError } from '../types';
-import { MAX_TOKENS_GLOBAL } from '../client';
 
-// Lazy initialization of Gemini client
-let geminiClient: GoogleGenerativeAI | null = null;
-
-function getClient(): GoogleGenerativeAI {
-  if (!geminiClient) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new AIGenerationError(
-        'GEMINI_API_KEY environment variable is not set',
-        'INVALID_API_KEY',
-        false
-      );
-    }
-    geminiClient = new GoogleGenerativeAI(apiKey);
+/**
+ * Sanitize generated content to fix common Gemini issues
+ * - Null values for optional fields
+ * - Invalid enum values
+ */
+function sanitizeGeneratedContent(obj: any, schema: z.ZodType<any, any, any>): any {
+  // Handle null at the top
+  if (obj === null || obj === undefined) {
+    return undefined;
   }
-  return geminiClient;
-}
-
-/**
- * Pricing per 1M tokens (as of Nov 2024)
- * Gemini 2.5 Flash is 33x cheaper than GPT-4o
- */
-const PRICING = {
-  'gemini-2.5-flash': {
-    input: 0.075, // $0.075 per 1M tokens
-    output: 0.30,  // $0.30 per 1M tokens
-  },
-  'gemini-2.0-flash-exp': {
-    input: 0, // FREE during preview
-    output: 0, // FREE during preview
-  },
-  'gemini-1.5-flash': {
-    input: 0.075, // $0.075 per 1M tokens
-    output: 0.30,  // $0.30 per 1M tokens
-  },
-  'gemini-1.5-pro': {
-    input: 1.25,
-    output: 5.00,
-  },
-} as const;
-
-export type GeminiModel = keyof typeof PRICING;
-
-/**
- * Calculate cost based on token usage
- */
-export function calculateGeminiCost(
-  model: GeminiModel,
-  promptTokens: number,
-  completionTokens: number
-): number {
-  const pricing = PRICING[model];
-  const inputCost = (promptTokens / 1_000_000) * pricing.input;
-  const outputCost = (completionTokens / 1_000_000) * pricing.output;
-  return inputCost + outputCost;
-}
-
-/**
- * Message format compatible with OpenAI
- */
-export interface GeminiMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
-
-/**
- * Gemini generation options
- */
-export interface GeminiGenerationOptions {
-  model?: GeminiModel;
-  temperature?: number;
-  maxTokens?: number;
-  zodSchema?: z.ZodType<any>; // Direct Zod schema - no conversion needed!
-  retries?: number;
-}
-
-/**
- * Gemini generation result
- */
-export interface GeminiGenerationResult {
-  content: string;
-  tokensUsed: number;
-  promptTokens: number;
-  completionTokens: number;
-  costUsd: number;
-  generationTimeMs: number;
-  model: GeminiModel;
-}
-
-/**
- * Convert OpenAI-style messages to Gemini format
- */
-function convertMessagesToGemini(messages: GeminiMessage[]): { systemInstruction?: string; contents: any[] } {
-  const systemMessages = messages.filter(m => m.role === 'system');
-  const conversationMessages = messages.filter(m => m.role !== 'system');
   
-  // Combine all system messages into one system instruction
-  const systemInstruction = systemMessages.length > 0
-    ? systemMessages.map(m => m.content).join('\n\n')
-    : undefined;
+  // Handle arrays - recursively sanitize each item
+  if (Array.isArray(obj)) {
+    return obj
+      .map(item => sanitizeGeneratedContent(item, schema))
+      .filter(item => item !== undefined && item !== null);
+  }
   
-  // Convert conversation messages to Gemini format
-  const contents = conversationMessages.map(msg => ({
-    role: msg.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: msg.content }],
-  }));
-  
-  return { systemInstruction, contents };
-}
-
-/**
- * Generate completion with Gemini using native Zod support
- */
-export async function generateGeminiCompletion(
-  messages: GeminiMessage[],
-  options: GeminiGenerationOptions = {}
-): Promise<GeminiGenerationResult> {
-  const {
-    model = 'gemini-1.5-flash',
-    temperature = 0.7,
-    maxTokens = MAX_TOKENS_GLOBAL,
-    zodSchema,
-    retries = 3,
-  } = options;
-
-  let lastError: Error | null = null;
-  const startTime = Date.now();
-
-  // Retry logic
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const client = getClient();
-      const genModel = client.getGenerativeModel({ model });
-
-      // Convert messages to Gemini format
-      const { systemInstruction, contents } = convertMessagesToGemini(messages);
-
-      // Build generation config
-      const generationConfig: any = {
-        temperature,
-        maxOutputTokens: maxTokens,
-        responseMimeType: 'application/json',
-      };
-
-      // Use responseSchema with hybrid approach: strict for structure, flexible for settings/content
-      // DISABLED: Gemini API requires non-empty properties for OBJECT types
-      // Even with .loose()/.passthrough(), Gemini rejects empty object schemas
-      // We validate with Zod after generation instead
-      // if (zodSchema) {
-      //   const geminiSchema = zodToGoogleAISchema(zodSchema);
-      //   generationConfig.responseSchema = geminiSchema;
-      //   console.log('✅ [GEMINI] Using responseSchema with passthrough objects for flexibility');
-      // }
-      console.log('📐 [GEMINI] Using JSON mode with explicit formatting instructions');
-      console.log('⚙️ [GEMINI] Config:', { 
-        temperature, 
-        maxTokens, 
-        responseMimeType: 'application/json'
-      });
-
-      // Generate content
-      const result = await genModel.generateContent({
-        systemInstruction: systemInstruction || undefined,
-        contents,
-        generationConfig,
-      });
-
-      const response = result.response;
+  // Handle objects - recursively sanitize values
+  if (typeof obj === 'object') {
+    const result: any = {};
+    
+    for (const [key, value] of Object.entries(obj)) {
+      // Recursively sanitize the value FIRST
+      const sanitizedValue = sanitizeGeneratedContent(value, schema);
       
-      // Check if response has candidates
-      if (!response.candidates || response.candidates.length === 0) {
-        console.error('❌ [GEMINI] No candidates in response:', JSON.stringify(response, null, 2));
-        throw new Error('Gemini API returned no candidates. Response may have been blocked by safety filters.');
-      }
-      
-      const candidate = response.candidates[0];
-      
-      // Check for finish reason issues
-      if (candidate.finishReason && candidate.finishReason !== 'STOP') {
-        console.error('❌ [GEMINI] Unexpected finish reason:', candidate.finishReason);
-        console.error('📄 [GEMINI] Candidate details:', JSON.stringify(candidate, null, 2));
-        
-        if (candidate.finishReason === 'SAFETY') {
-          throw new Error('Gemini API blocked response due to safety filters.');
-        } else if (candidate.finishReason === 'MAX_TOKENS') {
-          throw new Error('Gemini API response truncated due to max tokens limit.');
-        } else if (candidate.finishReason === 'RECITATION') {
-          throw new Error('Gemini API blocked response due to recitation detection.');
-        } else {
-          throw new Error(`Gemini API stopped with reason: ${candidate.finishReason}`);
-        }
-      }
-      
-      // Extract text from candidate parts
-      let text = '';
-      if (candidate.content?.parts) {
-        text = candidate.content.parts
-          .filter((part: any) => part.text)
-          .map((part: any) => part.text)
-          .join('');
-      }
-      
-      // Fallback to response.text() if parts extraction failed
-      if (!text) {
-        try {
-          text = response.text();
-        } catch (textError) {
-          console.error('❌ [GEMINI] Failed to extract text:', textError);
-          console.error('📄 [GEMINI] Full response:', JSON.stringify(response, null, 2));
-          throw new Error('Failed to extract text from Gemini response');
-        }
-      }
-
-      // Post-process JSON to ensure it's valid
-      // Gemini sometimes adds markdown code blocks or extra whitespace
-      text = text.trim();
-      
-      if (!text) {
-        console.error('❌ [GEMINI] Empty response text after extraction');
-        console.error('📄 [GEMINI] Full response:', JSON.stringify(response, null, 2));
-        throw new Error('Gemini API returned empty response');
-      }
-      
-      // Remove markdown code blocks if present
-      if (text.startsWith('```json')) {
-        text = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-      } else if (text.startsWith('```')) {
-        text = text.replace(/^```\s*/, '').replace(/\s*```$/, '');
-      }
-      
-      // Trim again after removing code blocks
-      text = text.trim();
-      
-      // Log a preview of what we're returning
-      console.log('📄 [GEMINI] Response preview (first 500 chars):', text.substring(0, 500));
-      console.log('📄 [GEMINI] Response preview (last 200 chars):', text.substring(text.length - 200));
-
-      // Get token usage
-      const usageMetadata = response.usageMetadata;
-      const promptTokens = usageMetadata?.promptTokenCount || 0;
-      const completionTokens = usageMetadata?.candidatesTokenCount || 0;
-      const totalTokens = usageMetadata?.totalTokenCount || promptTokens + completionTokens;
-
-      const generationTimeMs = Date.now() - startTime;
-      const costUsd = calculateGeminiCost(model, promptTokens, completionTokens);
-
-      console.log('✅ [GEMINI] Generation successful:', {
-        model,
-        tokens: totalTokens,
-        cost: `$${costUsd.toFixed(6)}`,
-        time: `${generationTimeMs}ms`,
-      });
-
-      return {
-        content: text,
-        tokensUsed: totalTokens,
-        promptTokens,
-        completionTokens,
-        costUsd,
-        generationTimeMs,
-        model,
-      };
-    } catch (error: any) {
-      lastError = error;
-
-      console.error(`❌ [GEMINI] Attempt ${attempt}/${retries} failed:`, error.message);
-
-      // Check error type and determine if retryable
-      if (error.message?.includes('API_KEY')) {
-        throw new AIGenerationError(
-          'Invalid Gemini API key',
-          'INVALID_API_KEY',
-          false
-        );
-      }
-
-      if (error.message?.includes('quota') || error.message?.includes('QUOTA')) {
-        throw new AIGenerationError(
-          'Gemini API quota exceeded. Please check your billing.',
-          'INSUFFICIENT_QUOTA',
-          true // Make retryable so it falls back to OpenAI
-        );
-      }
-
-      if (error.message?.includes('rate limit') || error.status === 429) {
-        // Rate limit is retryable with backoff
-        if (attempt < retries) {
-          const backoffMs = Math.min(1000 * Math.pow(2, attempt), 10000);
-          console.log(`⏳ [GEMINI] Rate limited. Retrying in ${backoffMs}ms...`);
-          await new Promise(resolve => setTimeout(resolve, backoffMs));
-          continue;
-        }
-        throw new AIGenerationError(
-          'Gemini API rate limit exceeded. Please try again later.',
-          'RATE_LIMIT',
-          true
-        );
-      }
-
-      // Network errors
-      if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
-        if (attempt < retries) {
-          const backoffMs = 2000 * attempt;
-          console.log(`⏳ [GEMINI] Network error. Retrying in ${backoffMs}ms...`);
-          await new Promise(resolve => setTimeout(resolve, backoffMs));
-          continue;
-        }
-        throw new AIGenerationError(
-          'Network error connecting to Gemini API.',
-          'NETWORK_ERROR',
-          true
-        );
-      }
-
-      // Unknown error - retry if attempts remain
-      if (attempt < retries) {
-        const backoffMs = 1000 * attempt;
-        console.log(`⏳ [GEMINI] Retrying in ${backoffMs}ms...`);
-        await new Promise(resolve => setTimeout(resolve, backoffMs));
+      // Skip null/undefined values - let Zod use defaults or mark as optional
+      if (sanitizedValue === null || sanitizedValue === undefined) {
         continue;
       }
+      
+      // Fix invalid icons after sanitization
+      if (key === 'icon' && typeof sanitizedValue === 'string') {
+        const validIcons = ['check', 'star', 'heart', 'lightning', 'shield', 'lock', 'clock', 'globe'];
+        if (!validIcons.includes(sanitizedValue)) {
+          // Map common invalid icons to valid ones
+          const iconMap: Record<string, string> = {
+            'moon': 'star',
+            'sun': 'star',
+            'eye': 'shield',
+            'dark': 'shield',
+            'light': 'lightning',
+            'checkmark': 'check',
+            'tick': 'check',
+            'security': 'shield',
+            'speed': 'lightning',
+            'fast': 'lightning',
+            'time': 'clock',
+            'world': 'globe',
+            'global': 'globe',
+            'love': 'heart',
+            'favorite': 'star',
+            'featured': 'star',
+            'safe': 'shield',
+            'protected': 'lock',
+          };
+          
+          result[key] = iconMap[sanitizedValue.toLowerCase()] || 'check';
+        } else {
+          result[key] = sanitizedValue;
+        }
+      } else {
+        result[key] = sanitizedValue;
+      }
     }
+    
+    return result;
   }
-
-  // All retries failed
-  throw new AIGenerationError(
-    lastError?.message || 'Failed to generate completion after multiple retries',
-    'UNKNOWN',
-    true
-  );
+  
+  // Primitive values - return as-is
+  return obj;
 }
 
 /**
- * Test Gemini connection
+ * Recursively enforce string length constraints from Zod schema
+ * Gemini's native schema doesn't enforce maxLength, so we do it post-processing
  */
-export async function testGeminiConnection(): Promise<boolean> {
-  try {
-    const TestSchema = z.object({
-      status: z.literal('ok'),
-      message: z.string(),
-    });
-
-    const result = await generateGeminiCompletion(
-      [
-        {
-          role: 'user',
-          content: 'Respond with JSON: {"status": "ok", "message": "Connection successful"}',
-        },
-      ],
-      {
-        model: 'gemini-1.5-flash',
-        maxTokens: 100,
-        zodSchema: TestSchema,
-        retries: 1,
+function enforceStringLengthConstraints(obj: any, schema: z.ZodType<any, any, any>): any {
+  if (schema instanceof z.ZodObject) {
+    const shape = schema.shape;
+    const result: any = { ...obj };
+    
+    for (const [key, zodValue] of Object.entries(shape)) {
+      if (key in result) {
+        result[key] = enforceStringLengthConstraints(result[key], zodValue as z.ZodType<any>);
       }
-    );
-
-    const parsed = JSON.parse(result.content);
-    return parsed.status === 'ok';
-  } catch (error) {
-    console.error('❌ [GEMINI] Connection test failed:', error);
-    return false;
+    }
+    
+    return result;
   }
+  
+  if (schema instanceof z.ZodArray) {
+    return obj.map((item: any) => enforceStringLengthConstraints(item, schema.element as z.ZodType<any>));
+  }
+  
+  if (schema instanceof z.ZodString) {
+    const checks = (schema as any)._def?.checks || [];
+    // Zod v4 structure: check._zod.def.maximum and check._zod.def.check === 'max_length'
+    const maxCheck = checks.find((c: any) => c._zod?.def?.check === 'max_length');
+    const maxValue = maxCheck?._zod?.def?.maximum;
+    
+    if (maxValue && typeof maxValue === 'number' && typeof obj === 'string') {
+      if (obj.length > maxValue) {
+        // Truncate to max length
+        return obj.substring(0, maxValue);
+      }
+    }
+    
+    return obj;
+  }
+  
+  if (schema instanceof z.ZodOptional || schema instanceof z.ZodNullable) {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+    return enforceStringLengthConstraints(obj, schema.unwrap() as z.ZodType<any>);
+  }
+  
+  if (schema instanceof z.ZodDefault) {
+    return enforceStringLengthConstraints(obj, schema.removeDefault() as z.ZodType<any>);
+  }
+  
+  return obj;
+}
+
+/**
+ * Options for generating structured objects with Gemini
+ */
+export interface GenerateObjectOptions {
+  /** Model name (e.g., 'gemini-2.5-flash') */
+  model: string;
+  /** Zod schema for structured output */
+  schema: z.ZodType<any, any, any>;
+  /** User prompt */
+  prompt: string;
+  /** System prompt (optional) */
+  system?: string;
+  /** Temperature (0-1, default: 0.5) */
+  temperature?: number;
+  /** Max output tokens */
+  maxOutputTokens?: number;
+  /** API key (optional, falls back to env var) */
+  apiKey?: string;
+}
+
+/**
+ * Result from structured object generation
+ */
+export interface GenerateObjectResult {
+  /** Parsed object matching the schema */
+  object: any;
+  /** Token usage information */
+  usage: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+}
+
+/**
+ * Generate a structured object using Gemini's native responseSchema
+ * 
+ * This uses Gemini's built-in structured output feature which properly
+ * enforces schema constraints (unlike Vercel AI SDK's broken implementation)
+ */
+export async function generateObjectWithGemini(
+  options: GenerateObjectOptions
+): Promise<GenerateObjectResult> {
+  const {
+    model,
+    schema,
+    prompt,
+    system,
+    temperature = 0.5,
+    maxOutputTokens = 2000,
+    apiKey,
+  } = options;
+
+  // Get API key from options or environment
+  const geminiApiKey = apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  if (!geminiApiKey) {
+    throw new Error('GEMINI_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY environment variable is not set');
+  }
+
+  // Initialize Gemini client
+  const genAI = new GoogleGenerativeAI(geminiApiKey);
+  
+  // Get the model instance
+  const geminiModel = genAI.getGenerativeModel({
+    model,
+  });
+
+  // Convert Zod schema to Gemini's schema format
+  const responseSchema = zodToGoogleAISchema(schema);
+
+  // Build the full prompt (system + user)
+  const fullPrompt = system ? `${system}\n\n${prompt}` : prompt;
+
+  // Generate with structured output
+  const result = await geminiModel.generateContent({
+    contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
+    generationConfig: {
+      temperature,
+      maxOutputTokens,
+      responseSchema,
+      responseMimeType: 'application/json',
+    },
+  });
+
+  const response = result.response;
+  
+  // Extract text content (should be JSON)
+  // Try multiple methods to get the response text
+  let text = response.text();
+  
+  if (!text) {
+    // Fallback: try to get text from candidates
+    const candidates = response.candidates;
+    if (candidates && candidates.length > 0) {
+      const candidate = candidates[0];
+      if (candidate.content && candidate.content.parts) {
+        text = candidate.content.parts
+          .map((part: any) => part.text || '')
+          .join('');
+      }
+    }
+  }
+  
+  if (!text) {
+    throw new Error(`No response text from Gemini. Response: ${JSON.stringify({
+      candidates: response.candidates?.length || 0,
+      finishReason: response.candidates?.[0]?.finishReason,
+    })}`);
+  }
+
+  // Clean up common Gemini JSON response issues
+  // Remove preamble text like "Here is the JSON requested:" or markdown code blocks
+  text = text.trim();
+  if (text.startsWith('```json')) {
+    text = text.replace(/^```json\s*/, '').replace(/```\s*$/, '');
+  } else if (text.startsWith('```')) {
+    text = text.replace(/^```\s*/, '').replace(/```\s*$/, '');
+  }
+  
+  // Remove common preamble patterns
+  const preamblePatterns = [
+    /^Here is the JSON requested:\s*/i,
+    /^Here's the JSON:\s*/i,
+    /^JSON response:\s*/i,
+  ];
+  
+  for (const pattern of preamblePatterns) {
+    text = text.replace(pattern, '');
+  }
+  
+  text = text.trim();
+
+  // Parse JSON response
+  let parsed: any;
+  try {
+    parsed = JSON.parse(text);
+  } catch (error) {
+    // If JSON parsing fails, try to extract and fix incomplete JSON
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      let jsonStr = jsonMatch[0];
+      
+      // Try to fix common incomplete JSON issues
+      // If the string is cut off mid-value, try to close it
+      if (jsonStr.includes('"description":') && !jsonStr.match(/"description"\s*:\s*"[^"]*"/)) {
+        // String value is incomplete - try to extract and truncate it
+        const descMatch = jsonStr.match(/"description"\s*:\s*"([^"]*)/);
+        if (descMatch) {
+          // Extract the incomplete description and close the JSON properly
+          const incompleteDesc = descMatch[1];
+          // Truncate to a reasonable length and close the JSON
+          jsonStr = `{"description":"${incompleteDesc.substring(0, 200)}"}`;
+        }
+      }
+      
+      try {
+        parsed = JSON.parse(jsonStr);
+      } catch (e) {
+        // Last resort: if we can't parse, create a minimal valid object
+        // This will be caught by Zod validation anyway
+        parsed = {};
+      }
+    } else {
+      throw new Error(`Failed to parse JSON response from Gemini: ${error instanceof Error ? error.message : 'Unknown error'}\nResponse: ${text.substring(0, 300)}`);
+    }
+  }
+
+  // Post-process to fix common Gemini issues
+  // 1. Sanitize null values and invalid enums
+  parsed = sanitizeGeneratedContent(parsed, schema);
+  
+  // 2. Enforce maxLength constraints BEFORE validation
+  parsed = enforceStringLengthConstraints(parsed, schema);
+
+  // Validate against Zod schema (after sanitization and truncation)
+  const validated = schema.parse(parsed);
+
+  // Extract usage information
+  const usageMetadata = response.usageMetadata;
+  const promptTokens = usageMetadata?.promptTokenCount || 0;
+  const completionTokens = usageMetadata?.candidatesTokenCount || 0;
+  const totalTokens = usageMetadata?.totalTokenCount || promptTokens + completionTokens;
+
+  return {
+    object: validated,
+    usage: {
+      promptTokens,
+      completionTokens,
+      totalTokens,
+    },
+  };
+}
+
+/**
+ * Generate text completion (non-structured)
+ */
+export interface GenerateTextOptions {
+  /** Model name */
+  model: string;
+  /** Messages array with role and content */
+  messages: Array<{ role: 'user' | 'system' | 'assistant'; content: string }>;
+  /** Temperature (0-1, default: 0.7) */
+  temperature?: number;
+  /** Max output tokens */
+  maxTokens?: number;
+  /** API key (optional) */
+  apiKey?: string;
+}
+
+/**
+ * Text completion result
+ */
+export interface GenerateTextResult {
+  /** Generated text content */
+  content: string;
+  /** Token usage */
+  usage: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+}
+
+/**
+ * Generate text completion with Gemini
+ */
+export async function generateTextWithGemini(
+  options: GenerateTextOptions
+): Promise<GenerateTextResult> {
+  const {
+    model,
+    messages,
+    temperature = 0.7,
+    maxTokens = 1000,
+    apiKey,
+  } = options;
+
+  // Get API key
+  const geminiApiKey = apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  if (!geminiApiKey) {
+    throw new Error('GEMINI_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY environment variable is not set');
+  }
+
+  // Initialize Gemini client
+  const genAI = new GoogleGenerativeAI(geminiApiKey);
+  const geminiModel = genAI.getGenerativeModel({ model });
+
+  // Convert messages to Gemini format
+  // Gemini doesn't support system messages directly, so we prepend them to the first user message
+  const parts: Array<{ text: string }> = [];
+  
+  for (const msg of messages) {
+    if (msg.role === 'system') {
+      // Prepend system message to the first user message
+      if (parts.length === 0) {
+        parts.push({ text: `${msg.content}\n\n` });
+      } else {
+        // If we already have content, prepend system to it
+        parts[0].text = `${msg.content}\n\n${parts[0].text}`;
+      }
+    } else if (msg.role === 'user') {
+      parts.push({ text: msg.content });
+    } else if (msg.role === 'assistant') {
+      // Gemini doesn't support assistant messages in the same way
+      // We'll just include them as context in the user message
+      if (parts.length > 0) {
+        parts[parts.length - 1].text += `\n\nAssistant: ${msg.content}`;
+      }
+    }
+  }
+
+  // Generate content
+  const result = await geminiModel.generateContent({
+    contents: [{ role: 'user', parts }],
+    generationConfig: {
+      temperature,
+      maxOutputTokens: maxTokens,
+    },
+  });
+
+  const response = result.response;
+  const text = response.text();
+
+  if (!text) {
+    throw new Error('No response text from Gemini');
+  }
+
+  // Extract usage information
+  const usageMetadata = response.usageMetadata;
+  const promptTokens = usageMetadata?.promptTokenCount || 0;
+  const completionTokens = usageMetadata?.candidatesTokenCount || 0;
+  const totalTokens = usageMetadata?.totalTokenCount || promptTokens + completionTokens;
+
+  return {
+    content: text,
+    usage: {
+      promptTokens,
+      completionTokens,
+      totalTokens,
+    },
+  };
 }
 

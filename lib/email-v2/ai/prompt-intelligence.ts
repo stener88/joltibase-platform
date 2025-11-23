@@ -125,15 +125,41 @@ export function parseColorPreferences(prompt: string): {
   primaryColor?: string;
   backgroundColor?: string;
   textColor?: string;
+  headlineColor?: string;
+  bodyTextColor?: string;
+  heroTextColor?: string;
 } | undefined {
   const lower = prompt.toLowerCase();
   const colors: {
     primaryColor?: string;
     backgroundColor?: string;
     textColor?: string;
+    headlineColor?: string;
+    bodyTextColor?: string;
+    heroTextColor?: string;
   } = {};
   
-  // Background color detection
+  // Priority 1: Extract hex codes from prompt (highest priority)
+  // Matches #RRGGBB or #RGB format
+  const hexPattern = /#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})\b/g;
+  const hexMatches = prompt.match(hexPattern);
+  
+  if (hexMatches && hexMatches.length > 0) {
+    // First hex code becomes primary color
+    colors.primaryColor = hexMatches[0].toUpperCase();
+    
+    // Second hex code becomes secondary/background (if available)
+    if (hexMatches.length > 1) {
+      // Use the darkest or most contrasting as background
+      // For now, just use the last hex code as background
+      colors.backgroundColor = hexMatches[hexMatches.length - 1].toUpperCase();
+    }
+    
+    // Return early if hex codes found (they take priority)
+    return Object.keys(colors).length > 0 ? colors : undefined;
+  }
+  
+  // Priority 2: Background color detection from keywords
   if (lower.includes('white background')) {
     colors.backgroundColor = '#ffffff';
   } else if (lower.includes('black background') || lower.includes('dark background')) {
@@ -144,7 +170,7 @@ export function parseColorPreferences(prompt: string): {
     colors.backgroundColor = '#f9fafb';
   }
   
-  // Primary color detection from color names
+  // Priority 3: Primary color detection from color names
   const colorMap: Record<string, string> = {
     // Greens
     'forest green': '#228B22',
@@ -221,15 +247,29 @@ export function parseColorPreferences(prompt: string): {
     }
   }
   
-  // Text color detection
-  if (lower.includes('black text')) {
-    colors.textColor = '#000000';
-  } else if (lower.includes('white text')) {
-    colors.textColor = '#ffffff';
+  // Text color detection (more specific now)
+  if (lower.includes('black text') || lower.includes('dark headlines')) {
+    colors.headlineColor = '#000000';
+    colors.bodyTextColor = '#374151'; // Dark gray for body
+  } else if (lower.includes('white text') || lower.includes('light text')) {
+    colors.heroTextColor = '#ffffff';
+    // Don't set headline/body for white - only works on colored backgrounds
   } else if (lower.includes('dark text')) {
-    colors.textColor = '#1f2937';
+    colors.headlineColor = '#1f2937';
+    colors.bodyTextColor = '#374151';
   } else if (lower.includes('gray text') || lower.includes('grey text')) {
-    colors.textColor = '#6b7280';
+    colors.headlineColor = '#374151';
+    colors.bodyTextColor = '#6b7280';
+  }
+  
+  // Hero-specific text color
+  if (lower.includes('hero') && (lower.includes('white') || lower.includes('light'))) {
+    colors.heroTextColor = '#ffffff';
+  }
+  
+  // Legacy textColor - now maps to bodyTextColor
+  if (colors.textColor) {
+    colors.bodyTextColor = colors.bodyTextColor || colors.textColor;
   }
   
   // Style descriptors that imply colors
@@ -260,6 +300,87 @@ export function parseColorPreferences(prompt: string): {
   
   // Return undefined if no colors detected
   return Object.keys(colors).length > 0 ? colors : undefined;
+}
+
+/**
+ * Analyze prompt complexity to determine appropriate token allocation
+ * Returns complexity score and recommended token multiplier
+ */
+export function analyzePromptComplexity(prompt: string): {
+  score: number;
+  level: 'simple' | 'medium' | 'complex' | 'extreme';
+  recommendedTokens: number;
+  reasoning: string;
+} {
+  const length = prompt.length;
+  const lower = prompt.toLowerCase();
+  
+  let score = 0;
+  const reasons: string[] = [];
+  
+  // Length scoring
+  if (length > 800) {
+    score += 3;
+    reasons.push('very long prompt');
+  } else if (length > 500) {
+    score += 2;
+    reasons.push('long prompt');
+  } else if (length > 300) {
+    score += 1;
+    reasons.push('medium prompt');
+  }
+  
+  // Complexity keywords (indicate nuanced requirements)
+  const complexityKeywords = [
+    'without', 'but', 'however', 'balance', 'both', 
+    'while', 'yet', 'though', 'except', 'unless',
+    'impossible', 'difficult', 'nuanced', 'sensitive'
+  ];
+  const keywordCount = complexityKeywords.filter(kw => lower.includes(kw)).length;
+  if (keywordCount >= 5) {
+    score += 2;
+    reasons.push('highly nuanced requirements');
+  } else if (keywordCount >= 3) {
+    score += 1;
+    reasons.push('nuanced requirements');
+  }
+  
+  // Multiple constraints (bullet points, numbered lists)
+  const bulletPoints = (prompt.match(/\n[-•*]\s/g) || []).length;
+  const numberedPoints = (prompt.match(/\n\d+\.\s/g) || []).length;
+  const totalPoints = bulletPoints + numberedPoints;
+  if (totalPoints >= 8) {
+    score += 2;
+    reasons.push('many constraints');
+  } else if (totalPoints >= 5) {
+    score += 1;
+    reasons.push('multiple constraints');
+  }
+  
+  // Determine level and tokens
+  let level: 'simple' | 'medium' | 'complex' | 'extreme';
+  let recommendedTokens: number;
+  
+  if (score >= 6) {
+    level = 'extreme';
+    recommendedTokens = 2560; // +150%
+  } else if (score >= 4) {
+    level = 'complex';
+    recommendedTokens = 2048; // +100%
+  } else if (score >= 2) {
+    level = 'medium';
+    recommendedTokens = 1536; // +50%
+  } else {
+    level = 'simple';
+    recommendedTokens = 1024; // baseline
+  }
+  
+  return {
+    score,
+    level,
+    recommendedTokens,
+    reasoning: reasons.join(', ') || 'simple prompt'
+  };
 }
 
 /**

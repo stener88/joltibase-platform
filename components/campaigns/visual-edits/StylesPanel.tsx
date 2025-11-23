@@ -8,7 +8,7 @@
 
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { ElementDescriptor, getStyleProperties } from '@/lib/email/visual-edits/element-descriptor';
+import { ElementDescriptor, getStyleProperties } from '@/lib/email-v2/visual-edits/element-descriptor';
 import { ColorPicker } from '@/components/email-editor/shared/ColorPicker';
 import { AlignmentPicker } from '@/components/email-editor/shared/AlignmentPicker';
 import { PaddingInput } from '@/components/email-editor/shared/PaddingInput';

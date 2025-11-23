@@ -8,27 +8,14 @@
  * This ensures no empty Sections and deterministic structure
  */
 
-import { generateObject } from 'ai';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import type { EmailComponent, GlobalEmailSettings } from '../types';
 import { EmailContentSchema, createEmailContentSchema, getMaxBlocksForCampaign, type EmailContent } from './blocks';
-import { buildSemanticGenerationPrompt } from './prompts-v2';
+
 import { renderEmailComponent } from '../renderer';
 import { fetchImagesForBlocks } from './image-fetcher';
 import { replaceImageKeywords, addCreditsToFooter } from './image-helpers';
-import { enforceColorConsistency } from './color-enforcer';
-import { transformBlocksToEmail } from './transforms';
 
-// Initialize Google AI with API key
-const getGoogleModel = (model: string) => {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY environment variable is not set');
-  }
-  
-  const google = createGoogleGenerativeAI({ apiKey });
-  return google(model);
-};
+import { transformBlocksToEmail } from './transforms';
 
 /**
  * Calculate token cost for Gemini models
@@ -281,8 +268,7 @@ export async function generateEmailSemantic(
   console.log('🔄 [EMAIL-GEN-V2] Replacing image keywords with URLs');
   let blocksWithImages = replaceImageKeywords(content.blocks, imageMap);
   
-  // Phase 3.5: Enforce color consistency
-  blocksWithImages = enforceColorConsistency(blocksWithImages, settings.primaryColor);
+  
   
   // Phase 4: Add photo credits to footer
   if (credits.length > 0) {

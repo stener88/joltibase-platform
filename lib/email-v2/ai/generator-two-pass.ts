@@ -7,26 +7,13 @@
  */
 
 import { z } from 'zod';
-import { generateObject } from 'ai';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { generateStructuredObject } from '@/lib/ai/client';
 import { BLOCK_CONTENT_SCHEMAS } from './block-schemas';
 import type { GlobalEmailSettings } from '../types';
 import type { SemanticBlock } from './blocks';
 import { getMaxBlocksForCampaign } from './blocks';
 import { SEMANTIC_GENERATION_SYSTEM_PROMPT, STRUCTURE_GENERATION_SYSTEM_PROMPT, getBlockVariantGuidance } from './prompts-v2';
 import { preprocessPrompt, type PreprocessedPrompt } from './prompt-intelligence';
-import { MAX_TOKENS_GLOBAL } from '@/lib/ai/client';
-
-// Initialize Google AI with API key
-const getGoogleModel = (model: string) => {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY environment variable is not set');
-  }
-  
-  const google = createGoogleGenerativeAI({ apiKey });
-  return google(model);
-};
 
 // ==========================================
 // PASS 1 SCHEMAS (Simple)
@@ -106,7 +93,7 @@ async function generateEmailStructure(
   settings: GenerationSettings,
   emailType: string,
   maxBlocks: number,
-  model: any,
+  modelName: string,
   preprocessed?: PreprocessedPrompt
 ): Promise<{ structure: EmailStructure; usage: any }> {
   console.log('🏗️  [PASS-1] Generating email structure...');
@@ -132,14 +119,12 @@ Block types: header, hero, heading, text, features, testimonial, gallery, stats,
   let usage: any;
   
   try {
-    const result = await generateObject({
-      model,
+    const result = await generateStructuredObject({
+      model: modelName,
       schema: EmailStructureSchema,
-      schemaName: 'EmailStructure',
-      schemaDescription: 'Email skeleton with block types and purposes (max 150 chars each)',
       system: STRUCTURE_GENERATION_SYSTEM_PROMPT, // Minimal prompt for structure only
       prompt: structureUserPrompt,
-      maxOutputTokens: 1200, // Phase 1: Increased to 1200 to prevent length errors (was 800, too low)
+      maxOutputTokens: 2000, // Increased for very complex prompts with many constraints
     });
     object = result.object;
     usage = result.usage;
@@ -155,8 +140,9 @@ Block types: header, hero, heading, text, features, testimonial, gallery, stats,
       causeValue: error?.cause?.value,
     });
     
-    const zodError = error?.cause || error;
-    const issues = zodError?.issues || error?.issues || [];
+    // Extract Zod validation issues - they can be nested deep in the error chain
+    const zodError = error?.cause?.cause || error?.cause || error;
+    const issues = zodError?.issues || error?.cause?.issues || error?.issues || [];
     
     const isPreviewTextError = issues.some((issue: any) => 
       (Array.isArray(issue.path) ? issue.path.includes('previewText') : issue.path?.includes?.('previewText')) && 
@@ -194,19 +180,17 @@ Block types: header, hero, heading, text, features, testimonial, gallery, stats,
       console.warn(`[PASS-1] ${errorType} detected, retrying with stricter constraints (same token limit)...`);
       
       // Retry with explicit instruction to keep responses VERY concise - same token limit
-      const retryPrompt = `CRITICAL: purpose fields must be ≤100 characters (reduced from 150). Keep ALL responses extremely concise. Generate fewer blocks (max ${maxBlocks}). Use short purposes only.
+      const retryPrompt = `CRITICAL: purpose fields must be ≤100 characters (reduced from 150). Keep ALL responses extremely concise. Generate fewer blocks (max ${maxBlocks - 1}). Use short purposes only.
 
 ${structureUserPrompt}`;
       
       try {
-        const retryResult = await generateObject({
-          model,
+        const retryResult = await generateStructuredObject({
+          model: modelName,
           schema: EmailStructureSchema,
-          schemaName: 'EmailStructure',
-          schemaDescription: 'Email skeleton with block types and purposes (max 100 chars each)',
           system: STRUCTURE_GENERATION_SYSTEM_PROMPT,
           prompt: retryPrompt,
-          maxOutputTokens: 1200, // Same limit - don't increase
+          maxOutputTokens: 2000, // Same as original: increased for complex structure
         });
         object = retryResult.object;
         usage = retryResult.usage;
@@ -214,6 +198,42 @@ ${structureUserPrompt}`;
       } catch (retryError: any) {
         console.error('[PASS-1] Retry failed - token limit is strict, cannot increase');
         throw error; // Throw original error - limit is enforced
+      }
+    } else if (isPurposeError) {
+      console.warn(`[PASS-1] Purpose field(s) too long, retrying with explicit length constraint...`);
+      
+      // Extract which purposes are too long
+      const tooLongPurposes = issues
+        .filter((issue: any) => {
+          const pathStr = Array.isArray(issue.path) ? issue.path.join('.') : String(issue.path || '');
+          return pathStr.includes('purpose') && issue.code === 'too_big';
+        })
+        .map((issue: any) => {
+          const pathStr = Array.isArray(issue.path) ? issue.path.join('.') : String(issue.path || '');
+          return { path: pathStr, max: issue.maximum };
+        });
+      
+      console.warn('[PASS-1] Purpose errors:', tooLongPurposes);
+      
+      // Retry with stricter purpose constraint
+      const retryPrompt = `CRITICAL: ALL purpose fields MUST be ≤100 characters. COUNT CHARACTERS BEFORE WRITING. Use brief, direct purposes only.
+
+${structureUserPrompt}`;
+      
+      try {
+        const retryResult = await generateStructuredObject({
+          model: modelName,
+          schema: EmailStructureSchema,
+          system: STRUCTURE_GENERATION_SYSTEM_PROMPT + '\n\nCRITICAL: purpose fields must be ≤100 characters. Count before writing.',
+          prompt: retryPrompt,
+          maxOutputTokens: 2000,
+        });
+        object = retryResult.object;
+        usage = retryResult.usage;
+        console.log('[PASS-1] Successfully recovered with purpose length constraint');
+      } catch (retryError: any) {
+        console.error('[PASS-1] Retry failed for purpose length');
+        throw error; // Throw original error
       }
     } else if (isPreviewTextError) {
       console.warn(`[PASS-1] Preview text validation failed, attempting to extract and fix...`);
@@ -329,30 +349,29 @@ ${structureUserPrompt}`;
 // ==========================================
 
 /**
- * Get explicit field requirements for each block type
+ * Get explicit field requirements for each block type - ULTRA-COMPACT
  */
 function getBlockSpecificRequirements(blockType: string): string {
-  // Phase 1: Condensed requirements (removed verbose "Fields:" prefix)
-  const requirements: Record<string, string> = {
-    hero: `headline (8-15w), subheadline (15-25w), ctaText (2-5w), ctaUrl, imageKeyword`,
-    features: `heading (5-10w), subheading (10-20w), features[3-4]: title (3-8w), description (15-30w), imageKeyword`,
-    list: `heading (5-10w), items[4+]: title (5-10w), description (15-25w)`,
-    cta: `headline (8-12w), subheadline (10-20w), buttonText (2-5w), buttonUrl`,
-    heading: `text (5-15w)`,
-    text: `content (50-200w)`,
-    footer: `companyName, unsubscribeUrl, populate all fields`,
-    testimonial: `quote (20-50w), authorName, authorTitle, authorImageKeyword`,
-    article: `headline (8-15w), excerpt (30-60w), imageKeyword`,
-    articles: `heading (5-10w), articles[2-4]: headline, excerpt, imageKeyword`,
-    ecommerce: `heading (5-10w), products[1-4]: name, description (15-30w), price, imageKeyword`,
-    gallery: `heading (5-10w), images[2-6]: keyword`,
-    stats: `heading (5-10w), stats[2-4]: value, label, description (10-20w)`,
-    pricing: `heading (5-10w), plans[1-3]: name, price, description (15-30w), features[3-5]`,
-    marketing: `heading (5-10w), featuredItem (title, description, imageKeyword), items[2-4]: title, description, imageKeyword`,
-    feedback: `heading (5-10w), subheading (10-20w), ctaText, ctaUrl`,
+  const r: Record<string, string> = {
+    hero: `headline≤80,subheadline≤140,ctaText≤30,ctaUrl(valid),imageKeyword≤60`,
+    features: `heading≤80,subheading≤140,features[3-4]:{title≤40,description≤90,imageKeyword≤60}`,
+    list: `heading≤80,items[4+]:{title≤40,description≤90}`,
+    cta: `headline≤80,subheadline≤140,buttonText≤30,buttonUrl(valid)`,
+    heading: `text≤80`,
+    text: `content:concise`,
+    footer: `companyName,unsubscribeUrl(valid)`,
+    testimonial: `quote≤120,authorName≤40,authorTitle≤40,imageKeyword≤60`,
+    article: `heading≤80,excerpt≤80,imageKeyword≤60`,
+    articles: `heading≤80,articles[2-4]:{heading≤80,excerpt≤100,imageKeyword≤60}`,
+    ecommerce: `heading≤80,products[1-4]:{name≤40,description≤90,price,imageKeyword≤60}`,
+    gallery: `heading≤80,images[2-6]:imageKeyword≤60`,
+    stats: `heading≤80,stats[2-4]:{value≤40,label≤40,description≤80}`,
+    pricing: `heading≤80,plans[1-3]:{name≤40,price,description≤120,features[3-5]≤50}`,
+    marketing: `heading≤80,featuredItem:{title≤40,description≤90,imageKeyword≤60},items[2-4]:{title≤40,description≤90,imageKeyword≤60}. DO NOT generate imageUrl.`,
+    feedback: `heading≤80,subheading≤140,ctaText≤30,ctaUrl(valid)`,
   };
 
-  return requirements[blockType] || `Populate all fields.`;
+  return r[blockType] || `All fields.Check schema.`;
 }
 
 // ==========================================
@@ -367,7 +386,7 @@ async function generateBlockContent(
     settings: GenerationSettings;
     previousBlocks: any[];
   },
-  model: any
+  modelName: string
 ): Promise<{ block: SemanticBlock; usage: any } | null> {
   const schema = BLOCK_CONTENT_SCHEMAS[blockStructure.blockType];
   
@@ -384,28 +403,20 @@ async function generateBlockContent(
   // Generate block-specific prompt with explicit field requirements
   const blockSpecificRequirements = getBlockSpecificRequirements(blockStructure.blockType);
   
-  // Phase 1: Condensed prompt to reduce input tokens
-  const blockUserPrompt = `Generate ${blockStructure.blockType} block.
+  // Keep prompt minimal - no extra context to maximize output token budget
+  const blockUserPrompt = `${blockStructure.blockType}. ${blockSpecificRequirements}${variantGuidance ? ` ${variantGuidance}` : ''}
 
-${blockSpecificRequirements}
-${variantGuidance ? `\n${variantGuidance}` : ''}
-
-Purpose: ${blockStructure.purpose}
-${emailContext.settings.companyName ? `Company: ${emailContext.settings.companyName}` : ''}
-${emailContext.settings.tone ? `Tone: ${emailContext.settings.tone}` : ''}
-
-Populate ALL fields. No placeholders.`.trim();
+Purpose: ${blockStructure.purpose}${emailContext.settings.companyName ? ` Co:${emailContext.settings.companyName}` : ''}${emailContext.settings.tone ? ` Tone:${emailContext.settings.tone}` : ''}`.trim();
 
   try {
-    const { object, usage } = await generateObject({
-      model,
+    const result = await generateStructuredObject({
+      model: modelName,
       schema,
-      schemaName: `${blockStructure.blockType}Block`,
-      schemaDescription: `Content for ${blockStructure.blockType} block: ${blockStructure.purpose}`,
-      system: SEMANTIC_GENERATION_SYSTEM_PROMPT, // Pass 2: Full prompt with design specs (condensed)
+      system: SEMANTIC_GENERATION_SYSTEM_PROMPT,
       prompt: blockUserPrompt,
-      maxOutputTokens: 1200, // Phase 1: Reduced from 1750 to 1200 per block
+      maxOutputTokens: 2000,
     });
+    const { object, usage } = result;
 
     console.log(`✅ [PASS-2] ${blockStructure.blockType} generated successfully`);
     
@@ -441,7 +452,34 @@ Populate ALL fields. No placeholders.`.trim();
       } as SemanticBlock,
       usage,
     };
-  } catch (error) {
+  } catch (error: any) {
+    // Log error details for debugging
+    console.log(`[PASS-2] Generation error caught for ${blockStructure.blockType}:`, {
+      errorType: error?.constructor?.name,
+      message: error?.message,
+      hasCause: !!error?.cause,
+      causeType: error?.cause?.constructor?.name,
+    });
+    
+    // Extract Zod validation issues for detailed error reporting
+    const zodError = error?.cause?.cause || error?.cause || error;
+    const issues = zodError?.issues || error?.cause?.issues || error?.issues || [];
+    
+    if (issues.length > 0) {
+      const tooLongFields = issues
+        .filter((issue: any) => issue.code === 'too_big')
+        .map((issue: any) => {
+          const path = Array.isArray(issue.path) ? issue.path.join('.') : String(issue.path || '');
+          return { path, max: issue.maximum };
+        });
+      
+      if (tooLongFields.length > 0) {
+        console.warn(`⚠️  [PASS-2] Schema validation failed for ${blockStructure.blockType}:`, tooLongFields);
+        console.warn(`💡 [PASS-2] Check that prompt uses correct field names and limits match schema`);
+      }
+    }
+    
+    // Fail fast - rely on clear initial prompt instead of retrying
     console.error(`❌ [PASS-2] Failed to generate ${blockStructure.blockType}:`, error);
     return null;
   }
@@ -466,7 +504,6 @@ export async function generateSemanticBlocks(
   console.log(`📝 [TWO-PASS-GEN] Prompt: "${prompt}"`);
 
   const startTime = Date.now();
-  const googleModel = getGoogleModel(model);
 
   // Preprocess prompt to extract intent
   console.log('🔍 [TWO-PASS-GEN] Preprocessing prompt...');
@@ -501,13 +538,19 @@ export async function generateSemanticBlocks(
 
   // Determine max blocks (use detected suggestion if available)
   const detectedMaxBlocks = preprocessed.suggestedMaxBlocks;
-  const maxBlocks = options.maxBlocks || detectedMaxBlocks || getMaxBlocksForCampaign(
+  // Aggressive block limits to reduce token usage
+  const baseMaxBlocks = getMaxBlocksForCampaign(
     undefined,
     prompt,
     { itemCount: mergedStructureHints.itemCount, gridLayout: mergedStructureHints.gridLayout }
   );
+  
+  const maxBlocks = options.maxBlocks || Math.min(
+    detectedMaxBlocks || baseMaxBlocks,
+    emailType === 'transactional' ? 4 : 6  // Fewer blocks = fewer tokens
+  );
 
-  console.log(`📦 [TWO-PASS-GEN] Max blocks: ${maxBlocks}`);
+  console.log(`📦 [TWO-PASS-GEN] Max blocks: ${maxBlocks} (emailType: ${emailType || 'general'})`);
 
   // Use enhanced prompt with detected metadata
   const enhancedPrompt = preprocessed.enhancedPrompt;
@@ -519,7 +562,7 @@ export async function generateSemanticBlocks(
       enhancedSettings,
       preprocessed.emailType,
       maxBlocks,
-      googleModel,
+      model,
       preprocessed
     );
 
@@ -550,7 +593,7 @@ export async function generateSemanticBlocks(
             settings: enhancedSettings,
             previousBlocks: generatedBlocks, // Include context from previously generated blocks
           },
-          googleModel
+          model
         );
       });
 

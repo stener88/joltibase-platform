@@ -1,379 +1,228 @@
 /**
- * Multi-Provider AI Client
+ * Unified AI Client
  * 
- * Unified interface supporting:
- * - Gemini 2.5 Flash (primary) - 33x cheaper, 2-4x faster
- * - OpenAI GPT-4o (fallback) - for compatibility
- * 
- * Handles API calls with error handling, retry logic, and cost tracking
+ * Provides a consistent interface for AI operations across different providers.
+ * Currently supports Gemini with native structured output.
  */
 
-import OpenAI from 'openai';
-import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import { z } from 'zod';
-import { AIGenerationError } from './types';
-import { 
-  generateGeminiCompletion, 
-  type GeminiMessage,
-  type GeminiModel,
-  calculateGeminiCost 
-} from './providers/gemini-client';
-
-// ============================================================================
-// Global Constants
-// ============================================================================
+import { generateObjectWithGemini, type GenerateObjectOptions } from './providers/gemini-client';
+import { generateTextWithGemini, type GenerateTextOptions } from './providers/gemini-client';
 
 /**
- * Global maximum token limit for all AI generations
- * Set to 16000 for cost control - prevents runaway generations
+ * Supported AI providers
  */
-export const MAX_TOKENS_GLOBAL = 16000;
-
-// ============================================================================
-// Provider Types
-// ============================================================================
-
 export type AIProvider = 'gemini' | 'openai';
 
-export interface GenerationOptions {
-  model?: string;
-  temperature?: number;
-  maxTokens?: number;
-  jsonMode?: boolean;
-  jsonSchema?: Record<string, any>; // For OpenAI Structured Outputs
-  zodSchema?: z.ZodType<any>; // For Gemini native Zod support
-  retries?: number;
+/**
+ * Global max tokens limit
+ */
+export const MAX_TOKENS_GLOBAL = 4000;
+
+/**
+ * Options for text completion
+ */
+export interface GenerateCompletionOptions {
+  /** Messages array */
+  messages: Array<{ role: 'user' | 'system' | 'assistant'; content: string }>;
+  /** Provider to use */
   provider?: AIProvider;
+  /** Model name (defaults based on provider) */
+  model?: string;
+  /** Temperature (0-1) */
+  temperature?: number;
+  /** Max tokens */
+  maxTokens?: number;
+  /** Zod schema for structured output (optional) */
+  zodSchema?: z.ZodType<any, any, any>;
 }
 
-export interface GenerationResult {
+/**
+ * Result from text completion
+ */
+export interface GenerateCompletionResult {
+  /** Generated content */
   content: string;
-  tokensUsed: number;
-  promptTokens: number;
-  completionTokens: number;
-  costUsd: number;
-  generationTimeMs: number;
-  model: string;
+  /** Provider used */
   provider: AIProvider;
-}
-
-// ============================================================================
-// OpenAI Client (Legacy/Fallback)
-// ============================================================================
-
-let openaiClient: OpenAI | null = null;
-
-function getOpenAIClient(): OpenAI {
-  if (!openaiClient) {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new AIGenerationError(
-        'OPENAI_API_KEY environment variable is not set',
-        'INVALID_API_KEY',
-        false
-      );
-    }
-    openaiClient = new OpenAI({ apiKey });
-  }
-  return openaiClient;
+  /** Token usage */
+  tokensUsed: number;
+  /** Cost in USD (estimated) */
+  costUsd?: number;
 }
 
 /**
- * OpenAI Pricing per 1M tokens
+ * Options for structured object generation
  */
-const OPENAI_PRICING = {
-  'gpt-4o': {
-    input: 2.50,
-    output: 10.00,
-  },
-  'gpt-4-turbo-preview': {
-    input: 10.00,
-    output: 30.00,
-  },
-  'gpt-4': {
-    input: 30.00,
-    output: 60.00,
-  },
-} as const;
-
-type OpenAIModel = keyof typeof OPENAI_PRICING;
-
-function calculateOpenAICost(
-  model: OpenAIModel,
-  promptTokens: number,
-  completionTokens: number
-): number {
-  const pricing = OPENAI_PRICING[model];
-  const inputCost = (promptTokens / 1_000_000) * pricing.input;
-  const outputCost = (completionTokens / 1_000_000) * pricing.output;
-  return inputCost + outputCost;
+export interface GenerateStructuredObjectOptions {
+  /** Model name */
+  model: string;
+  /** Zod schema */
+  schema: z.ZodType<any, any, any>;
+  /** User prompt */
+  prompt: string;
+  /** System prompt (optional) */
+  system?: string;
+  /** Temperature (0-1, default: 0.5) */
+  temperature?: number;
+  /** Max output tokens */
+  maxOutputTokens?: number;
 }
 
 /**
- * Generate completion with OpenAI (fallback provider)
+ * Result from structured object generation
  */
-async function generateOpenAICompletion(
-  messages: ChatCompletionMessageParam[],
-  options: GenerationOptions
-): Promise<GenerationResult> {
-  const {
-    model = 'gpt-4o',
-    temperature = 0.7,
-    maxTokens = MAX_TOKENS_GLOBAL,
-    jsonMode = true,
-    jsonSchema,
-    retries = 3,
-  } = options;
-
-  let lastError: Error | null = null;
-  const startTime = Date.now();
-
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const responseFormat = jsonSchema
-        ? {
-            type: 'json_schema' as const,
-            json_schema: {
-              name: 'campaign_response',
-              description: 'Generated email campaign with blocks structure',
-              schema: jsonSchema,
-              strict: true,
-            },
-          }
-        : jsonMode
-        ? { type: 'json_object' as const }
-        : undefined;
-
-      const completion = await getOpenAIClient().chat.completions.create({
-        model,
-        messages,
-        temperature,
-        max_tokens: maxTokens,
-        response_format: responseFormat,
-      });
-
-      const usage = completion.usage;
-      if (!usage) {
-        throw new AIGenerationError(
-          'No usage data returned from OpenAI',
-          'INVALID_RESPONSE',
-          false
-        );
-      }
-
-      const generationTimeMs = Date.now() - startTime;
-      const costUsd = calculateOpenAICost(
-        model as OpenAIModel,
-        usage.prompt_tokens,
-        usage.completion_tokens
-      );
-
-      console.log('✅ [OPENAI] Generation successful:', {
-        model,
-        tokens: usage.total_tokens,
-        cost: `$${costUsd.toFixed(4)}`,
-        time: `${generationTimeMs}ms`,
-      });
-
-      return {
-        content: completion.choices[0].message.content || '',
-        tokensUsed: usage.total_tokens,
-        promptTokens: usage.prompt_tokens,
-        completionTokens: usage.completion_tokens,
-        costUsd,
-        generationTimeMs,
-        model,
-        provider: 'openai',
-      };
-    } catch (error: any) {
-      lastError = error;
-
-      if (error.code === 'invalid_api_key') {
-        throw new AIGenerationError(
-          'Invalid OpenAI API key',
-          'INVALID_API_KEY',
-          false
-        );
-      }
-
-      if (error.code === 'insufficient_quota') {
-        throw new AIGenerationError(
-          'Insufficient OpenAI quota',
-          'INSUFFICIENT_QUOTA',
-          false
-        );
-      }
-
-      if (error.code === 'rate_limit_exceeded') {
-        if (attempt < retries) {
-          const backoffMs = Math.min(1000 * Math.pow(2, attempt), 10000);
-          console.log(`⏳ [OPENAI] Rate limited. Retrying in ${backoffMs}ms...`);
-          await new Promise(resolve => setTimeout(resolve, backoffMs));
-          continue;
-        }
-        throw new AIGenerationError(
-          'OpenAI rate limit exceeded',
-          'RATE_LIMIT',
-          true
-        );
-      }
-
-      if (attempt < retries) {
-        const backoffMs = 1000 * attempt;
-        console.log(`⏳ [OPENAI] Retrying in ${backoffMs}ms...`);
-        await new Promise(resolve => setTimeout(resolve, backoffMs));
-        continue;
-      }
-    }
-  }
-
-  throw new AIGenerationError(
-    lastError?.message || 'Failed to generate completion',
-    'UNKNOWN',
-    true
-  );
-}
-
-// ============================================================================
-// Unified Multi-Provider Interface
-// ============================================================================
-
-/**
- * Get the default provider based on environment configuration
- */
-function getDefaultProvider(): AIProvider {
-  const envProvider = process.env.AI_PROVIDER?.toLowerCase();
-  
-  if (envProvider === 'openai') {
-    return 'openai';
-  }
-  
-  // Default to Gemini (33x cheaper!)
-  return 'gemini';
-}
-
-/**
- * Convert OpenAI messages to provider-agnostic format
- */
-function normalizeMessages(messages: ChatCompletionMessageParam[]): GeminiMessage[] {
-  return messages.map(msg => ({
-    role: msg.role as 'system' | 'user' | 'assistant',
-    content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content),
-  }));
-}
-
-/**
- * Generate completion with automatic provider selection and fallback
- * 
- * Primary: Gemini 2.5 Flash (33x cheaper, 2-4x faster)
- * Fallback: OpenAI GPT-4o (if Gemini fails)
- */
-export async function generateCompletion(
-  messages: ChatCompletionMessageParam[],
-  options: GenerationOptions = {}
-): Promise<GenerationResult> {
-  // Enforce global token limit for cost control
-  const safeMaxTokens = options.maxTokens 
-    ? Math.min(options.maxTokens, MAX_TOKENS_GLOBAL)
-    : MAX_TOKENS_GLOBAL;
-  
-  const finalOptions = { ...options, maxTokens: safeMaxTokens };
-  
-  const provider = finalOptions.provider || getDefaultProvider();
-  const normalizedMessages = normalizeMessages(messages);
-
-  console.log(`🤖 [AI-CLIENT] Using provider: ${provider.toUpperCase()}`);
-
-  try {
-    if (provider === 'gemini') {
-      // Use Gemini with prompt-based generation (Zod validates after)
-      const geminiResult = await generateGeminiCompletion(normalizedMessages, {
-        model: (finalOptions.model as GeminiModel) || 'gemini-2.5-flash',
-        temperature: finalOptions.temperature,
-        maxTokens: finalOptions.maxTokens,
-        zodSchema: finalOptions.zodSchema,
-        retries: finalOptions.retries,
-      });
-
-      return {
-        ...geminiResult,
-        provider: 'gemini',
-      };
-    } else {
-      // Use OpenAI as fallback
-      return await generateOpenAICompletion(messages, finalOptions);
-    }
-  } catch (error: any) {
-    // If primary provider fails and it's retryable, try fallback
-    if (provider === 'gemini' && error.retryable) {
-      console.log('⚠️  [AI-CLIENT] Gemini failed, falling back to OpenAI...');
-      
-      try {
-        return await generateOpenAICompletion(messages, {
-          ...finalOptions,
-          model: 'gpt-4o',
-        });
-      } catch (fallbackError: any) {
-        console.error('❌ [AI-CLIENT] Fallback to OpenAI also failed');
-        throw fallbackError;
-      }
-    }
-    
-    throw error;
-  }
-}
-
-/**
- * Test connection for a specific provider
- */
-export async function testConnection(provider?: AIProvider): Promise<boolean> {
-  const testProvider = provider || getDefaultProvider();
-  
-  try {
-    const TestSchema = z.object({
-      status: z.literal('ok'),
-    });
-
-    const result = await generateCompletion(
-      [
-        {
-          role: 'system',
-          content: 'You are a test assistant. Respond with valid JSON.',
-        },
-        {
-          role: 'user',
-          content: 'Respond with {"status": "ok"}',
-        },
-      ],
-      {
-        provider: testProvider,
-        maxTokens: 50,
-        retries: 1,
-        zodSchema: TestSchema,
-      }
-    );
-
-    const parsed = JSON.parse(result.content);
-    return parsed.status === 'ok';
-  } catch (error) {
-    console.error(`❌ [AI-CLIENT] ${testProvider.toUpperCase()} connection test failed:`, error);
-    return false;
-  }
-}
-
-/**
- * Get provider cost comparison
- */
-export function getProviderCostComparison(
-  promptTokens: number,
-  completionTokens: number
-): Record<string, number> {
-  return {
-    gemini: calculateGeminiCost('gemini-1.5-flash', promptTokens, completionTokens),
-    openai: calculateOpenAICost('gpt-4o', promptTokens, completionTokens),
+export interface GenerateStructuredObjectResult {
+  /** Parsed object matching schema */
+  object: any;
+  /** Token usage */
+  usage: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
   };
 }
 
-// Legacy exports for backward compatibility
-export { calculateOpenAICost as calculateCost };
-export type { ChatCompletionMessageParam };
+/**
+ * Generate text completion
+ * 
+ * Supports both plain text and structured output (if zodSchema provided)
+ */
+export async function generateCompletion(
+  messages: Array<{ role: 'user' | 'system' | 'assistant'; content: string }>,
+  options: {
+    provider?: AIProvider;
+    model?: string;
+    temperature?: number;
+    maxTokens?: number;
+    zodSchema?: z.ZodType<any, any, any>;
+  } = {}
+): Promise<GenerateCompletionResult> {
+  const {
+    provider = 'gemini',
+    model,
+    temperature = 0.7,
+    maxTokens = 1000,
+    zodSchema,
+  } = options;
+
+  // If zodSchema is provided, use structured output
+  if (zodSchema) {
+    // Combine system and user messages
+    const systemMessages = messages.filter(m => m.role === 'system');
+    const userMessages = messages.filter(m => m.role === 'user');
+    const systemPrompt = systemMessages.map(m => m.content).join('\n\n');
+    const userPrompt = userMessages.map(m => m.content).join('\n\n');
+
+    const modelName = model || (provider === 'gemini' ? 'gemini-2.5-flash' : 'gpt-4o');
+    
+    const result = await generateStructuredObject({
+      model: modelName,
+      schema: zodSchema,
+      prompt: userPrompt,
+      system: systemPrompt || undefined,
+      temperature,
+      maxOutputTokens: maxTokens,
+    });
+
+    // Parse the object back to JSON string for compatibility
+    const content = JSON.stringify(result.object);
+
+    return {
+      content,
+      provider,
+      tokensUsed: result.usage.totalTokens,
+      costUsd: calculateCost(provider, modelName, result.usage),
+    };
+  }
+
+  // Plain text completion
+  if (provider === 'gemini') {
+    const modelName = model || 'gemini-2.5-flash';
+    const result = await generateTextWithGemini({
+      model: modelName,
+      messages,
+      temperature,
+      maxTokens,
+    });
+
+    return {
+      content: result.content,
+      provider: 'gemini',
+      tokensUsed: result.usage.totalTokens,
+      costUsd: calculateCost('gemini', modelName, result.usage),
+    };
+  }
+
+  throw new Error(`Unsupported provider: ${provider}`);
+}
+
+/**
+ * Generate structured object with Zod schema validation
+ */
+export async function generateStructuredObject(
+  options: GenerateStructuredObjectOptions
+): Promise<GenerateStructuredObjectResult> {
+  const {
+    model,
+    schema,
+    prompt,
+    system,
+    temperature = 0.5,
+    maxOutputTokens = 2000,
+  } = options;
+
+  // Currently only Gemini is supported for structured output
+  // (OpenAI support can be added later if needed)
+  const result = await generateObjectWithGemini({
+    model,
+    schema,
+    prompt,
+    system,
+    temperature,
+    maxOutputTokens,
+  });
+
+  return {
+    object: result.object,
+    usage: result.usage,
+  };
+}
+
+/**
+ * Calculate estimated cost in USD
+ */
+function calculateCost(
+  provider: AIProvider,
+  model: string,
+  usage: { promptTokens: number; completionTokens: number }
+): number {
+  if (provider === 'gemini') {
+    // Gemini 2.5 Flash pricing: $0.10/$0.40 per 1M tokens (input/output)
+    if (model.includes('2.5-flash')) {
+      const inputCost = (usage.promptTokens / 1_000_000) * 0.10;
+      const outputCost = (usage.completionTokens / 1_000_000) * 0.40;
+      return inputCost + outputCost;
+    }
+    // Gemini 2.0 Flash: Free tier
+    if (model.includes('2.0-flash')) {
+      return 0;
+    }
+    // Gemini 1.5 Flash: $0.075/$0.30 per 1M tokens
+    if (model.includes('1.5-flash')) {
+      const inputCost = (usage.promptTokens / 1_000_000) * 0.075;
+      const outputCost = (usage.completionTokens / 1_000_000) * 0.30;
+      return inputCost + outputCost;
+    }
+    // Gemini 1.5 Pro: $1.25/$5.00 per 1M tokens
+    if (model.includes('1.5-pro')) {
+      const inputCost = (usage.promptTokens / 1_000_000) * 1.25;
+      const outputCost = (usage.completionTokens / 1_000_000) * 5.00;
+      return inputCost + outputCost;
+    }
+  }
+
+  // Default: return 0 if pricing unknown
+  return 0;
+}
+

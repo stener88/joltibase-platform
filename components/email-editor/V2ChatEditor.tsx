@@ -12,7 +12,7 @@ import { V2ContentPanel } from './visual-edits/V2ContentPanel';
 import { V2StylesPanel } from './visual-edits/V2StylesPanel';
 import { V2SpacingPanel } from './visual-edits/V2SpacingPanel';
 import { DiscardSaveButtons } from './visual-edits/DiscardSaveButtons';
-import type { ElementDescriptor } from '@/lib/email/visual-edits/element-descriptor';
+import type { ElementDescriptor } from '@/lib/email-v2/visual-edits/element-descriptor';
 import { SplitScreenLayout } from '@/components/campaigns/SplitScreenLayout';
 import { getToolbarConfig } from '@/lib/email-v2/toolbar-config';
 import { getComponentDescriptor } from '@/lib/email-v2/component-descriptor';

@@ -71,6 +71,16 @@ export interface GlobalEmailSettings {
   
   /** Background color for email body */
   backgroundColor?: string;
+  
+  // Optional text color overrides (if not provided, uses smart defaults)
+  /** Headline text color (defaults to context-appropriate value) */
+  headlineColor?: string;
+  
+  /** Body text color (defaults to #374151 gray) */
+  bodyTextColor?: string;
+  
+  /** Hero text color override (defaults to white on colored backgrounds) */
+  heroTextColor?: string;
 }
 
 /**

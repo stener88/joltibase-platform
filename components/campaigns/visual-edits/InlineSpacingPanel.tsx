@@ -7,7 +7,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ElementDescriptor, getSpacingProperties } from '@/lib/email/visual-edits/element-descriptor';
+import { ElementDescriptor, getSpacingProperties } from '@/lib/email-v2/visual-edits/element-descriptor';
 import { ColorPicker } from '@/components/email-editor/shared/ColorPicker';
 
 interface InlineSpacingPanelProps {

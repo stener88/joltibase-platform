@@ -7,6 +7,13 @@
 
 import type { EmailComponent, GlobalEmailSettings } from '../types';
 import type { SemanticBlock } from './blocks';
+import {
+  getSafeHeadlineColor,
+  getSafeBodyColor,
+  getSafeTextColor,
+  DEFAULT_COLORS,
+  validateHexColor,
+} from '../color-utils';
 
 // ============================================================================
 // Helper Utilities
@@ -125,6 +132,21 @@ export function transformBlocksToEmail(
 // ============================================================================
 
 function createHeroSection(block: any, settings: GlobalEmailSettings): EmailComponent {
+  // Smart color selection for hero:
+  // If user provided heroTextColor, use it (with safety check)
+  // Otherwise, use white (good contrast on colored backgrounds)
+  const heroHeadlineColor = getSafeHeadlineColor(
+    validateHexColor(settings.heroTextColor),
+    settings.primaryColor,
+    DEFAULT_COLORS.heroHeadline
+  );
+  
+  const heroSubheadlineColor = getSafeBodyColor(
+    validateHexColor(settings.heroTextColor),
+    settings.primaryColor,
+    DEFAULT_COLORS.heroSubheadline
+  );
+  
   const children: EmailComponent[] = [
     {
       id: 'hero-heading',
@@ -132,7 +154,7 @@ function createHeroSection(block: any, settings: GlobalEmailSettings): EmailComp
       props: {
         as: 'h1',
         style: {
-          color: '#ffffff',
+          color: heroHeadlineColor, // Now respects user preference with safety checks
           fontSize: '42px',
           fontWeight: 700,
           lineHeight: '1.2',
@@ -151,7 +173,7 @@ function createHeroSection(block: any, settings: GlobalEmailSettings): EmailComp
       component: 'Text',
       props: {
         style: {
-          color: '#e9d5ff',
+          color: heroSubheadlineColor, // Now respects user preference
           fontSize: '18px',
           lineHeight: '1.5',
           margin: '0 0 32px 0',
@@ -221,6 +243,20 @@ function createHeroSection(block: any, settings: GlobalEmailSettings): EmailComp
 }
 
 function createFeaturesSection(block: any, settings: GlobalEmailSettings): EmailComponent {
+  // Smart color selection for features (on white background):
+  // Use headlineColor if provided, otherwise default to dark gray
+  const featureHeadlineColor = getSafeHeadlineColor(
+    validateHexColor(settings.headlineColor),
+    DEFAULT_COLORS.white,
+    DEFAULT_COLORS.contentHeadline
+  );
+  
+  const featureBodyColor = getSafeBodyColor(
+    validateHexColor(settings.bodyTextColor),
+    DEFAULT_COLORS.white,
+    DEFAULT_COLORS.contentSubtext
+  );
+  
   const children: EmailComponent[] = [];
 
   if (block.heading) {
@@ -230,7 +266,7 @@ function createFeaturesSection(block: any, settings: GlobalEmailSettings): Email
       props: {
         as: 'h2',
         style: {
-          color: '#111827',
+          color: featureHeadlineColor, // Now respects user preference
           fontSize: '32px',
           fontWeight: 700,
           margin: '0 0 16px 0',
@@ -248,7 +284,7 @@ function createFeaturesSection(block: any, settings: GlobalEmailSettings): Email
       component: 'Text',
       props: {
         style: {
-          color: '#6b7280',
+          color: featureBodyColor, // Now respects user preference
           fontSize: '16px',
           margin: '0 0 40px 0',
           textAlign: 'center',

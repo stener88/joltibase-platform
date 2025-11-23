@@ -11,69 +11,54 @@ import type { GlobalEmailSettings } from '../types';
  * Minimal system prompt for Pass 1 (structure generation only)
  * Reduced from ~2,000 tokens to ~300 tokens
  */
-export const STRUCTURE_GENERATION_SYSTEM_PROMPT = `You are an email structure strategist. Generate email structure (block types + order), NOT content.
-
-Rules:
-- previewText: ≤140 chars
-- Choose 2-12 blocks from: header, hero, heading, text, features, testimonial, gallery, stats, pricing, ecommerce, article, articles, list, marketing, feedback, buttons, image, avatars, link, code, markdown, cta, footer
-- Each block needs: blockType + purpose (max 150 chars)
-- Order: header→content→cta→footer
-- Return valid JSON with previewText and blocks array`;
+export const STRUCTURE_GENERATION_SYSTEM_PROMPT = `Email structure only. previewText ≤140 chars. 2-12 blocks: header,hero,heading,text,features,testimonial,gallery,stats,pricing,ecommerce,article,articles,list,marketing,feedback,buttons,image,avatars,link,code,markdown,cta,footer. Each: blockType+purpose (≤150). Order: header→content→cta→footer. Return JSON.`;
 
 /**
- * Full system prompt for Pass 2 (content generation)
- * Condensed from ~2,000 tokens to ~800 tokens by removing verbose examples
+ * Pass 2 content generation - ULTRA-COMPACT for max token efficiency
  */
-export const SEMANTIC_GENERATION_SYSTEM_PROMPT = `You are an expert email content strategist. Generate email content as semantic blocks, NOT HTML or React components.
+export const SEMANTIC_GENERATION_SYSTEM_PROMPT = `Generate semantic email JSON with exact field names and character limits.
 
-⚠️ VALIDATION:
-- previewText: ≤140 chars
-- URLs: Valid https:// format
-- JSON: Valid schema match
+CRITICAL LIMITS (schema will reject if exceeded):
+- headline: MAX 80 chars
+- subheadline: MAX 140 chars (hero, cta)
+- subheading: MAX 140 chars (features, articles, gallery, marketing, feedback)
+- description: MAX 90 chars
+- title: MAX 40 chars
+- ctaText/buttonText: MAX 30 chars
+- imageKeyword: MAX 60 chars
+- URLs: Must be valid https://
 
-Block types: hero, features, content, testimonial, cta, footer, gallery, stats, pricing, article, articles, list, ecommerce, marketing, header, feedback, heading, text, link, buttons, image, avatars, code, markdown.
+ICON SELECTION (for features block - use EXACTLY one of these):
+- check: Completed items, verified features, checkmarks
+- star: Premium features, highlights, ratings
+- heart: User favorites, loved features, liked items
+- lightning: Fast features, speed, power, energy
+- shield: Security, protection, safety features
+- lock: Privacy, access control, secure features
+- clock: Time-saving, scheduling, time features
+- globe: Global, worldwide, international features
 
-## Design System
+DO NOT invent icon names like "moon", "sun", "eye", "dark", "light". ONLY use: check, star, heart, lightning, shield, lock, clock, globe.
 
-**Spacing:** 8px grid (8,16,24,32,40,48,64,80). Hero: 80px padding. Sections: 40-48px padding.
+OPTIONAL FIELDS (can be omitted):
+- imageUrl: NEVER generate URLs. Leave blank or omit entirely. Images are fetched separately.
+- imageKeyword: Only for blocks with images (hero, features, testimonial, gallery, etc.)
 
-**Typography:** Hero: 56-64px/800-900/1.1. Headers: 36-40px/700-800/1.2. Subheads: 20-24px/600/#6b7280. Body: 17-18px/400/1.7. Headings ≥1.5x body size.
+EXAMPLES (count chars carefully):
+✅ GOOD description (78 chars): "Automate repetitive tasks and focus on what matters most to your business success"
+✅ GOOD subheading (118 chars): "Experience powerful tools designed to streamline your workflow and boost team productivity across all departments"
+✅ GOOD icon: "check" (for verified features), "lightning" (for fast features), "shield" (for secure features)
+❌ TOO LONG description (93 chars): "Protect your sensitive information with robust encryption and advanced security protocols today"
+❌ TOO LONG subheading (141 chars): "Experience unparalleled efficiency and innovation designed to streamline your operations and elevate your productivity to new heights overall"
+❌ INVALID icon: "moon", "sun", "eye", "dark" (not in the valid list)
 
-**Colors:** Text: #1f2937 (headlines), #374151 (body), #6b7280 (secondary). CTAs: {primaryColor}. Backgrounds: #f9fafb (page), #ffffff (content). Never use #6b7280 as primary text.
-
-**Accessibility:** Buttons ≥44px height. Text contrast 4.5:1 minimum.
-
-## Content Quality
-
-**Writing:** Conversational, brand-specific. Include specifics/numbers. Active voice. Paragraphs: 2-3 sentences max.
-
-**Headlines:** 8-15 words, action-oriented. ❌ "Welcome" → ✅ "Your analytics dashboard is ready. Here's what's new."
-
-**Body:** Lead with benefits. Use "you/your" > "we/our". Descriptions: 15-30 words minimum.
-
-**Image Keywords:** 1-3 core words (nouns only), max 60 chars. Generic terms: "coffee shop", "team meeting", "mountains forest". Avoid adjectives.
-
-## Content Requirements
-
-**Minimum Lengths:**
-- Headlines: 8+ words
-- Subheadlines: 15+ words (if field exists, REQUIRED)
-- Descriptions: 15+ words
-- CTA text: 2+ words
-
-**Required Fields:**
+FIELD NAMES (use exact names):
 - Hero: headline, subheadline, ctaText, ctaUrl, imageKeyword
-- Features: heading, subheading, features[3-4] each: title, description, imageKeyword
-- List: heading, items[4+] each: title, description
+- Features: heading, subheading, features[]{title, description, icon, imageKeyword}
 - CTA: headline, subheadline, buttonText, buttonUrl
+- List: heading, items[]{title, description}
 
-**DO NOT:** Empty strings, placeholders, generic content ("Welcome", "Check it out"), single-word headlines.
-
-**Brand:** Primary color: {primaryColor}. Font: {fontFamily}. Tone: Professional but approachable.
-
-**Visual Focus:** Prioritize visual blocks (gallery, stats, features with images, ecommerce) over text-heavy blocks. Use images, icons, and visual elements. Keep text concise and impactful.
-
-Generate: 1) Specific to request, 2) Email-appropriate, 3) Action-oriented, 4) Visual and styled, 5) Complete with all fields populated.`;
+STYLE: 8px grid. Hero:80px pad. h1:56-64px/800. h2:36-40px/700. body:17-18px/400. Active voice. Benefits-first. "you/your" language. Images:1-3 nouns,generic. No placeholders. Brand:{primaryColor},{fontFamily}.`;
 
 /**
  * Build semantic generation prompt with user request and settings
@@ -99,17 +84,9 @@ export function buildSemanticGenerationPrompt(
   let guidance = '';
 
   if (emailType === 'marketing') {
-    // Content type specific guidance
     let contentTypeGuidance = '';
     if (campaignOptions?.contentType === 'press-release') {
-      contentTypeGuidance = `
-CONTENT TYPE: Press Release
-STRUCTURE: Formal announcement format
-- Recommended: header (with logo) + hero (centered, formal headline) + content (2-3 paragraphs) + features (key points) + cta + footer
-- Tone: Professional, formal, newsworthy
-- Use formal language, third-person perspective
-- Include key facts: who, what, when, where, why
-- Block selection: header + hero + content + features + cta + footer`;
+      contentTypeGuidance = `Press release: header+hero(centered)+content(2-3¶)+features+cta+footer. Formal tone, 3rd person, who/what/when/where/why.`;
     } else if (campaignOptions?.contentType === 'product-launch') {
       contentTypeGuidance = `
 CONTENT TYPE: Product Launch
@@ -151,95 +128,21 @@ TONE: Playful
 - Creative, energetic messaging`;
     }
     
-    guidance = `
-
-Email type: Marketing campaign
-${contentTypeGuidance}${toneGuidance}
-BLOCK SELECTION: Choose structure that fits the message:
-- Product launch: hero + features (icons-2col) + gallery + testimonial + pricing + cta + footer
-- Welcome/onboarding: hero (split) + features (numbered) + cta + footer
-- Announcement: hero + content + article + cta + footer
-- Sale/promotion: hero + ecommerce (3-column or 4-grid) + cta + footer
-- Feature highlight: hero + content + features (icons-centered) + stats + cta + footer
-
-VARIANT USAGE:
-- Use 'split' hero for emphasis on imagery
-- Use 'icons-2col' or 'icons-centered' for features with visual emphasis
-- Use 'gallery' for product showcases
-- Use 'stats' to highlight metrics/achievements
-- Use 'pricing' for upgrade/purchase campaigns
-
-Goal: Drive conversions and engagement with visual variety`;
+    guidance = `Marketing: ${contentTypeGuidance}${toneGuidance} Product launch→hero+features(icons-2col)+gallery+pricing+cta. Welcome→hero(split)+features(numbered)+cta. Sale→hero+ecommerce(grid)+cta. Use split hero for images, icons-2col for features, gallery for products.`;
   } else if (emailType === 'transactional') {
-    guidance = `
-
-Email type: Transactional
-BLOCK SELECTION: Keep it brief and direct
-- Recommended: content + list (numbered) + cta + footer (one-column)
-- Use 1-2 content/list blocks maximum
-- Skip hero, gallery, testimonials, pricing
-- Use simple variants only
-
-Goal: Clear information and next steps`;
+    guidance = `Transactional: content+list(numbered)+cta+footer. Max 1-2 blocks. Skip hero/gallery/testimonials. Simple variants only.`;
   } else if (emailType === 'newsletter') {
-    guidance = `
-
-Email type: Newsletter
-BLOCK SELECTION: Multiple content sections with varied layouts
-- Recommended: hero + article (image-right or two-cards) + list + content + footer
-- Or: hero + content + gallery (3-column) + article (single-author) + footer
-- Vary block types: mix articles, content, lists
-- Use 'article' blocks for featured stories
-- Use 'list' for quick updates or tips
-- Vary paragraph counts (1-3 per content block)
-
-VARIANT USAGE:
-- Mix article variants: image-top, image-right, two-cards
-- Use list variants: numbered for steps, image-left for feature updates
-- Use centered hero with compelling headline
-
-Goal: Inform and engage subscribers with varied content formats`;
+    guidance = `Newsletter: hero+article(image-right|two-cards)+list+content+footer. Mix article variants. Use numbered lists for steps.`;
   } else {
-    guidance = `
-
-Email type: General
-BLOCK SELECTION: Choose blocks that best fit the user's request
-- Use 2-6 blocks total (not always the same)
-- Don't always include all block types
-- Consider the context:
-  * Ecommerce: use 'ecommerce' and 'gallery' blocks
-  * B2B/SaaS: use 'features', 'stats', 'testimonial', 'pricing'
-  * Content-focused: use 'article', 'content', 'list'
-  * Event: use 'hero', 'content', 'stats' (attendees, speakers)
-- Vary content length based on complexity
-- Mix variants for visual interest`;
+    guidance = `General: 2-6 blocks. Ecommerce→ecommerce+gallery. B2B/SaaS→features+stats+testimonial+pricing. Content→article+content+list. Event→hero+content+stats. Vary length & variants.`;
   }
 
-  // Add campaign-specific context if provided
-  let campaignContext = '';
+  // Campaign context
+  let ctx = '';
   if (campaignOptions) {
-    campaignContext = `
-
-Campaign Context:`;
-    
-    if (campaignOptions.campaignType) {
-      campaignContext += `
-- Campaign Type: ${campaignOptions.campaignType}`;
-    }
-    
-    if (campaignOptions.companyName) {
-      campaignContext += `
-- Company: ${campaignOptions.companyName}`;
-    }
-    
-    if (campaignOptions.targetAudience) {
-      campaignContext += `
-- Target Audience: ${campaignOptions.targetAudience}`;
-    }
-    
-    campaignContext += `
-
-Please tailor the content, tone, and messaging to match this context.`;
+    if (campaignOptions.campaignType) ctx += ` Type: ${campaignOptions.campaignType}.`;
+    if (campaignOptions.companyName) ctx += ` Co: ${campaignOptions.companyName}.`;
+    if (campaignOptions.targetAudience) ctx += ` Audience: ${campaignOptions.targetAudience}.`;
   }
 
   const systemPrompt = SEMANTIC_GENERATION_SYSTEM_PROMPT
@@ -247,91 +150,44 @@ Please tailor the content, tone, and messaging to match this context.`;
     .replace('{fontFamily}', settings.fontFamily);
 
   return `${systemPrompt}
+${guidance}${ctx}
 
-${guidance}${campaignContext}
+Request: "${userPrompt}"${campaignOptions?.structureHints ? `
+Hints:${campaignOptions.structureHints.gridLayout ? ` Grid ${campaignOptions.structureHints.gridLayout.columns}×${campaignOptions.structureHints.gridLayout.rows} (${campaignOptions.structureHints.itemCount} items).` : ''}${campaignOptions.structureHints.itemCount && !campaignOptions.structureHints.gridLayout ? ` ${campaignOptions.structureHints.itemCount} items.` : ''}${campaignOptions.structureHints.needsTable ? ` Table/grid required.` : ''}${campaignOptions.structureHints.needsLogo ? ` Logo in header.` : ''}` : ''}
 
-VARIETY & INTELLIGENCE REQUIREMENTS:
-1. BLOCK SELECTION:
-   - Analyze user request to choose most appropriate blocks
-   - Newsletter → Use article, content, list blocks
-   - Promotional → Use ecommerce, gallery, pricing, stats
-   - B2B/SaaS → Use features, testimonial, stats, pricing
-   - Event/Webinar → Use stats (speakers, attendees), content, article
-   
-2. VARIANT SELECTION:
-   - Choose variants that enhance the message:
-     * Split hero when imagery is important
-     * Numbered features for sequential benefits
-     * Large-avatar testimonial for credibility emphasis
-     * Grid galleries for product showcases
-     * Stepped stats for dramatic metric presentation
-   
-3. STRUCTURAL VARIETY:
-   - Vary the number of blocks based on campaign complexity:
-     * Simple/Transactional: 3-6 blocks
-     * Standard/Newsletter: 5-8 blocks  
-     * Complex/Promotional: 8-12 blocks
-   - Don't use the same structure every time
-   - Mix block types based on content
-   - For features: choose between 2, 3, or 4 items
-   - For content: use 1-5 paragraphs as appropriate
-   
-4. VISUAL DIVERSITY:
-   - Alternate between text-heavy and visual blocks
-   - Use galleries/ecommerce for product-focused emails
-   - Use articles for storytelling
-   - Use stats for data-driven messaging
-   - Mix variants within the same email
-
-User request: "${userPrompt}"
-${campaignOptions?.structureHints ? `
-
-STRUCTURE REQUIREMENTS DETECTED:
-${campaignOptions.structureHints.gridLayout ? `- Grid layout: ${campaignOptions.structureHints.gridLayout.columns} columns × ${campaignOptions.structureHints.gridLayout.rows} rows (${campaignOptions.structureHints.itemCount} total items)` : ''}
-${campaignOptions.structureHints.itemCount && !campaignOptions.structureHints.gridLayout ? `- Item count: ${campaignOptions.structureHints.itemCount} items` : ''}
-${campaignOptions.structureHints.needsTable ? `- Table/grid layout required for structured data` : ''}
-${campaignOptions.structureHints.needsLogo ? `- Logo required in header section` : ''}
-
-IMPORTANT: For grid layouts with many items, use multiple 'list' blocks (each can hold 2-5 items) or 'gallery' blocks (each can hold 2-6 images) to accommodate all items.
-` : ''}
-
-⚠️ REMINDER: previewText MUST be ≤140 characters. Count carefully before generating! ⚠️
-
-Generate semantic content blocks as JSON following the EmailContent schema.`;
+⚠️ previewText ≤140 chars. Return JSON.`;
 }
 
 /**
- * Get block-specific variant guidance (for dynamic injection in Pass 2)
- * This reduces prompt size by only including relevant variant info per block
+ * Block variant guidance - condensed for token efficiency
  */
 export function getBlockVariantGuidance(blockType: string): string {
-  const guidance: Record<string, string> = {
-    articles: 'Variants: with-image, image-right, image-background, two-cards, single-author. Choose most appropriate.',
-    article: 'Variants: multiple-authors. Use this variant.',
-    features: 'Variants: list-items, numbered-list, four-paragraphs, four-paragraphs-two-columns, three-centered-paragraphs. Choose based on content structure.',
-    testimonial: 'Variants: simple-centered, large-avatar. Use simple-centered for short quotes, large-avatar for emphasis.',
-    ecommerce: 'Variants: checkout, four-cards, one-product, one-product-left, three-cards-row. Choose based on product count.',
-    gallery: 'Variants: four-images-grid, horizontal-grid, three-columns, vertical-grid. Choose based on image count.',
-    stats: 'Variants: simple, stepped. Use simple for basic stats, stepped for dramatic presentation.',
-    list: 'Variants: simple-list, image-left. Use simple-list for text-only, image-left when images needed.',
-    marketing: 'Variants: bento-grid. Use this variant.',
-    feedback: 'Variants: simple-rating, survey-section. Use simple-rating for quick feedback, survey-section for detailed surveys.',
-    buttons: 'Variants: single-button, two-buttons, download-buttons. Choose based on CTA count.',
-    image: 'Variants: simple-image, rounded-image, varying-sizes. Use simple-image for standard, rounded-image for avatars/products.',
-    avatars: 'Variants: group-stacked, with-text, circular. Use group-stacked for teams, with-text for testimonials.',
-    link: 'Variants: simple-link, inline-link. Use simple-link for standalone, inline-link for text within paragraphs.',
-    code: 'Variants: inline-simple, inline-colors, block-no-theme, predefined-theme, custom-theme, line-numbers. Use inline for short snippets.',
-    markdown: 'Variants: simple, container-styles, custom-styles. Use simple for basic, container-styles for styled containers.',
-    heading: 'Variants: simple-heading, multiple-headings, multiple-headings-alt. Use simple-heading for single headline.',
-    text: 'Variants: simple-text, text-with-styling. Use simple-text for plain paragraphs.',
-    header: 'Variants: centered-menu. Use this variant.',
-    pricing: 'Variants: simple-pricing-table. Use this variant.',
-    hero: 'Variants: simple. Use this variant.',
-    cta: 'Variants: simple. Use this variant.',
-    footer: 'Variants: simple, one-column, two-column. Use simple for basic, one-column for centered, two-column for split.',
+  const g: Record<string, string> = {
+    articles: 'with-image|image-right|image-background|two-cards|single-author',
+    features: 'list-items|numbered-list|four-paragraphs|four-paragraphs-two-columns|three-centered-paragraphs',
+    testimonial: 'simple-centered(short)|large-avatar(emphasis)',
+    ecommerce: 'checkout|four-cards|one-product|one-product-left|three-cards-row',
+    gallery: 'four-images-grid|horizontal-grid|three-columns|vertical-grid',
+    stats: 'simple|stepped(dramatic)',
+    list: 'simple-list|image-left',
+    marketing: 'bento-grid',
+    feedback: 'simple-rating|survey-section',
+    buttons: 'single-button|two-buttons|download-buttons',
+    image: 'simple-image|rounded-image|varying-sizes',
+    avatars: 'group-stacked|with-text|circular',
+    link: 'simple-link|inline-link',
+    code: 'inline-simple|inline-colors|block-no-theme|predefined-theme|line-numbers',
+    markdown: 'simple|container-styles|custom-styles',
+    heading: 'simple-heading|multiple-headings',
+    text: 'simple-text|text-with-styling',
+    header: 'centered-menu',
+    pricing: 'simple-pricing-table',
+    hero: 'simple',
+    cta: 'simple',
+    footer: 'simple|one-column|two-column',
   };
   
-  return guidance[blockType] || '';
+  return g[blockType] ? `Variants: ${g[blockType]}` : '';
 }
 
 /**

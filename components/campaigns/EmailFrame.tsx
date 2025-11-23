@@ -5,7 +5,7 @@ import { renderBlock } from '@/lib/email/blocks';
 
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { SelectionOverlay } from './visual-edits/SelectionOverlay';
-import type { ElementDescriptor } from '@/lib/email/visual-edits/element-descriptor';
+import type { ElementDescriptor } from '@/lib/email-v2/visual-edits/element-descriptor';
 
 interface EmailFrameProps {
   blocks: EmailBlock[];
