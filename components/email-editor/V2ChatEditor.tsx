@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import type { EmailComponent, GlobalEmailSettings } from '@/lib/email-v2/types';
 import type { SemanticBlock } from '@/lib/email-v2/ai/blocks';
 import { getComponentPath, findComponentById, deleteComponentById, updateComponentById } from '@/lib/email-v2';
@@ -17,6 +19,7 @@ import { SplitScreenLayout } from '@/components/campaigns/SplitScreenLayout';
 import { getToolbarConfig } from '@/lib/email-v2/toolbar-config';
 import { getComponentDescriptor } from '@/lib/email-v2/component-descriptor';
 import { renderEmailComponent } from '@/lib/email-v2/renderer';
+import { useCampaignMutation } from '@/hooks/use-campaign-query';
 
 
 interface V2ChatEditorProps {
@@ -47,6 +50,10 @@ export function V2ChatEditor({
   deviceMode = 'desktop',
   renderMode = 'both',
 }: V2ChatEditorProps) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const saveMutation = useCampaignMutation(campaignId);
+  
   // Visual edit mode state
   const [visualEditMode, setVisualEditMode] = useState(false);
   const [rootComponent, setRootComponent] = useState<EmailComponent | null>(initialRootComponent || null);
@@ -831,21 +838,20 @@ export function V2ChatEditor({
       
       const { html } = await renderEmailComponent(updatedRoot, globalSettings);
       
-      const saveResponse = await fetch(`/api/campaigns/${campaignId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          root_component: updatedRoot,
-          html_content: html,
-        }),
+      // Use React Query mutation instead of direct fetch
+      await saveMutation.mutateAsync({
+        root_component: updatedRoot,
+        html_content: html,
       });
-      
-      if (!saveResponse.ok) {
-        throw new Error('Failed to save changes');
-      }
       
       console.log('=== AFTER DATABASE SAVE ===');
       console.log('State will be updated with:', JSON.parse(JSON.stringify(updatedRoot)));
+      
+      // Invalidate React Query cache to refetch fresh data
+      await queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] });
+      
+      // Refresh Next.js router to update server components
+      router.refresh();
       
       // Update state directly without clearing to null
       setRootComponent(updatedRoot);
@@ -876,7 +882,7 @@ export function V2ChatEditor({
       alert(`Failed to save changes: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setIsSaving(false);
     }
-  }, [rootComponent, globalSettings, campaignId]);
+  }, [rootComponent, globalSettings, campaignId, saveMutation, queryClient, router]);
 
   // Handle discard changes (revert to original)
   const handleDiscardChanges = useCallback(() => {
@@ -946,6 +952,7 @@ export function V2ChatEditor({
       chatHistory={chatHistory}
       visualEditsMode={visualEditMode}
       onVisualEditsToggle={handleVisualEditsToggle}
+      showDiscardSaveButtons={showDiscardSaveButtons}
       selectedElement={null}
       onClearSelection={() => {
         setShowComponentEditor(false);

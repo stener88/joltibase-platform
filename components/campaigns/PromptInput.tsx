@@ -23,6 +23,7 @@ interface PromptInputProps {
   noBackground?: boolean;
   visualEditsMode?: boolean;
   onVisualEditsToggle?: () => void;
+  showDiscardSaveButtons?: boolean;
 }
 
 const TYPING_EXAMPLES = [
@@ -52,6 +53,7 @@ export function PromptInput({
   noBackground = false,
   visualEditsMode = false,
   onVisualEditsToggle,
+  showDiscardSaveButtons = false,
 }: PromptInputProps) {
   const internalTextareaRef = useRef<HTMLTextAreaElement>(null);
   const textareaRef = inputRef || internalTextareaRef;
@@ -189,7 +191,7 @@ export function PromptInput({
               <TooltipTrigger asChild>
                 <button
                   onClick={onLightningToggle}
-                  disabled={isLoading || disabled}
+                  disabled={isLoading || disabled || showDiscardSaveButtons}
                   className="absolute left-2 bottom-4 w-8 h-8 rounded-lg bg-transparent border border-[#e8e7e5] text-[#6b6b6b] hover:border-[#3d3d3a] hover:bg-black/[0.03] flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed z-10"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -198,7 +200,7 @@ export function PromptInput({
                 </button>
               </TooltipTrigger>
               <TooltipContent side="top">
-                <p>Quick prompts - Get instant suggestions for your campaign</p>
+                <p>{showDiscardSaveButtons ? 'Save or discard changes to continue' : 'Quick prompts - Get instant suggestions for your campaign'}</p>
               </TooltipContent>
             </Tooltip>
           )}
@@ -210,17 +212,17 @@ export function PromptInput({
                 <button
                   type="button"
                   onClick={(e) => {
-                    console.log('[PromptInput] Visual Edit button clicked', { isLoading, visualEditsMode, hasHandler: !!onVisualEditsToggle });
+                    console.log('[PromptInput] Visual Edit button clicked', { isLoading, visualEditsMode, hasHandler: !!onVisualEditsToggle, showDiscardSaveButtons });
                     e.preventDefault();
                     e.stopPropagation();
-                    if (!isLoading && onVisualEditsToggle) {
+                    if (!isLoading && !showDiscardSaveButtons && onVisualEditsToggle) {
                       console.log('[PromptInput] Calling onVisualEditsToggle');
                       onVisualEditsToggle();
                     } else {
-                      console.warn('[PromptInput] Button click ignored', { isLoading, hasHandler: !!onVisualEditsToggle });
+                      console.warn('[PromptInput] Button click ignored', { isLoading, showDiscardSaveButtons, hasHandler: !!onVisualEditsToggle });
                     }
                   }}
-                  disabled={isLoading}
+                  disabled={isLoading || showDiscardSaveButtons}
                   className={`
                     absolute left-12 bottom-4 w-8 h-8
                     rounded-lg
@@ -235,7 +237,7 @@ export function PromptInput({
                 </button>
               </TooltipTrigger>
               <TooltipContent side="top">
-                <p>Visual Edits - Click elements to edit</p>
+                <p>{showDiscardSaveButtons ? 'Save or discard changes to continue editing' : 'Visual Edits - Click elements to edit'}</p>
               </TooltipContent>
             </Tooltip>
           )}
@@ -246,7 +248,7 @@ export function PromptInput({
               <TooltipTrigger asChild>
                 <button
                   onClick={onChatOnlyToggle}
-                  disabled={isLoading || disabled}
+                  disabled={isLoading || disabled || showDiscardSaveButtons}
                   className={`
                     absolute right-14 bottom-4 w-8 h-8
                     rounded-lg
@@ -261,7 +263,7 @@ export function PromptInput({
                 </button>
               </TooltipTrigger>
               <TooltipContent side="top">
-                <p>Chat mode - Ask questions without modifying your campaign</p>
+                <p>{showDiscardSaveButtons ? 'Save or discard changes to continue' : 'Chat mode - Ask questions without modifying your campaign'}</p>
               </TooltipContent>
             </Tooltip>
           )}

@@ -624,3 +624,4 @@ renderer.ts
 
 This guide provides a complete map of all files controlling AI component, color, and style decisions.
 
+

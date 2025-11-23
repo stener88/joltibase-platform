@@ -30,6 +30,7 @@ interface ChatInterfaceProps {
   chatInterfaceRef?: React.RefObject<ChatInterfaceRef>;
   visualEditsMode?: boolean;
   onVisualEditsToggle?: () => void;
+  showDiscardSaveButtons?: boolean;
   // Visual edits state
   selectedElement?: ElementDescriptor | null;
   pendingChangesCount?: number;
@@ -53,6 +54,7 @@ export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
   chatHistory,
   visualEditsMode = false,
   onVisualEditsToggle,
+  showDiscardSaveButtons = false,
   selectedElement = null,
   pendingChangesCount = 0,
   showExitPrompt = false,
@@ -377,6 +379,7 @@ export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
           showLightningChips={showChips}
           visualEditsMode={visualEditsMode}
           onVisualEditsToggle={onVisualEditsToggle}
+          showDiscardSaveButtons={showDiscardSaveButtons}
           inputRef={inputRef}
         />
       </div>
