@@ -21,7 +21,7 @@ import { z } from 'zod';
 export const componentRefinementSchema = z.object({
   props: z.record(z.string(), z.any()).optional().describe('Updated props (only include changed props)'),
   content: z.string().optional().describe('Updated content (only if content changed)'),
-  explanation: z.string().optional().describe('Brief explanation of changes made'),
+  // explanation removed to reduce token usage and keep responses concise
 });
 
 /**

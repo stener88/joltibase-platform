@@ -189,18 +189,26 @@ function parseNextElement(html: string, idCounter: number): ParseResult | null {
   const content = html.slice(openTagEnd, closeIndex);
   const props = parseAttributes(tagAttributes);
   
+  // Map tag to component type first
+  const componentType = mapHTMLTagToComponent(tagName);
+  
   // Parse component
   const component: EmailComponent = {
     id: `${tagName}-${idCounter}`,
-    component: mapHTMLTagToComponent(tagName),
+    component: componentType,
     props,
   };
   
-  // Check if it's a text element or container
-  if (isTextElement(tagName)) {
+  // Check if component type can have children, not just tag name
+  // Components that CANNOT have children: Text, Heading, Button, Link, Hr, Img
+  // When parsing HTML, we flatten nested HTML in these elements to avoid invalid structures
+  const componentCanHaveChildren = !['Text', 'Heading', 'Button', 'Link', 'Hr', 'Img'].includes(componentType);
+  
+  if (!componentCanHaveChildren) {
+    // Text-only components: strip HTML and use content (flatten nested HTML)
     component.content = stripHTMLTags(content).trim();
   } else {
-    // Recursively parse children
+    // Container components: recursively parse children
     const children = parseChildren(content);
     if (children.length > 0) {
       component.children = children;

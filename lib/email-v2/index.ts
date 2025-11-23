@@ -87,13 +87,16 @@ export {
   RefineComponentRequestSchema,
 } from './ai/schemas';
 
+// AI refinement
+export {
+  refineComponent,
+  type RefinementContext,
+} from './ai/refiner';
+
 // AI prompts (V2)
 export {
   SEMANTIC_GENERATION_SYSTEM_PROMPT,
   buildSemanticGenerationPrompt,
-  buildRefinementPrompt,
-  buildEnhancedRefinementPrompt,
-  COMPONENT_EDIT_PATTERNS,
   EXAMPLE_PROMPTS,
 } from './ai/prompts-v2';
 

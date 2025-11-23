@@ -516,55 +516,167 @@ export function V2ChatEditor({
     setChatHistory(prev => [...prev, userMessage]);
 
     try {
-      const response = await fetch('/api/ai/generate-email', {
+      // Get current semantic blocks (from props or fetch from campaign)
+      let currentBlocks = semanticBlocks || [];
+      
+      // If no semantic blocks available, try to fetch from campaign
+      if (!currentBlocks || currentBlocks.length === 0) {
+        try {
+          const campaignResponse = await fetch(`/api/campaigns/${campaignId}`);
+          if (campaignResponse.ok) {
+            const campaignResult = await campaignResponse.json();
+            if (campaignResult.success && campaignResult.data?.semantic_blocks?.blocks) {
+              currentBlocks = campaignResult.data.semantic_blocks.blocks;
+            }
+          }
+        } catch (fetchError) {
+          console.warn('[V2ChatEditor] Failed to fetch semantic blocks from campaign:', fetchError);
+        }
+      }
+
+      // If still no blocks, fall back to generate-email (for new campaigns)
+      if (!currentBlocks || currentBlocks.length === 0) {
+        console.log('[V2ChatEditor] No existing blocks found, using generate-email');
+        const response = await fetch('/api/ai/generate-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            campaignId,
+            prompt: message,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success && result.rootComponent) {
+          setRootComponent(result.rootComponent);
+          
+          // Update HTML content
+          const { html } = await renderEmailComponent(result.rootComponent, globalSettings);
+          setCurrentHtmlContent(html);
+          
+          const assistantMessage: ChatMessage = {
+            role: 'assistant',
+            content: `✓ Generated new email successfully`,
+            timestamp: new Date(),
+          };
+          setChatHistory(prev => [...prev, assistantMessage]);
+          return;
+        } else {
+          throw new Error(result.error || 'Generation failed');
+        }
+      }
+
+      // Refine existing campaign using refine-campaign API
+      console.log('[V2ChatEditor] Refining campaign with', currentBlocks.length, 'blocks');
+      
+      const response = await fetch('/api/ai/refine-campaign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           campaignId,
-          prompt: message,
+          message,
+          currentEmail: {
+            subject: '', // Will be extracted from blocks if needed
+            previewText: previewText || '',
+            blocks: currentBlocks,
+            globalSettings: globalSettings,
+          },
         }),
       });
 
       const result = await response.json();
 
-      console.log('[V2ChatEditor] Generation result:', {
+      console.log('[V2ChatEditor] Refinement result:', {
         success: result.success,
-        hasRootComponent: !!result.rootComponent,
-        rootComponentId: result.rootComponent?.id,
-        rootComponentType: result.rootComponent?.component,
-        childrenCount: result.rootComponent?.children?.length,
+        hasRefinedEmail: !!result.data?.refinedEmail,
+        blocksCount: result.data?.refinedEmail?.blocks?.length || 0,
       });
 
-      // Defer expensive tree inspection to avoid blocking
-      setTimeout(() => {
-        if (result.rootComponent?.component === 'Html' && result.rootComponent.children) {
-          const body = result.rootComponent.children.find((c: any) => c.component === 'Body');
-          const container = body?.children?.find((c: any) => c.component === 'Container');
-          if (container) {
-            console.log('[V2ChatEditor] Container has', container.children?.length || 0, 'sections');
-          }
-        }
-      }, 0);
-
-      if (result.success && result.rootComponent) {
-        console.log('[V2ChatEditor] Updating rootComponent state');
-        console.log('[V2ChatEditor] Full rootComponent structure:', JSON.stringify(result.rootComponent, null, 2));
-        setRootComponent(result.rootComponent);
+      if (result.success && result.data) {
+        const refined = result.data.refinedEmail;
         
-        // NOTE: Database save is already done by the generation API
-        // No need to save again here
+        // Use rootComponent from API if available (server-side conversion)
+        // Otherwise fall back to client-side conversion
+        let refinedRootComponent: EmailComponent;
+        
+        if (result.data.rootComponent) {
+          console.log('[V2ChatEditor] Using rootComponent from API');
+          refinedRootComponent = result.data.rootComponent;
+        } else {
+          console.log('[V2ChatEditor] Converting blocks to EmailComponent tree on client');
+          // Fallback: Convert refined semantic blocks to EmailComponent tree
+          const { transformBlocksToEmail } = await import('@/lib/email-v2/ai/transforms');
+          const components = transformBlocksToEmail(refined.blocks, refined.globalSettings);
+          
+          // Wrap in root HTML structure
+          refinedRootComponent = {
+            id: 'root',
+            component: 'Html',
+            props: { lang: 'en' },
+            children: [
+              {
+                id: 'head',
+                component: 'Head',
+                props: {},
+                children: refined.previewText ? [{
+                  id: 'preview',
+                  component: 'Preview',
+                  props: {},
+                  content: refined.previewText
+                }] : undefined,
+              },
+              {
+                id: 'body',
+                component: 'Body',
+                props: {
+                  style: {
+                    fontFamily: refined.globalSettings.fontFamily,
+                    backgroundColor: refined.globalSettings.backgroundColor || '#ffffff',
+                    margin: 0,
+                    padding: 0,
+                  },
+                },
+                children: [
+                  {
+                    id: 'main-container',
+                    component: 'Container',
+                    props: {
+                      style: {
+                        maxWidth: refined.globalSettings.maxWidth || '600px',
+                        margin: '0 auto',
+                      },
+                    },
+                    children: components,
+                  },
+                ],
+              },
+            ],
+          };
+        }
+
+        console.log('[V2ChatEditor] Updating rootComponent state with refined content');
+        setRootComponent(refinedRootComponent);
+        setGlobalSettings(refined.globalSettings);
+        
+        // Update HTML content
+        setCurrentHtmlContent(refined.html);
+        
+        // Database is already saved by the API, so we don't need to mark as unsaved
+        // But we do want to invalidate the query cache to refetch fresh data
+        queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] });
         
         const assistantMessage: ChatMessage = {
           role: 'assistant',
-          content: `✓ Generated new email successfully`,
+          content: result.data.message || `✓ Refined email successfully`,
           timestamp: new Date(),
         };
         setChatHistory(prev => [...prev, assistantMessage]);
       } else {
-        throw new Error(result.error || 'Generation failed');
+        throw new Error(result.error || 'Refinement failed');
       }
     } catch (error) {
-      console.error('Chat generation error:', error);
+      console.error('Chat refinement error:', error);
       
       const errorMessage: ChatMessage = {
         role: 'assistant',
@@ -575,7 +687,7 @@ export function V2ChatEditor({
     } finally {
       setIsGenerating(false);
     }
-  }, [campaignId, globalSettings]);
+  }, [campaignId, semanticBlocks, previewText, globalSettings]);
 
   // Handle manual component updates from panels (apply button)
   const handleManualUpdate = useCallback(async (updates: { props?: Record<string, any>; content?: string }) => {
@@ -742,7 +854,8 @@ export function V2ChatEditor({
         };
         setChatHistory(prev => [...prev, assistantMessage]);
       } else {
-        throw new Error(result.error || 'Refinement failed');
+        const errorDetails = result.details ? `: ${JSON.stringify(result.details)}` : '';
+        throw new Error(`${result.error || 'Refinement failed'}${errorDetails}`);
       }
     } catch (error) {
       console.error('Component refinement error:', error);
@@ -940,13 +1053,9 @@ export function V2ChatEditor({
       ref={chatInterfaceRef}
       campaignId={campaignId}
       onRefine={async (message) => {
-        if (selectedComponent && showComponentEditor && visualEditMode) {
-          // If component is selected, refine that component
-          await handleComponentRefinement(message);
-        } else {
-          // Otherwise, generate/refine whole email
-          await handleChatSubmit(message);
-        }
+        // Chat input always refines/generates the whole campaign
+        // Component refinement is handled by FloatingToolbar
+        await handleChatSubmit(message);
       }}
       isRefining={isGenerating || isRefining}
       chatHistory={chatHistory}
@@ -1142,22 +1251,7 @@ export function V2ChatEditor({
         </>
       )}
       
-      {/* Loading overlay */}
-      {(isGenerating || isRefining) && (
-        <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center z-20">
-          <div className="bg-white rounded-lg p-6 shadow-xl max-w-sm">
-            <div className="flex items-center gap-3">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600" />
-              <div>
-                <p className="font-medium text-gray-900">
-                  {isGenerating ? 'Generating email...' : 'Refining component...'}
-                </p>
-                <p className="text-sm text-gray-600">This may take a few seconds</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Loading overlay removed - loading indicator shown in FloatingToolbar instead */}
     </div>
   );
 }

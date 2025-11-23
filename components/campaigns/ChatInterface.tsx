@@ -42,8 +42,6 @@ interface ChatInterfaceProps {
   onDiscardChanges?: () => void;
   onClearSelection?: () => void;
   onUpdateGlobalSettings?: (settings: Partial<GlobalEmailSettings>) => void;
-  onAIRefineElement?: (prompt: string) => Promise<void>;
-  isAIRefining?: boolean;
   isChatDisabled?: boolean;
 }
 
@@ -65,8 +63,6 @@ export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
   onDiscardChanges,
   onClearSelection,
   onUpdateGlobalSettings,
-  onAIRefineElement,
-  isAIRefining = false,
   isChatDisabled = false,
 }, ref) => {
   const [message, setMessage] = useState('');
@@ -223,9 +219,9 @@ export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
   };
 
   const handleAISubmit = async (prompt: string) => {
-    if (onAIRefineElement) {
-      await onAIRefineElement(prompt);
-    }
+    // Toolbar AI refinement is handled by V2ChatEditor's FloatingToolbar
+    // This handler is kept for potential future use
+    console.log('Toolbar AI refinement requested:', prompt);
   };
 
   const handleContentClick = () => {
@@ -397,7 +393,7 @@ export const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
             onSpacingClick={handleSpacingClick}
             onGlobalSettingsClick={handleGlobalSettingsClick}
             onDeleteClick={handleDeleteClick}
-            isAILoading={isAIRefining}
+            isAILoading={false}
           />
           
           {/* Inline Content Panel - Appears below toolbar */}

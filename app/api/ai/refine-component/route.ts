@@ -9,10 +9,12 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import {
-  refineComponent,
+  refineComponent as refineComponentAI,
   RefineComponentRequestSchema,
   validateComponentTree,
   type EmailComponent,
+  type RefinementContext,
+  type GlobalEmailSettings,
 } from '@/lib/email-v2';
 
 /**
@@ -36,6 +38,43 @@ function getComponentAtPath(root: EmailComponent, path: string): EmailComponent 
   }
   
   return current as EmailComponent;
+}
+
+/**
+ * Find all components of a specific type in the tree and calculate position
+ */
+function getComponentPosition(
+  root: EmailComponent,
+  targetComponent: EmailComponent,
+  componentType: string
+): string | undefined {
+  // Collect all components of this type in order
+  const components: EmailComponent[] = [];
+  
+  function traverse(node: EmailComponent) {
+    if (node.component === componentType) {
+      components.push(node);
+    }
+    if (node.children) {
+      for (const child of node.children) {
+        traverse(child);
+      }
+    }
+  }
+  
+  traverse(root);
+  
+  if (components.length === 0) return undefined;
+  
+  // Find the index of the target component
+  const index = components.findIndex(c => c.id === targetComponent.id);
+  
+  if (index === -1) return undefined;
+  
+  const position = index + 1; // 1-indexed for user-friendly display
+  const total = components.length;
+  
+  return `${componentType} #${position} (of ${total} total ${componentType}${total > 1 ? 's' : ''})`;
 }
 
 /**
@@ -155,6 +194,13 @@ export async function POST(req: Request) {
 
     const rootComponent = campaign.root_component as EmailComponent;
 
+    // Validate tree BEFORE applying changes to help debug issues
+    const preValidation = validateComponentTree(rootComponent);
+    if (!preValidation.valid) {
+      console.warn('⚠️  [REFINE-COMPONENT-V2] Tree has pre-existing validation issues:', preValidation.errors);
+      console.warn('⚠️  [REFINE-COMPONENT-V2] This may cause refinement to fail');
+    }
+
     // Find component at path
     const targetComponent = getComponentAtPath(rootComponent, componentPath);
     if (!targetComponent) {
@@ -166,8 +212,50 @@ export async function POST(req: Request) {
 
     console.log('✅ [REFINE-COMPONENT-V2] Component found:', targetComponent.component);
 
-    // Refine with AI
-    const changes = await refineComponent(targetComponent, prompt);
+    // Calculate component position (e.g., "Heading #2 (of 3 total Headings)")
+    const componentPosition = getComponentPosition(
+      rootComponent,
+      targetComponent,
+      targetComponent.component
+    );
+
+    // Build context from existing campaign data (already stored during generation)
+    const context: RefinementContext = {
+      emailSubject: campaign.subject_line,
+      emailPreviewText: campaign.preview_text,
+      campaignName: campaign.name,
+      originalPrompt: campaign.ai_prompt, // The original generation prompt
+      componentPath,
+      componentPosition,
+      globalSettings: campaign.global_settings as GlobalEmailSettings,
+    };
+
+    // Get sibling components for additional context
+    try {
+      const pathParts = componentPath.split('.');
+      if (pathParts.length > 1) {
+        const parentPath = pathParts.slice(0, -1).join('.');
+        const parentComponent = getComponentAtPath(rootComponent, parentPath);
+        
+        if (parentComponent?.children) {
+          context.siblingComponents = parentComponent.children.filter(
+            (c: EmailComponent) => c.id !== targetComponent.id
+          );
+        }
+      }
+    } catch (error) {
+      console.warn('[REFINE-COMPONENT-V2] Could not get siblings:', error);
+    }
+
+    console.log('📋 [REFINE-COMPONENT-V2] Context prepared:', {
+      subject: context.emailSubject?.substring(0, 30),
+      hasOriginalPrompt: !!context.originalPrompt,
+      siblings: context.siblingComponents?.length || 0,
+      position: context.componentPosition,
+    });
+
+    // Refine with AI - NOW WITH CONTEXT
+    const changes = await refineComponentAI(targetComponent, prompt, context);
     
     console.log('✅ [REFINE-COMPONENT-V2] Changes generated:', changes);
 

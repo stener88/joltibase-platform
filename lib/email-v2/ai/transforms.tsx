@@ -874,7 +874,7 @@ function createFooterSection(block: any, settings: GlobalEmailSettings): EmailCo
 
   children.push({
     id: 'footer-links',
-    component: 'Text',
+    component: 'Section',
     props: {
       style: {
         color: '#9ca3af',
