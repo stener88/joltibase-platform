@@ -46,6 +46,7 @@ export default function DashboardCampaignEditorPage() {
             htmlContent={(campaign as any).html_content}
             semanticBlocks={(campaign as any).semantic_blocks?.blocks}
             previewText={(campaign as any).semantic_blocks?.previewText}
+            originalPrompt={(campaign as any).ai_prompt}
             initialGlobalSettings={
               (campaign as any).global_settings || {
                 fontFamily: 'system-ui, sans-serif',

@@ -27,6 +27,7 @@ interface V2ChatEditorProps {
   htmlContent?: string;
   semanticBlocks?: SemanticBlock[];
   previewText?: string;
+  originalPrompt?: string;
   initialGlobalSettings: GlobalEmailSettings;
   campaignId: string;
   deviceMode?: 'desktop' | 'mobile';
@@ -45,6 +46,7 @@ export function V2ChatEditor({
   htmlContent,
   semanticBlocks,
   previewText,
+  originalPrompt,
   initialGlobalSettings,
   campaignId,
   deviceMode = 'desktop',
@@ -153,7 +155,24 @@ export function V2ChatEditor({
   const [selectedComponent, setSelectedComponent] = useState<SelectedComponent | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  // Initialize chat history with original prompt if available
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>(() => {
+    if (originalPrompt) {
+      return [
+        {
+          role: 'user',
+          content: originalPrompt,
+          timestamp: new Date(),
+        },
+        {
+          role: 'assistant',
+          content: `Hey! I've generated your email based on that prompt. Want to refine anything or brainstorm some ideas?`,
+          timestamp: new Date(),
+        },
+      ];
+    }
+    return [];
+  });
   const [showComponentEditor, setShowComponentEditor] = useState(false);
   const [toolbarPosition, setToolbarPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [activePanel, setActivePanel] = useState<'content' | 'styles' | 'spacing' | null>(null);
@@ -557,7 +576,7 @@ export function V2ChatEditor({
           
           const assistantMessage: ChatMessage = {
             role: 'assistant',
-            content: `✓ Generated new email successfully`,
+            content: `Nice! I've created a fresh email based on your prompt. Want to tweak anything?`,
             timestamp: new Date(),
           };
           setChatHistory(prev => [...prev, assistantMessage]);
@@ -668,7 +687,7 @@ export function V2ChatEditor({
         
         const assistantMessage: ChatMessage = {
           role: 'assistant',
-          content: result.data.message || `✓ Refined email successfully`,
+          content: result.data.message || `Done! I've updated the email. How does that look?`,
           timestamp: new Date(),
         };
         setChatHistory(prev => [...prev, assistantMessage]);
@@ -680,7 +699,7 @@ export function V2ChatEditor({
       
       const errorMessage: ChatMessage = {
         role: 'assistant',
-        content: `✗ Failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        content: `Hmm, I ran into an issue: ${error instanceof Error ? error.message : 'Unknown error'}. Want to try again?`,
         timestamp: new Date(),
       };
       setChatHistory(prev => [...prev, errorMessage]);
@@ -849,7 +868,7 @@ export function V2ChatEditor({
         // Add success message to chat
         const assistantMessage: ChatMessage = {
           role: 'assistant',
-          content: `✓ Updated ${selectedComponent.component.component.toLowerCase()} successfully`,
+          content: `Updated that ${selectedComponent.component.component.toLowerCase()} for you. Want to adjust anything else?`,
           timestamp: new Date(),
         };
         setChatHistory(prev => [...prev, assistantMessage]);
@@ -862,7 +881,7 @@ export function V2ChatEditor({
       
       const errorMessage: ChatMessage = {
         role: 'assistant',
-        content: `✗ Failed to update: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        content: `Hmm, I couldn't update that: ${error instanceof Error ? error.message : 'Unknown error'}. Want to try again?`,
         timestamp: new Date(),
       };
       setChatHistory(prev => [...prev, errorMessage]);
