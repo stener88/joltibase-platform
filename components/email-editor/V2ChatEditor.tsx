@@ -613,6 +613,19 @@ export function V2ChatEditor({
       });
 
       if (result.success && result.data) {
+        // Check if this was an advice response (no blocks changed)
+        if (result.data.blocksChanged === false) {
+          // Advisory response - just add to chat, don't update email
+          const assistantMessage: ChatMessage = {
+            role: 'assistant',
+            content: result.data.message,
+            timestamp: new Date(),
+          };
+          setChatHistory(prev => [...prev, assistantMessage]);
+          return; // Don't update rootComponent or HTML
+        }
+        
+        // Normal refinement - update email (existing logic)
         const refined = result.data.refinedEmail;
         
         // Use rootComponent from API if available (server-side conversion)

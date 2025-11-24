@@ -118,8 +118,8 @@ export const GalleryBlockSchema = z.object({
   heading: z.string().max(100, 'Heading too long').optional(),
   subheading: z.string().max(200, 'Subheading too long').optional(),
   images: z.array(z.object({
-    keyword: z.string().max(60, 'Image keyword too long').optional(),
-    url: z.string().url('Invalid image URL'),
+    keyword: z.string().max(60, 'Image keyword too long'),
+    url: z.string().url('Invalid image URL').optional(),
     alt: z.string().max(100, 'Image alt text too long'),
     link: z.string().url('Invalid link URL').optional(),
   })).min(2, 'At least 2 images required').max(6, 'Maximum 6 images required'),
