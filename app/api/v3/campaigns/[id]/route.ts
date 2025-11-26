@@ -16,6 +16,8 @@ const UpdateRequestSchema = z.object({
   subject_line: z.string().optional(),
   preview_text: z.string().optional(),
   status: z.enum(['draft', 'ready', 'scheduled', 'sent']).optional(),
+  component_code: z.string().optional(),
+  html_content: z.string().optional(),
 });
 
 /**
@@ -23,18 +25,19 @@ const UpdateRequestSchema = z.object({
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authResult = await requireAuth();
     if (authResult instanceof NextResponse) return authResult;
     
     const { user, supabase } = authResult;
+    const { id } = await params;
     
     const { data: campaign, error } = await supabase
       .from('campaigns_v3')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single();
     
@@ -71,13 +74,14 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authResult = await requireAuth();
     if (authResult instanceof NextResponse) return authResult;
     
     const { user, supabase } = authResult;
+    const { id } = await params;
     
     // Parse and validate request
     const body = await request.json();
@@ -87,7 +91,7 @@ export async function PATCH(
     const { data: campaign, error } = await supabase
       .from('campaigns_v3')
       .update(updates)
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .select()
       .single();
@@ -138,19 +142,20 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authResult = await requireAuth();
     if (authResult instanceof NextResponse) return authResult;
     
     const { user, supabase } = authResult;
+    const { id } = await params;
     
     // Fetch campaign to get filename
     const { data: campaign, error: fetchError } = await supabase
       .from('campaigns_v3')
       .select('component_filename')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single();
     
@@ -168,7 +173,7 @@ export async function DELETE(
     const { error: deleteError } = await supabase
       .from('campaigns_v3')
       .delete()
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id);
     
     if (deleteError) {

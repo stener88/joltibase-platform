@@ -11,19 +11,20 @@ import { renderEmail } from '@/lib/email-v3/renderer';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authResult = await requireAuth();
     if (authResult instanceof NextResponse) return authResult;
     
     const { user, supabase } = authResult;
+    const { id } = await params;
     
     // Fetch campaign
     const { data: campaign, error: fetchError } = await supabase
       .from('campaigns_v3')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single();
     
@@ -37,7 +38,7 @@ export async function POST(
       );
     }
     
-    console.log(`🎯 [FINALIZE-V3] Finalizing campaign: ${params.id}`);
+    console.log(`🎯 [FINALIZE-V3] Finalizing campaign: ${id}`);
     
     // Re-render to ensure latest HTML
     const renderResult = await renderEmail(
@@ -56,14 +57,14 @@ export async function POST(
         html_content: renderResult.html,
         status: 'ready',
       })
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .select()
       .single();
     
     if (updateError) throw updateError;
     
-    console.log(`✅ [FINALIZE-V3] Campaign finalized: ${params.id}`);
+    console.log(`✅ [FINALIZE-V3] Campaign finalized: ${id}`);
     
     return NextResponse.json({
       success: true,

@@ -18,19 +18,20 @@ const RegenerateRequestSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authResult = await requireAuth();
     if (authResult instanceof NextResponse) return authResult;
     
     const { user, supabase } = authResult;
+    const { id } = await params;
     
     // Fetch existing campaign
     const { data: existingCampaign, error: fetchError } = await supabase
       .from('campaigns_v3')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single();
     
@@ -48,7 +49,7 @@ export async function POST(
     const body = await request.json();
     const { prompt, preserveProps } = RegenerateRequestSchema.parse(body);
     
-    console.log(`🔄 [REGENERATE-V3] Campaign ${params.id}: "${prompt}"`);
+    console.log(`🔄 [REGENERATE-V3] Campaign ${id}: "${prompt}"`);
     
     // Build context-aware prompt
     let fullPrompt = prompt;
@@ -78,7 +79,7 @@ export async function POST(
         version: existingCampaign.version + 1,
         previous_version_id: existingCampaign.id,
       })
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .select()
       .single();
