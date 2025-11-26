@@ -100,12 +100,12 @@ export default function HomePage() {
         campaignType: 'one-time',
       };
 
-      const response = await fetch('/api/ai/generate-campaign', {
+      const response = await fetch('/api/v3/campaigns/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ prompt: formData.prompt }),
       });
 
       if (!response.ok) {
@@ -127,17 +127,17 @@ export default function HomePage() {
       });
       
       // Redirect to the campaign editor page
-      if (result.success && result.data?.id) {
+      if (result.success && result.campaign?.id) {
         // Check if user is authenticated
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
         
         if (user) {
           // Authenticated users go to dashboard editor
-          router.push(`/dashboard/campaigns/${result.data.id}/edit`);
+          router.push(`/dashboard/campaigns/${result.campaign.id}/edit`);
         } else {
           // Unauthenticated users stay on landing page editor
-          router.push(`/campaigns/${result.data.id}`);
+          router.push(`/campaigns/${result.campaign.id}`);
         }
       } else {
         throw new Error('No campaign ID received from server');

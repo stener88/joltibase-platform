@@ -55,7 +55,7 @@ export default function CampaignsPage() {
       if (statusFilter) params.append('status', statusFilter);
       if (typeFilter) params.append('type', typeFilter);
 
-      const response = await fetch(`/api/campaigns?${params}`);
+      const response = await fetch(`/api/v3/campaigns?${params}`);
       const result = await response.json();
 
       if (result.success) {
@@ -94,7 +94,7 @@ export default function CampaignsPage() {
 
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/campaigns/${campaignToDelete.id}`, {
+      const response = await fetch(`/api/v3/campaigns/${campaignToDelete.id}`, {
         method: 'DELETE',
       });
 

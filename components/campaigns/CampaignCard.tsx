@@ -34,6 +34,7 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
   }, [campaign.name]);
   
   const stats = campaign.stats || { sent: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0 };
+  const hasStats = campaign.stats && stats.sent > 0;
   
   const openRate = stats.delivered > 0 ? ((stats.opened / stats.delivered) * 100).toFixed(1) : '0';
   const clickRate = stats.delivered > 0 ? ((stats.clicked / stats.delivered) * 100).toFixed(1) : '0';
@@ -71,8 +72,8 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
         await onRename(campaign.id, newName.trim());
       } else {
         // Fallback: call API directly
-        const response = await fetch(`/api/campaigns/${campaign.id}`, {
-          method: 'PUT',
+        const response = await fetch(`/api/v2/campaigns/${campaign.id}`, {
+          method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: newName.trim() }),
         });
@@ -115,12 +116,12 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
               {campaign.name}
             </h3>
             <div className="flex items-center gap-2 text-sm text-[#6b6b6b]">
-              {campaign.ai_generated && (
+              {(campaign.ai_generated || campaign.generation_prompt) && (
                 <span className="inline-flex items-center gap-1 text-xs bg-[#e9a589]/10 text-[#e9a589] px-2 py-0.5 rounded-full border border-[#e9a589]/20">
                   ✨ AI Generated
                 </span>
               )}
-              <span className="capitalize">{campaign.type}</span>
+              {campaign.type && <span className="capitalize">{campaign.type}</span>}
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -172,7 +173,7 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
         )}
 
         {/* Stats Grid */}
-        {campaign.status !== 'draft' && stats.sent > 0 && (
+        {campaign.status !== 'draft' && hasStats && (
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="flex items-center gap-2">
               <Mail className="w-4 h-4 text-[#6b6b6b]" />
@@ -217,9 +218,11 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
               <span>Created {new Date(campaign.created_at).toLocaleDateString()}</span>
             )}
           </div>
-          <div className="text-xs text-[#6b6b6b]">
-            {campaign.list_ids?.length || 0} list{campaign.list_ids?.length !== 1 ? 's' : ''}
-          </div>
+          {campaign.list_ids && (
+            <div className="text-xs text-[#6b6b6b]">
+              {campaign.list_ids.length} list{campaign.list_ids.length !== 1 ? 's' : ''}
+            </div>
+          )}
         </div>
       </div>
       </Link>

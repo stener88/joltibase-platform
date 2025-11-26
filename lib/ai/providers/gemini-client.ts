@@ -220,6 +220,15 @@ export async function generateObjectWithGemini(
 
   const response = result.response;
   
+  // Check for MAX_TOKENS finish reason before trying to extract text
+  const finishReason = response.candidates?.[0]?.finishReason;
+  if (finishReason === 'MAX_TOKENS') {
+    throw new Error(
+      `Gemini response exceeded token limit (maxOutputTokens: ${maxOutputTokens}). ` +
+      `Consider increasing maxTokens or reducing context size.`
+    );
+  }
+  
   // Extract text content (should be JSON)
   // Try multiple methods to get the response text
   let text = response.text();
@@ -240,7 +249,7 @@ export async function generateObjectWithGemini(
   if (!text) {
     throw new Error(`No response text from Gemini. Response: ${JSON.stringify({
       candidates: response.candidates?.length || 0,
-      finishReason: response.candidates?.[0]?.finishReason,
+      finishReason,
     })}`);
   }
 

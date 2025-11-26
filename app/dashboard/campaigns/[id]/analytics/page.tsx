@@ -23,10 +23,10 @@ export default function CampaignAnalyticsPage() {
 
   const loadCampaign = async () => {
     try {
-      const response = await fetch(`/api/campaigns/${campaignId}`);
+      const response = await fetch(`/api/v2/campaigns/${campaignId}`);
       const result = await response.json();
       if (result.success) {
-        setCampaign(result.data);
+        setCampaign(result.campaign);
       }
     } catch (error) {
       console.error('Failed to load campaign:', error);
@@ -203,18 +203,24 @@ export default function CampaignAnalyticsPage() {
                 <dt className="text-gray-600">Subject Line:</dt>
                 <dd className="font-medium text-gray-900 text-right max-w-xs truncate">{campaign.subject_line}</dd>
               </div>
-              <div className="flex justify-between text-sm">
-                <dt className="text-gray-600">From:</dt>
-                <dd className="font-medium text-gray-900">{campaign.from_name}</dd>
-              </div>
-              <div className="flex justify-between text-sm">
-                <dt className="text-gray-600">From Email:</dt>
-                <dd className="font-medium text-gray-900">{campaign.from_email}</dd>
-              </div>
-              <div className="flex justify-between text-sm">
-                <dt className="text-gray-600">Type:</dt>
-                <dd className="font-medium text-gray-900 capitalize">{campaign.type.replace('-', ' ')}</dd>
-              </div>
+              {campaign.from_name && (
+                <div className="flex justify-between text-sm">
+                  <dt className="text-gray-600">From:</dt>
+                  <dd className="font-medium text-gray-900">{campaign.from_name}</dd>
+                </div>
+              )}
+              {campaign.from_email && (
+                <div className="flex justify-between text-sm">
+                  <dt className="text-gray-600">From Email:</dt>
+                  <dd className="font-medium text-gray-900">{campaign.from_email}</dd>
+                </div>
+              )}
+              {campaign.type && (
+                <div className="flex justify-between text-sm">
+                  <dt className="text-gray-600">Type:</dt>
+                  <dd className="font-medium text-gray-900 capitalize">{campaign.type.replace('-', ' ')}</dd>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
                 <dt className="text-gray-600">Created:</dt>
                 <dd className="font-medium text-gray-900">{format(new Date(campaign.created_at), 'MMM dd, yyyy')}</dd>

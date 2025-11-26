@@ -1,33 +1,46 @@
-// Campaign Management Types
-// Aligned with existing database schema
+// Campaign Management Types (V3)
+// Aligned with campaigns_v3 database schema
 
-export type CampaignStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled';
+export type CampaignStatus = 'draft' | 'ready' | 'scheduled' | 'sent';
 export type CampaignType = 'one-time' | 'sequence' | 'automation';
 
 export interface Campaign {
   id: string;
   user_id: string;
-  name: string;
-  type: CampaignType;
+  
+  // Campaign metadata
+  name: string | null;
   status: CampaignStatus;
-  ai_generated: boolean;
-  ai_prompt: string | null;
-  subject_line: string | null;
+  subject_line: string;
   preview_text: string | null;
-  from_name: string;
-  from_email: string;
-  reply_to_email: string | null;
-  html_content: string | null;
-  plain_text: string | null;
-  send_config: Record<string, any>;
-  list_ids: string[];
-  scheduled_at: string | null;
-  sent_at: string | null;
-  stats: CampaignStats;
+  
+  // V3 Code generation
+  component_filename: string;
+  component_code: string;
+  html_content: string;
+  default_props: Record<string, any>;
+  
+  // RAG metadata
+  patterns_used: string[] | null;
+  generation_prompt: string | null;
+  
+  // Versioning
+  version: number;
+  previous_version_id: string | null;
+  
+  // Timestamps
   created_at: string;
   updated_at: string;
-  ai_model: string | null;
-  ai_metadata: Record<string, any> | null;
+  sent_at: string | null;
+  
+  // Optional fields for sending
+  type?: CampaignType;
+  from_name?: string;
+  from_email?: string;
+  reply_to_email?: string | null;
+  list_ids?: string[];
+  scheduled_at?: string | null;
+  stats?: CampaignStats;
 }
 
 export interface CampaignStats {
@@ -57,15 +70,31 @@ export interface CampaignListResponse {
 }
 
 export interface CreateCampaignInput {
-  name: string;
-  type: CampaignType;
-  from_name: string;
-  from_email: string;
-  reply_to_email?: string;
-  subject_line?: string;
+  name?: string;
+  subject_line: string;
   preview_text?: string;
-  html_content?: string;
-  plain_text?: string;
+  component_filename: string;
+  component_code: string;
+  html_content: string;
+  default_props?: Record<string, any>;
+  patterns_used?: string[];
+  generation_prompt?: string;
+  type?: CampaignType;
+  from_name?: string;
+  from_email?: string;
+  reply_to_email?: string;
   list_ids?: string[];
+}
+
+// Visual Editor Types
+export interface ComponentContext {
+  type: 'text' | 'button' | 'heading' | 'section' | 'image' | 'container';
+  id?: string;
+  currentText?: string;
+  currentStyles?: Record<string, string>;
+  tagName?: string;
+  className?: string;
+  fullContent?: string;
+  parentContext?: string;
 }
 

@@ -1,0 +1,10 @@
+# Ignore embeddings cache
+embeddings.json
+
+# Keep the directory
+!.gitkeep
+
+
+
+
+

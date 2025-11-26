@@ -1,0 +1,7 @@
+# Ignore all AI-generated email files
+*.tsx
+
+# Keep the .gitkeep file
+!.gitkeep
+
+

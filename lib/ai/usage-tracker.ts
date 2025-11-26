@@ -25,7 +25,8 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
-import type { GeneratedCampaign } from './validator';
+// Legacy import - define type locally
+type GeneratedCampaign = any;
 
 // ============================================================================
 // Usage Tracking Interfaces

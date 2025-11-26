@@ -178,9 +178,8 @@ function convertZodToGemini(schema: z.ZodType<any, any, any>): any {
 
   // Handle ZodUnion (including discriminated unions)
   if (schema instanceof z.ZodUnion || schema instanceof z.ZodDiscriminatedUnion) {
-    // For discriminated unions: Keep it simple!
-    // Don't try to define the full nested structure - let Gemini infer from examples
-    // We validate with Zod after the response anyway
+    // For discriminated unions: Convert ALL options with full property constraints
+    // This ensures variant enums and nested fields are enforced
     if (schema instanceof z.ZodDiscriminatedUnion) {
       const options = (schema as any)._def?.options || [];
       const discriminatorKey = (schema as any)._def?.discriminator;
@@ -195,18 +194,46 @@ function convertZodToGemini(schema: z.ZodType<any, any, any>): any {
           }
         }
         
-        // Simple approach: Just tell Gemini it's an object with a type field
-        // The prompt examples will guide the actual structure
+        // Merge all properties from all options with descriptions
+        // This ensures variant enums and nested required fields are included
+        const allProperties: Record<string, any> = {};
+        const allRequired: Set<string> = new Set([discriminatorKey]);
+        
+        for (const option of options) {
+          const converted = convertZodToGemini(option);
+          if (converted.properties) {
+            // Merge properties, keeping the most restrictive constraints
+            for (const [key, value] of Object.entries(converted.properties)) {
+              if (!allProperties[key]) {
+                allProperties[key] = value;
+              } else {
+                // If property exists, merge enum constraints if present
+                if (value.enum && allProperties[key].enum) {
+                  // Combine enums (union of all possible values)
+                  const combinedEnum = [...new Set([...allProperties[key].enum, ...value.enum])];
+                  allProperties[key] = {
+                    ...allProperties[key],
+                    enum: combinedEnum,
+                    description: `Must be one of: ${combinedEnum.join(', ')}`,
+                  };
+                } else if (value.enum) {
+                  // Use the enum constraint
+                  allProperties[key] = value;
+                }
+                // Otherwise keep existing property definition
+              }
+            }
+          }
+          if (converted.required) {
+            converted.required.forEach((r: string) => allRequired.add(r));
+          }
+        }
+        
         return {
           type: SchemaType.OBJECT,
-          description: `Object with '${discriminatorKey}' field. Valid types: ${discriminatorValues.join(', ')}`,
-          properties: {
-            [discriminatorKey]: {
-              type: SchemaType.STRING,
-              description: `Must be one of: ${discriminatorValues.join(', ')}`,
-            },
-          },
-          required: [discriminatorKey],
+          description: `Block object with discriminator '${discriminatorKey}'. Valid types: ${discriminatorValues.join(', ')}. Each type has specific required fields and variant options.`,
+          properties: allProperties,  // Includes variant enums, nested fields
+          required: Array.from(allRequired),
         };
       }
     }

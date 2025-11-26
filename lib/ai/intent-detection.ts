@@ -50,15 +50,17 @@ export function detectUserIntent(
     // Pure questions without action
     /^(what|which|why|when|where)\b.*\?$/,
     /^how (can|could|should|would|do) (i|we)\b.*\?$/,
-    // Seeking suggestions
-    /\b(recommend|suggestion|advice|tip|idea|thought|feedback|opinion)s?\b/,
+    // Seeking suggestions - ADD VERB FORMS
+    /\b(suggest|recommend|advise|propose)\b/,  // ✅ NEW - catches verbs
+    /\b(recommendation|suggestion|advice|tip|idea|thought|feedback|opinion)s?\b/,
     /\b(what do you think|any thoughts|got any)\b/,
     /^(should i|should we)\b.*\?$/,
   ];
   
   const isQuestion = lower.includes('?');
   
-  if (strongAdvicePatterns.some(p => p.test(lower)) && isQuestion) {
+  // Remove question mark requirement for clear advisory requests
+  if (strongAdvicePatterns.some(p => p.test(lower))) {
     return { intent: 'advice', confidence: 0.9 };
   }
   
@@ -120,4 +122,7 @@ export function detectUserIntent(
   // No question, no action = assume refinement (user expects action)
   return { intent: 'refinement', confidence: 0.5 };
 }
+
+
+
 
