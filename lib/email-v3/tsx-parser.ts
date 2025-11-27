@@ -13,6 +13,7 @@ export interface ComponentLocation {
   startChar: number;
   endChar: number;
   hasChildren: boolean;
+  computedStyles?: Record<string, string>; // Inline styles from rendered HTML
 }
 
 export interface ComponentMap {

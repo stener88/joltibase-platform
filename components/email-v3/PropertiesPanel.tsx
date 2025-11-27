@@ -87,30 +87,55 @@ export function PropertiesPanel({
       text = ''; // Don't show dynamic variables in edit box
     }
 
-    // Extract style properties (basic regex parsing)
-    const extractStyleValue = (prop: string): string => {
-      const regex = new RegExp(`${prop}:\\s*['"]([^'"]+)['"]`);
-      const match = componentCode.match(regex);
-      return match ? match[1] : '';
-    };
-
-    // Extract href for links/buttons
+    // Extract href for links/buttons from TSX
     const hrefMatch = componentCode.match(/href=["']([^"']+)["']/);
     const href = hrefMatch ? hrefMatch[1] : '';
+
+    // Helper: Extract style value from computed styles (rendered HTML)
+    const computedStyles = componentInfo.computedStyles || {};
+    
+    const getStyleValue = (cssProp: string, defaultValue: string = ''): string => {
+      const value = computedStyles[cssProp];
+      if (!value) return defaultValue;
+      
+      // Remove 'px' suffix for spacing values
+      if (cssProp.includes('margin') || cssProp.includes('padding')) {
+        return value.replace('px', '');
+      }
+      
+      return value;
+    };
+
+    // Helper: Convert rgb() to hex for color inputs
+    const rgbToHex = (rgb: string): string => {
+      if (!rgb || !rgb.startsWith('rgb')) return rgb;
+      
+      const match = rgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+      if (!match) return rgb;
+      
+      const [, r, g, b] = match;
+      return '#' + [r, g, b].map(x => {
+        const hex = parseInt(x).toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+      }).join('');
+    };
+
+    const backgroundColor = getStyleValue('background-color', 'transparent');
+    const textColor = getStyleValue('color', '#000000');
 
     return {
       type: componentType,
       // Text properties (only for text components)
       text: isTextComponent ? text : undefined,
-      textColor: isTextComponent ? (extractStyleValue('color') || '#000000') : undefined,
-      fontSize: isTextComponent ? extractStyleValue('fontSize') : undefined,
-      fontWeight: isTextComponent ? extractStyleValue('fontWeight') : undefined,
+      textColor: isTextComponent ? rgbToHex(textColor) : undefined,
+      fontSize: isTextComponent ? getStyleValue('font-size') : undefined,
+      fontWeight: isTextComponent ? getStyleValue('font-weight') : undefined,
       // Layout properties
-      backgroundColor: extractStyleValue('backgroundColor') || 'transparent',
-      marginTop: extractStyleValue('marginTop')?.replace('px', '') || '0',
-      marginBottom: extractStyleValue('marginBottom')?.replace('px', '') || '0',
-      paddingTop: extractStyleValue('paddingTop')?.replace('px', '') || '0',
-      paddingBottom: extractStyleValue('paddingBottom')?.replace('px', '') || '0',
+      backgroundColor: backgroundColor === 'transparent' ? 'transparent' : rgbToHex(backgroundColor),
+      marginTop: getStyleValue('margin-top', '0'),
+      marginBottom: getStyleValue('margin-bottom', '0'),
+      paddingTop: getStyleValue('padding-top', '0'),
+      paddingBottom: getStyleValue('padding-bottom', '0'),
       // Link properties
       href: href || undefined,
       // Capabilities

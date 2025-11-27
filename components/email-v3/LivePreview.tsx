@@ -26,6 +26,28 @@ export interface DirectUpdate {
   value: string;
 }
 
+// Helper: Extract inline styles from rendered HTML for a component
+function extractStylesFromHtml(html: string, componentId: string): Record<string, string> {
+  // Find the element with this component ID and extract its style attribute
+  const regex = new RegExp(`data-component-id="${componentId}"[^>]*style="([^"]*)"`, 'i');
+  const match = html.match(regex);
+  
+  if (!match) return {};
+  
+  const styleString = match[1];
+  const styles: Record<string, string> = {};
+  
+  // Parse "color: rgb(0,0,0); background-color: blue; padding: 10px"
+  styleString.split(';').forEach(pair => {
+    const [key, value] = pair.split(':').map(s => s?.trim());
+    if (key && value) {
+      styles[key] = value;
+    }
+  });
+  
+  return styles;
+}
+
 export function LivePreview({
   tsxCode,
   mode,
@@ -260,11 +282,20 @@ export function LivePreview({
       // Inject interactive JavaScript into the rendered HTML (mode-aware)
       const interactiveHtml = injectInteractiveScript(data.html, currentMode);
       
-      setPreviewHtml(interactiveHtml);
-      setComponentMap(data.componentMap || {});
+      // Enhance componentMap with computed styles from rendered HTML
+      const enhancedComponentMap: ComponentMap = {};
+      Object.keys(data.componentMap || {}).forEach(componentId => {
+        enhancedComponentMap[componentId] = {
+          ...data.componentMap[componentId],
+          computedStyles: extractStylesFromHtml(data.html, componentId),
+        };
+      });
       
-      // Notify parent of component map update
-      onComponentMapUpdate(data.componentMap || {});
+      setPreviewHtml(interactiveHtml);
+      setComponentMap(enhancedComponentMap);
+      
+      // Notify parent of enhanced component map (with computed styles)
+      onComponentMapUpdate(enhancedComponentMap);
     } catch (error) {
       console.error('[LIVE-PREVIEW] Render error:', error);
       setPreviewHtml(generateErrorHtml(error));
