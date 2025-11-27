@@ -13,6 +13,10 @@ interface LivePreviewProps {
   onComponentHover: (id: string | null) => void;
   onComponentMapUpdate: (componentMap: ComponentMap) => void;
   isGenerating: boolean;
+  isSaving?: boolean;
+  isEnteringVisualMode?: boolean;
+  isExitingVisualMode?: boolean;
+  iframeKey?: number;
 }
 
 export interface DirectUpdate {
@@ -31,6 +35,10 @@ export function LivePreview({
   onComponentHover,
   onComponentMapUpdate,
   isGenerating,
+  isSaving = false,
+  isEnteringVisualMode = false,
+  isExitingVisualMode = false,
+  iframeKey = 0,
 }: LivePreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [previewHtml, setPreviewHtml] = useState<string>('');
@@ -280,7 +288,13 @@ export function LivePreview({
       return;
     }
 
-    // Subsequent renders - debounced
+    // Skip re-render if in visual mode (rely on direct updates)
+    if (mode === 'visual') {
+      console.log('[LIVE-PREVIEW] Visual mode - skipping auto re-render (direct updates only)');
+      return;
+    }
+
+    // Subsequent renders - debounced (chat mode or AI edits)
     console.log('[LIVE-PREVIEW] TSX or mode changed, scheduling debounced render', { tsxLength: tsxCode.length, mode });
     
     // Clear existing timeout
@@ -552,16 +566,24 @@ export function LivePreview({
 
   return (
     <div className="relative h-full w-full bg-gray-50">
-      {/* Loading Overlay (AI generation or rendering) */}
-      {(isGenerating || isRendering) && (
+      {/* Loading Overlay (AI generation, rendering, saving, or visual mode transitions) */}
+      {(isGenerating || isRendering || isSaving || isEnteringVisualMode || isExitingVisualMode) && (
         <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center">
           <div className="bg-white rounded-lg p-8 text-center max-w-sm">
             <div className="w-12 h-12 border-4 border-[#e9a589] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">
-              {isGenerating ? 'AI is updating your email...' : 'Rendering preview...'}
+              {isEnteringVisualMode ? 'Preparing visual editor...' :
+               isExitingVisualMode ? 'Applying changes...' :
+               isSaving ? 'Saving changes...' : 
+               isGenerating ? 'AI is updating your email...' : 
+               'Rendering preview...'}
             </h3>
             <p className="text-sm text-gray-600">
-              {isGenerating ? 'Hang tight while we apply changes' : 'This will just take a moment'}
+              {isEnteringVisualMode ? 'Setting up interactive preview' :
+               isExitingVisualMode ? 'Saving your edits' :
+               isSaving ? 'Your email is being saved' : 
+               isGenerating ? 'Hang tight while we apply changes' : 
+               'This will just take a moment'}
             </p>
           </div>
         </div>
@@ -570,27 +592,13 @@ export function LivePreview({
       {/* Email Preview */}
       <iframe
         ref={iframeRef}
-        key="email-preview"
+        key={`email-preview-${iframeKey}`}
         srcDoc={previewHtml || placeholderHtml}
         className="w-full h-full border-0"
         sandbox="allow-scripts allow-same-origin"
         title="Email Preview"
       />
 
-      {/* Mode Indicator */}
-      {mode === 'visual' && (
-        <div className="absolute top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-lg flex items-center gap-2">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
-          </svg>
-          Click elements to edit
-          {selectedComponentId && (
-            <span className="ml-2 px-2 py-0.5 bg-white/20 rounded text-xs">
-              {selectedComponentId} selected
-            </span>
-          )}
-        </div>
-      )}
     </div>
   );
 }

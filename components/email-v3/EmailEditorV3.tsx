@@ -10,6 +10,7 @@ import { ChatHistory } from './ChatHistory';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Save, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { updateComponentText, updateInlineStyle } from '@/lib/email-v3/tsx-manipulator';
 
 interface EmailEditorV3Props {
   campaignId: string;
@@ -36,7 +37,7 @@ export function EmailEditorV3({
   const router = useRouter();
 
   // State management
-  const [savedTsxCode] = useState(initialTsxCode);
+  const [savedTsxCode, setSavedTsxCode] = useState(initialTsxCode);
   const [draftTsxCode, setDraftTsxCode] = useState(initialTsxCode);
   const [mode, setMode] = useState<EditMode>('chat');
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
@@ -49,6 +50,12 @@ export function EmailEditorV3({
   const [componentMap, setComponentMap] = useState<any>({});
   const [hasVisualEdits, setHasVisualEdits] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  
+  // Visual editing state
+  const [visualEdits, setVisualEdits] = useState<Map<string, Record<string, string>>>(new Map());
+  const [iframeKey, setIframeKey] = useState(0);
+  const [isEnteringVisualMode, setIsEnteringVisualMode] = useState(false);
+  const [isExitingVisualMode, setIsExitingVisualMode] = useState(false);
 
   // Derived state
   const hasUnsavedChanges = draftTsxCode !== savedTsxCode;
@@ -118,10 +125,19 @@ export function EmailEditorV3({
       return;
     }
     
+    // Entering visual mode - show loading overlay
+    if (newMode === 'visual') {
+      setIsEnteringVisualMode(true);
+      setTimeout(() => {
+        setIsEnteringVisualMode(false);
+      }, 600);
+    }
+    
     setMode(newMode);
     if (newMode === 'chat') {
       setSelectedComponentId(null);
       setHasVisualEdits(false);
+      setVisualEdits(new Map());
     }
   }, [mode, hasVisualEdits]);
 
@@ -132,12 +148,7 @@ export function EmailEditorV3({
     setComponentPosition(position || null);
   }, []);
 
-  // Handle direct TSX update (from PropertiesPanel)
-  const handleTsxUpdate = useCallback((newTsxCode: string) => {
-    setDraftTsxCode(newTsxCode);
-  }, []);
-
-  // Send direct update to iframe (instant, no re-render)
+  // Send direct update to iframe (instant, no re-render, track in memory)
   const sendDirectUpdate = useCallback((componentId: string, property: string, value: string) => {
     // Access the sendDirectUpdate function exposed by LivePreview
     const livePreviewUpdate = (window as any).__livePreviewSendDirectUpdate;
@@ -149,6 +160,15 @@ export function EmailEditorV3({
         value,
       });
       
+      // Track the edit in memory (don't update TSX yet!)
+      setVisualEdits(prev => {
+        const newEdits = new Map(prev);
+        const componentEdits = newEdits.get(componentId) || {};
+        componentEdits[property] = value;
+        newEdits.set(componentId, componentEdits);
+        return newEdits;
+      });
+      
       // Mark that we have visual edits
       setHasVisualEdits(true);
     }
@@ -156,25 +176,58 @@ export function EmailEditorV3({
 
   // Save visual edits and exit
   const handleSaveVisualEdits = useCallback(() => {
-    console.log('[EDITOR] Saving visual edits');
-    // TODO: Update draftTsxCode with the visual edits using tsx-manipulator
+    console.log('[EDITOR] Applying visual edits to TSX');
+    setIsExitingVisualMode(true);
+    
+    let updatedTsx = draftTsxCode;
+    
+    // Apply all tracked edits to TSX
+    visualEdits.forEach((edits, componentId) => {
+      Object.entries(edits).forEach(([property, value]) => {
+        if (property === 'text' || property === 'textContent') {
+          updatedTsx = updateComponentText(updatedTsx, componentMap, componentId, value);
+        } else {
+          updatedTsx = updateInlineStyle(updatedTsx, componentMap, componentId, property, value);
+        }
+      });
+    });
+    
+    // Update draft TSX (this will trigger re-render)
+    setDraftTsxCode(updatedTsx);
+    
+    // Clear visual edits and exit visual mode
+    setVisualEdits(new Map());
     setShowExitConfirm(false);
     setMode('chat');
     setSelectedComponentId(null);
     setHasVisualEdits(false);
-  }, []);
+    
+    // Clear loading after re-render
+    setTimeout(() => {
+      setIsExitingVisualMode(false);
+    }, 600);
+  }, [visualEdits, draftTsxCode, componentMap]);
 
   // Discard visual edits and exit
   const handleDiscardVisualEdits = useCallback(() => {
     console.log('[EDITOR] Discarding visual edits');
-    // TODO: Reload iframe to reset visual changes
+    setIsExitingVisualMode(true);
+    
+    // Force iframe reload by incrementing key
+    setIframeKey(prev => prev + 1);
+    
+    // Clear visual edits and exit visual mode
+    setVisualEdits(new Map());
     setShowExitConfirm(false);
     setMode('chat');
     setSelectedComponentId(null);
     setHasVisualEdits(false);
-    // Trigger re-render to reset iframe
-    setDraftTsxCode(draftTsxCode);
-  }, [draftTsxCode]);
+    
+    // Clear loading after re-render
+    setTimeout(() => {
+      setIsExitingVisualMode(false);
+    }, 600);
+  }, []);
 
   // Handle save
   const handleSave = useCallback(async () => {
@@ -210,8 +263,10 @@ export function EmailEditorV3({
         throw new Error(`Update failed: ${errorText}`);
       }
 
-      // Redirect back to campaigns list
-      router.push('/dashboard/campaigns');
+      // Update saved state to reflect successful save
+      setSavedTsxCode(draftTsxCode);
+      
+      console.log('✅ Campaign saved successfully');
     } catch (error: any) {
       console.error('Failed to save:', error);
       alert(`Failed to save changes: ${error.message}`);
@@ -229,34 +284,9 @@ export function EmailEditorV3({
     }
   }, [savedTsxCode]);
 
-  // Editor controls for header
+  // Editor controls for header (empty - save/discard only via visual mode exit)
   const editorControls = {
-    editorActions: (
-      <div className="flex items-center gap-2">
-        {hasUnsavedChanges && (
-          <>
-            <span className="text-sm text-gray-600">Unsaved changes</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDiscard}
-              disabled={isSaving}
-            >
-              <X className="w-4 h-4 mr-1" />
-              Discard
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={isSaving}
-            >
-              <Save className="w-4 h-4 mr-1" />
-              {isSaving ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </>
-        )}
-      </div>
-    ),
+    editorActions: null,
   };
 
   return (
@@ -307,11 +337,11 @@ export function EmailEditorV3({
                         onChange={setPrompt}
                         onSubmit={handleChatSubmit}
                         isLoading={isGenerating}
-                        disabled={hasUnsavedChanges && isSaving}
+                        disabled={isSaving}
                         compact
                         visualEditsMode={false}
                         onVisualEditsToggle={handleModeToggle}
-                        showDiscardSaveButtons={hasUnsavedChanges}
+                        showDiscardSaveButtons={false}
                       />
                     </div>
                   </>
@@ -323,9 +353,7 @@ export function EmailEditorV3({
                         tsxCode={draftTsxCode}
                         selectedComponentId={selectedComponentId}
                         componentMap={componentMap}
-                        onTsxUpdate={handleTsxUpdate}
                         onDirectUpdate={sendDirectUpdate}
-                        onBackToChat={() => setMode('chat')}
                       />
                     </div>
 
@@ -346,11 +374,11 @@ export function EmailEditorV3({
                         onChange={setPrompt}
                         onSubmit={handleChatSubmit}
                         isLoading={isGenerating}
-                        disabled={hasUnsavedChanges && isSaving}
+                        disabled={isSaving}
                         compact
                         visualEditsMode={true}
                         onVisualEditsToggle={handleModeToggle}
-                        showDiscardSaveButtons={hasUnsavedChanges}
+                        showDiscardSaveButtons={false}
                       />
                     </div>
                   </>
@@ -368,23 +396,28 @@ export function EmailEditorV3({
                   onComponentHover={setHoveredComponentId}
                   onComponentMapUpdate={setComponentMap}
                   isGenerating={isGenerating}
+                  isSaving={isSaving}
+                  isEnteringVisualMode={isEnteringVisualMode}
+                  isExitingVisualMode={isExitingVisualMode}
+                  iframeKey={iframeKey}
                 />
                 
                 {/* Floating AI Toolbar (Visual Mode Only) - positioned below selected component */}
                 {mode === 'visual' && selectedComponentId && componentPosition && (
                   <div 
-                    className="absolute z-50 bg-white shadow-lg rounded border border-gray-300 p-2"
+                    className="absolute z-50 bg-[#2d2d2d] shadow-2xl rounded-xl p-2"
                     style={{
                       top: `${componentPosition.top}px`,
                       left: `${componentPosition.left}px`,
-                      maxWidth: '300px',
+                      minWidth: '400px',
                     }}
                   >
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2">
+                      {/* AI Input */}
                       <input
                         type="text"
-                        placeholder="AI edit..."
-                        className="flex-1 px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        placeholder="Ask Jolti..."
+                        className="flex-1 px-3 py-1.5 text-sm bg-transparent text-white placeholder-gray-400 border-none outline-none focus:outline-none"
                         onKeyPress={(e) => {
                           if (e.key === 'Enter') {
                             const input = e.currentTarget.value;
@@ -396,22 +429,44 @@ export function EmailEditorV3({
                           }
                         }}
                       />
-                      <Button
-                        size="sm"
-                        className="h-6 px-2 text-xs"
-                        onClick={() => {
-                          const input = document.querySelector<HTMLInputElement>(
-                            'input[placeholder="AI edit..."]'
-                          );
-                          if (input?.value.trim()) {
-                            setPrompt(input.value);
-                            handleChatSubmit();
-                            input.value = '';
-                          }
-                        }}
-                      >
-                        →
-                      </Button>
+                      
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-2">
+                        {/* Up Arrow / Submit */}
+                        <button
+                          className="w-7 h-7 rounded-lg bg-gray-700 hover:bg-gray-600 flex items-center justify-center transition-colors"
+                          onClick={() => {
+                            const input = document.querySelector<HTMLInputElement>(
+                              'input[placeholder="Ask Jolti..."]'
+                            );
+                            if (input?.value.trim()) {
+                              setPrompt(input.value);
+                              handleChatSubmit();
+                              input.value = '';
+                            }
+                          }}
+                        >
+                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                          </svg>
+                        </button>
+                        
+                        {/* Separator */}
+                        <div className="h-5 w-px bg-gray-600"></div>
+                        
+                        {/* Delete / Close */}
+                        <button
+                          className="w-7 h-7 rounded-lg bg-gray-700 hover:bg-red-600 flex items-center justify-center transition-colors"
+                          onClick={() => {
+                            setSelectedComponentId(null);
+                            setComponentPosition(null);
+                          }}
+                        >
+                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}

@@ -38,7 +38,8 @@ export function updateComponentText(
 }
 
 /**
- * Update inline style property
+ * Update inline style property or add to existing inline styles
+ * Works with both Tailwind (className) and inline styles (style={{}})
  */
 export function updateInlineStyle(
   tsxCode: string,
@@ -60,7 +61,7 @@ export function updateInlineStyle(
   let updatedComponent: string;
   
   if (styleMatch) {
-    // Update existing style
+    // Update existing inline style
     const existingStyles = styleMatch[1];
     
     // Check if property already exists
@@ -77,7 +78,7 @@ export function updateInlineStyle(
         `style={{${updatedStyles}}}`
       );
     } else {
-      // Add new property
+      // Add new property to existing styles
       const updatedStyles = existingStyles.trim().endsWith(',')
         ? `${existingStyles} ${styleProp}: '${value}'`
         : `${existingStyles}, ${styleProp}: '${value}'`;
@@ -87,7 +88,8 @@ export function updateInlineStyle(
       );
     }
   } else {
-    // Add new style attribute
+    // No inline styles - add new style attribute
+    // This will override any Tailwind classes for this property
     const tagMatch = componentCode.match(/<(\w+)([^>]*?)(\/?>)/);
     if (tagMatch) {
       const [fullTag, tagName, attributes, closingBracket] = tagMatch;
@@ -98,7 +100,7 @@ export function updateInlineStyle(
     }
   }
   
-  console.log(`[TSX-MANIPULATOR] Updated ${styleProp} for ${componentId} to ${value}`);
+  console.log(`[TSX-MANIPULATOR] Updated ${styleProp} for ${componentId} to ${value} (inline style)`);
   
   return before + updatedComponent + after;
 }

@@ -8,9 +8,7 @@ interface PropertiesPanelProps {
   tsxCode: string;
   selectedComponentId: string | null;
   componentMap: ComponentMap;
-  onTsxUpdate: (newTsxCode: string) => void;
   onDirectUpdate: (componentId: string, property: string, value: string) => void;
-  onBackToChat: () => void;
 }
 
 interface ComponentProperties {
@@ -39,9 +37,7 @@ export function PropertiesPanel({
   tsxCode,
   selectedComponentId,
   componentMap,
-  onTsxUpdate,
   onDirectUpdate,
-  onBackToChat,
 }: PropertiesPanelProps) {
   // Extract properties from selected component
   const componentProperties = useMemo<ComponentProperties | null>(() => {
@@ -147,17 +143,13 @@ export function PropertiesPanel({
     }
   }, [componentProperties]);
 
-  // Handle instant updates (direct DOM manipulation + background TSX update)
+  // Handle instant updates (direct DOM manipulation only - TSX updated on save)
   const handleTextChange = (newText: string) => {
     setText(newText);
     
     if (selectedComponentId) {
-      // Instant visual update (no re-render!)
+      // Instant visual update (no re-render, no TSX update!)
       onDirectUpdate(selectedComponentId, 'text', newText);
-      
-      // Background TSX update for persistence
-      // TODO: Use tsx-manipulator to update actual TSX code
-      // For now, the TSX update will happen on save
     }
   };
 
