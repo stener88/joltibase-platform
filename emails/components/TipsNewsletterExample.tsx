@@ -22,43 +22,11 @@ import {
 } from '@react-email/components';
 import tailwindConfig from '../tailwind.config';
 
-interface TipsNewsletterProps {
-  tips?: { id: number; description: string }[];
-  companyName?: string;
-  logoUrl?: string;
-  headerImageUrl?: string;
-  mainHeading?: string;
-  mainSubheading?: string;
-}
-
 const baseUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : '';
 
-export default function TipsNewsletter({
-  tips = [
-    {
-      id: 1,
-      description:
-        'To find a specific phrase, enter it in quotes: "local storage"',
-    },
-    {
-      id: 2,
-      description:
-        'To search within specific tag(s), enter them in square brackets: [javascript]',
-    },
-    {
-      id: 3,
-      description:
-        'Combine them to get even more precise results - [javascript] "local storage" searches for the phrase "local storage" in questions that have the [javascript] tag',
-    },
-  ],
-  companyName = 'Your Company',
-  logoUrl = `${baseUrl}/static/logo.png`,
-  headerImageUrl = `${baseUrl}/static/header.png`,
-  mainHeading = 'Find what you want, faster',
-  mainSubheading = 'Tips and tricks for getting the most out of our platform',
-}: TipsNewsletterProps) {
+export default function TipsNewsletter() {
   return (
     <Html>
       <Head />
@@ -67,24 +35,24 @@ export default function TipsNewsletter({
           <Preview>Tips for getting the most out of our platform</Preview>
           <Container className="w-[680px] max-w-full mx-auto bg-white rounded-[5px] overflow-hidden">
             <Section className="flex bg-[#f3f3f5] p-5 px-[30px]">
-              <Img width={146} src={logoUrl} alt={companyName} />
+              <Img width={146} src={`${baseUrl}/static/logo.png`} alt="Company Logo" />
             </Section>
 
             <Section className="rounded-t-md flex flex-col bg-[#2b2d6e]">
               <Row>
                 <Column className="py-5 px-[30px] pb-[15px]">
                   <Heading className="text-white text-[27px] leading-[27px] font-bold">
-                    {mainHeading}
+                    Find what you want, faster
                   </Heading>
                   <Text className="text-white text-[17px] leading-[24px]">
-                    {mainSubheading}
+                    Tips and tricks for getting the most out of our platform
                   </Text>
                 </Column>
                 <Column className="py-[30px] px-[10px]">
                   <Img
                     className="max-w-full"
                     width={340}
-                    src={headerImageUrl}
+                    src={`${baseUrl}/static/header.png`}
                     alt="Header illustration"
                   />
                 </Column>
@@ -100,7 +68,7 @@ export default function TipsNewsletter({
               </Heading>
               <Text className="text-[15px] leading-[21px] text-[#3c3f44]">
                 With millions of questions and answers, it's possible that someone
-                has already provided a solution to the problem you're facing.{' '}
+                has already provided a solution to the problem you're facing.
               </Text>
 
               <Hr className="my-[30px]" />
@@ -115,13 +83,21 @@ export default function TipsNewsletter({
                 Here are a few simple search tips to get you started:
               </Text>
               <ul>
-                {tips.map((tip) => (
-                  <li key={tip.id}>
-                    <Text className="text-[15px] leading-[21px] text-[#3c3f44]">
-                      {tip.description}
-                    </Text>
-                  </li>
-                ))}
+                <li>
+                  <Text className="text-[15px] leading-[21px] text-[#3c3f44]">
+                    To find a specific phrase, enter it in quotes: "local storage"
+                  </Text>
+                </li>
+                <li>
+                  <Text className="text-[15px] leading-[21px] text-[#3c3f44]">
+                    To search within specific tag(s), enter them in square brackets: [javascript]
+                  </Text>
+                </li>
+                <li>
+                  <Text className="text-[15px] leading-[21px] text-[#3c3f44]">
+                    Combine them to get even more precise results - [javascript] "local storage" searches for the phrase "local storage" in questions that have the [javascript] tag
+                  </Text>
+                </li>
               </ul>
 
               <Text className="text-[15px] leading-[21px] text-[#3c3f44]">
@@ -152,20 +128,20 @@ export default function TipsNewsletter({
 
           <Section className="w-[680px] max-w-full mt-8 mx-auto py-0 px-[30px]">
             <Text className="text-xs leading-[15px] text-[#9199a1] m-0">
-              You're receiving this email because of your activity on {companyName}.
+              You're receiving this email because of your activity on our platform.
             </Text>
 
             <Link
               href="/"
               className="inline-block text-[#9199a1] underline text-[12px] mr-[10px] mb-0 mt-2"
             >
-              Unsubscribe from emails like this{' '}
+              Unsubscribe from emails like this
             </Link>
             <Link
               href="/"
               className="inline-block text-[#9199a1] underline text-[12px] mr-[10px] mb-0 mt-2"
             >
-              Edit email settings{' '}
+              Edit email settings
             </Link>
             <Link
               href="/"
@@ -184,11 +160,11 @@ export default function TipsNewsletter({
 
             <Img
               width={111}
-              src={logoUrl}
-              alt={companyName}
+              src={`${baseUrl}/static/logo.png`}
+              alt="Company Logo"
             />
             <Text className="my-1 text-[12px] leading-[15px] text-[#9199a1]">
-              <strong>{companyName}</strong>, 123 Main Street, Suite 100, City, State 12345
+              <strong>Your Company</strong>, 123 Main Street, Suite 100, City, State 12345
             </Text>
             <Text className="rounded-[1px] border border-solid border-[#d6d9dc] pt-1 pb-[3px] px-[6px] text-[11px] leading-none font-mono text-[#e06c77] max-w-min m-0 mb-8">
               {'<3'}

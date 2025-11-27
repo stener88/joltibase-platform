@@ -40,25 +40,28 @@ export function LivePreview({
   const hasRenderedRef = useRef(false);
 
   // Inject interactive JavaScript into rendered HTML
-  const injectInteractiveScript = (html: string): string => {
+  const injectInteractiveScript = (html: string, currentMode: EditMode): string => {
     const interactiveScript = `
       <style>
         [data-component-id] {
           position: relative;
           transition: outline 0.15s ease;
-          cursor: pointer;
+          ${currentMode === 'visual' ? 'cursor: pointer;' : ''}
         }
-        /* Only show hover on direct hover, not on child elements */
+        /* Only show hover in visual mode, on direct hover, not on child elements */
+        ${currentMode === 'visual' ? `
         [data-component-id]:hover:not(:has([data-component-id]:hover)) {
           outline: 2px dashed #3b82f6;
           outline-offset: 2px;
         }
+        ` : ''}
         /* Selected state - solid outline, NO background */
         [data-component-id].selected {
           outline: 3px solid #3b82f6 !important;
           outline-offset: 2px;
         }
-        /* Component type label */
+        /* Component type label - only in visual mode */
+        ${currentMode === 'visual' ? `
         [data-component-id]::before {
           content: attr(data-component-type);
           position: absolute;
@@ -81,6 +84,7 @@ export function LivePreview({
         [data-component-id].selected::before {
           display: block;
         }
+        ` : ''}
       </style>
       <script>
         console.log('[IFRAME] Interactive script loaded');
@@ -227,7 +231,7 @@ export function LivePreview({
   };
 
   // Render TSX to HTML with component IDs
-  const renderPreview = useCallback(async (tsx: string) => {
+  const renderPreview = useCallback(async (tsx: string, currentMode: EditMode) => {
     setIsRendering(true);
     
     try {
@@ -245,8 +249,8 @@ export function LivePreview({
       
       console.log('[LIVE-PREVIEW] Rendered with', Object.keys(data.componentMap || {}).length, 'components');
       
-      // Inject interactive JavaScript into the rendered HTML
-      const interactiveHtml = injectInteractiveScript(data.html);
+      // Inject interactive JavaScript into the rendered HTML (mode-aware)
+      const interactiveHtml = injectInteractiveScript(data.html, currentMode);
       
       setPreviewHtml(interactiveHtml);
       setComponentMap(data.componentMap || {});
@@ -259,9 +263,9 @@ export function LivePreview({
     } finally {
       setIsRendering(false);
     }
-  }, []);
+  }, [onComponentMapUpdate]);
 
-  // Render on TSX change (including initial mount)
+  // Render on TSX change or mode change (including initial mount)
   useEffect(() => {
     if (!tsxCode) {
       console.warn('[LIVE-PREVIEW] No TSX code provided');
@@ -270,14 +274,14 @@ export function LivePreview({
 
     // First render - immediate, no debounce
     if (!hasRenderedRef.current) {
-      console.log('[LIVE-PREVIEW] Initial render (immediate)', { tsxLength: tsxCode.length });
+      console.log('[LIVE-PREVIEW] Initial render (immediate)', { tsxLength: tsxCode.length, mode });
       hasRenderedRef.current = true;
-      renderPreview(tsxCode);
+      renderPreview(tsxCode, mode);
       return;
     }
 
     // Subsequent renders - debounced
-    console.log('[LIVE-PREVIEW] TSX changed, scheduling debounced render', { tsxLength: tsxCode.length });
+    console.log('[LIVE-PREVIEW] TSX or mode changed, scheduling debounced render', { tsxLength: tsxCode.length, mode });
     
     // Clear existing timeout
     if (renderTimeoutRef.current) {
@@ -287,7 +291,7 @@ export function LivePreview({
     // Debounce render (300ms)
     renderTimeoutRef.current = setTimeout(() => {
       console.log('[LIVE-PREVIEW] Executing render after debounce');
-      renderPreview(tsxCode);
+      renderPreview(tsxCode, mode);
     }, 300);
 
     return () => {
@@ -295,7 +299,7 @@ export function LivePreview({
         clearTimeout(renderTimeoutRef.current);
       }
     };
-  }, [tsxCode, renderPreview]);
+  }, [tsxCode, mode, renderPreview]);
 
   // Send direct update to iframe (instant, no re-render)
   const sendDirectUpdate = useCallback((update: DirectUpdate) => {

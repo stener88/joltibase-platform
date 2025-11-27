@@ -130,13 +130,7 @@ export function EmailEditorV3({
     console.log('[EDITOR] Component selected:', componentId, position);
     setSelectedComponentId(componentId);
     setComponentPosition(position || null);
-    
-    // Auto-switch to visual mode if clicking in chat mode
-    if (componentId && mode === 'chat') {
-      console.log('[EDITOR] Auto-switching to visual mode');
-      setMode('visual');
-    }
-  }, [mode]);
+  }, []);
 
   // Handle direct TSX update (from PropertiesPanel)
   const handleTsxUpdate = useCallback((newTsxCode: string) => {

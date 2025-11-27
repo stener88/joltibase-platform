@@ -94,6 +94,24 @@ export function validateGeneratedCode(code: string): ValidationResult {
     errors.push(`Duplicate variable declarations: ${duplicateVars.join(', ')}`);
   }
   
+  // **CRITICAL**: Check for dynamic content patterns (not editable in visual editor)
+  if (code.includes('.map(')) {
+    errors.push('Code contains .map() loops - use static content instead. Write out each section individually.');
+  }
+  
+  // Check for JSX expressions in content (makes text non-editable)
+  // Pattern to detect {variable} in JSX content (excluding attributes)
+  const dynamicJSXContentPattern = />[\s\n]*\{[a-zA-Z_][a-zA-Z0-9_.]*\}[\s\n]*</g;
+  if (dynamicJSXContentPattern.test(code)) {
+    errors.push('Code contains dynamic JSX expressions like {variable} in content - write static text instead.');
+  }
+  
+  // Check for pseudo-class selectors in className (hover:, focus:, etc.)
+  const pseudoClassPattern = /className="[^"]*(?:hover|focus|active|dark|group-):/;
+  if (pseudoClassPattern.test(code)) {
+    errors.push('Code contains pseudo-class selectors (hover:, focus:, etc.) - these cannot be inlined in emails. Use static classes only.');
+  }
+  
   // Check for common React Email components
   const hasComponents = [
     '<Body',
@@ -275,6 +293,10 @@ export function cleanGeneratedCode(code: string): string {
   
   // Remove any BOM or invisible characters
   cleaned = cleaned.replace(/^\uFEFF/, '');
+  
+  // Clean up double spaces
+  cleaned = cleaned.replace(/className="\s+/g, 'className="');
+  cleaned = cleaned.replace(/\s+"/g, '"');
   
   return cleaned;
 }

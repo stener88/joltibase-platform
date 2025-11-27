@@ -81,8 +81,15 @@ export function PropertiesPanel({
     const isLayoutComponent = ['Section', 'Container', 'Column', 'Row'].includes(componentType);
     
     // Extract text content (only for text components)
+    // Check if text is a JSX expression (dynamic content like {variable})
     const textMatch = componentCode.match(/>([^<]+)</);
-    const text = textMatch ? textMatch[1].trim() : '';
+    let text = textMatch ? textMatch[1].trim() : '';
+    
+    // If text contains JSX expression, mark as dynamic (non-editable for now)
+    const isDynamicText = text.includes('{') && text.includes('}');
+    if (isDynamicText) {
+      text = ''; // Don't show dynamic variables in edit box
+    }
 
     // Extract style properties (basic regex parsing)
     const extractStyleValue = (prop: string): string => {
@@ -111,7 +118,7 @@ export function PropertiesPanel({
       // Link properties
       href: href || undefined,
       // Capabilities
-      canEditText: isTextComponent,
+      canEditText: isTextComponent && !isDynamicText, // Can't edit dynamic text
       canEditTextColor: isTextComponent,
       canEditBackgroundColor: true, // Most components can have background
       canEditSpacing: true, // All components can have spacing
@@ -219,16 +226,24 @@ export function PropertiesPanel({
 
       {/* Properties Form */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
-        {/* Text Content - Only for text components */}
-        {componentProperties.canEditText && (
+        {/* Text Content - Only for text components with static text */}
+        {componentProperties.type && ['Text', 'Heading', 'Button', 'Link'].includes(componentProperties.type) && (
           <div>
             <label className="block text-sm font-medium mb-2">Content</label>
-            <textarea
-              value={text}
-              onChange={(e) => handleTextChange(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm min-h-[100px] resize-y"
-              placeholder="Enter text content..."
-            />
+            {componentProperties.canEditText ? (
+              <textarea
+                value={text}
+                onChange={(e) => handleTextChange(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg text-sm min-h-[100px] resize-y"
+                placeholder="Enter text content..."
+              />
+            ) : (
+              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm min-h-[100px] bg-gray-50">
+                <p className="text-gray-500 italic">
+                  This component uses dynamic content and cannot be edited directly.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
