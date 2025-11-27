@@ -10,6 +10,7 @@ import { generateText } from 'ai';
 import { initializeRAG, retrievePatternsByEmbedding } from '@/emails/lib/rag';
 import type { Pattern } from '@/emails/lib/patterns';
 import { validateGeneratedCode, extractCodeFromMarkdown, cleanGeneratedCode } from '@/emails/lib/validator';
+import { fetchImagesForPrompt, type ImageContext } from './image-service';
 import fs from 'fs';
 import path from 'path';
 
@@ -71,14 +72,23 @@ const SYSTEM_INSTRUCTION = `You are an expert React Email developer creating pro
    - Props can be used for URLs or names ONLY (not for body content)
    - Export as default function
 
-5. **EMAIL BEST PRACTICES**
+5. **IMAGES**
+   - Use <Img> component from '@react-email/components'
+   - Real image URLs will be provided in the user prompt
+   - ALWAYS include width, height, and alt attributes
+   - Use the exact URLs provided (professional Unsplash images)
+   - DO NOT use placeholder.com, via.placeholder.com, or /static/ paths
+   - DO NOT use baseUrl variables or process.env patterns
+   - Example: <Img src="https://images.unsplash.com/..." width={600} height={300} alt="Description" />
+
+6. **EMAIL BEST PRACTICES**
    - Max content width: 600px via Container
    - Include <Preview> text for email clients
    - Clear visual hierarchy with Tailwind
    - Accessible color contrast (text-gray-900 on white, etc.)
    - Mobile-responsive with Tailwind utilities
 
-6. **COMPLETE CODE ONLY**
+7. **COMPLETE CODE ONLY**
    - NO placeholders, NO "...", NO incomplete sections
    - EVERY section fully implemented
    - NO TODO or FIXME comments
@@ -157,13 +167,14 @@ Generate COMPLETE, production-ready React Email components with Tailwind classes
 export async function generateEmail(prompt: string): Promise<GeneratedEmail> {
   console.log(`🚀 [V3-GENERATOR] Generating email for: "${prompt}"`);
   
-  // Initialize RAG and retrieve relevant patterns
+  // Initialize RAG first
   const patternsWithEmbeddings = await initializeRAG();
-  const relevantPatterns = await retrievePatternsByEmbedding(
-    prompt,
-    patternsWithEmbeddings,
-    3 // Get top 3 patterns
-  );
+  
+  // Run pattern retrieval and image fetch in parallel (no added latency!)
+  const [relevantPatterns, images] = await Promise.all([
+    retrievePatternsByEmbedding(prompt, patternsWithEmbeddings, 3),
+    fetchImagesForPrompt(prompt),
+  ]);
   
   if (relevantPatterns.length === 0) {
     console.warn('⚠️ [V3-GENERATOR] No patterns found, proceeding without examples');
@@ -178,8 +189,8 @@ export async function generateEmail(prompt: string): Promise<GeneratedEmail> {
     console.log(`🔄 [V3-GENERATOR] Attempt ${attempt}/${MAX_GENERATION_ATTEMPTS}`);
     
     try {
-      // Build user prompt with pattern context
-      const userPrompt = buildUserPrompt(prompt, relevantPatterns, attempt);
+      // Build user prompt with pattern context and images
+      const userPrompt = buildUserPrompt(prompt, relevantPatterns, attempt, images);
       
       // Generate with Gemini
       const result = await generateText({
@@ -241,9 +252,9 @@ export async function generateEmail(prompt: string): Promise<GeneratedEmail> {
 }
 
 /**
- * Build user prompt with pattern examples
+ * Build user prompt with pattern examples and images
  */
-function buildUserPrompt(prompt: string, patterns: Pattern[], attempt: number): string {
+function buildUserPrompt(prompt: string, patterns: Pattern[], attempt: number, images: ImageContext): string {
   let userPrompt = '';
   
   // Add pattern examples if available
@@ -258,6 +269,42 @@ function buildUserPrompt(prompt: string, patterns: Pattern[], attempt: number): 
       userPrompt += `\`\`\`tsx\n${pattern.code.substring(0, 2000)}\n\`\`\`\n\n`;
     });
   }
+  
+  // Add image URLs to use
+  userPrompt += '# IMAGES TO USE\n\n';
+  userPrompt += 'Use these professional images from Unsplash:\n\n';
+  
+  if (images.hero) {
+    userPrompt += `**Hero/Header Image**:\n`;
+    userPrompt += `- URL: ${images.hero.url}\n`;
+    userPrompt += `- Dimensions: ${images.hero.width}x${images.hero.height}\n`;
+    userPrompt += `- Alt: "${images.hero.alt}"\n`;
+    userPrompt += `- Use in: Header section, hero banner\n\n`;
+  }
+  
+  if (images.logo) {
+    userPrompt += `**Logo**:\n`;
+    userPrompt += `- URL: ${images.logo.url}\n`;
+    userPrompt += `- Dimensions: ${images.logo.width}x${images.logo.height}\n`;
+    userPrompt += `- Alt: "Company logo"\n`;
+    userPrompt += `- Use in: Top of email, header\n\n`;
+  }
+  
+  if (images.feature) {
+    userPrompt += `**Feature/Content Image** (optional):\n`;
+    userPrompt += `- URL: ${images.feature.url}\n`;
+    userPrompt += `- Dimensions: ${images.feature.width}x${images.feature.height}\n`;
+    userPrompt += `- Alt: "${images.feature.alt}"\n`;
+    userPrompt += `- Use in: Body sections, feature highlights\n\n`;
+  }
+  
+  userPrompt += `**CRITICAL - Image Usage Rules**:\n`;
+  userPrompt += `✅ Use these EXACT URLs in <Img> components\n`;
+  userPrompt += `✅ Include width and height attributes\n`;
+  userPrompt += `✅ Include descriptive alt text\n`;
+  userPrompt += `❌ DO NOT use baseUrl or process.env.VERCEL_URL\n`;
+  userPrompt += `❌ DO NOT use /static/ paths or placeholders\n`;
+  userPrompt += `❌ DO NOT use placeholder.com or via.placeholder.com\n\n`;
   
   // Add CRITICAL content rules
   userPrompt += `# 🚨 CRITICAL - STATIC CONTENT ONLY 🚨\n\n`;
