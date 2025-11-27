@@ -2,81 +2,121 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
+import type { ComponentMap } from '@/lib/email-v3/tsx-parser';
 
 interface PropertiesPanelProps {
   tsxCode: string;
   selectedComponentId: string | null;
+  componentMap: ComponentMap;
   onTsxUpdate: (newTsxCode: string) => void;
+  onDirectUpdate: (componentId: string, property: string, value: string) => void;
   onBackToChat: () => void;
 }
 
 interface ComponentProperties {
   type: string;
+  // Text components
   text?: string;
   textColor?: string;
+  fontSize?: string;
+  fontWeight?: string;
+  // Layout components
   backgroundColor?: string;
   marginTop?: string;
   marginBottom?: string;
   paddingTop?: string;
   paddingBottom?: string;
+  // Button components
+  href?: string;
+  // Capabilities flags
+  canEditText: boolean;
+  canEditTextColor: boolean;
+  canEditBackgroundColor: boolean;
+  canEditSpacing: boolean;
 }
 
 export function PropertiesPanel({
   tsxCode,
   selectedComponentId,
+  componentMap,
   onTsxUpdate,
+  onDirectUpdate,
   onBackToChat,
 }: PropertiesPanelProps) {
   // Extract properties from selected component
   const componentProperties = useMemo<ComponentProperties | null>(() => {
-    if (!selectedComponentId) return null;
+    if (!selectedComponentId) {
+      console.log('[PROPERTIES-PANEL] No component selected');
+      return null;
+    }
 
-    // Mock extraction - in production, parse TSX and extract actual properties
-    const mockProperties: Record<string, ComponentProperties> = {
-      'header-1': {
-        type: 'Heading',
-        text: 'Your Big things',
-        textColor: '#007fff',
+    console.log('[PROPERTIES-PANEL] Component selected:', selectedComponentId);
+    console.log('[PROPERTIES-PANEL] Component map:', componentMap);
+
+    // Get component info from map
+    const componentInfo = componentMap[selectedComponentId];
+    if (!componentInfo) {
+      console.warn('[PROPERTIES-PANEL] Component not found in map:', selectedComponentId);
+      return {
+        type: 'Unknown',
+        text: '',
+        textColor: '#000000',
         backgroundColor: 'transparent',
         marginTop: '0',
-        marginBottom: '16',
+        marginBottom: '0',
         paddingTop: '0',
         paddingBottom: '0',
-      },
-      'text-1': {
-        type: 'Text',
-        text: 'Transform your ideas into reality with powerful tools designed for modern creators and innovators',
-        textColor: '#666666',
-        backgroundColor: 'transparent',
-        marginTop: '0',
-        marginBottom: '32',
-        paddingTop: '0',
-        paddingBottom: '0',
-      },
-      'button-1': {
-        type: 'Button',
-        text: 'Get Started →',
-        textColor: '#ffffff',
-        backgroundColor: '#000000',
-        marginTop: '0',
-        marginBottom: '0',
-        paddingTop: '12',
-        paddingBottom: '12',
-      },
-      'button-2': {
-        type: 'Button',
-        text: 'Jolt',
-        textColor: '#ffffff',
-        backgroundColor: '#007fff',
-        marginTop: '0',
-        marginBottom: '0',
-        paddingTop: '12',
-        paddingBottom: '12',
-      },
+      };
+    }
+
+    console.log('[PROPERTIES-PANEL] Component info:', componentInfo);
+
+    // Extract the component code from TSX
+    const componentCode = tsxCode.substring(componentInfo.startChar, componentInfo.endChar);
+    console.log('[PROPERTIES-PANEL] Component code:', componentCode);
+
+    // Determine component capabilities based on type
+    const componentType = componentInfo.type;
+    const isTextComponent = ['Text', 'Heading', 'Button', 'Link'].includes(componentType);
+    const isLayoutComponent = ['Section', 'Container', 'Column', 'Row'].includes(componentType);
+    
+    // Extract text content (only for text components)
+    const textMatch = componentCode.match(/>([^<]+)</);
+    const text = textMatch ? textMatch[1].trim() : '';
+
+    // Extract style properties (basic regex parsing)
+    const extractStyleValue = (prop: string): string => {
+      const regex = new RegExp(`${prop}:\\s*['"]([^'"]+)['"]`);
+      const match = componentCode.match(regex);
+      return match ? match[1] : '';
     };
 
-    return mockProperties[selectedComponentId] || null;
-  }, [selectedComponentId]);
+    // Extract href for links/buttons
+    const hrefMatch = componentCode.match(/href=["']([^"']+)["']/);
+    const href = hrefMatch ? hrefMatch[1] : '';
+
+    return {
+      type: componentType,
+      // Text properties (only for text components)
+      text: isTextComponent ? text : undefined,
+      textColor: isTextComponent ? (extractStyleValue('color') || '#000000') : undefined,
+      fontSize: isTextComponent ? extractStyleValue('fontSize') : undefined,
+      fontWeight: isTextComponent ? extractStyleValue('fontWeight') : undefined,
+      // Layout properties
+      backgroundColor: extractStyleValue('backgroundColor') || 'transparent',
+      marginTop: extractStyleValue('marginTop')?.replace('px', '') || '0',
+      marginBottom: extractStyleValue('marginBottom')?.replace('px', '') || '0',
+      paddingTop: extractStyleValue('paddingTop')?.replace('px', '') || '0',
+      paddingBottom: extractStyleValue('paddingBottom')?.replace('px', '') || '0',
+      // Link properties
+      href: href || undefined,
+      // Capabilities
+      canEditText: isTextComponent,
+      canEditTextColor: isTextComponent,
+      canEditBackgroundColor: true, // Most components can have background
+      canEditSpacing: true, // All components can have spacing
+    };
+  }, [selectedComponentId, componentMap, tsxCode]);
 
   // Local state for editing
   const [text, setText] = useState('');
@@ -100,38 +140,55 @@ export function PropertiesPanel({
     }
   }, [componentProperties]);
 
-  // Handle instant updates (direct TSX manipulation)
+  // Handle instant updates (direct DOM manipulation + background TSX update)
   const handleTextChange = (newText: string) => {
     setText(newText);
-    // TODO: Update TSX directly
-    // For now, just update local state - will implement TSX manipulation next
+    
+    if (selectedComponentId) {
+      // Instant visual update (no re-render!)
+      onDirectUpdate(selectedComponentId, 'text', newText);
+      
+      // Background TSX update for persistence
+      // TODO: Use tsx-manipulator to update actual TSX code
+      // For now, the TSX update will happen on save
+    }
   };
 
   const handleColorChange = (newColor: string, type: 'text' | 'background') => {
     if (type === 'text') {
       setTextColor(newColor);
+      if (selectedComponentId) {
+        onDirectUpdate(selectedComponentId, 'textColor', newColor);
+      }
     } else {
       setBackgroundColor(newColor);
+      if (selectedComponentId) {
+        onDirectUpdate(selectedComponentId, 'backgroundColor', newColor);
+      }
     }
-    // TODO: Update TSX directly
   };
 
   const handleSpacingChange = (value: string, property: string) => {
+    if (!selectedComponentId) return;
+    
     switch (property) {
       case 'marginTop':
         setMarginTop(value);
+        onDirectUpdate(selectedComponentId, 'marginTop', value);
         break;
       case 'marginBottom':
         setMarginBottom(value);
+        onDirectUpdate(selectedComponentId, 'marginBottom', value);
         break;
       case 'paddingTop':
         setPaddingTop(value);
+        onDirectUpdate(selectedComponentId, 'paddingTop', value);
         break;
       case 'paddingBottom':
         setPaddingBottom(value);
+        onDirectUpdate(selectedComponentId, 'paddingBottom', value);
         break;
     }
-    // TODO: Update TSX directly
   };
 
   if (!selectedComponentId || !componentProperties) {
@@ -162,8 +219,8 @@ export function PropertiesPanel({
 
       {/* Properties Form */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
-        {/* Text Content */}
-        {componentProperties.text !== undefined && (
+        {/* Text Content - Only for text components */}
+        {componentProperties.canEditText && (
           <div>
             <label className="block text-sm font-medium mb-2">Content</label>
             <textarea
@@ -180,49 +237,56 @@ export function PropertiesPanel({
           <h3 className="text-sm font-semibold mb-3">Colors</h3>
           
           <div className="space-y-3">
-            <div>
-              <label className="block text-sm mb-1">Text color</label>
-              <div className="flex gap-2">
-                <Input
-                  type="color"
-                  value={textColor}
-                  onChange={(e) => handleColorChange(e.target.value, 'text')}
-                  className="w-12 h-10 p-1 cursor-pointer"
-                />
-                <Input
-                  type="text"
-                  value={textColor}
-                  onChange={(e) => handleColorChange(e.target.value, 'text')}
-                  className="flex-1"
-                  placeholder="#000000"
-                />
+            {/* Text Color - Only for text components */}
+            {componentProperties.canEditTextColor && (
+              <div>
+                <label className="block text-sm mb-1">Text color</label>
+                <div className="flex gap-2">
+                  <Input
+                    type="color"
+                    value={textColor}
+                    onChange={(e) => handleColorChange(e.target.value, 'text')}
+                    className="w-12 h-10 p-1 cursor-pointer"
+                  />
+                  <Input
+                    type="text"
+                    value={textColor}
+                    onChange={(e) => handleColorChange(e.target.value, 'text')}
+                    className="flex-1"
+                    placeholder="#000000"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
-            <div>
-              <label className="block text-sm mb-1">Background color</label>
-              <div className="flex gap-2">
-                <Input
-                  type="color"
-                  value={backgroundColor === 'transparent' ? '#ffffff' : backgroundColor}
-                  onChange={(e) => handleColorChange(e.target.value, 'background')}
-                  className="w-12 h-10 p-1 cursor-pointer"
-                />
-                <Input
-                  type="text"
-                  value={backgroundColor}
-                  onChange={(e) => handleColorChange(e.target.value, 'background')}
-                  className="flex-1"
-                  placeholder="transparent"
-                />
+            {/* Background Color - For all components */}
+            {componentProperties.canEditBackgroundColor && (
+              <div>
+                <label className="block text-sm mb-1">Background color</label>
+                <div className="flex gap-2">
+                  <Input
+                    type="color"
+                    value={backgroundColor === 'transparent' ? '#ffffff' : backgroundColor}
+                    onChange={(e) => handleColorChange(e.target.value, 'background')}
+                    className="w-12 h-10 p-1 cursor-pointer"
+                  />
+                  <Input
+                    type="text"
+                    value={backgroundColor}
+                    onChange={(e) => handleColorChange(e.target.value, 'background')}
+                    className="flex-1"
+                    placeholder="transparent"
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Spacing */}
-        <div>
-          <h3 className="text-sm font-semibold mb-3">Spacing</h3>
+        {/* Spacing - For all components */}
+        {componentProperties.canEditSpacing && (
+          <div>
+            <h3 className="text-sm font-semibold mb-3">Spacing</h3>
           
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
@@ -285,7 +349,8 @@ export function PropertiesPanel({
               </div>
             </div>
           </div>
-        </div>
+          </div>
+        )}
 
         {/* Code Preview */}
         <details className="pt-4 border-t">

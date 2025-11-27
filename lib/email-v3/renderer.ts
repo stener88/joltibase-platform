@@ -14,6 +14,7 @@ import fs from 'fs';
 import { pathToFileURL } from 'url';
 import { transformSync } from 'esbuild';
 import React from 'react';
+import { parseAndInjectIds, type ComponentMap } from './tsx-parser';
 
 const GENERATED_DIR = path.join(process.cwd(), 'emails/generated');
 
@@ -26,6 +27,11 @@ export interface RenderResult {
   html: string;
   plainText?: string;
   error?: string;
+}
+
+export interface RenderWithIdsResult extends RenderResult {
+  componentMap: ComponentMap;
+  modifiedTsx: string;
 }
 
 /**
@@ -109,6 +115,91 @@ export async function renderEmail(
     
     return {
       html: generateFallbackEmail(filename, error),
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Render TSX code directly with component ID injection
+ * Used by the editor for live preview with click-to-edit
+ */
+export async function renderTsxWithIds(
+  tsxCode: string,
+  options: RenderOptions = {}
+): Promise<RenderWithIdsResult> {
+  console.log(`🎨 [V3-RENDERER] Rendering TSX with IDs...`);
+  
+  try {
+    // Step 1: Parse and inject component IDs
+    const { modifiedTsx, componentMap } = parseAndInjectIds(tsxCode);
+    console.log(`✅ [V3-RENDERER] Injected ${Object.keys(componentMap).length} component IDs`);
+    
+    // Step 2: Transpile TSX to JS
+    console.log(`🔄 [V3-RENDERER] Transpiling TSX to JS...`);
+    const transpiled = transformSync(modifiedTsx, {
+      loader: 'tsx',
+      format: 'esm',
+      target: 'node20',
+      jsx: 'automatic',
+      jsxImportSource: 'react',
+    });
+    
+    // Step 3: Create temp file for import
+    const tempFilepath = path.join(
+      GENERATED_DIR,
+      `temp_${Date.now()}_${Math.random().toString(36).slice(2)}.mjs`
+    );
+    
+    // Ensure generated directory exists
+    if (!fs.existsSync(GENERATED_DIR)) {
+      fs.mkdirSync(GENERATED_DIR, { recursive: true });
+    }
+    
+    fs.writeFileSync(tempFilepath, transpiled.code, 'utf-8');
+    
+    try {
+      // Step 4: Dynamic import
+      const fileUrl = pathToFileURL(tempFilepath).href;
+      const module = await import(/* webpackIgnore: true */ fileUrl);
+      const Component = module.default;
+      
+      // Clean up temp file
+      fs.unlinkSync(tempFilepath);
+      
+      if (!Component) {
+        throw new Error('No default export found in email component');
+      }
+      
+      // Step 5: Render to HTML
+      const componentProps = options.props || {};
+      const html = await render(React.createElement(Component, componentProps));
+      
+      if (!html || html.length < 100) {
+        throw new Error('Rendered HTML too short (likely error in component)');
+      }
+      
+      console.log(`✅ [V3-RENDERER] Rendered successfully (${html.length} bytes)`);
+      
+      return {
+        html,
+        componentMap,
+        modifiedTsx,
+      };
+    } catch (importError) {
+      // Clean up temp file on error
+      if (fs.existsSync(tempFilepath)) {
+        fs.unlinkSync(tempFilepath);
+      }
+      throw importError;
+    }
+  } catch (error: any) {
+    console.error('❌ [V3-RENDERER] Render error:', error);
+    
+    return {
+      html: generateFallbackEmail('TSX Code', error),
+      componentMap: {},
+      modifiedTsx: tsxCode,
       error: error.message,
     };
   }

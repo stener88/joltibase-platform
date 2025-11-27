@@ -57,7 +57,9 @@ const SYSTEM_INSTRUCTION = `You are an expert React Email developer creating pro
    - Layout: flex, flex-col, items-center, justify-center
    - Responsive: max-w-xl, w-full
    - Email-safe: Use standard Tailwind classes (React Email converts them)
-   - **AVOID**: hover:, focus:, active:, group- classes (not reliable in email clients)
+   - **CRITICAL - NEVER USE**: hover:, focus:, active:, group-, dark:, or any pseudo-class selectors
+   - **REASON**: These cannot be inlined and will cause rendering errors in emails
+   - **INSTEAD**: Use static colors and styles only (e.g., text-blue-600 instead of hover:text-blue-600)
 
 4. **TYPESCRIPT**
    - Define proper interface for props

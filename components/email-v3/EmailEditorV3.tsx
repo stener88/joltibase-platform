@@ -46,6 +46,9 @@ export function EmailEditorV3({
   const [isSaving, setIsSaving] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [componentPosition, setComponentPosition] = useState<{ top: number; left: number } | null>(null);
+  const [componentMap, setComponentMap] = useState<any>({});
+  const [hasVisualEdits, setHasVisualEdits] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   // Derived state
   const hasUnsavedChanges = draftTsxCode !== savedTsxCode;
@@ -106,22 +109,78 @@ export function EmailEditorV3({
 
   // Handle mode toggle
   const handleModeToggle = useCallback(() => {
-    setMode((prev) => (prev === 'chat' ? 'visual' : 'chat'));
-    if (mode === 'visual') {
-      setSelectedComponentId(null);
+    const newMode = mode === 'chat' ? 'visual' : 'chat';
+    console.log('[EDITOR] Toggling mode from', mode, 'to', newMode);
+    
+    // If exiting visual mode with unsaved edits, show confirmation
+    if (mode === 'visual' && hasVisualEdits) {
+      setShowExitConfirm(true);
+      return;
     }
-  }, [mode]);
+    
+    setMode(newMode);
+    if (newMode === 'chat') {
+      setSelectedComponentId(null);
+      setHasVisualEdits(false);
+    }
+  }, [mode, hasVisualEdits]);
 
   // Handle component selection
   const handleComponentSelect = useCallback((componentId: string | null, position?: { top: number; left: number }) => {
+    console.log('[EDITOR] Component selected:', componentId, position);
     setSelectedComponentId(componentId);
     setComponentPosition(position || null);
-  }, []);
+    
+    // Auto-switch to visual mode if clicking in chat mode
+    if (componentId && mode === 'chat') {
+      console.log('[EDITOR] Auto-switching to visual mode');
+      setMode('visual');
+    }
+  }, [mode]);
 
   // Handle direct TSX update (from PropertiesPanel)
   const handleTsxUpdate = useCallback((newTsxCode: string) => {
     setDraftTsxCode(newTsxCode);
   }, []);
+
+  // Send direct update to iframe (instant, no re-render)
+  const sendDirectUpdate = useCallback((componentId: string, property: string, value: string) => {
+    // Access the sendDirectUpdate function exposed by LivePreview
+    const livePreviewUpdate = (window as any).__livePreviewSendDirectUpdate;
+    if (livePreviewUpdate) {
+      livePreviewUpdate({
+        type: 'direct-update',
+        componentId,
+        property,
+        value,
+      });
+      
+      // Mark that we have visual edits
+      setHasVisualEdits(true);
+    }
+  }, []);
+
+  // Save visual edits and exit
+  const handleSaveVisualEdits = useCallback(() => {
+    console.log('[EDITOR] Saving visual edits');
+    // TODO: Update draftTsxCode with the visual edits using tsx-manipulator
+    setShowExitConfirm(false);
+    setMode('chat');
+    setSelectedComponentId(null);
+    setHasVisualEdits(false);
+  }, []);
+
+  // Discard visual edits and exit
+  const handleDiscardVisualEdits = useCallback(() => {
+    console.log('[EDITOR] Discarding visual edits');
+    // TODO: Reload iframe to reset visual changes
+    setShowExitConfirm(false);
+    setMode('chat');
+    setSelectedComponentId(null);
+    setHasVisualEdits(false);
+    // Trigger re-render to reset iframe
+    setDraftTsxCode(draftTsxCode);
+  }, [draftTsxCode]);
 
   // Handle save
   const handleSave = useCallback(async () => {
@@ -208,6 +267,31 @@ export function EmailEditorV3({
 
   return (
     <DashboardLayout campaignEditor={editorControls}>
+      {/* Exit Visual Mode Confirmation Modal */}
+      {showExitConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-2">Save visual edits?</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              You have unsaved visual edits. Do you want to save them before switching modes?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={handleDiscardVisualEdits}
+              >
+                Discard Changes
+              </Button>
+              <Button
+                onClick={handleSaveVisualEdits}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="relative h-full w-full">
         {/* Main Editor */}
         <div className="h-[calc(100vh-3rem)]">
@@ -244,13 +328,25 @@ export function EmailEditorV3({
                       <PropertiesPanel
                         tsxCode={draftTsxCode}
                         selectedComponentId={selectedComponentId}
+                        componentMap={componentMap}
                         onTsxUpdate={handleTsxUpdate}
+                        onDirectUpdate={sendDirectUpdate}
                         onBackToChat={() => setMode('chat')}
                       />
                     </div>
 
                     {/* Prompt Input (also in visual mode) */}
                     <div className="border-t p-4">
+                      {hasVisualEdits && (
+                        <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-sm text-blue-800 flex items-center gap-2">
+                            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            You have unsaved visual edits. Switch to chat mode to save or discard.
+                          </p>
+                        </div>
+                      )}
                       <PromptInput
                         value={prompt}
                         onChange={setPrompt}
@@ -276,6 +372,7 @@ export function EmailEditorV3({
                   hoveredComponentId={hoveredComponentId}
                   onComponentSelect={handleComponentSelect}
                   onComponentHover={setHoveredComponentId}
+                  onComponentMapUpdate={setComponentMap}
                   isGenerating={isGenerating}
                 />
                 
