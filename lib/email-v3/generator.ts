@@ -207,7 +207,21 @@ export async function generateEmail(prompt: string): Promise<GeneratedEmail> {
         temperature: 0.7,
       });
       
-      // Extract and clean code
+      // Log token usage and cost (Gemini 2.0 Flash pricing)
+      if (result.usage) {
+        const usage = result.usage as any;
+        const inputTokens = usage.inputTokens || 0;
+        const outputTokens = usage.outputTokens || 0;
+        const totalTokens = usage.totalTokens || 0;
+        
+        const inputCost = (inputTokens / 1000) * 0.00001875;
+        const outputCost = (outputTokens / 1000) * 0.000075;
+        const totalCost = inputCost + outputCost;
+        
+        console.log(`💰 [GENERATOR] Tokens: ${totalTokens} (in: ${inputTokens}, out: ${outputTokens}) | Cost: $${totalCost.toFixed(6)}`);
+      }
+      
+    // Extract and clean code
       const extractedCode = extractCodeFromMarkdown(result.text);
       const code = cleanGeneratedCode(extractedCode);
       

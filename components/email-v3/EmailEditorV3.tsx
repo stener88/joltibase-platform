@@ -39,7 +39,8 @@ export function EmailEditorV3({
   // State management
   const [savedTsxCode, setSavedTsxCode] = useState(initialTsxCode);
   const [draftTsxCode, setDraftTsxCode] = useState(initialTsxCode);
-  const [mode, setMode] = useState<EditMode>('chat');
+  const [renderVersion, setRenderVersion] = useState(0); // Version counter to force preview re-renders
+const [mode, setMode] = useState<EditMode>('chat');
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
   const [hoveredComponentId, setHoveredComponentId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -99,6 +100,8 @@ export function EmailEditorV3({
 
       // Update draft (not database)
       setDraftTsxCode(newTsxCode);
+      setRenderVersion(v => v + 1); // Force preview re-render
+      console.log('[EDITOR] AI updated TSX, incrementing render version');
 
       // Add assistant response
       const assistantMessage: Message = {
@@ -127,8 +130,9 @@ export function EmailEditorV3({
     const newMode = mode === 'chat' ? 'visual' : 'chat';
     console.log('[EDITOR] Toggling mode from', mode, 'to', newMode);
     
-    // If exiting visual mode with unsaved edits, show confirmation
-    if (mode === 'visual' && hasVisualEdits) {
+    // If exiting visual mode with unsaved edits (manual OR AI changes), show confirmation
+    if (mode === 'visual' && (hasVisualEdits || hasUnsavedChanges)) {
+      console.log('[EDITOR] Unsaved changes detected:', { hasVisualEdits, hasUnsavedChanges });
       setShowExitConfirm(true);
       return;
     }
@@ -147,7 +151,7 @@ export function EmailEditorV3({
       setHasVisualEdits(false);
       setVisualEdits(new Map());
     }
-  }, [mode, hasVisualEdits]);
+  }, [mode, hasVisualEdits, hasUnsavedChanges]);
 
   // Handle component selection
   const handleComponentSelect = useCallback((componentId: string | null, position?: { top: number; left: number }) => {
@@ -234,6 +238,8 @@ export function EmailEditorV3({
     
     // Update draft TSX (this will trigger re-render)
     setDraftTsxCode(updatedTsx);
+    setRenderVersion(v => v + 1); // Force preview re-render
+    console.log('[EDITOR] Saved visual edits, incrementing render version');
     
     // Clear visual edits and exit visual mode
     setVisualEdits(new Map());
@@ -399,13 +405,13 @@ export function EmailEditorV3({
 
                     {/* Prompt Input (also in visual mode) */}
                     <div className="border-t p-4">
-                      {hasVisualEdits && (
+                      {(hasVisualEdits || hasUnsavedChanges) && (
                         <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
                           <p className="text-sm text-blue-800 flex items-center gap-2">
                             <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            You have unsaved visual edits. Switch to chat mode to save or discard.
+                            You have unsaved changes. Exit visual mode to save or discard.
                           </p>
                         </div>
                       )}
@@ -429,6 +435,7 @@ export function EmailEditorV3({
               <div className="relative h-full">
                 <LivePreview
                   tsxCode={draftTsxCode}
+                  renderVersion={renderVersion}
                   mode={mode}
                   selectedComponentId={selectedComponentId}
                   hoveredComponentId={hoveredComponentId}

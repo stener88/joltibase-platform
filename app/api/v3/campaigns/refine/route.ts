@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       componentMap = undefined;
     }
 
-    // Use two-tier refinement system
+    // Use AI-native refinement
     const result = await refineEmail({
       currentTsxCode,
       userMessage,
@@ -50,12 +50,11 @@ export async function POST(request: NextRequest) {
       selectedComponentType,
     });
 
-    console.log(`✅ [REFINE] Applied ${result.changeType} change:`, result.changesApplied);
+    console.log(`✅ [REFINE] ${result.message}:`, result.changesApplied);
 
     return NextResponse.json({
       tsxCode: result.newTsxCode,
       message: result.message,
-      changeType: result.changeType,
       changesApplied: result.changesApplied,
     });
 

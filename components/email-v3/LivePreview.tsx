@@ -6,6 +6,7 @@ import type { ComponentMap } from '@/lib/email-v3/tsx-parser';
 
 interface LivePreviewProps {
   tsxCode: string;
+  renderVersion: number; // Version counter to trigger re-renders
   mode: EditMode;
   selectedComponentId: string | null;
   hoveredComponentId: string | null;
@@ -50,6 +51,7 @@ function extractStylesFromHtml(html: string, componentId: string): Record<string
 
 export function LivePreview({
   tsxCode,
+  renderVersion,
   mode,
   selectedComponentId,
   hoveredComponentId,
@@ -66,8 +68,6 @@ export function LivePreview({
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const [componentMap, setComponentMap] = useState<ComponentMap>({});
   const [isRendering, setIsRendering] = useState(false);
-  const renderTimeoutRef = useRef<NodeJS.Timeout>();
-  const hasRenderedRef = useRef(false);
 
   // Inject interactive JavaScript into rendered HTML
   const injectInteractiveScript = (html: string, currentMode: EditMode): string => {
@@ -323,42 +323,16 @@ export function LivePreview({
     }
   }, [onComponentMapUpdate]);
 
-  // Render on TSX change or mode change (including initial mount)
+  // Render on version change (triggered by AI updates or visual edit saves)
   useEffect(() => {
     if (!tsxCode) {
       console.warn('[LIVE-PREVIEW] No TSX code provided');
       return;
     }
 
-    // First render - immediate, no debounce
-    if (!hasRenderedRef.current) {
-      console.log('[LIVE-PREVIEW] Initial render (immediate)', { tsxLength: tsxCode.length, mode });
-      hasRenderedRef.current = true;
-      renderPreview(tsxCode, mode);
-      return;
-    }
-
-    // Subsequent renders - debounced for AI edits
-    // Note: Property panel edits don't change tsxCode, so they won't trigger this
-    console.log('[LIVE-PREVIEW] TSX changed, scheduling debounced render', { tsxLength: tsxCode.length, mode });
-    
-    // Clear existing timeout
-    if (renderTimeoutRef.current) {
-      clearTimeout(renderTimeoutRef.current);
-    }
-
-    // Debounce render (300ms)
-    renderTimeoutRef.current = setTimeout(() => {
-      console.log('[LIVE-PREVIEW] Executing render after debounce');
-      renderPreview(tsxCode, mode);
-    }, 300);
-
-    return () => {
-      if (renderTimeoutRef.current) {
-        clearTimeout(renderTimeoutRef.current);
-      }
-    };
-  }, [tsxCode, mode, renderPreview]);
+    console.log('[LIVE-PREVIEW] Render triggered by version change:', renderVersion, '| TSX length:', tsxCode.length);
+    renderPreview(tsxCode, mode);
+  }, [renderVersion, tsxCode, mode, renderPreview]); // Include all dependencies for completeness
 
   // Send direct update to iframe (instant, no re-render)
   const sendDirectUpdate = useCallback((update: DirectUpdate) => {
