@@ -160,6 +160,25 @@ export function LivePreview({
               case 'paddingBottom':
                 element.style.paddingBottom = value + 'px';
                 break;
+              case 'imageSrc':
+                // Parse JSON image data
+                try {
+                  const imageData = JSON.parse(value);
+                  if (element.tagName === 'IMG') {
+                    element.src = imageData.url;
+                    if (imageData.alt) element.alt = imageData.alt;
+                    if (imageData.width) element.width = imageData.width;
+                    if (imageData.height) element.height = imageData.height;
+                  }
+                } catch (e) {
+                  console.error('[IFRAME] Failed to parse image data:', e);
+                }
+                break;
+              case 'imageAlt':
+                if (element.tagName === 'IMG') {
+                  element.alt = value;
+                }
+                break;
               default:
                 console.warn('[IFRAME] Unknown property:', property);
             }
@@ -494,6 +513,25 @@ export function LivePreview({
                     break;
                   case 'paddingBottom':
                     element.style.paddingBottom = value + 'px';
+                    break;
+                  case 'imageSrc':
+                    // Parse JSON image data
+                    try {
+                      const imageData = JSON.parse(value);
+                      if (element.tagName === 'IMG') {
+                        element.src = imageData.url;
+                        if (imageData.alt) element.alt = imageData.alt;
+                        if (imageData.width) element.width = imageData.width;
+                        if (imageData.height) element.height = imageData.height;
+                      }
+                    } catch (e) {
+                      console.error('[IFRAME] Failed to parse image data:', e);
+                    }
+                    break;
+                  case 'imageAlt':
+                    if (element.tagName === 'IMG') {
+                      element.alt = value;
+                    }
                     break;
                   default:
                     console.warn('[IFRAME] Unknown property:', property);

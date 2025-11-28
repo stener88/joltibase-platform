@@ -26,7 +26,7 @@ interface UnsplashPhoto {
   links: {
     download_location: string;
   };
-  description: string | null;
+  description?: string | null;
   alt_description: string | null;
   width: number;
   height: number;
