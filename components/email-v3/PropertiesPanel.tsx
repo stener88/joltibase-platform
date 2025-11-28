@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { ImagePicker } from './ImagePicker';
+import type { SelectedImage } from './ImagePickerUnsplash';
 import type { ComponentMap } from '@/lib/email-v3/tsx-parser';
 
 interface PropertiesPanelProps {
@@ -26,11 +29,17 @@ interface ComponentProperties {
   paddingBottom?: string;
   // Button components
   href?: string;
+  // Image components
+  src?: string;
+  alt?: string;
+  width?: string;
+  height?: string;
   // Capabilities flags
   canEditText: boolean;
   canEditTextColor: boolean;
   canEditBackgroundColor: boolean;
   canEditSpacing: boolean;
+  canEditImage: boolean;
 }
 
 export function PropertiesPanel({
@@ -75,6 +84,7 @@ export function PropertiesPanel({
     const componentType = componentInfo.type;
     const isTextComponent = ['Text', 'Heading', 'Button', 'Link'].includes(componentType);
     const isLayoutComponent = ['Section', 'Container', 'Column', 'Row'].includes(componentType);
+    const isImageComponent = componentType === 'Img';
     
     // Extract text content (only for text components)
     // Check if text is a JSX expression (dynamic content like {variable})
@@ -90,6 +100,17 @@ export function PropertiesPanel({
     // Extract href for links/buttons from TSX
     const hrefMatch = componentCode.match(/href=["']([^"']+)["']/);
     const href = hrefMatch ? hrefMatch[1] : '';
+
+    // Extract image attributes from TSX
+    const srcMatch = componentCode.match(/src=["']([^"']+)["']/);
+    const altMatch = componentCode.match(/alt=["']([^"']+)["']/);
+    const widthMatch = componentCode.match(/width=\{?(\d+)\}?/);
+    const heightMatch = componentCode.match(/height=\{?(\d+)\}?/);
+    
+    const src = srcMatch ? srcMatch[1] : '';
+    const alt = altMatch ? altMatch[1] : '';
+    const width = widthMatch ? widthMatch[1] : '';
+    const height = heightMatch ? heightMatch[1] : '';
 
     // Helper: Extract style value from computed styles (rendered HTML)
     const computedStyles = componentInfo.computedStyles || {};
@@ -138,11 +159,17 @@ export function PropertiesPanel({
       paddingBottom: getStyleValue('padding-bottom', '0'),
       // Link properties
       href: href || undefined,
+      // Image properties (only for Img components)
+      src: isImageComponent ? src : undefined,
+      alt: isImageComponent ? alt : undefined,
+      width: isImageComponent ? width : undefined,
+      height: isImageComponent ? height : undefined,
       // Capabilities
       canEditText: isTextComponent && !isDynamicText, // Can't edit dynamic text
       canEditTextColor: isTextComponent,
       canEditBackgroundColor: true, // Most components can have background
       canEditSpacing: true, // All components can have spacing
+      canEditImage: isImageComponent, // Can change image
     };
   }, [selectedComponentId, componentMap, tsxCode]);
 
@@ -154,6 +181,9 @@ export function PropertiesPanel({
   const [marginBottom, setMarginBottom] = useState('0');
   const [paddingTop, setPaddingTop] = useState('0');
   const [paddingBottom, setPaddingBottom] = useState('0');
+  const [imageSrc, setImageSrc] = useState('');
+  const [imageAlt, setImageAlt] = useState('');
+  const [imagePickerOpen, setImagePickerOpen] = useState(false);
 
   // Sync local state with component properties
   useEffect(() => {
@@ -165,6 +195,8 @@ export function PropertiesPanel({
       setMarginBottom(componentProperties.marginBottom || '0');
       setPaddingTop(componentProperties.paddingTop || '0');
       setPaddingBottom(componentProperties.paddingBottom || '0');
+      setImageSrc(componentProperties.src || '');
+      setImageAlt(componentProperties.alt || '');
     }
   }, [componentProperties]);
 
@@ -215,6 +247,30 @@ export function PropertiesPanel({
     }
   };
 
+  const handleImageSelect = (image: SelectedImage) => {
+    if (!selectedComponentId) return;
+    
+    setImageSrc(image.url);
+    setImageAlt(image.alt);
+    
+    // Send image update to parent
+    onDirectUpdate(selectedComponentId, 'imageSrc', JSON.stringify({
+      url: image.url,
+      alt: image.alt,
+      width: image.width,
+      height: image.height,
+      credit: image.credit,
+      downloadLocation: image.downloadLocation,
+    }));
+  };
+
+  const handleAltChange = (newAlt: string) => {
+    if (!selectedComponentId) return;
+    
+    setImageAlt(newAlt);
+    onDirectUpdate(selectedComponentId, 'imageAlt', newAlt);
+  };
+
   if (!selectedComponentId || !componentProperties) {
     return (
       <div className="h-full flex items-center justify-center p-8 text-center">
@@ -259,6 +315,79 @@ export function PropertiesPanel({
                 <p className="text-gray-500 italic">
                   This component uses dynamic content and cannot be edited directly.
                 </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Image Properties - Only for Img components */}
+        {componentProperties.canEditImage && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Current Image</label>
+              <div className="border rounded-lg p-3 bg-gray-50">
+                {imageSrc ? (
+                  <img
+                    src={imageSrc}
+                    alt={imageAlt}
+                    className="w-full h-auto rounded"
+                  />
+                ) : (
+                  <div className="h-32 flex items-center justify-center text-gray-400">
+                    No image
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <Button
+              onClick={() => setImagePickerOpen(true)}
+              variant="outline"
+              className="w-full"
+            >
+              🖼️ Change Image
+            </Button>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Alt Text</label>
+              <Input
+                type="text"
+                value={imageAlt}
+                onChange={(e) => handleAltChange(e.target.value)}
+                placeholder="Description for accessibility"
+                className="w-full"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Describe what the image shows for accessibility
+              </p>
+            </div>
+
+            {componentProperties.width && componentProperties.height && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Width</label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="text"
+                      value={componentProperties.width}
+                      className="w-full"
+                      disabled
+                    />
+                    <span className="text-xs text-gray-500">px</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Height</label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="text"
+                      value={componentProperties.height}
+                      className="w-full"
+                      disabled
+                    />
+                    <span className="text-xs text-gray-500">px</span>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -392,6 +521,17 @@ export function PropertiesPanel({
           </pre>
         </details>
       </div>
+
+      {/* Image Picker Modal */}
+      {componentProperties.canEditImage && (
+        <ImagePicker
+          isOpen={imagePickerOpen}
+          onClose={() => setImagePickerOpen(false)}
+          onSelectImage={handleImageSelect}
+          currentSrc={imageSrc}
+          currentAlt={imageAlt}
+        />
+      )}
     </div>
   );
 }

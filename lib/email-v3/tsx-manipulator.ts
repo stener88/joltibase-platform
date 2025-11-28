@@ -189,3 +189,82 @@ export function getStyleValue(
   return match ? match[1] : null;
 }
 
+/**
+ * Update image src and related attributes
+ */
+export function updateImageSrc(
+  tsxCode: string,
+  componentMap: ComponentMap,
+  componentId: string,
+  newSrc: string,
+  newAlt?: string,
+  newWidth?: number,
+  newHeight?: number
+): string {
+  const location = componentMap[componentId];
+  if (!location || location.type !== 'Img') {
+    console.warn(`[TSX-MANIPULATOR] Component ${componentId} is not an Img component`);
+    return tsxCode;
+  }
+  
+  const before = tsxCode.substring(0, location.startChar);
+  let componentCode = tsxCode.substring(location.startChar, location.endChar);
+  const after = tsxCode.substring(location.endChar);
+  
+  // Update src
+  componentCode = componentCode.replace(
+    /src=["'][^"']*["']/,
+    `src="${newSrc}"`
+  );
+  
+  // Update alt if provided
+  if (newAlt !== undefined) {
+    if (/alt=["'][^"']*["']/.test(componentCode)) {
+      componentCode = componentCode.replace(
+        /alt=["'][^"']*["']/,
+        `alt="${newAlt}"`
+      );
+    } else {
+      // Add alt attribute if it doesn't exist
+      componentCode = componentCode.replace(
+        /<Img/,
+        `<Img alt="${newAlt}"`
+      );
+    }
+  }
+  
+  // Update width if provided
+  if (newWidth !== undefined) {
+    if (/width=\{?\d+\}?/.test(componentCode)) {
+      componentCode = componentCode.replace(
+        /width=\{?\d+\}?/,
+        `width={${newWidth}}`
+      );
+    } else {
+      componentCode = componentCode.replace(
+        /<Img/,
+        `<Img width={${newWidth}}`
+      );
+    }
+  }
+  
+  // Update height if provided
+  if (newHeight !== undefined) {
+    if (/height=\{?\d+\}?/.test(componentCode)) {
+      componentCode = componentCode.replace(
+        /height=\{?\d+\}?/,
+        `height={${newHeight}}`
+      );
+    } else {
+      componentCode = componentCode.replace(
+        /<Img/,
+        `<Img height={${newHeight}}`
+      );
+    }
+  }
+  
+  console.log(`[TSX-MANIPULATOR] Updated image ${componentId}: src="${newSrc.substring(0, 50)}..."`);
+  
+  return before + componentCode + after;
+}
+

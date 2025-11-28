@@ -10,7 +10,7 @@ import { ChatHistory } from './ChatHistory';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Save, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { updateComponentText, updateInlineStyle } from '@/lib/email-v3/tsx-manipulator';
+import { updateComponentText, updateInlineStyle, updateImageSrc } from '@/lib/email-v3/tsx-manipulator';
 
 interface EmailEditorV3Props {
   campaignId: string;
@@ -186,6 +186,38 @@ export function EmailEditorV3({
       Object.entries(edits).forEach(([property, value]) => {
         if (property === 'text' || property === 'textContent') {
           updatedTsx = updateComponentText(updatedTsx, componentMap, componentId, value);
+        } else if (property === 'imageSrc') {
+          // Parse image data from JSON
+          try {
+            const imageData = JSON.parse(value);
+            updatedTsx = updateImageSrc(
+              updatedTsx,
+              componentMap,
+              componentId,
+              imageData.url,
+              imageData.alt,
+              imageData.width,
+              imageData.height
+            );
+          } catch (error) {
+            console.error('[EDITOR] Failed to parse image data:', error);
+          }
+        } else if (property === 'imageAlt') {
+          // Update only alt text
+          const componentInfo = componentMap[componentId];
+          if (componentInfo && componentInfo.type === 'Img') {
+            const componentCode = updatedTsx.substring(componentInfo.startChar, componentInfo.endChar);
+            const srcMatch = componentCode.match(/src=["']([^"']+)["']/);
+            if (srcMatch) {
+              updatedTsx = updateImageSrc(
+                updatedTsx,
+                componentMap,
+                componentId,
+                srcMatch[1],
+                value
+              );
+            }
+          }
         } else {
           updatedTsx = updateInlineStyle(updatedTsx, componentMap, componentId, property, value);
         }
