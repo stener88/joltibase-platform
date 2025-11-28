@@ -338,14 +338,9 @@ export function LivePreview({
       return;
     }
 
-    // Skip re-render if in visual mode (rely on direct updates)
-    if (mode === 'visual') {
-      console.log('[LIVE-PREVIEW] Visual mode - skipping auto re-render (direct updates only)');
-      return;
-    }
-
-    // Subsequent renders - debounced (chat mode or AI edits)
-    console.log('[LIVE-PREVIEW] TSX or mode changed, scheduling debounced render', { tsxLength: tsxCode.length, mode });
+    // Subsequent renders - debounced for AI edits
+    // Note: Property panel edits don't change tsxCode, so they won't trigger this
+    console.log('[LIVE-PREVIEW] TSX changed, scheduling debounced render', { tsxLength: tsxCode.length, mode });
     
     // Clear existing timeout
     if (renderTimeoutRef.current) {
@@ -441,35 +436,15 @@ export function LivePreview({
           </style>
         </head>
         <body>
-          <div class="email-container">
-            <div data-component-id="header-1" class="${selectedComponentId === 'header-1' ? 'selected' : ''}">
-              <span class="component-label">h1</span>
-              <h1 style="color: #007fff; font-size: 48px; margin: 0 0 16px;">Your Big things</h1>
-            </div>
-            
-            <div data-component-id="text-1" class="${selectedComponentId === 'text-1' ? 'selected' : ''}">
-              <span class="component-label">text</span>
-              <p style="color: #666; font-size: 18px; line-height: 1.6; margin: 0 0 32px;">
-                Transform your ideas into reality with powerful tools designed for modern creators and innovators
-              </p>
-            </div>
-            
-            <div data-component-id="buttons-1" style="display: flex; gap: 12px;">
-              <div data-component-id="button-1" class="${selectedComponentId === 'button-1' ? 'selected' : ''}">
-                <span class="component-label">button</span>
-                <a href="#" style="background: #000; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-block;">
-                  Get Started →
-                </a>
-              </div>
-              
-              <div data-component-id="button-2" class="${selectedComponentId === 'button-2' ? 'selected' : ''}">
-                <span class="component-label">button</span>
-                <a href="#" style="background: #007fff; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-block;">
-                  Jolt
-                </a>
-              </div>
+          <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #f9fafb;">
+            <div style="text-align: center;">
+              <div style="width: 48px; height: 48px; border: 4px solid #e5e7eb; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+              <p style="color: #6b7280; font-size: 14px; margin: 0;">Loading email preview...</p>
             </div>
           </div>
+          <style>
+            @keyframes spin { to { transform: rotate(360deg); } }
+          </style>
           
           <script>
             // Handle direct updates from parent (INSTANT, NO RE-RENDER)

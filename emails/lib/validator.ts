@@ -112,6 +112,20 @@ export function validateGeneratedCode(code: string): ValidationResult {
     errors.push('Code contains pseudo-class selectors (hover:, focus:, etc.) - these cannot be inlined in emails. Use static classes only.');
   }
   
+  // Check for problematic Tailwind utility classes that cannot be inlined
+  const problematicClasses = [
+    { pattern: /className="[^"]*\bspace-[xy]-\d+/, class: 'space-x-* or space-y-*', fix: 'use inline style={{marginBottom: "16px"}} or style={{gap: "12px"}}' },
+    { pattern: /className="[^"]*\bgap-\d+/, class: 'gap-*', fix: 'use inline style={{display: "flex", gap: "12px"}}' },
+    { pattern: /className="[^"]*\bdivide-[xy]/, class: 'divide-x or divide-y', fix: 'use individual <Hr /> components or borders' },
+    { pattern: /className="[^"]*\bgrid-cols-/, class: 'grid-cols-*', fix: 'use <Row> and <Column> components or inline styles' },
+  ];
+  
+  for (const { pattern, class: className, fix } of problematicClasses) {
+    if (pattern.test(code)) {
+      errors.push(`Code contains ${className} classes - these cannot be inlined in emails. ${fix} instead.`);
+    }
+  }
+  
   // Check for common React Email components
   const hasComponents = [
     '<Body',

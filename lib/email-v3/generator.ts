@@ -50,17 +50,24 @@ const SYSTEM_INSTRUCTION = `You are an expert React Email developer creating pro
    - Column, Row, Img, Hr
    - ALL imported from '@react-email/components'
 
-3. **STYLING - TAILWIND CLASSES**
-   - Use Tailwind utility classes via className prop
-   - Semantic classes: text-sm, text-lg, font-bold, text-center
-   - Colors: bg-blue-500, text-gray-600, border-gray-300
-   - Spacing: p-4, px-6, py-3, m-0, mt-4, mb-8
-   - Layout: flex, flex-col, items-center, justify-center
-   - Responsive: max-w-xl, w-full
-   - Email-safe: Use standard Tailwind classes (React Email converts them)
-   - **CRITICAL - NEVER USE**: hover:, focus:, active:, group-, dark:, or any pseudo-class selectors
-   - **REASON**: These cannot be inlined and will cause rendering errors in emails
-   - **INSTEAD**: Use static colors and styles only (e.g., text-blue-600 instead of hover:text-blue-600)
+3. **STYLING - MIXED APPROACH**
+   - **TAILWIND (className) - SAFE for**: text colors, backgrounds, basic spacing, typography
+     - Colors: bg-blue-500, text-gray-600, border-gray-300
+     - Typography: text-sm, text-lg, font-bold, text-center
+     - Basic spacing: p-4, px-6, py-3, m-0, mt-4, mb-8
+     - Simple layout: flex, flex-col, items-center, justify-center, max-w-xl, w-full
+   
+   - **INLINE STYLES (style prop) - REQUIRED for**: layout gaps, spacing between elements, complex positioning
+     - For spacing between elements: style={{display: 'flex', gap: '12px'}} NOT gap-3
+     - For margins between siblings: style={{marginBottom: '16px'}} on each child, NOT space-y-4
+     - For dividers: Individual <Hr /> components, NOT divide-y
+   
+   - **FORBIDDEN CLASSES** (will cause rendering errors):
+     - ❌ space-x-*, space-y-* (use inline margin on children instead)
+     - ❌ gap-* (use inline style={{gap: '12px'}} instead)
+     - ❌ divide-* (use individual Hr or borders instead)
+     - ❌ hover:, focus:, active:, group-, dark: (no pseudo-classes)
+     - ❌ grid-cols-*, grid-rows-* (use Row/Column components or inline styles)
 
 4. **TYPESCRIPT & CONTENT - CRITICAL**
    - Define proper interface for props (optional, with defaults)

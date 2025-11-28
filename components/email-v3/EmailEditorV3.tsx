@@ -76,6 +76,12 @@ export function EmailEditorV3({
     setIsGenerating(true);
 
     try {
+      // Get selected component info for context
+      let selectedComponentType = null;
+      if (selectedComponentId && componentMap[selectedComponentId]) {
+        selectedComponentType = componentMap[selectedComponentId].type;
+      }
+
       // Call AI to modify TSX
       const response = await fetch('/api/v3/campaigns/refine', {
         method: 'POST',
@@ -84,6 +90,8 @@ export function EmailEditorV3({
           campaignId,
           currentTsxCode: draftTsxCode,
           userMessage: prompt,
+          selectedComponentId: selectedComponentId || null,
+          selectedComponentType: selectedComponentType,
         }),
       });
 

@@ -62,7 +62,16 @@ export function ImagePickerUnsplash({ onSelect, onClose }: ImagePickerUnsplashPr
       }
       
       const data = await response.json();
-      setResults(data.images || []);
+      
+      // Deduplicate results by image ID to avoid React key warnings
+      const uniqueImages = (data.images || []).reduce((acc: UnsplashImage[], image: UnsplashImage) => {
+        if (!acc.find(img => img.id === image.id)) {
+          acc.push(image);
+        }
+        return acc;
+      }, []);
+      
+      setResults(uniqueImages);
     } catch (error) {
       console.error('Unsplash search error:', error);
       setResults([]);
