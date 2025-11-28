@@ -147,15 +147,21 @@ export function ImagePickerUnsplash({ onSelect, onClose }: ImagePickerUnsplashPr
             {results.map((image) => (
               <div
                 key={image.id}
-                className="group cursor-pointer relative rounded-lg overflow-hidden border border-gray-200 hover:border-blue-500 transition-all hover:shadow-lg"
+                className="group cursor-pointer relative rounded-lg overflow-hidden border border-gray-200 hover:border-blue-500 transition-all hover:shadow-lg bg-gray-100"
                 onClick={() => handleImageSelect(image)}
               >
                 <img
                   src={image.urls.small}
                   alt={image.alt}
+                  crossOrigin="anonymous"
+                  loading="eager"
                   className="w-full h-40 object-cover transition-transform group-hover:scale-105"
+                  onError={(e) => {
+                    console.error('Image failed to load:', image.urls.small);
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-end">
+                <div className="absolute inset-0 bg-transparent group-hover:bg-black/40 transition-all flex items-end pointer-events-none">
                   <div className="p-2 w-full bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                     <p className="text-xs text-white truncate">
                       Photo by {image.user.name}
