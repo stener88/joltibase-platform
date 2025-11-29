@@ -224,7 +224,7 @@ export function PromptInput({
                   }}
                   disabled={isLoading || showDiscardSaveButtons}
                   className={`
-                    absolute left-12 bottom-4 w-8 h-8
+                    absolute left-4 bottom-4 w-8 h-8
                     rounded-lg
                     flex items-center justify-center
                     transition-all duration-200

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import { SplitScreenLayout } from '@/components/campaigns/SplitScreenLayout';
 import { PromptInput } from '@/components/campaigns/PromptInput';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { Save, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { updateComponentText, updateInlineStyle, updateImageSrc } from '@/lib/email-v3/tsx-manipulator';
 import { parseAndInjectIds } from '@/lib/email-v3/tsx-parser';
+import { Z_INDEX } from '@/lib/ui-constants';
 
 interface EmailEditorV3Props {
   campaignId: string;
@@ -58,9 +59,13 @@ const [mode, setMode] = useState<EditMode>('chat');
   const [iframeKey, setIframeKey] = useState(0);
   const [isEnteringVisualMode, setIsEnteringVisualMode] = useState(false);
   const [isExitingVisualMode, setIsExitingVisualMode] = useState(false);
+  const [floatingPrompt, setFloatingPrompt] = useState(''); // Separate state for floating toolbar input
 
   // ✅ Working TSX ref - holds current code with visual edits (no re-renders!)
   const workingTsxRef = useRef(initialTsxCode);
+  
+  // ✅ Floating toolbar input ref - for focus management
+  const floatingToolbarInputRef = useRef<HTMLInputElement>(null);
 
   // Sync working ref when draftTsxCode changes externally (AI, load, etc.)
   useEffect(() => {
@@ -70,19 +75,38 @@ const [mode, setMode] = useState<EditMode>('chat');
   // Derived state
   const hasUnsavedChanges = draftTsxCode !== savedTsxCode;
 
+  // ✅ Focus floating toolbar input when component is selected (synchronous, no flicker)
+  useLayoutEffect(() => {
+    if (selectedComponentId && floatingToolbarInputRef.current) {
+      floatingToolbarInputRef.current.focus();
+    }
+  }, [selectedComponentId]);
+
+  // ✅ Clear floating prompt when switching components
+  useEffect(() => {
+    if (selectedComponentId) {
+      setFloatingPrompt('');
+    }
+  }, [selectedComponentId]);
+
   // Handle chat submission (AI-based edits)
-  const handleChatSubmit = useCallback(async () => {
-    if (!prompt.trim() || isGenerating) return;
+  // Can accept optional customPrompt to bypass main prompt state (for floating toolbar)
+  const handleChatSubmit = useCallback(async (customPrompt?: string) => {
+    const promptToUse = customPrompt || prompt;
+    if (!promptToUse.trim() || isGenerating) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: prompt,
+      content: promptToUse,
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setPrompt('');
+    // Only clear main prompt if not using custom prompt
+    if (!customPrompt) {
+      setPrompt('');
+    }
     setIsGenerating(true);
 
     try {
@@ -99,7 +123,7 @@ const [mode, setMode] = useState<EditMode>('chat');
         body: JSON.stringify({
           campaignId,
           currentTsxCode: workingTsxRef.current, // ✅ Use ref to include visual edits
-          userMessage: prompt,
+          userMessage: promptToUse, // ✅ Use the parameter or state
           selectedComponentId: selectedComponentId || null,
           selectedComponentType: selectedComponentType,
         }),
@@ -170,7 +194,6 @@ const [mode, setMode] = useState<EditMode>('chat');
 
   // Handle component selection
   const handleComponentSelect = useCallback((componentId: string | null, position?: { top: number; left: number }) => {
-    console.log('[EDITOR] Component selected:', componentId, position);
     setSelectedComponentId(componentId);
     setComponentPosition(position || null);
   }, []);
@@ -402,8 +425,14 @@ const [mode, setMode] = useState<EditMode>('chat');
     <DashboardLayout campaignEditor={editorControls}>
       {/* Exit Visual Mode Confirmation Modal */}
       {showExitConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4">
+        <div 
+          className="fixed inset-0 flex items-center justify-center bg-black/50"
+          style={{ zIndex: Z_INDEX.MODAL_BACKDROP }}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4"
+            style={{ zIndex: Z_INDEX.MODAL_CONTENT }}
+          >
             <h3 className="text-lg font-semibold mb-2">Save visual edits?</h3>
             <p className="text-sm text-gray-600 mb-6">
               You have unsaved visual edits. Do you want to save them before switching modes?
@@ -448,6 +477,7 @@ const [mode, setMode] = useState<EditMode>('chat');
                         isLoading={isGenerating}
                         disabled={isSaving}
                         compact
+                        disableAnimation
                         visualEditsMode={false}
                         onVisualEditsToggle={handleModeToggle}
                         showDiscardSaveButtons={false}
@@ -468,23 +498,14 @@ const [mode, setMode] = useState<EditMode>('chat');
 
                     {/* Prompt Input (also in visual mode) */}
                     <div className="border-t p-4">
-                      {(hasVisualEdits || hasUnsavedChanges) && (
-                        <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-                          <p className="text-sm text-blue-800 flex items-center gap-2">
-                            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            You have unsaved changes. Exit visual mode to save or discard.
-                          </p>
-                        </div>
-                      )}
                       <PromptInput
                         value={prompt}
                         onChange={setPrompt}
                         onSubmit={handleChatSubmit}
                         isLoading={isGenerating}
-                        disabled={isSaving}
+                        disabled={isSaving || !!selectedComponentId}
                         compact
+                        disableAnimation
                         visualEditsMode={true}
                         onVisualEditsToggle={handleModeToggle}
                         showDiscardSaveButtons={false}
@@ -515,68 +536,72 @@ const [mode, setMode] = useState<EditMode>('chat');
                 {/* Floating AI Toolbar (Visual Mode Only) - positioned below selected component */}
                 {mode === 'visual' && selectedComponentId && componentPosition && (
                   <div 
-                    className="absolute z-50 bg-[#2d2d2d] shadow-2xl rounded-xl p-2"
+                    className="absolute bg-gradient-to-r from-gray-900 to-gray-800 shadow-2xl rounded-xl border border-gray-700 p-2.5"
                     style={{
                       top: `${componentPosition.top}px`,
                       left: `${componentPosition.left}px`,
-                      minWidth: '400px',
+                      width: '320px',
+                      zIndex: Z_INDEX.VISUAL_EDITOR_TOOLBAR,
                     }}
+                    onMouseDown={(e) => e.preventDefault()} // ✅ Prevent blur on toolbar clicks
                   >
                     <div className="flex items-center gap-2">
-                      {/* AI Input */}
+                      {/* AI Input - Controlled with stable ref */}
                       <input
+                        ref={floatingToolbarInputRef}
                         type="text"
+                        value={floatingPrompt}
+                        onChange={(e) => setFloatingPrompt(e.target.value)}
                         placeholder="Ask Jolti..."
-                        className="flex-1 px-3 py-1.5 text-sm bg-transparent text-white placeholder-gray-400 border-none outline-none focus:outline-none"
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            const input = e.currentTarget.value;
-                            if (input.trim()) {
-                              setPrompt(input);
-                              handleChatSubmit();
-                              e.currentTarget.value = '';
-                            }
+                        className="flex-1 px-3 py-2 text-sm bg-gray-800/50 text-white placeholder-gray-400 border border-gray-600 rounded-lg outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && floatingPrompt.trim()) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleChatSubmit(floatingPrompt); // ✅ Pass directly, don't touch main prompt!
+                            setFloatingPrompt('');
+                            // Re-focus after submit
+                            setTimeout(() => floatingToolbarInputRef.current?.focus(), 0);
+                          }
+                          if (e.key === 'Escape') {
+                            setSelectedComponentId(null);
+                            setComponentPosition(null);
+                            setFloatingPrompt('');
                           }
                         }}
                       />
                       
-                      {/* Action Buttons */}
-                      <div className="flex items-center gap-2">
-                        {/* Up Arrow / Submit */}
-                        <button
-                          className="w-7 h-7 rounded-lg bg-gray-700 hover:bg-gray-600 flex items-center justify-center transition-colors"
-                          onClick={() => {
-                            const input = document.querySelector<HTMLInputElement>(
-                              'input[placeholder="Ask Jolti..."]'
-                            );
-                            if (input?.value.trim()) {
-                              setPrompt(input.value);
-                              handleChatSubmit();
-                              input.value = '';
-                            }
-                          }}
-                        >
-                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                          </svg>
-                        </button>
-                        
-                        {/* Separator */}
-                        <div className="h-5 w-px bg-gray-600"></div>
-                        
-                        {/* Delete / Close */}
-                        <button
-                          className="w-7 h-7 rounded-lg bg-gray-700 hover:bg-red-600 flex items-center justify-center transition-colors"
-                          onClick={() => {
-                            setSelectedComponentId(null);
-                            setComponentPosition(null);
-                          }}
-                        >
-                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
+                      {/* Submit Button */}
+                      <button
+                        className="w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-500 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={!floatingPrompt.trim() || isGenerating}
+                        onClick={() => {
+                          if (floatingPrompt.trim()) {
+                            handleChatSubmit(floatingPrompt); // ✅ Pass directly, don't touch main prompt!
+                            setFloatingPrompt('');
+                            // Re-focus after submit
+                            setTimeout(() => floatingToolbarInputRef.current?.focus(), 0);
+                          }
+                        }}
+                      >
+                        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                        </svg>
+                      </button>
+                      
+                      {/* Close Button */}
+                      <button
+                        className="w-8 h-8 rounded-lg bg-gray-700 hover:bg-gray-600 flex items-center justify-center transition-colors"
+                        onClick={() => {
+                          setSelectedComponentId(null);
+                          setComponentPosition(null);
+                          setFloatingPrompt('');
+                        }}
+                      >
+                        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 )}

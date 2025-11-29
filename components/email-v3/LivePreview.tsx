@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import type { EditMode } from './EmailEditorV3';
 import type { ComponentMap } from '@/lib/email-v3/tsx-parser';
+import { Z_INDEX } from '@/lib/ui-constants';
 
 interface LivePreviewProps {
   workingTsxRef: React.MutableRefObject<string>; // Ref to working TSX (no re-renders on edit!)
@@ -644,7 +645,10 @@ export function LivePreview({
     <div className="relative h-full w-full bg-gray-50">
       {/* Loading Overlay (AI generation, rendering, saving, or visual mode transitions) */}
       {(isGenerating || isRendering || isSaving || isEnteringVisualMode || isExitingVisualMode) && (
-        <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center">
+        <div 
+          className="absolute inset-0 bg-black/50 flex items-center justify-center"
+          style={{ zIndex: Z_INDEX.VISUAL_EDITOR_LOADING }}
+        >
           <div className="bg-white rounded-lg p-8 text-center max-w-sm">
             <div className="w-12 h-12 border-4 border-[#e9a589] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">
@@ -672,6 +676,7 @@ export function LivePreview({
         srcDoc={previewHtml || placeholderHtml}
         className="w-full h-full border-0"
         sandbox="allow-scripts allow-same-origin"
+        tabIndex={-1}
         title="Email Preview"
       />
 
