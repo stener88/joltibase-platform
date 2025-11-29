@@ -1,68 +1,247 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { streamText } from 'ai';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createClient } from '@/lib/supabase/server';
-import { refineEmail } from '@/lib/email-v3/refiner';
+import { detectIntent } from '@/lib/email-v3/intent-detector';
+import { resolveImage, extractImageKeyword } from '@/lib/email-v3/image-resolver';
+import { processCodeChanges } from '@/lib/email-v3/refiner-streaming';
 import { parseAndInjectIds } from '@/lib/email-v3/tsx-parser';
 
-export async function POST(request: NextRequest) {
+const google = createGoogleGenerativeAI({
+  apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+});
+
+const CONSULTATION_PROMPT = `You are a helpful email design colleague brainstorming ideas together.
+
+When the user asks for suggestions:
+- Give 2-3 specific, actionable ideas in a conversational way
+- Keep it brief - just 2-4 sentences total, no lists
+- Reference what you see in their email
+- Be casual and friendly, like chatting with a colleague
+- Don't lecture, teach, or give step-by-step instructions
+
+Examples of good responses:
+- "The CTA could pop more with a brighter color. Also, adding some vertical spacing around the header would help it breathe."
+- "I'd center everything with mx-auto on the Container and add breathing room between sections."
+- "Try a bigger, bolder headline and make the button stand out more with stronger contrast."
+
+Keep it casual, specific, and helpful!`;
+
+const EXECUTION_PROMPT = `You are an expert React Email developer modifying email components based on user requests.
+
+# CRITICAL RULES
+
+1. **PRESERVE STRUCTURE**
+   - Keep overall layout unless explicitly asked to change it
+   - Maintain existing content unless told to modify/remove it
+   - Keep imports from '@react-email/components'
+
+2. **STATIC CONTENT ONLY**
+   - ❌ NEVER use: {variables}, {props.text}, .map(), .forEach()
+   - ✅ Write all text directly in JSX
+   - ✅ If asked for "3 buttons", write 3 separate <Button> components
+
+3. **STYLING - MIXED APPROACH**
+   
+   **TAILWIND (className) - SAFE for:**
+   - Colors: bg-blue-500, text-gray-600
+   - Typography: text-sm, text-lg, font-bold, text-center
+   - Basic spacing: p-4, px-6, py-3, m-0, mt-4
+
+   **INLINE STYLES (style prop) - REQUIRED for:**
+   - Layout gaps: style={{display: 'flex', gap: '12px'}}
+   - Spacing between siblings: style={{marginBottom: '16px'}}
+   - Complex positioning
+
+   **FORBIDDEN CLASSES**:
+   - ❌ space-x-*, space-y-*, gap-*, divide-*
+   - ❌ hover:, focus:, active:, group-, dark:
+
+4. **IMAGES**
+   - ONLY use image URLs that are explicitly provided
+   - NEVER generate or make up image URLs
+   - If no image URL is provided, keep the existing src attribute
+
+# OUTPUT FORMAT
+Return ONLY the complete modified TSX code. No explanations, no markdown, just code.`;
+
+export async function POST(request: Request) {
   try {
     const supabase = await createClient();
     
-    // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return new Response('Unauthorized', { status: 401 });
     }
 
-    const { campaignId, currentTsxCode, userMessage, selectedComponentId, selectedComponentType } = await request.json();
+    const { campaignId, currentTsxCode, userMessage, selectedComponentId, selectedComponentType } = 
+      await request.json();
 
     if (!campaignId || !currentTsxCode || !userMessage) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+      return new Response('Missing required fields', { status: 400 });
     }
 
-    console.log(`🔄 [REFINE] User message: "${userMessage}"`);
+    console.log(`🔄 [REFINE-SDK] User message: "${userMessage}"`);
     if (selectedComponentId) {
-      console.log(`🎯 [REFINE] Target component: ${selectedComponentType} (${selectedComponentId})`);
+      console.log(`🎯 [REFINE-SDK] Target component: ${selectedComponentType} (${selectedComponentId})`);
     }
 
-    // Parse current TSX to get component map
+    // Parse componentMap
     let componentMap;
     try {
       const parsed = parseAndInjectIds(currentTsxCode);
       componentMap = parsed.componentMap;
     } catch (error) {
-      console.warn('[REFINE] Failed to parse TSX, proceeding without component map');
       componentMap = undefined;
     }
 
-    // Use AI-native refinement
-    const result = await refineEmail({
-      currentTsxCode,
-      userMessage,
-      componentMap,
-      selectedComponentId,
-      selectedComponentType,
+    // Detect intent
+    const intent = detectIntent(userMessage);
+    console.log(`[REFINE-SDK] Intent: ${intent}`);
+
+    // CONSULTATION MODE - Just stream suggestions
+    if (intent === 'question') {
+      const result = await streamText({
+        model: google('gemini-2.0-flash-exp'),
+        system: CONSULTATION_PROMPT,
+        prompt: `# THE EMAIL CODE\n\n\`\`\`tsx\n${currentTsxCode}\n\`\`\`\n\n# USER'S QUESTION\n\n"${userMessage}"\n\nProvide 2-3 specific, actionable suggestions.`,
+        temperature: 0.8,
+      });
+
+      return result.toTextStreamResponse({
+        headers: {
+          'X-Intent': 'question',
+        },
+      });
+    }
+
+    // EXECUTION MODE - Modify code
+    
+    // Resolve images if needed
+    let imageUrl: string | null = null;
+    const msg = userMessage.toLowerCase();
+    const isImageRequest = selectedComponentType === 'Img' && 
+      (msg.includes('change') || msg.includes('replace') || msg.includes('different') || 
+       msg.includes('photo') || msg.includes('picture'));
+
+    if (isImageRequest) {
+      const keyword = extractImageKeyword(userMessage);
+      const imageResult = await resolveImage(keyword, {
+        orientation: 'landscape',
+        width: 600,
+        height: 300,
+      });
+      imageUrl = imageResult.url;
+      console.log(`[REFINE-SDK] Resolved image: ${imageUrl.substring(0, 60)}... (source: ${imageResult.source})`);
+    }
+
+    // Build execution prompt
+    let executionPrompt = `# CURRENT EMAIL CODE\n\n\`\`\`tsx\n${currentTsxCode}\n\`\`\`\n\n`;
+
+    // Add selected component context
+    if (selectedComponentId && selectedComponentType && componentMap) {
+      const componentLocation = componentMap[selectedComponentId];
+      
+      if (componentLocation) {
+        const componentCode = currentTsxCode.substring(
+          componentLocation.startChar,
+          componentLocation.endChar
+        );
+        
+        executionPrompt += `# SELECTED COMPONENT\n\nThe user has selected a **${selectedComponentType}** component.\n\n**The selected component's code:**\n\`\`\`tsx\n${componentCode}\n\`\`\`\n\nWhen they say:\n- "this" / "it" / "the ${selectedComponentType.toLowerCase()}" → They mean THIS EXACT component\n- "delete this" → Remove THIS EXACT component\n- "change this" → Modify THIS EXACT component only\n\n`;
+      }
+    }
+
+    // Add image URL if available
+    if (imageUrl) {
+      executionPrompt += `# NEW IMAGE AVAILABLE\n\nUse this image URL (already validated and working):\n- **URL**: ${imageUrl}\n- **Alt text**: "${extractImageKeyword(userMessage)}"\n\nUpdate the selected <Img> component's src to this URL.\n\n`;
+    }
+
+    executionPrompt += `# USER REQUEST\n\n"${userMessage}"\n\n# YOUR TASK\n\nModify the code above based on the user's request.\nReturn ONLY the complete modified TSX code, nothing else.`;
+
+    // Stream code generation and create custom response with metadata
+    const aiResult = await streamText({
+      model: google('gemini-2.0-flash-exp'),
+      system: EXECUTION_PROMPT,
+      prompt: executionPrompt,
+      temperature: 0.7,
     });
 
-    console.log(`✅ [REFINE] ${result.message}:`, result.changesApplied);
+    // Create custom stream that includes metadata at the end
+    const encoder = new TextEncoder();
+    const transformStream = new TransformStream({
+      async start(controller) {
+        let fullText = '';
+        
+        // Stream AI response
+        for await (const chunk of aiResult.textStream) {
+          fullText += chunk;
+          controller.enqueue(encoder.encode(chunk));
+        }
+        
+        // Extract code
+        const codeMatch = fullText.match(/```(?:tsx|typescript)?\n([\s\S]*?)\n```/);
+        const finalCode = codeMatch ? codeMatch[1].trim() : fullText.trim();
 
-    return NextResponse.json({
-      tsxCode: result.newTsxCode,
-      message: result.message,
-      changesApplied: result.changesApplied,
+        // Validate and generate diff
+        const processResult = processCodeChanges({
+          oldCode: currentTsxCode,
+          newCode: finalCode,
+          userMessage,
+        });
+
+        console.log(`[REFINE-SDK] Validation: ${processResult.valid ? '✅ Valid' : '❌ Invalid'}`);
+        console.log(`[REFINE-SDK] Changes: ${processResult.changes.length}`);
+
+        // Send metadata as JSON at the end (special marker)
+        const metadata = JSON.stringify({
+          __metadata: true,
+          intent: 'command',
+          tsxCode: finalCode,
+          validation: {
+            valid: processResult.valid,
+            errors: processResult.errors,
+            warnings: processResult.warnings,
+          },
+          changes: processResult.changes,
+          message: processResult.conversationalResponse,
+        });
+        
+        controller.enqueue(encoder.encode(`\n\n__METADATA__:${metadata}`));
+        controller.terminate();
+
+        // Log telemetry
+        try {
+          const usage = await aiResult.usage;
+          if (usage && usage.totalTokens) {
+            // Gemini 2.0 Flash pricing: $0.00001875/1K input, $0.000075/1K output
+            // Estimate 60/40 split for input/output when individual counts unavailable
+            const totalTokens = usage.totalTokens;
+            const estimatedInputTokens = Math.floor(totalTokens * 0.6);
+            const estimatedOutputTokens = totalTokens - estimatedInputTokens;
+            
+            const cost = (estimatedInputTokens / 1000) * 0.00001875 + 
+                         (estimatedOutputTokens / 1000) * 0.000075;
+            
+            console.log(`💰 [REFINE-SDK] Tokens: ${totalTokens} | Cost: ~$${cost.toFixed(6)}`);
+          }
+        } catch (e) {
+          // Usage might not be available
+        }
+      },
+    });
+
+    return new Response(transformStream.readable, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'X-Intent': 'command',
+      },
     });
 
   } catch (error: any) {
-    console.error('[REFINE] Error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to refine email' },
-      { status: 500 }
+    console.error('[REFINE-SDK] Error:', error);
+    return new Response(
+      JSON.stringify({ error: error.message || 'Failed to refine email' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }

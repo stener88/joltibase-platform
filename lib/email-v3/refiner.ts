@@ -29,6 +29,66 @@ export interface RefineResult {
 }
 
 /**
+ * Generate a natural, conversational response to the user
+ */
+function generateConversationalResponse(userMessage: string, componentType?: string | null): string {
+  const msg = userMessage.toLowerCase();
+  
+  // Pattern matching for common requests
+  if (msg.includes('change') && (msg.includes('color') || msg.includes('blue') || msg.includes('red') || msg.includes('green'))) {
+    return "Great! I've updated the color for you.";
+  }
+  
+  if (msg.includes('delete') || msg.includes('remove')) {
+    return "Done! I've removed that for you.";
+  }
+  
+  if (msg.includes('bigger') || msg.includes('larger') || msg.includes('increase')) {
+    return "Made it bigger! Let me know if you'd like it even larger.";
+  }
+  
+  if (msg.includes('smaller') || msg.includes('decrease')) {
+    return "Made it smaller for you!";
+  }
+  
+  if (msg.includes('center') || msg.includes('align')) {
+    return "Perfect! I've adjusted the alignment.";
+  }
+  
+  if (msg.includes('spacing') || msg.includes('padding') || msg.includes('margin')) {
+    return "Nice! I've adjusted the spacing.";
+  }
+  
+  if (msg.includes('image') || msg.includes('photo') || msg.includes('picture') || componentType === 'Img') {
+    return "Great choice! I've updated the image for you.";
+  }
+  
+  if (msg.includes('text') || msg.includes('wording') || msg.includes('copy')) {
+    return "Perfect! I've updated the text.";
+  }
+  
+  if (msg.includes('add') || msg.includes('new')) {
+    return "Done! I've added that for you.";
+  }
+  
+  if (msg.includes('button') || msg.includes('cta')) {
+    return "Looking good! I've updated the button.";
+  }
+  
+  // Generic friendly responses
+  const genericResponses = [
+    "Done! How does that look?",
+    "Great idea! I've made those changes.",
+    "Perfect! Updated as requested.",
+    "All set! Let me know if you'd like any other adjustments.",
+  ];
+  
+  // Use a simple hash of the message to pick a consistent response
+  const index = userMessage.length % genericResponses.length;
+  return genericResponses[index];
+}
+
+/**
  * Main AI refinement function - handles all types of changes
  */
 export async function refineEmail(request: RefineRequest): Promise<RefineResult> {
@@ -231,9 +291,12 @@ Return ONLY the complete modified TSX code, nothing else.`;
     
     console.log('[REFINER] ✅ AI successfully modified code');
     
+    // Generate conversational response
+    const conversationalMessage = generateConversationalResponse(userMessage, selectedComponentType);
+    
     return {
       newTsxCode: newCode,
-      message: `Applied changes: ${userMessage}`,
+      message: conversationalMessage,
       changesApplied: ['AI-generated modification'],
     };
     

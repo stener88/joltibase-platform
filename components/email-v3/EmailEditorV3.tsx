@@ -13,12 +13,14 @@ import { useRouter } from 'next/navigation';
 import { updateComponentText, updateInlineStyle, updateImageSrc } from '@/lib/email-v3/tsx-manipulator';
 import { parseAndInjectIds } from '@/lib/email-v3/tsx-parser';
 import { Z_INDEX } from '@/lib/ui-constants';
+import type { CodeChange } from '@/lib/email-v3/diff-generator';
 
 interface EmailEditorV3Props {
   campaignId: string;
   initialTsxCode: string;
   initialHtmlContent: string;
   campaignName: string;
+  generationPrompt?: string | null;
 }
 
 interface Message {
@@ -26,6 +28,8 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  changes?: CodeChange[]; // For showing what the AI modified
+  intent?: 'question' | 'command'; // Track if it was a question or command
 }
 
 export type EditMode = 'chat' | 'visual';
@@ -35,37 +39,55 @@ export function EmailEditorV3({
   initialTsxCode,
   initialHtmlContent,
   campaignName,
+  generationPrompt,
 }: EmailEditorV3Props) {
   const router = useRouter();
+
+  // Initialize chat history with original prompt if available
+  const initialChatMessages = generationPrompt ? [
+    {
+      id: 'initial-prompt',
+      role: 'user' as const,
+      content: generationPrompt,
+    },
+    {
+      id: 'initial-response',
+      role: 'assistant' as const,
+      content: "I've created your email based on your request. How would you like to refine it?",
+    },
+  ] : [];
 
   // State management
   const [savedTsxCode, setSavedTsxCode] = useState(initialTsxCode);
   const [draftTsxCode, setDraftTsxCode] = useState(initialTsxCode);
-  const [renderVersion, setRenderVersion] = useState(0); // Version counter to force preview re-renders
-const [mode, setMode] = useState<EditMode>('chat');
+  const [renderVersion, setRenderVersion] = useState(0);
+  const [mode, setMode] = useState<EditMode>('chat');
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
   const [hoveredComponentId, setHoveredComponentId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [prompt, setPrompt] = useState('');
   const [componentPosition, setComponentPosition] = useState<{ top: number; left: number } | null>(null);
   const [componentMap, setComponentMap] = useState<any>({});
   const [hasVisualEdits, setHasVisualEdits] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-  
-  // Visual editing state
-  const [visualModeEntryCode, setVisualModeEntryCode] = useState<string>(''); // TSX code when entering visual mode
+  const [visualModeEntryCode, setVisualModeEntryCode] = useState<string>('');
   const [iframeKey, setIframeKey] = useState(0);
   const [isEnteringVisualMode, setIsEnteringVisualMode] = useState(false);
   const [isExitingVisualMode, setIsExitingVisualMode] = useState(false);
-  const [floatingPrompt, setFloatingPrompt] = useState(''); // Separate state for floating toolbar input
+  const [floatingPrompt, setFloatingPrompt] = useState('');
 
   // ✅ Working TSX ref - holds current code with visual edits (no re-renders!)
   const workingTsxRef = useRef(initialTsxCode);
   
   // ✅ Floating toolbar input ref - for focus management
   const floatingToolbarInputRef = useRef<HTMLInputElement>(null);
+
+  // ✅ Message metadata ref - tracks changes and intent per message
+  const messageMetadataRef = useRef<Map<string, { changes?: CodeChange[]; intent?: 'question' | 'command' }>>(new Map());
+
+  // State for manual streaming (hybrid approach)
+  const [messages, setMessages] = useState<Array<{ id: string; role: 'user' | 'assistant'; content: string; createdAt?: Date }>>(initialChatMessages as any);
+  const [input, setInput] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Sync working ref when draftTsxCode changes externally (AI, load, etc.)
   useEffect(() => {
@@ -89,75 +111,145 @@ const [mode, setMode] = useState<EditMode>('chat');
     }
   }, [selectedComponentId]);
 
-  // Handle chat submission (AI-based edits)
-  // Can accept optional customPrompt to bypass main prompt state (for floating toolbar)
+  // Handle chat submission with streaming
+  // Can accept optional customPrompt to bypass main input state (for floating toolbar)
   const handleChatSubmit = useCallback(async (customPrompt?: string) => {
-    const promptToUse = customPrompt || prompt;
+    const promptToUse = customPrompt || input;
     if (!promptToUse.trim() || isGenerating) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: promptToUse,
-      timestamp: new Date(),
-    };
+    console.log(`[EDITOR] Submitting: "${promptToUse}"`);
 
-    setMessages((prev) => [...prev, userMessage]);
-    // Only clear main prompt if not using custom prompt
+    // Add user message
+    const userMsg = {
+      id: Date.now().toString(),
+      role: 'user' as const,
+      content: promptToUse,
+      createdAt: new Date(),
+    };
+    setMessages(prev => [...prev, userMsg]);
+
+    // Clear input
     if (!customPrompt) {
-      setPrompt('');
+      setInput('');
     }
+
+    // Create placeholder for assistant
+    const assistantId = (Date.now() + 1).toString();
+    const assistantMsg = {
+      id: assistantId,
+      role: 'assistant' as const,
+      content: '',
+      createdAt: new Date(),
+    };
+    setMessages(prev => [...prev, assistantMsg]);
+
     setIsGenerating(true);
 
     try {
-      // Get selected component info for context
-      let selectedComponentType = null;
-      if (selectedComponentId && componentMap[selectedComponentId]) {
-        selectedComponentType = componentMap[selectedComponentId].type;
-      }
-
-      // Call AI to modify TSX (use workingTsxRef for latest code including unsaved visual edits!)
       const response = await fetch('/api/v3/campaigns/refine', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           campaignId,
-          currentTsxCode: workingTsxRef.current, // ✅ Use ref to include visual edits
-          userMessage: promptToUse, // ✅ Use the parameter or state
-          selectedComponentId: selectedComponentId || null,
-          selectedComponentType: selectedComponentType,
+          currentTsxCode: workingTsxRef.current,
+          userMessage: promptToUse,
+          selectedComponentId,
+          selectedComponentType: selectedComponentId && componentMap[selectedComponentId]
+            ? componentMap[selectedComponentId].type
+            : null,
         }),
       });
 
-      const { tsxCode: newTsxCode, message } = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
 
-      // Update draft state and working ref
-      setDraftTsxCode(newTsxCode);
-      workingTsxRef.current = newTsxCode; // ✅ Direct sync before re-render (no race condition)
-      setRenderVersion(v => v + 1); // Force preview re-render
-      console.log('[EDITOR] AI updated TSX, synced ref, incrementing render version');
+      const intent = response.headers.get('X-Intent') as 'question' | 'command';
+      console.log(`[EDITOR] Intent: ${intent}`);
 
-      // Add assistant response
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: message || 'Updated the email as requested.',
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+      // Read stream
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullText = '';
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          
+          // Check for metadata marker
+          if (chunk.includes('__METADATA__:')) {
+            const parts = chunk.split('__METADATA__:');
+            fullText += parts[0];
+            
+            try {
+              const metadata = JSON.parse(parts[1]);
+              
+              // Apply code changes
+              if (metadata.tsxCode && intent === 'command') {
+                setDraftTsxCode(metadata.tsxCode);
+                workingTsxRef.current = metadata.tsxCode;
+                setRenderVersion(v => v + 1);
+              }
+
+              // Store metadata
+              messageMetadataRef.current.set(assistantId, {
+                changes: metadata.changes,
+                intent: metadata.intent,
+              });
+
+              // Update message with final content
+              // For commands: use conversational message (not raw TSX code)
+              // For questions: use streamed text
+              const displayContent = intent === 'command' 
+                ? (metadata.message || 'Done! Applied your changes.')
+                : fullText;
+
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === assistantId
+                    ? { ...m, content: displayContent }
+                    : m
+                )
+              );
+              
+              console.log(`[EDITOR] Applied ${metadata.changes?.length || 0} changes`);
+            } catch (e) {
+              console.error('[EDITOR] Failed to parse metadata:', e);
+            }
+          } else {
+            fullText += chunk;
+            
+            // Only stream in real-time for QUESTIONS
+            // For commands, don't show the raw TSX code
+            if (intent === 'question') {
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === assistantId
+                    ? { ...m, content: fullText }
+                    : m
+                )
+              );
+            }
+            // For commands, show "Thinking..." or nothing until metadata arrives
+          }
+        }
+      }
     } catch (error) {
-      console.error('Failed to generate:', error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: 'Sorry, something went wrong. Please try again.',
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      console.error('[EDITOR] Stream error:', error);
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === assistantId
+            ? { ...m, content: 'Sorry, something went wrong. Please try again.' }
+            : m
+        )
+      );
     } finally {
       setIsGenerating(false);
     }
-  }, [prompt, isGenerating, draftTsxCode, campaignId, selectedComponentId, componentMap]);
+  }, [input, isGenerating, campaignId, selectedComponentId, componentMap, workingTsxRef]);
 
   // Handle mode toggle
   const handleModeToggle = useCallback(() => {
@@ -465,14 +557,18 @@ const [mode, setMode] = useState<EditMode>('chat');
                   <>
                     {/* Chat History */}
                     <div className="flex-1 overflow-y-auto">
-                      <ChatHistory messages={messages} isGenerating={isGenerating} />
+                      <ChatHistory 
+                        messages={messages} 
+                        messageMetadata={messageMetadataRef.current}
+                        isGenerating={isGenerating} 
+                      />
                     </div>
 
                     {/* Chat Input */}
                     <div className="border-t p-4">
                       <PromptInput
-                        value={prompt}
-                        onChange={setPrompt}
+                        value={input}
+                        onChange={setInput}
                         onSubmit={handleChatSubmit}
                         isLoading={isGenerating}
                         disabled={isSaving}
@@ -499,8 +595,8 @@ const [mode, setMode] = useState<EditMode>('chat');
                     {/* Prompt Input (also in visual mode) */}
                     <div className="border-t p-4">
                       <PromptInput
-                        value={prompt}
-                        onChange={setPrompt}
+                        value={input}
+                        onChange={setInput}
                         onSubmit={handleChatSubmit}
                         isLoading={isGenerating}
                         disabled={isSaving || !!selectedComponentId}

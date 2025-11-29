@@ -76,6 +76,7 @@ export default function CampaignEditPage({ params }: EditPageProps) {
       initialTsxCode={campaign.component_code}
       initialHtmlContent={campaign.html_content}
       campaignName={campaign.name || 'Untitled Campaign'}
+      generationPrompt={campaign.generation_prompt}
     />
   );
 }

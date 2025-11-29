@@ -129,7 +129,7 @@ export async function fetchUnsplashImage(
       if (width) params.set('w', width.toString());
       if (height) params.set('h', height.toString());
       params.set('fit', 'crop');
-      imageUrl = `${photo.urls.raw}&${params}`;
+      imageUrl = `${photo.urls.raw}&${params.toString()}`;
     }
     
     const result: ImageResult = {
