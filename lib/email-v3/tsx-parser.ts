@@ -14,6 +14,7 @@ export interface ComponentLocation {
   endChar: number;
   hasChildren: boolean;
   computedStyles?: Record<string, string>; // Inline styles from rendered HTML
+  textContent?: string; // Text content from rendered HTML
 }
 
 export interface ComponentMap {

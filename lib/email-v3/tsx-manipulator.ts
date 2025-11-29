@@ -196,7 +196,7 @@ export function updateImageSrc(
   tsxCode: string,
   componentMap: ComponentMap,
   componentId: string,
-  newSrc: string,
+  newSrc?: string,
   newAlt?: string,
   newWidth?: number,
   newHeight?: number
@@ -211,17 +211,23 @@ export function updateImageSrc(
   let componentCode = tsxCode.substring(location.startChar, location.endChar);
   const after = tsxCode.substring(location.endChar);
   
-  // Update src
-  componentCode = componentCode.replace(
-    /src=["'][^"']*["']/,
-    `src="${newSrc}"`
-  );
+  // Update src (if provided)
+  // ✅ FIX: Match either double-quoted or single-quoted strings properly
+  // This handles apostrophes and special characters in URLs
+  if (newSrc !== undefined) {
+    componentCode = componentCode.replace(
+      /src=(?:"[^"]*"|'[^']*')/,
+      `src="${newSrc}"`
+    );
+  }
   
   // Update alt if provided
+  // ✅ FIX: Match either double-quoted or single-quoted strings properly
+  // This handles apostrophes in alt text like "person's hand"
   if (newAlt !== undefined) {
-    if (/alt=["'][^"']*["']/.test(componentCode)) {
+    if (/alt=(?:"[^"]*"|'[^']*')/.test(componentCode)) {
       componentCode = componentCode.replace(
-        /alt=["'][^"']*["']/,
+        /alt=(?:"[^"]*"|'[^']*')/,
         `alt="${newAlt}"`
       );
     } else {
@@ -263,7 +269,8 @@ export function updateImageSrc(
     }
   }
   
-  console.log(`[TSX-MANIPULATOR] Updated image ${componentId}: src="${newSrc.substring(0, 50)}..."`);
+  const srcPreview = newSrc ? `src="${newSrc.substring(0, 50)}..."` : 'alt/dimensions only';
+  console.log(`[TSX-MANIPULATOR] Updated image ${componentId}: ${srcPreview}`);
   
   return before + componentCode + after;
 }

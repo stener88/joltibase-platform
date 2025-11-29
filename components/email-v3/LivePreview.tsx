@@ -5,7 +5,7 @@ import type { EditMode } from './EmailEditorV3';
 import type { ComponentMap } from '@/lib/email-v3/tsx-parser';
 
 interface LivePreviewProps {
-  tsxCode: string;
+  workingTsxRef: React.MutableRefObject<string>; // Ref to working TSX (no re-renders on edit!)
   renderVersion: number; // Version counter to trigger re-renders
   mode: EditMode;
   selectedComponentId: string | null;
@@ -49,8 +49,43 @@ function extractStylesFromHtml(html: string, componentId: string): Record<string
   return styles;
 }
 
+// Helper: Extract text content from rendered HTML for a component
+function extractTextFromHtml(html: string, componentId: string): string {
+  // Find the opening tag
+  const openingRegex = new RegExp(`<([^\\s>]+)[^>]*data-component-id="${componentId}"[^>]*>`, 'i');
+  const openingMatch = html.match(openingRegex);
+  
+  if (!openingMatch) return '';
+  
+  const tagName = openingMatch[1];
+  const startPos = openingMatch.index! + openingMatch[0].length;
+  
+  // Find the corresponding closing tag
+  const closingTag = `</${tagName}>`;
+  const closingPos = html.indexOf(closingTag, startPos);
+  
+  if (closingPos === -1) return ''; // Self-closing tag
+  
+  // Extract content between tags
+  const content = html.substring(startPos, closingPos);
+  
+  // Strip HTML tags and decode entities
+  const textOnly = content
+    .replace(/<[^>]+>/g, '') // Remove HTML tags
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .trim();
+  
+  return textOnly;
+}
+
 export function LivePreview({
-  tsxCode,
+  workingTsxRef,
   renderVersion,
   mode,
   selectedComponentId,
@@ -179,6 +214,16 @@ export function LivePreview({
                   element.alt = value;
                 }
                 break;
+              case 'imageWidth':
+                if (element.tagName === 'IMG') {
+                  element.width = parseInt(value, 10);
+                }
+                break;
+              case 'imageHeight':
+                if (element.tagName === 'IMG') {
+                  element.height = parseInt(value, 10);
+                }
+                break;
               default:
                 console.warn('[IFRAME] Unknown property:', property);
             }
@@ -301,12 +346,13 @@ export function LivePreview({
       // Inject interactive JavaScript into the rendered HTML (mode-aware)
       const interactiveHtml = injectInteractiveScript(data.html, currentMode);
       
-      // Enhance componentMap with computed styles from rendered HTML
+      // Enhance componentMap with computed styles and text content from rendered HTML
       const enhancedComponentMap: ComponentMap = {};
       Object.keys(data.componentMap || {}).forEach(componentId => {
         enhancedComponentMap[componentId] = {
           ...data.componentMap[componentId],
           computedStyles: extractStylesFromHtml(data.html, componentId),
+          textContent: extractTextFromHtml(data.html, componentId),
         };
       });
       
@@ -324,15 +370,17 @@ export function LivePreview({
   }, [onComponentMapUpdate]);
 
   // Render on version change (triggered by AI updates or visual edit saves)
+  // ✅ CRITICAL: Only re-renders on renderVersion changes, NOT on every edit!
   useEffect(() => {
-    if (!tsxCode) {
-      console.warn('[LIVE-PREVIEW] No TSX code provided');
+    const currentTsx = workingTsxRef.current;
+    if (!currentTsx) {
+      console.warn('[LIVE-PREVIEW] No TSX code in ref');
       return;
     }
 
-    console.log('[LIVE-PREVIEW] Render triggered by version change:', renderVersion, '| TSX length:', tsxCode.length);
-    renderPreview(tsxCode, mode);
-  }, [renderVersion, tsxCode, mode, renderPreview]); // Include all dependencies for completeness
+    console.log('[LIVE-PREVIEW] Render triggered by version change:', renderVersion, '| TSX length:', currentTsx.length);
+    renderPreview(currentTsx, mode);
+  }, [renderVersion, mode, renderPreview, workingTsxRef]); // Only re-render on version/mode changes!
 
   // Send direct update to iframe (instant, no re-render)
   const sendDirectUpdate = useCallback((update: DirectUpdate) => {
@@ -480,6 +528,16 @@ export function LivePreview({
                   case 'imageAlt':
                     if (element.tagName === 'IMG') {
                       element.alt = value;
+                    }
+                    break;
+                  case 'imageWidth':
+                    if (element.tagName === 'IMG') {
+                      element.width = parseInt(value, 10);
+                    }
+                    break;
+                  case 'imageHeight':
+                    if (element.tagName === 'IMG') {
+                      element.height = parseInt(value, 10);
                     }
                     break;
                   default:

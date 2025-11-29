@@ -8,7 +8,7 @@ import type { SelectedImage } from './ImagePickerUnsplash';
 import type { ComponentMap } from '@/lib/email-v3/tsx-parser';
 
 interface PropertiesPanelProps {
-  tsxCode: string;
+  workingTsxRef: React.MutableRefObject<string>; // Ref to working TSX
   selectedComponentId: string | null;
   componentMap: ComponentMap;
   onDirectUpdate: (componentId: string, property: string, value: string) => void;
@@ -43,7 +43,7 @@ interface ComponentProperties {
 }
 
 export function PropertiesPanel({
-  tsxCode,
+  workingTsxRef,
   selectedComponentId,
   componentMap,
   onDirectUpdate,
@@ -71,14 +71,15 @@ export function PropertiesPanel({
         marginBottom: '0',
         paddingTop: '0',
         paddingBottom: '0',
+        canEditText: false,
+        canEditTextColor: false,
+        canEditBackgroundColor: false,
+        canEditSpacing: false,
+        canEditImage: false,
       };
     }
 
     console.log('[PROPERTIES-PANEL] Component info:', componentInfo);
-
-    // Extract the component code from TSX
-    const componentCode = tsxCode.substring(componentInfo.startChar, componentInfo.endChar);
-    console.log('[PROPERTIES-PANEL] Component code:', componentCode);
 
     // Determine component capabilities based on type
     const componentType = componentInfo.type;
@@ -86,29 +87,24 @@ export function PropertiesPanel({
     const isLayoutComponent = ['Section', 'Container', 'Column', 'Row'].includes(componentType);
     const isImageComponent = componentType === 'Img';
     
-    // Extract text content (only for text components)
-    // Check if text is a JSX expression (dynamic content like {variable})
-    const textMatch = componentCode.match(/>([^<]+)</);
-    let text = textMatch ? textMatch[1].trim() : '';
+    // Get text content from rendered HTML (reliable!)
+    const text = componentInfo.textContent || '';
     
-    // If text contains JSX expression, mark as dynamic (non-editable for now)
-    const isDynamicText = text.includes('{') && text.includes('}');
-    if (isDynamicText) {
-      text = ''; // Don't show dynamic variables in edit box
-    }
-
-    // Extract href for links/buttons from TSX
+    // Check if text content is dynamic (contains JSX expressions)
+    // We check the TSX code for this since rendered HTML won't show the expressions
+    const componentCode = workingTsxRef.current.substring(componentInfo.startChar, componentInfo.endChar);
+    const isDynamicText = componentCode.includes('{') && componentCode.includes('}') && !componentCode.includes('style={');
+    
     const hrefMatch = componentCode.match(/href=["']([^"']+)["']/);
     const href = hrefMatch ? hrefMatch[1] : '';
 
-    // Extract image attributes from TSX
-    const srcMatch = componentCode.match(/src=["']([^"']+)["']/);
-    const altMatch = componentCode.match(/alt=["']([^"']+)["']/);
+    const srcMatch = componentCode.match(/src=(?:"([^"]*)"|'([^']*)')/);
+    const altMatch = componentCode.match(/alt=(?:"([^"]*)"|'([^']*)')/);
     const widthMatch = componentCode.match(/width=\{?(\d+)\}?/);
     const heightMatch = componentCode.match(/height=\{?(\d+)\}?/);
     
-    const src = srcMatch ? srcMatch[1] : '';
-    const alt = altMatch ? altMatch[1] : '';
+    const src = srcMatch ? (srcMatch[1] || srcMatch[2]) : '';
+    const alt = altMatch ? (altMatch[1] || altMatch[2]) : '';
     const width = widthMatch ? widthMatch[1] : '';
     const height = heightMatch ? heightMatch[1] : '';
 
@@ -171,7 +167,7 @@ export function PropertiesPanel({
       canEditSpacing: true, // All components can have spacing
       canEditImage: isImageComponent, // Can change image
     };
-  }, [selectedComponentId, componentMap, tsxCode]);
+  }, [selectedComponentId, componentMap, workingTsxRef]);
 
   // Local state for editing
   const [text, setText] = useState('');
@@ -183,6 +179,8 @@ export function PropertiesPanel({
   const [paddingBottom, setPaddingBottom] = useState('0');
   const [imageSrc, setImageSrc] = useState('');
   const [imageAlt, setImageAlt] = useState('');
+  const [imageWidth, setImageWidth] = useState('');
+  const [imageHeight, setImageHeight] = useState('');
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
 
   // Sync local state with component properties
@@ -197,6 +195,8 @@ export function PropertiesPanel({
       setPaddingBottom(componentProperties.paddingBottom || '0');
       setImageSrc(componentProperties.src || '');
       setImageAlt(componentProperties.alt || '');
+      setImageWidth(componentProperties.width || '');
+      setImageHeight(componentProperties.height || '');
     }
   }, [componentProperties]);
 
@@ -252,6 +252,8 @@ export function PropertiesPanel({
     
     setImageSrc(image.url);
     setImageAlt(image.alt);
+    setImageWidth(image.width?.toString() || '');
+    setImageHeight(image.height?.toString() || '');
     
     // Send image update to parent
     onDirectUpdate(selectedComponentId, 'imageSrc', JSON.stringify({
@@ -269,6 +271,25 @@ export function PropertiesPanel({
     
     setImageAlt(newAlt);
     onDirectUpdate(selectedComponentId, 'imageAlt', newAlt);
+  };
+
+  const handleDimensionChange = (dimension: 'width' | 'height', value: string) => {
+    if (!selectedComponentId) return;
+    
+    // Allow only numbers
+    if (value && !/^\d+$/.test(value)) return;
+    
+    if (dimension === 'width') {
+      setImageWidth(value);
+      if (value) {
+        onDirectUpdate(selectedComponentId, 'imageWidth', value);
+      }
+    } else {
+      setImageHeight(value);
+      if (value) {
+        onDirectUpdate(selectedComponentId, 'imageHeight', value);
+      }
+    }
   };
 
   if (!selectedComponentId || !componentProperties) {
@@ -369,9 +390,10 @@ export function PropertiesPanel({
                   <div className="flex items-center gap-1">
                     <Input
                       type="text"
-                      value={componentProperties.width}
+                      value={imageWidth}
+                      onChange={(e) => handleDimensionChange('width', e.target.value)}
                       className="w-full"
-                      disabled
+                      placeholder="Width"
                     />
                     <span className="text-xs text-gray-500">px</span>
                   </div>
@@ -381,9 +403,10 @@ export function PropertiesPanel({
                   <div className="flex items-center gap-1">
                     <Input
                       type="text"
-                      value={componentProperties.height}
+                      value={imageHeight}
+                      onChange={(e) => handleDimensionChange('height', e.target.value)}
                       className="w-full"
-                      disabled
+                      placeholder="Height"
                     />
                     <span className="text-xs text-gray-500">px</span>
                   </div>

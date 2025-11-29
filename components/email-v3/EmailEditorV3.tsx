@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { SplitScreenLayout } from '@/components/campaigns/SplitScreenLayout';
 import { PromptInput } from '@/components/campaigns/PromptInput';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Save, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { updateComponentText, updateInlineStyle, updateImageSrc } from '@/lib/email-v3/tsx-manipulator';
+import { parseAndInjectIds } from '@/lib/email-v3/tsx-parser';
 
 interface EmailEditorV3Props {
   campaignId: string;
@@ -53,10 +54,18 @@ const [mode, setMode] = useState<EditMode>('chat');
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   
   // Visual editing state
-  const [visualEdits, setVisualEdits] = useState<Map<string, Record<string, string>>>(new Map());
+  const [visualModeEntryCode, setVisualModeEntryCode] = useState<string>(''); // TSX code when entering visual mode
   const [iframeKey, setIframeKey] = useState(0);
   const [isEnteringVisualMode, setIsEnteringVisualMode] = useState(false);
   const [isExitingVisualMode, setIsExitingVisualMode] = useState(false);
+
+  // ✅ Working TSX ref - holds current code with visual edits (no re-renders!)
+  const workingTsxRef = useRef(initialTsxCode);
+
+  // Sync working ref when draftTsxCode changes externally (AI, load, etc.)
+  useEffect(() => {
+    workingTsxRef.current = draftTsxCode;
+  }, [draftTsxCode]);
 
   // Derived state
   const hasUnsavedChanges = draftTsxCode !== savedTsxCode;
@@ -83,13 +92,13 @@ const [mode, setMode] = useState<EditMode>('chat');
         selectedComponentType = componentMap[selectedComponentId].type;
       }
 
-      // Call AI to modify TSX
+      // Call AI to modify TSX (use workingTsxRef for latest code including unsaved visual edits!)
       const response = await fetch('/api/v3/campaigns/refine', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           campaignId,
-          currentTsxCode: draftTsxCode,
+          currentTsxCode: workingTsxRef.current, // ✅ Use ref to include visual edits
           userMessage: prompt,
           selectedComponentId: selectedComponentId || null,
           selectedComponentType: selectedComponentType,
@@ -98,10 +107,11 @@ const [mode, setMode] = useState<EditMode>('chat');
 
       const { tsxCode: newTsxCode, message } = await response.json();
 
-      // Update draft (not database)
+      // Update draft state and working ref
       setDraftTsxCode(newTsxCode);
+      workingTsxRef.current = newTsxCode; // ✅ Direct sync before re-render (no race condition)
       setRenderVersion(v => v + 1); // Force preview re-render
-      console.log('[EDITOR] AI updated TSX, incrementing render version');
+      console.log('[EDITOR] AI updated TSX, synced ref, incrementing render version');
 
       // Add assistant response
       const assistantMessage: Message = {
@@ -123,22 +133,27 @@ const [mode, setMode] = useState<EditMode>('chat');
     } finally {
       setIsGenerating(false);
     }
-  }, [prompt, isGenerating, draftTsxCode, campaignId]);
+  }, [prompt, isGenerating, draftTsxCode, campaignId, selectedComponentId, componentMap]);
 
   // Handle mode toggle
   const handleModeToggle = useCallback(() => {
     const newMode = mode === 'chat' ? 'visual' : 'chat';
     console.log('[EDITOR] Toggling mode from', mode, 'to', newMode);
     
-    // If exiting visual mode with unsaved edits (manual OR AI changes), show confirmation
-    if (mode === 'visual' && (hasVisualEdits || hasUnsavedChanges)) {
-      console.log('[EDITOR] Unsaved changes detected:', { hasVisualEdits, hasUnsavedChanges });
+    // Check if there are visual edits (compare working ref with entry code)
+    const hasVisualModeChanges = mode === 'visual' && visualModeEntryCode && workingTsxRef.current !== visualModeEntryCode;
+    
+    // If exiting visual mode with changes, show confirmation
+    if (mode === 'visual' && (hasVisualModeChanges || hasUnsavedChanges)) {
+      console.log('[EDITOR] Unsaved changes detected:', { hasVisualModeChanges, hasUnsavedChanges });
       setShowExitConfirm(true);
       return;
     }
     
-    // Entering visual mode - show loading overlay
+    // Entering visual mode - snapshot current code
     if (newMode === 'visual') {
+      setVisualModeEntryCode(draftTsxCode);
+      workingTsxRef.current = draftTsxCode; // Initialize working ref
       setIsEnteringVisualMode(true);
       setTimeout(() => {
         setIsEnteringVisualMode(false);
@@ -149,9 +164,9 @@ const [mode, setMode] = useState<EditMode>('chat');
     if (newMode === 'chat') {
       setSelectedComponentId(null);
       setHasVisualEdits(false);
-      setVisualEdits(new Map());
+      setVisualModeEntryCode('');
     }
-  }, [mode, hasVisualEdits, hasUnsavedChanges]);
+  }, [mode, draftTsxCode, visualModeEntryCode, hasUnsavedChanges]);
 
   // Handle component selection
   const handleComponentSelect = useCallback((componentId: string | null, position?: { top: number; left: number }) => {
@@ -160,9 +175,9 @@ const [mode, setMode] = useState<EditMode>('chat');
     setComponentPosition(position || null);
   }, []);
 
-  // Send direct update to iframe (instant, no re-render, track in memory)
+  // Send direct update to iframe (instant DOM update + silent ref update)
   const sendDirectUpdate = useCallback((componentId: string, property: string, value: string) => {
-    // Access the sendDirectUpdate function exposed by LivePreview
+    // 1. Send instant DOM update via postMessage
     const livePreviewUpdate = (window as any).__livePreviewSendDirectUpdate;
     if (livePreviewUpdate) {
       livePreviewUpdate({
@@ -171,109 +186,156 @@ const [mode, setMode] = useState<EditMode>('chat');
         property,
         value,
       });
-      
-      // Track the edit in memory (don't update TSX yet!)
-      setVisualEdits(prev => {
-        const newEdits = new Map(prev);
-        const componentEdits = newEdits.get(componentId) || {};
-        componentEdits[property] = value;
-        newEdits.set(componentId, componentEdits);
-        return newEdits;
-      });
-      
-      // Mark that we have visual edits
-      setHasVisualEdits(true);
     }
-  }, []);
+    
+    // 2. Update working ref SILENTLY (no state change, no re-render!)
+    const currentTsx = workingTsxRef.current;
+    
+    // Parse fresh componentMap from current working code
+    let freshMap;
+    try {
+      const parsed = parseAndInjectIds(currentTsx);
+      freshMap = parsed.componentMap;
+    } catch (error) {
+      console.error('[EDITOR] Failed to parse componentMap:', error);
+      return; // Abort edit on parse error
+    }
+    
+    // Apply edit to working ref based on property type
+    let updatedTsx: string;
+    
+    if (property === 'text' || property === 'textContent') {
+      updatedTsx = updateComponentText(currentTsx, freshMap, componentId, value);
+      
+    } else if (property === 'imageSrc') {
+      // Parse JSON for atomic image update (url, alt, width, height)
+      try {
+        const { url, alt, width, height } = JSON.parse(value);
+        updatedTsx = updateImageSrc(currentTsx, freshMap, componentId, url, alt, width, height);
+      } catch (error) {
+        console.error('[EDITOR] Failed to parse image data:', error);
+        return;
+      }
+      
+    } else if (property === 'imageAlt') {
+      updatedTsx = updateImageSrc(currentTsx, freshMap, componentId, undefined, value);
+      
+    } else if (property === 'imageWidth') {
+      const numValue = parseInt(value, 10);
+      if (isNaN(numValue)) return;
+      updatedTsx = updateImageSrc(currentTsx, freshMap, componentId, undefined, undefined, numValue, undefined);
+      
+    } else if (property === 'imageHeight') {
+      const numValue = parseInt(value, 10);
+      if (isNaN(numValue)) return;
+      updatedTsx = updateImageSrc(currentTsx, freshMap, componentId, undefined, undefined, undefined, numValue);
+      
+    } else {
+      updatedTsx = updateInlineStyle(currentTsx, freshMap, componentId, property, value);
+    }
+    
+    // Update working ref (silent, no re-render)
+    workingTsxRef.current = updatedTsx;
+    
+    // Mark that we have visual edits
+    setHasVisualEdits(true);
+  }, []); // ✅ No dependencies - always uses fresh data from closure
 
-  // Save visual edits and exit
-  const handleSaveVisualEdits = useCallback(() => {
-    console.log('[EDITOR] Applying visual edits to TSX');
+  // Save visual edits and exit (commit ref to state + persist to DB)
+  const handleSaveVisualEdits = useCallback(async () => {
+    console.log('[EDITOR] Saving visual edits and exiting visual mode');
     setIsExitingVisualMode(true);
     
-    let updatedTsx = draftTsxCode;
+    // Commit working ref to draft state
+    const updatedCode = workingTsxRef.current;
+    setDraftTsxCode(updatedCode);
     
-    // Apply all tracked edits to TSX
-    visualEdits.forEach((edits, componentId) => {
-      Object.entries(edits).forEach(([property, value]) => {
-        if (property === 'text' || property === 'textContent') {
-          updatedTsx = updateComponentText(updatedTsx, componentMap, componentId, value);
-        } else if (property === 'imageSrc') {
-          // Parse image data from JSON
-          try {
-            const imageData = JSON.parse(value);
-            updatedTsx = updateImageSrc(
-              updatedTsx,
-              componentMap,
-              componentId,
-              imageData.url,
-              imageData.alt,
-              imageData.width,
-              imageData.height
-            );
-          } catch (error) {
-            console.error('[EDITOR] Failed to parse image data:', error);
-          }
-        } else if (property === 'imageAlt') {
-          // Update only alt text
-          const componentInfo = componentMap[componentId];
-          if (componentInfo && componentInfo.type === 'Img') {
-            const componentCode = updatedTsx.substring(componentInfo.startChar, componentInfo.endChar);
-            const srcMatch = componentCode.match(/src=["']([^"']+)["']/);
-            if (srcMatch) {
-              updatedTsx = updateImageSrc(
-                updatedTsx,
-                componentMap,
-                componentId,
-                srcMatch[1],
-                value
-              );
-            }
-          }
-        } else {
-          updatedTsx = updateInlineStyle(updatedTsx, componentMap, componentId, property, value);
-        }
-      });
-    });
+    // Force re-render to show final result
+    setRenderVersion(v => v + 1);
+    console.log('[EDITOR] Committed visual edits and incremented render version');
     
-    // Update draft TSX (this will trigger re-render)
-    setDraftTsxCode(updatedTsx);
-    setRenderVersion(v => v + 1); // Force preview re-render
-    console.log('[EDITOR] Saved visual edits, incrementing render version');
-    
-    // Clear visual edits and exit visual mode
-    setVisualEdits(new Map());
+    // Exit visual mode and clear state
     setShowExitConfirm(false);
     setMode('chat');
     setSelectedComponentId(null);
     setHasVisualEdits(false);
+    setVisualModeEntryCode('');
     
-    // Clear loading after re-render
+    // Clear loading overlay
     setTimeout(() => {
       setIsExitingVisualMode(false);
     }, 600);
-  }, [visualEdits, draftTsxCode, componentMap]);
+    
+    // Persist to database
+    setIsSaving(true);
+    try {
+      // Render TSX to HTML
+      const renderResponse = await fetch('/api/v3/campaigns/render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tsxCode: updatedCode }),
+      });
 
-  // Discard visual edits and exit
+      if (!renderResponse.ok) {
+        const errorText = await renderResponse.text();
+        throw new Error(`Render failed: ${errorText}`);
+      }
+      
+      const renderData = await renderResponse.json();
+
+      // Update campaign in database
+      const updateResponse = await fetch(`/api/v3/campaigns/${campaignId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          component_code: updatedCode,
+          html_content: renderData.html,
+        }),
+      });
+
+      if (!updateResponse.ok) {
+        const errorText = await updateResponse.text();
+        throw new Error(`Update failed: ${errorText}`);
+      }
+
+      // Update saved state to reflect successful save
+      setSavedTsxCode(updatedCode);
+      
+      console.log('✅ Visual edits saved to database');
+    } catch (error: any) {
+      console.error('Failed to save visual edits:', error);
+      alert(`Failed to save changes: ${error.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [campaignId]);
+
+  // Discard visual edits and exit (reset ref to snapshot + trigger re-render)
   const handleDiscardVisualEdits = useCallback(() => {
     console.log('[EDITOR] Discarding visual edits');
     setIsExitingVisualMode(true);
     
-    // Force iframe reload by incrementing key
-    setIframeKey(prev => prev + 1);
+    // Reset working ref to snapshot
+    if (visualModeEntryCode) {
+      workingTsxRef.current = visualModeEntryCode;
+      console.log('[EDITOR] Reset working ref to visual mode entry state');
+    }
     
-    // Clear visual edits and exit visual mode
-    setVisualEdits(new Map());
+    // Force re-render with original code
+    setRenderVersion(v => v + 1);
+    
+    // Exit visual mode and clear state
     setShowExitConfirm(false);
     setMode('chat');
     setSelectedComponentId(null);
     setHasVisualEdits(false);
+    setVisualModeEntryCode('');
     
     // Clear loading after re-render
     setTimeout(() => {
       setIsExitingVisualMode(false);
     }, 600);
-  }, []);
+  }, [visualModeEntryCode]);
 
   // Handle save
   const handleSave = useCallback(async () => {
@@ -325,6 +387,7 @@ const [mode, setMode] = useState<EditMode>('chat');
   const handleDiscard = useCallback(() => {
     if (confirm('Are you sure you want to discard all changes?')) {
       setDraftTsxCode(savedTsxCode);
+      workingTsxRef.current = savedTsxCode; // ✅ Sync ref when discarding
       setMessages([]);
       setSelectedComponentId(null);
     }
@@ -396,7 +459,7 @@ const [mode, setMode] = useState<EditMode>('chat');
                     {/* Visual Mode - Properties Panel */}
                     <div className="flex-1 overflow-y-auto">
                       <PropertiesPanel
-                        tsxCode={draftTsxCode}
+                        workingTsxRef={workingTsxRef}
                         selectedComponentId={selectedComponentId}
                         componentMap={componentMap}
                         onDirectUpdate={sendDirectUpdate}
@@ -434,7 +497,7 @@ const [mode, setMode] = useState<EditMode>('chat');
             rightPanel={
               <div className="relative h-full">
                 <LivePreview
-                  tsxCode={draftTsxCode}
+                  workingTsxRef={workingTsxRef}
                   renderVersion={renderVersion}
                   mode={mode}
                   selectedComponentId={selectedComponentId}
