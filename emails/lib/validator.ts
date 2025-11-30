@@ -16,6 +16,45 @@ export interface ValidationResult {
 }
 
 /**
+ * Validate that all used React Email components are imported
+ */
+function validateComponentImports(code: string): string[] {
+  const errors: string[] = [];
+  
+  // Extract what's actually imported from @react-email/components
+  const importMatch = code.match(/import\s*\{([^}]+)\}\s*from\s*['"]@react-email\/components['"]/);
+  if (!importMatch) {
+    return ['Missing @react-email/components import'];
+  }
+  
+  const importedComponents = importMatch[1]
+    .split(',')
+    .map(c => c.trim())
+    .filter(Boolean);
+  
+  // Common React Email components to check
+  const componentsToCheck = [
+    'Html', 'Head', 'Body', 'Container', 'Preview',
+    'Section', 'Row', 'Column',
+    'Text', 'Heading', 'Button', 'Link', 'Img', 'Hr',
+    'Tailwind', 'Font'
+  ];
+  
+  // Check each component
+  componentsToCheck.forEach(component => {
+    // Check if component is used in JSX (e.g., <Link or <Component)
+    const usagePattern = new RegExp(`<${component}[\\s>/]`, 'g');
+    const isUsed = usagePattern.test(code);
+    
+    if (isUsed && !importedComponents.includes(component)) {
+      errors.push(`Component <${component}> is used but not imported from @react-email/components`);
+    }
+  });
+  
+  return errors;
+}
+
+/**
  * Validate generated React Email TSX code
  */
 export function validateGeneratedCode(code: string): ValidationResult {
@@ -27,9 +66,10 @@ export function validateGeneratedCode(code: string): ValidationResult {
     errors.push('Code too short (likely incomplete or truncated)');
   }
   
-  // Check for required imports
-  if (!code.includes('from \'@react-email/components\'')) {
-    errors.push('Missing @react-email/components import');
+  // Check for required imports and validate all used components
+  const importErrors = validateComponentImports(code);
+  if (importErrors.length > 0) {
+    errors.push(...importErrors);
   }
   
   // Check for default export

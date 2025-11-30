@@ -1,7 +1,7 @@
 /**
  * PATTERN: Travel & Destination Marketing
- * USE CASE: Personalized travel recommendations with destination highlights, activity suggestions, and booking CTAs - perfect for travel platforms, booking sites, tourism boards, travel agencies
- * TAGS: travel, destination, booking, promotional, personalized, tourism, activities, exploration, trip-planning, recommendation, seasonal
+ * USE CASE: Personalized travel recommendations with destination highlights, activity suggestions, and booking CTAs - perfect for travel platforms, booking sites, tourism boards, travel agencies, adventure travel companies
+ * TAGS: travel, destination, booking, promotional, personalized, tourism, activities, exploration, trip-planning, recommendation, seasonal, newsletter, campaign, adventure, action, exotic, young-adult, energetic, vibrant, dynamic
  */
 
 import {
@@ -269,7 +269,7 @@ export default function TravelDestinationEmail() {
                         borderRadius: "16px",
                         width: "100%",
                         height: "250px",
-                        objectFit: "normal"
+                        objectFit: "cover"
                       }}
                     />
                   </Link>

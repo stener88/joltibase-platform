@@ -179,7 +179,7 @@ export async function generateEmail(prompt: string): Promise<GeneratedEmail> {
   
   // Run pattern retrieval and image fetch in parallel (no added latency!)
   const [relevantPatterns, images] = await Promise.all([
-    retrievePatternsByEmbedding(prompt, patternsWithEmbeddings, 3),
+    retrievePatternsByEmbedding(prompt, patternsWithEmbeddings, 5), // Increased from 3 to 5 for better pattern coverage
     fetchImagesForPrompt(prompt),
   ]);
   
@@ -293,30 +293,86 @@ function buildUserPrompt(prompt: string, patterns: Pattern[], attempt: number, i
   
   // Add image URLs to use
   userPrompt += '# IMAGES TO USE\n\n';
-  userPrompt += 'Use these professional images from Unsplash:\n\n';
+  userPrompt += 'Use these professional images from Unsplash (10 images available):\n\n';
   
   if (images.hero) {
-    userPrompt += `**Hero/Header Image**:\n`;
+    userPrompt += `**1. Hero/Header Image**:\n`;
     userPrompt += `- URL: ${images.hero.url}\n`;
     userPrompt += `- Dimensions: ${images.hero.width}x${images.hero.height}\n`;
     userPrompt += `- Alt: "${images.hero.alt}"\n`;
-    userPrompt += `- Use in: Header section, hero banner\n\n`;
+    userPrompt += `- Use in: Main header section, hero banner\n\n`;
   }
   
   if (images.logo) {
-    userPrompt += `**Logo**:\n`;
+    userPrompt += `**2. Logo**:\n`;
     userPrompt += `- URL: ${images.logo.url}\n`;
     userPrompt += `- Dimensions: ${images.logo.width}x${images.logo.height}\n`;
     userPrompt += `- Alt: "Company logo"\n`;
-    userPrompt += `- Use in: Top of email, header\n\n`;
+    userPrompt += `- Use in: Top of email, header branding\n\n`;
   }
   
-  if (images.feature) {
-    userPrompt += `**Feature/Content Image** (optional):\n`;
-    userPrompt += `- URL: ${images.feature.url}\n`;
-    userPrompt += `- Dimensions: ${images.feature.width}x${images.feature.height}\n`;
-    userPrompt += `- Alt: "${images.feature.alt}"\n`;
-    userPrompt += `- Use in: Body sections, feature highlights\n\n`;
+  if (images.feature1) {
+    userPrompt += `**3. Feature Image 1**:\n`;
+    userPrompt += `- URL: ${images.feature1.url}\n`;
+    userPrompt += `- Dimensions: ${images.feature1.width}x${images.feature1.height}\n`;
+    userPrompt += `- Alt: "${images.feature1.alt}"\n`;
+    userPrompt += `- Use in: Main feature section, content highlight\n\n`;
+  }
+  
+  if (images.feature2) {
+    userPrompt += `**4. Feature Image 2**:\n`;
+    userPrompt += `- URL: ${images.feature2.url}\n`;
+    userPrompt += `- Dimensions: ${images.feature2.width}x${images.feature2.height}\n`;
+    userPrompt += `- Alt: "${images.feature2.alt}"\n`;
+    userPrompt += `- Use in: Secondary feature, additional content\n\n`;
+  }
+  
+  if (images.feature3) {
+    userPrompt += `**5. Feature Image 3**:\n`;
+    userPrompt += `- URL: ${images.feature3.url}\n`;
+    userPrompt += `- Dimensions: ${images.feature3.width}x${images.feature3.height}\n`;
+    userPrompt += `- Alt: "${images.feature3.alt}"\n`;
+    userPrompt += `- Use in: Tertiary feature, additional content\n\n`;
+  }
+  
+  if (images.product1) {
+    userPrompt += `**6. Product Image 1**:\n`;
+    userPrompt += `- URL: ${images.product1.url}\n`;
+    userPrompt += `- Dimensions: ${images.product1.width}x${images.product1.height}\n`;
+    userPrompt += `- Alt: "${images.product1.alt}"\n`;
+    userPrompt += `- Use in: Product showcase, vertical card\n\n`;
+  }
+  
+  if (images.product2) {
+    userPrompt += `**7. Product Image 2**:\n`;
+    userPrompt += `- URL: ${images.product2.url}\n`;
+    userPrompt += `- Dimensions: ${images.product2.width}x${images.product2.height}\n`;
+    userPrompt += `- Alt: "${images.product2.alt}"\n`;
+    userPrompt += `- Use in: Second product, additional showcase\n\n`;
+  }
+  
+  if (images.destination1) {
+    userPrompt += `**8. Destination/Location Image 1**:\n`;
+    userPrompt += `- URL: ${images.destination1.url}\n`;
+    userPrompt += `- Dimensions: ${images.destination1.width}x${images.destination1.height}\n`;
+    userPrompt += `- Alt: "${images.destination1.alt}"\n`;
+    userPrompt += `- Use in: Travel destination, location card\n\n`;
+  }
+  
+  if (images.destination2) {
+    userPrompt += `**9. Destination/Location Image 2**:\n`;
+    userPrompt += `- URL: ${images.destination2.url}\n`;
+    userPrompt += `- Dimensions: ${images.destination2.width}x${images.destination2.height}\n`;
+    userPrompt += `- Alt: "${images.destination2.alt}"\n`;
+    userPrompt += `- Use in: Second destination, location showcase\n\n`;
+  }
+  
+  if (images.icon) {
+    userPrompt += `**10. Icon/Badge**:\n`;
+    userPrompt += `- URL: ${images.icon.url}\n`;
+    userPrompt += `- Dimensions: ${images.icon.width}x${images.icon.height}\n`;
+    userPrompt += `- Alt: "${images.icon.alt}"\n`;
+    userPrompt += `- Use in: Small icons, badges, decorative elements\n\n`;
   }
   
   userPrompt += `**CRITICAL - Image Usage Rules**:\n`;
@@ -364,9 +420,14 @@ function buildUserPrompt(prompt: string, patterns: Pattern[], attempt: number, i
     userPrompt += `- .map() loops or iterations\n`;
     userPrompt += `- hover:, focus:, or other pseudo-classes\n`;
     userPrompt += `- Incomplete code with "..." or "rest of code" comments\n`;
-    userPrompt += `- Missing imports or exports\n`;
+    userPrompt += `- Missing imports - if you use <Link>, <Hr>, <Font>, etc., you MUST import them from '@react-email/components'\n`;
+    userPrompt += `- Missing exports\n`;
     userPrompt += `- Missing <Tailwind> wrapper\n`;
     userPrompt += `- Mismatched braces or parentheses\n\n`;
+    userPrompt += `CRITICAL - Import ALL components you use:\n`;
+    userPrompt += `✅ If using <Link>, add Link to imports\n`;
+    userPrompt += `✅ If using <Hr>, add Hr to imports\n`;
+    userPrompt += `✅ If using <Font>, add Font to imports\n\n`;
   }
   
   userPrompt += `Return ONLY the complete TSX code with static content written directly in JSX.`;
