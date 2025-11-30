@@ -682,6 +682,7 @@ export function LivePreview({
         const iframeRect = iframeRef.current.getBoundingClientRect();
         
         // Use smart positioning to calculate optimal toolbar position
+        // Pass iframe bounds as the safe area (semantically correct!)
         const smartPosition = calculateSmartToolbarPosition(
           {
             top: iframeRect.top,
@@ -693,7 +694,12 @@ export function LivePreview({
           },
           elementRect as ElementRect,
           { width: 320, height: 60 }, // Toolbar dimensions
-          { width: window.innerWidth, height: window.innerHeight }
+          { 
+            left: iframeRect.left,
+            top: iframeRect.top,
+            right: iframeRect.right,
+            bottom: iframeRect.bottom,
+          }
         );
         
         console.log('[LIVE-PREVIEW] Smart position:', smartPosition.placement, smartPosition);
@@ -719,7 +725,12 @@ export function LivePreview({
           },
           elementRect as ElementRect,
           { width: 320, height: 60 },
-          { width: window.innerWidth, height: window.innerHeight }
+          { 
+            left: iframeRect.left,
+            top: iframeRect.top,
+            right: iframeRect.right,
+            bottom: iframeRect.bottom,
+          }
         );
         
         onComponentSelect(componentId, { top: smartPosition.top, left: smartPosition.left });

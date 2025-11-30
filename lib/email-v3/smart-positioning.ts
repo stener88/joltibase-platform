@@ -28,9 +28,11 @@ export interface ToolbarDimensions {
   height: number;
 }
 
-export interface ViewportDimensions {
-  width: number;
-  height: number;
+export interface ViewportBounds {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
 }
 
 export type Placement = 'below' | 'above' | 'right' | 'left' | 'fixed-top-right';
@@ -54,14 +56,14 @@ const VIEWPORT_PADDING = 16;
  * @param iframeRect - Position of iframe in parent viewport (from getBoundingClientRect)
  * @param elementRect - Position of element in iframe viewport (from iframe's getBoundingClientRect)
  * @param toolbar - Dimensions of toolbar
- * @param viewport - Parent viewport dimensions
+ * @param viewport - Safe area bounds (absolute coordinates) - typically iframe bounds
  * @returns Optimal position in parent viewport coordinates
  */
 export function calculateSmartToolbarPosition(
   iframeRect: IframeRect,
   elementRect: ElementRect,
   toolbar: ToolbarDimensions,
-  viewport: ViewportDimensions
+  viewport: ViewportBounds
 ): ToolbarPosition {
   
   // Transform element coordinates from iframe space to parent viewport space
@@ -106,15 +108,15 @@ export function calculateSmartToolbarPosition(
     },
   ];
 
-  // Check which positions fit in viewport
+  // Check which positions fit in viewport bounds (semantically correct!)
   const validPositions = candidates.filter(pos => {
     const fitsVertically = 
-      pos.top >= VIEWPORT_PADDING &&
-      pos.top + toolbar.height <= viewport.height - VIEWPORT_PADDING;
+      pos.top >= viewport.top + VIEWPORT_PADDING &&
+      pos.top + toolbar.height <= viewport.bottom - VIEWPORT_PADDING;
     
     const fitsHorizontally = 
-      pos.left >= VIEWPORT_PADDING &&
-      pos.left + toolbar.width <= viewport.width - VIEWPORT_PADDING;
+      pos.left >= viewport.left + VIEWPORT_PADDING &&
+      pos.left + toolbar.width <= viewport.right - VIEWPORT_PADDING;
     
     return fitsVertically && fitsHorizontally;
   });
@@ -124,27 +126,30 @@ export function calculateSmartToolbarPosition(
     return validPositions[0];
   }
 
-  // Fallback: Fixed position in top-right corner (when element is too large)
-  console.log('[SMART-POSITION] No valid positions, using fixed fallback');
+  // Fallback: Center in viewport (when element is too large or no valid positions)
+  console.log('[SMART-POSITION] No valid positions, using centered fallback');
+  const centerTop = viewport.top + ((viewport.bottom - viewport.top) / 2) - (toolbar.height / 2);
+  const centerLeft = viewport.left + ((viewport.right - viewport.left) / 2) - (toolbar.width / 2);
+  
   return {
     placement: 'fixed-top-right',
-    top: VIEWPORT_PADDING,
-    left: viewport.width - toolbar.width - VIEWPORT_PADDING,
+    top: Math.max(viewport.top + VIEWPORT_PADDING, centerTop),
+    left: Math.max(viewport.left + VIEWPORT_PADDING, centerLeft),
   };
 }
 
 /**
- * Check if element is sufficiently visible in viewport
+ * Check if element is sufficiently visible in viewport bounds
  */
 export function isElementVisible(
   elementRect: ElementRect,
-  viewport: ViewportDimensions,
+  viewport: ViewportBounds,
   threshold: number = 0.3
 ): boolean {
-  const visibleHeight = Math.min(elementRect.bottom, viewport.height) - 
-                        Math.max(elementRect.top, 0);
-  const visibleWidth = Math.min(elementRect.right, viewport.width) - 
-                       Math.max(elementRect.left, 0);
+  const visibleHeight = Math.min(elementRect.bottom, viewport.bottom) - 
+                        Math.max(elementRect.top, viewport.top);
+  const visibleWidth = Math.min(elementRect.right, viewport.right) - 
+                       Math.max(elementRect.left, viewport.left);
   
   const visibleArea = Math.max(0, visibleHeight) * Math.max(0, visibleWidth);
   const totalArea = elementRect.width * elementRect.height;
