@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import type { EditMode } from './EmailEditorV3';
 import type { ComponentMap } from '@/lib/email-v3/tsx-parser';
 import { Z_INDEX } from '@/lib/ui-constants';
+import { calculateSmartToolbarPosition, type ElementRect } from '@/lib/email-v3/smart-positioning';
 
 interface LivePreviewProps {
   workingTsxRef: React.MutableRefObject<string>; // Ref to working TSX (no re-renders on edit!)
@@ -270,12 +271,17 @@ export function LivePreview({
             // Update visual selection
             updateSelectedClass(componentId);
             
+            // Send raw element rect to parent for coordinate transformation
             window.parent.postMessage({ 
               type: 'component-select', 
               componentId,
-              position: {
-                top: rect.bottom + 8,
-                left: rect.left + (rect.width / 2) - 150
+              elementRect: {
+                top: rect.top,
+                left: rect.left,
+                bottom: rect.bottom,
+                right: rect.right,
+                width: rect.width,
+                height: rect.height,
               }
             }, '*');
           } else if (window.parent) {
@@ -317,7 +323,48 @@ export function LivePreview({
           }
         });
         
-        console.log('[IFRAME] Event listeners registered');
+        // Handle scroll - update toolbar position
+        let scrollTimeout;
+        window.addEventListener('scroll', () => {
+          if (!selectedComponentId) return;
+          
+          clearTimeout(scrollTimeout);
+          scrollTimeout = setTimeout(() => {
+            const element = document.querySelector('[data-component-id="' + selectedComponentId + '"]');
+            if (!element) return;
+            
+            const rect = element.getBoundingClientRect();
+            
+            console.log('[IFRAME] Scroll update for', selectedComponentId);
+            
+            window.parent.postMessage({
+              type: 'component-position-update',
+              componentId: selectedComponentId,
+              elementRect: {
+                top: rect.top,
+                left: rect.left,
+                bottom: rect.bottom,
+                right: rect.right,
+                width: rect.width,
+                height: rect.height,
+              }
+            }, '*');
+          }, 16); // ~60fps smooth updates
+        }, { passive: true });
+        
+        // Handle keyboard - Escape to deselect
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && selectedComponentId && window.parent) {
+            console.log('[IFRAME] Escape pressed, deselecting');
+            updateSelectedClass(null);
+            window.parent.postMessage({ 
+              type: 'component-select', 
+              componentId: null
+            }, '*');
+          }
+        });
+        
+        console.log('[IFRAME] Event listeners registered (click, hover, scroll, keyboard)');
       </script>
     `;
     
@@ -558,9 +605,13 @@ export function LivePreview({
                 window.parent.postMessage({ 
                   type: 'component-select', 
                   componentId,
-                  position: {
-                    top: rect.bottom + 8,
-                    left: rect.left + (rect.width / 2) - 150
+                  elementRect: {
+                    top: rect.top,
+                    left: rect.left,
+                    bottom: rect.bottom,
+                    right: rect.right,
+                    width: rect.width,
+                    height: rect.height,
                   }
                 }, '*');
               }
@@ -623,8 +674,56 @@ export function LivePreview({
     console.log('[LIVE-PREVIEW] Received message:', event.data);
     
     if (event.data.type === 'component-select') {
-      console.log('[LIVE-PREVIEW] Component selected:', event.data.componentId);
-      onComponentSelect(event.data.componentId, event.data.position);
+      const { componentId, elementRect } = event.data;
+      console.log('[LIVE-PREVIEW] Component selected:', componentId);
+      
+      if (componentId && elementRect && iframeRef.current) {
+        // Get iframe position in parent viewport
+        const iframeRect = iframeRef.current.getBoundingClientRect();
+        
+        // Use smart positioning to calculate optimal toolbar position
+        const smartPosition = calculateSmartToolbarPosition(
+          {
+            top: iframeRect.top,
+            left: iframeRect.left,
+            bottom: iframeRect.bottom,
+            right: iframeRect.right,
+            width: iframeRect.width,
+            height: iframeRect.height,
+          },
+          elementRect as ElementRect,
+          { width: 320, height: 60 }, // Toolbar dimensions
+          { width: window.innerWidth, height: window.innerHeight }
+        );
+        
+        console.log('[LIVE-PREVIEW] Smart position:', smartPosition.placement, smartPosition);
+        onComponentSelect(componentId, { top: smartPosition.top, left: smartPosition.left });
+      } else {
+        onComponentSelect(null);
+      }
+    } else if (event.data.type === 'component-position-update') {
+      // Handle scroll updates - recalculate position
+      const { componentId, elementRect } = event.data;
+      
+      if (componentId && elementRect && iframeRef.current) {
+        const iframeRect = iframeRef.current.getBoundingClientRect();
+        
+        const smartPosition = calculateSmartToolbarPosition(
+          {
+            top: iframeRect.top,
+            left: iframeRect.left,
+            bottom: iframeRect.bottom,
+            right: iframeRect.right,
+            width: iframeRect.width,
+            height: iframeRect.height,
+          },
+          elementRect as ElementRect,
+          { width: 320, height: 60 },
+          { width: window.innerWidth, height: window.innerHeight }
+        );
+        
+        onComponentSelect(componentId, { top: smartPosition.top, left: smartPosition.left });
+      }
     } else if (event.data.type === 'component-hover') {
       console.log('[LIVE-PREVIEW] Component hovered:', event.data.componentId);
       onComponentHover(event.data.componentId);

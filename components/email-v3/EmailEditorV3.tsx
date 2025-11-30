@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { SplitScreenLayout } from '@/components/campaigns/SplitScreenLayout';
 import { PromptInput } from '@/components/campaigns/PromptInput';
 import { Button } from '@/components/ui/button';
@@ -74,6 +75,7 @@ export function EmailEditorV3({
   const [isEnteringVisualMode, setIsEnteringVisualMode] = useState(false);
   const [isExitingVisualMode, setIsExitingVisualMode] = useState(false);
   const [floatingPrompt, setFloatingPrompt] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
 
   // ✅ Working TSX ref - holds current code with visual edits (no re-renders!)
   const workingTsxRef = useRef(initialTsxCode);
@@ -93,6 +95,11 @@ export function EmailEditorV3({
   useEffect(() => {
     workingTsxRef.current = draftTsxCode;
   }, [draftTsxCode]);
+
+  // Set mounted state for Portal
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Derived state
   const hasUnsavedChanges = draftTsxCode !== savedTsxCode;
@@ -582,83 +589,84 @@ export function EmailEditorV3({
                   isExitingVisualMode={isExitingVisualMode}
                   iframeKey={iframeKey}
                 />
-                
-                {/* Floating AI Toolbar (Visual Mode Only) - positioned below selected component */}
-                {mode === 'visual' && selectedComponentId && componentPosition && (
-                  <div 
-                    className="absolute bg-gradient-to-r from-gray-900 to-gray-800 shadow-2xl rounded-xl border border-gray-700 p-2.5"
-                    style={{
-                      top: `${componentPosition.top}px`,
-                      left: `${componentPosition.left}px`,
-                      width: '320px',
-                      zIndex: Z_INDEX.VISUAL_EDITOR_TOOLBAR,
-                    }}
-                    onMouseDown={(e) => e.preventDefault()} // ✅ Prevent blur on toolbar clicks
-                  >
-                    <div className="flex items-center gap-2">
-                      {/* AI Input - Controlled with stable ref */}
-                      <input
-                        ref={floatingToolbarInputRef}
-                        type="text"
-                        value={floatingPrompt}
-                        onChange={(e) => setFloatingPrompt(e.target.value)}
-                        placeholder="Ask Jolti..."
-                        className="flex-1 px-3 py-2 text-sm bg-gray-800/50 text-white placeholder-gray-400 border border-gray-600 rounded-lg outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && floatingPrompt.trim()) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleChatSubmit(floatingPrompt); // ✅ Pass directly, don't touch main prompt!
-                            setFloatingPrompt('');
-                            // Re-focus after submit
-                            setTimeout(() => floatingToolbarInputRef.current?.focus(), 0);
-                          }
-                          if (e.key === 'Escape') {
-                            setSelectedComponentId(null);
-                            setComponentPosition(null);
-                            setFloatingPrompt('');
-                          }
-                        }}
-                      />
-                      
-                      {/* Submit Button */}
-                      <button
-                        className="w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-500 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={!floatingPrompt.trim() || isGenerating}
-                        onClick={() => {
-                          if (floatingPrompt.trim()) {
-                            handleChatSubmit(floatingPrompt); // ✅ Pass directly, don't touch main prompt!
-                            setFloatingPrompt('');
-                            // Re-focus after submit
-                            setTimeout(() => floatingToolbarInputRef.current?.focus(), 0);
-                          }
-                        }}
-                      >
-                        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                        </svg>
-                      </button>
-                      
-                      {/* Close Button */}
-                      <button
-                        className="w-8 h-8 rounded-lg bg-gray-700 hover:bg-gray-600 flex items-center justify-center transition-colors"
-                        onClick={() => {
-                          setSelectedComponentId(null);
-                          setComponentPosition(null);
-                          setFloatingPrompt('');
-                        }}
-                      >
-                        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             }
           />
         </div>
+        
+        {/* Floating AI Toolbar - Rendered via Portal with smart positioning */}
+        {isMounted && mode === 'visual' && selectedComponentId && componentPosition && createPortal(
+          <div 
+            className="fixed bg-gradient-to-r from-gray-900 to-gray-800 shadow-2xl rounded-xl border border-gray-700 p-2.5 transition-all duration-200 ease-out"
+            style={{
+              top: `${componentPosition.top}px`,
+              left: `${componentPosition.left}px`,
+              width: '320px',
+              zIndex: Z_INDEX.VISUAL_EDITOR_TOOLBAR,
+            }}
+            onMouseDown={(e) => e.preventDefault()} // ✅ Prevent blur on toolbar clicks
+          >
+            <div className="flex items-center gap-2">
+              {/* AI Input - Controlled with stable ref */}
+              <input
+                ref={floatingToolbarInputRef}
+                type="text"
+                value={floatingPrompt}
+                onChange={(e) => setFloatingPrompt(e.target.value)}
+                placeholder="Ask Jolti..."
+                className="flex-1 px-3 py-2 text-sm bg-gray-800/50 text-white placeholder-gray-400 border border-gray-600 rounded-lg outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && floatingPrompt.trim()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleChatSubmit(floatingPrompt); // ✅ Pass directly, don't touch main prompt!
+                    setFloatingPrompt('');
+                    // Re-focus after submit
+                    setTimeout(() => floatingToolbarInputRef.current?.focus(), 0);
+                  }
+                  if (e.key === 'Escape') {
+                    setSelectedComponentId(null);
+                    setComponentPosition(null);
+                    setFloatingPrompt('');
+                  }
+                }}
+              />
+              
+              {/* Submit Button */}
+              <button
+                className="w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-500 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!floatingPrompt.trim() || isGenerating}
+                onClick={() => {
+                  if (floatingPrompt.trim()) {
+                    handleChatSubmit(floatingPrompt); // ✅ Pass directly, don't touch main prompt!
+                    setFloatingPrompt('');
+                    // Re-focus after submit
+                    setTimeout(() => floatingToolbarInputRef.current?.focus(), 0);
+                  }
+                }}
+              >
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+              </button>
+              
+              {/* Close Button */}
+              <button
+                className="w-8 h-8 rounded-lg bg-gray-700 hover:bg-gray-600 flex items-center justify-center transition-colors"
+                onClick={() => {
+                  setSelectedComponentId(null);
+                  setComponentPosition(null);
+                  setFloatingPrompt('');
+                }}
+              >
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
       </div>
     </DashboardLayout>
   );
