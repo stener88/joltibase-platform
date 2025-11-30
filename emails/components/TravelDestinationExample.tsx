@@ -1,7 +1,7 @@
 /**
  * PATTERN: Travel & Destination Marketing
- * USE CASE: Personalized travel recommendations with destination highlights, activity suggestions, and booking CTAs - perfect for travel platforms, booking sites, tourism boards, travel agencies, adventure travel companies
- * TAGS: travel, destination, booking, promotional, personalized, tourism, activities, exploration, trip-planning, recommendation, seasonal, newsletter, campaign, adventure, action, exotic, young-adult, energetic, vibrant, dynamic
+ * USE CASE: Adventure travel and destination newsletters with personalized recommendations, activity highlights, and booking CTAs - perfect for adventure travel companies, travel platforms, booking sites, tourism boards, travel agencies seeking to inspire wanderlust and exploration
+ * TAGS: travel, adventure, destination, exploration, activities, action, exotic, wanderlust, young-adult, energetic, vibrant, dynamic, journey, discovery, booking, promotional, personalized, tourism, trip-planning, recommendation, seasonal, newsletter, campaign
  */
 
 import {

@@ -182,21 +182,71 @@ export function LivePreview({
               case 'bgColor':
                 element.style.backgroundColor = value;
                 break;
+              
+              // Typography properties
               case 'fontSize':
                 element.style.fontSize = value;
                 break;
+              case 'fontWeight':
+                element.style.fontWeight = value;
+                break;
+              case 'lineHeight':
+                element.style.lineHeight = value;
+                break;
+              case 'textAlign':
+                element.style.textAlign = value;
+                break;
+              
+              // Spacing properties - Margin
               case 'marginTop':
                 element.style.marginTop = value + 'px';
                 break;
               case 'marginBottom':
                 element.style.marginBottom = value + 'px';
                 break;
+              case 'marginLeft':
+                element.style.marginLeft = value + 'px';
+                break;
+              case 'marginRight':
+                element.style.marginRight = value + 'px';
+                break;
+              
+              // Spacing properties - Padding
               case 'paddingTop':
                 element.style.paddingTop = value + 'px';
                 break;
               case 'paddingBottom':
                 element.style.paddingBottom = value + 'px';
                 break;
+              case 'paddingLeft':
+                element.style.paddingLeft = value + 'px';
+                break;
+              case 'paddingRight':
+                element.style.paddingRight = value + 'px';
+                break;
+              
+              // Border properties
+              case 'borderRadius':
+                element.style.borderRadius = value;
+                break;
+              case 'borderWidth':
+                element.style.borderWidth = value;
+                break;
+              case 'borderColor':
+                element.style.borderColor = value;
+                break;
+              case 'borderStyle':
+                element.style.borderStyle = value;
+                break;
+              
+              // Link properties
+              case 'href':
+                if (element.tagName === 'A' || element.tagName === 'BUTTON') {
+                  element.setAttribute('href', value);
+                }
+                break;
+              
+              // Image properties
               case 'imageSrc':
                 // Parse JSON image data
                 try {
@@ -544,21 +594,71 @@ export function LivePreview({
                   case 'bgColor':
                     element.style.backgroundColor = value;
                     break;
+                  
+                  // Typography properties
                   case 'fontSize':
                     element.style.fontSize = value;
                     break;
+                  case 'fontWeight':
+                    element.style.fontWeight = value;
+                    break;
+                  case 'lineHeight':
+                    element.style.lineHeight = value;
+                    break;
+                  case 'textAlign':
+                    element.style.textAlign = value;
+                    break;
+                  
+                  // Spacing properties - Margin
                   case 'marginTop':
                     element.style.marginTop = value + 'px';
                     break;
                   case 'marginBottom':
                     element.style.marginBottom = value + 'px';
                     break;
+                  case 'marginLeft':
+                    element.style.marginLeft = value + 'px';
+                    break;
+                  case 'marginRight':
+                    element.style.marginRight = value + 'px';
+                    break;
+                  
+                  // Spacing properties - Padding
                   case 'paddingTop':
                     element.style.paddingTop = value + 'px';
                     break;
                   case 'paddingBottom':
                     element.style.paddingBottom = value + 'px';
                     break;
+                  case 'paddingLeft':
+                    element.style.paddingLeft = value + 'px';
+                    break;
+                  case 'paddingRight':
+                    element.style.paddingRight = value + 'px';
+                    break;
+                  
+                  // Border properties
+                  case 'borderRadius':
+                    element.style.borderRadius = value;
+                    break;
+                  case 'borderWidth':
+                    element.style.borderWidth = value;
+                    break;
+                  case 'borderColor':
+                    element.style.borderColor = value;
+                    break;
+                  case 'borderStyle':
+                    element.style.borderStyle = value;
+                    break;
+                  
+                  // Link properties
+                  case 'href':
+                    if (element.tagName === 'A' || element.tagName === 'BUTTON') {
+                      element.setAttribute('href', value);
+                    }
+                    break;
+                  
+                  // Image properties
                   case 'imageSrc':
                     // Parse JSON image data
                     try {

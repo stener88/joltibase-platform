@@ -52,7 +52,7 @@ const SYSTEM_INSTRUCTION = `You are an expert React Email developer creating pro
 
 3. **STYLING - MIXED APPROACH**
    - **TAILWIND (className) - SAFE for**: text colors, backgrounds, basic spacing, typography
-     - Colors: bg-blue-500, text-gray-600, border-gray-300
+     - Colors: Tailwind utilities (bg-{color}-{shade}, text-{color}-{shade}, border-{color}-{shade})
      - Typography: text-sm, text-lg, font-bold, text-center
      - Basic spacing: p-4, px-6, py-3, m-0, mt-4, mb-8
      - Simple layout: flex, flex-col, items-center, justify-center, max-w-xl, w-full
@@ -129,7 +129,7 @@ export default function WelcomeEmail() {
             <Section className="px-8 pb-8 text-center">
               <Button 
                 href="https://example.com/get-started"
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold"
+                className="bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold"
               >
                 Get Started Now
               </Button>
@@ -158,13 +158,20 @@ Examples:
 # TAILWIND GUIDELINES
 
 - Use semantic sizes: text-xs, text-sm, text-base, text-lg, text-xl, text-2xl, text-3xl
-- Use color scales: gray-50 to gray-900, blue-500, green-600, red-500
+- Use Tailwind color scales: {color}-50 (lightest) to {color}-900 (darkest)
 - Use spacing scale: p-2, p-4, p-6, p-8 (multiples of 4px)
 - Common patterns:
-  - Headers: bg-blue-600 text-white p-8
+  - Headers: bg-{brand}-600 text-white p-8
   - Body text: text-gray-700 text-base leading-relaxed
-  - CTAs: bg-blue-500 text-white px-6 py-3 rounded font-semibold
+  - CTAs: bg-{brand}-500 or bg-{brand}-600 text-white px-6 py-3 rounded font-semibold
   - Footer: text-gray-500 text-sm text-center
+
+# COLOR PALETTE
+
+- Observe and maintain the color scheme from the reference patterns below
+- If the pattern uses violet-600 as primary, use violet-* throughout (e.g., violet-50 for backgrounds, violet-600 for CTAs)
+- If the pattern uses emerald-600, use emerald-* throughout
+- Keep a cohesive palette: one primary brand color + neutral grays for text
 
 Generate COMPLETE, production-ready React Email components with Tailwind classes.`;
 
