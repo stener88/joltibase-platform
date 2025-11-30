@@ -164,79 +164,33 @@ export function EmailEditorV3({
         throw new Error(`HTTP ${response.status}`);
       }
 
-      const intent = response.headers.get('X-Intent') as 'question' | 'command';
-      console.log(`[EDITOR] Intent: ${intent}`);
+      // Simple JSON response
+      const data = await response.json();
+      console.log(`[EDITOR] Intent: ${data.intent}`);
 
-      // Read stream
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullText = '';
+      // Apply code changes if command
+      if (data.intent === 'command' && data.tsxCode) {
+        setDraftTsxCode(data.tsxCode);
+        workingTsxRef.current = data.tsxCode;
+        setRenderVersion(v => v + 1);
 
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          
-          // Check for metadata marker
-          if (chunk.includes('__METADATA__:')) {
-            const parts = chunk.split('__METADATA__:');
-            fullText += parts[0];
-            
-            try {
-              const metadata = JSON.parse(parts[1]);
-              
-              // Apply code changes
-              if (metadata.tsxCode && intent === 'command') {
-                setDraftTsxCode(metadata.tsxCode);
-                workingTsxRef.current = metadata.tsxCode;
-                setRenderVersion(v => v + 1);
-              }
-
-              // Store metadata
-              messageMetadataRef.current.set(assistantId, {
-                changes: metadata.changes,
-                intent: metadata.intent,
-              });
-
-              // Update message with final content
-              // For commands: use conversational message (not raw TSX code)
-              // For questions: use streamed text
-              const displayContent = intent === 'command' 
-                ? (metadata.message || 'Done! Applied your changes.')
-                : fullText;
-
-              setMessages(prev =>
-                prev.map(m =>
-                  m.id === assistantId
-                    ? { ...m, content: displayContent }
-                    : m
-                )
-              );
-              
-              console.log(`[EDITOR] Applied ${metadata.changes?.length || 0} changes`);
-            } catch (e) {
-              console.error('[EDITOR] Failed to parse metadata:', e);
-            }
-          } else {
-            fullText += chunk;
-            
-            // Only stream in real-time for QUESTIONS
-            // For commands, don't show the raw TSX code
-            if (intent === 'question') {
-              setMessages(prev =>
-                prev.map(m =>
-                  m.id === assistantId
-                    ? { ...m, content: fullText }
-                    : m
-                )
-              );
-            }
-            // For commands, show "Thinking..." or nothing until metadata arrives
-          }
-        }
+        // Store metadata for changelog
+        messageMetadataRef.current.set(assistantId, {
+          changes: data.changes || [],
+          intent: data.intent,
+        });
+        
+        console.log(`[EDITOR] Applied ${data.changes?.length || 0} changes`);
       }
+
+      // Update assistant message
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === assistantId
+            ? { ...m, content: data.message }
+            : m
+        )
+      );
     } catch (error) {
       console.error('[EDITOR] Stream error:', error);
       setMessages(prev =>

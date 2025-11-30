@@ -1,4 +1,4 @@
-import { streamText } from 'ai';
+import { generateText } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createClient } from '@/lib/supabase/server';
 import { detectIntent } from '@/lib/email-v3/intent-detector';
@@ -98,19 +98,19 @@ export async function POST(request: Request) {
     const intent = detectIntent(userMessage);
     console.log(`[REFINE-SDK] Intent: ${intent}`);
 
-    // CONSULTATION MODE - Just stream suggestions
+    // CONSULTATION MODE - Answer questions
     if (intent === 'question') {
-      const result = await streamText({
+      const result = await generateText({
         model: google('gemini-2.0-flash-exp'),
         system: CONSULTATION_PROMPT,
         prompt: `# THE EMAIL CODE\n\n\`\`\`tsx\n${currentTsxCode}\n\`\`\`\n\n# USER'S QUESTION\n\n"${userMessage}"\n\nProvide 2-3 specific, actionable suggestions.`,
         temperature: 0.8,
       });
 
-      return result.toTextStreamResponse({
-        headers: {
-          'X-Intent': 'question',
-        },
+      return Response.json({
+        intent: 'question',
+        message: result.text,
+        tsxCode: currentTsxCode, // No changes
       });
     }
 
@@ -158,83 +158,52 @@ export async function POST(request: Request) {
 
     executionPrompt += `# USER REQUEST\n\n"${userMessage}"\n\n# YOUR TASK\n\nModify the code above based on the user's request.\nReturn ONLY the complete modified TSX code, nothing else.`;
 
-    // Stream code generation and create custom response with metadata
-    const aiResult = await streamText({
+    // Generate code (simple, no streaming)
+    const aiResult = await generateText({
       model: google('gemini-2.0-flash-exp'),
       system: EXECUTION_PROMPT,
       prompt: executionPrompt,
       temperature: 0.7,
     });
 
-    // Create custom stream that includes metadata at the end
-    const encoder = new TextEncoder();
-    const transformStream = new TransformStream({
-      async start(controller) {
-        let fullText = '';
-        
-        // Stream AI response
-        for await (const chunk of aiResult.textStream) {
-          fullText += chunk;
-          controller.enqueue(encoder.encode(chunk));
-        }
-        
-        // Extract code
-        const codeMatch = fullText.match(/```(?:tsx|typescript)?\n([\s\S]*?)\n```/);
-        const finalCode = codeMatch ? codeMatch[1].trim() : fullText.trim();
+    // Extract code from AI response
+    const { text, usage } = aiResult;
+    const codeMatch = text.match(/```(?:tsx|typescript)?\n([\s\S]*?)\n```/);
+    const finalCode = codeMatch ? codeMatch[1].trim() : text.trim();
 
-        // Validate and generate diff
-        const processResult = processCodeChanges({
-          oldCode: currentTsxCode,
-          newCode: finalCode,
-          userMessage,
-        });
-
-        console.log(`[REFINE-SDK] Validation: ${processResult.valid ? '✅ Valid' : '❌ Invalid'}`);
-        console.log(`[REFINE-SDK] Changes: ${processResult.changes.length}`);
-
-        // Send metadata as JSON at the end (special marker)
-        const metadata = JSON.stringify({
-          __metadata: true,
-          intent: 'command',
-          tsxCode: finalCode,
-          validation: {
-            valid: processResult.valid,
-            errors: processResult.errors,
-            warnings: processResult.warnings,
-          },
-          changes: processResult.changes,
-          message: processResult.conversationalResponse,
-        });
-        
-        controller.enqueue(encoder.encode(`\n\n__METADATA__:${metadata}`));
-        controller.terminate();
-
-        // Log telemetry
-        try {
-          const usage = await aiResult.usage;
-          if (usage && usage.totalTokens) {
-            // Gemini 2.0 Flash pricing: $0.00001875/1K input, $0.000075/1K output
-            // Estimate 60/40 split for input/output when individual counts unavailable
-            const totalTokens = usage.totalTokens;
-            const estimatedInputTokens = Math.floor(totalTokens * 0.6);
-            const estimatedOutputTokens = totalTokens - estimatedInputTokens;
-            
-            const cost = (estimatedInputTokens / 1000) * 0.00001875 + 
-                         (estimatedOutputTokens / 1000) * 0.000075;
-            
-            console.log(`💰 [REFINE-SDK] Tokens: ${totalTokens} | Cost: ~$${cost.toFixed(6)}`);
-          }
-        } catch (e) {
-          // Usage might not be available
-        }
-      },
+    // Validate and generate diff
+    const processResult = processCodeChanges({
+      oldCode: currentTsxCode,
+      newCode: finalCode,
+      userMessage,
     });
 
-    return new Response(transformStream.readable, {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'X-Intent': 'command',
+    console.log(`[REFINE-SDK] Validation: ${processResult.valid ? '✅ Valid' : '❌ Invalid'}`);
+    console.log(`[REFINE-SDK] Changes: ${processResult.changes.length}`);
+
+    // Log telemetry
+    if (usage && usage.totalTokens) {
+      const totalTokens = usage.totalTokens;
+      const estimatedInputTokens = Math.floor(totalTokens * 0.6);
+      const estimatedOutputTokens = totalTokens - estimatedInputTokens;
+      
+      const cost = (estimatedInputTokens / 1000) * 0.00001875 + 
+                   (estimatedOutputTokens / 1000) * 0.000075;
+      
+      console.log(`💰 [REFINE-SDK] Tokens: ${totalTokens} | Cost: ~$${cost.toFixed(6)}`);
+    }
+
+    // Return simple JSON response
+    return Response.json({
+      intent: 'command',
+      tsxCode: finalCode,
+      changes: processResult.changes,
+      validation: {
+        valid: processResult.valid,
+        errors: processResult.errors,
+        warnings: processResult.warnings,
       },
+      message: processResult.conversationalResponse,
     });
 
   } catch (error: any) {
