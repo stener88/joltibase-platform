@@ -950,7 +950,7 @@ export default function FlashSaleEmail() {
               © 2025 Shop Name. All rights reserved.
             </Text>
             <Text style={{
-              fontSize: '12px',
+              fontSize: '14px',
               color: '#9ca3af',
               margin: 0
             }}>

@@ -582,7 +582,7 @@ export default function EmailName() {
             <Text style={{ fontSize: '14px', color: '#666', textAlign: 'center', margin: '0 0 8px 0' }}>
               © 2025 Company Name. All rights reserved.
             </Text>
-            <Text style={{ fontSize: '12px', color: '#888', textAlign: 'center' }}>
+            <Text style={{ fontSize: '14px', color: '#888', textAlign: 'center' }}>
               <Link href="/unsubscribe" style={{ color: '#2563eb' }}>Unsubscribe</Link>
             </Text>
           </Section>
@@ -748,7 +748,7 @@ export default function Q4EarningsEmail() {
             </Text>
             
             <Text style={{
-              fontSize: '12px',
+              fontSize: '14px',
               color: '#888888',
               textAlign: 'center',
               lineHeight: '1.5',

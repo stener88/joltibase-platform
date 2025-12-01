@@ -259,7 +259,7 @@ Minimal Elements
 /* MINIMAL, REFINED BUTTON */
 background-color: transparent;
 color: #000000;
-font-size: 13px;
+font-size: 14px;
 font-weight: 400;
 text-transform: uppercase;
 letter-spacing: 2px;
@@ -275,7 +275,7 @@ text-align: center;
 \`\`\`css
 background-color: #000000;
 color: #ffffff;
-font-size: 13px;
+font-size: 14px;
 font-weight: 400;
 text-transform: uppercase;
 letter-spacing: 2px;
@@ -568,7 +568,7 @@ export default function LuxuryCollectionEmail() {
             display: 'inline-block',
             backgroundColor: 'transparent',
             color: '#000000',
-            fontSize: '13px',
+            fontSize: '14px',
             fontWeight: '400',
             textTransform: 'uppercase',
             letterSpacing: '2.5px',
@@ -602,7 +602,7 @@ export default function LuxuryCollectionEmail() {
         <div style={{
           display: 'inline-block',
           color: '#b8860b',
-          fontSize: '11px',
+          fontSize: '14px',
           fontWeight: '400',
           letterSpacing: '2.5px',
           textTransform: 'uppercase',
@@ -633,7 +633,7 @@ export default function LuxuryCollectionEmail() {
         
         {/* Product Caption */}
         <Text style={{
-          fontSize: '13px',
+          fontSize: '14px',
           color: '#808080',
           fontWeight: '300',
           letterSpacing: '2px',
@@ -688,7 +688,7 @@ export default function LuxuryCollectionEmail() {
             display: 'inline-block',
             backgroundColor: '#000000',
             color: '#ffffff',
-            fontSize: '13px',
+            fontSize: '14px',
             fontWeight: '400',
             textTransform: 'uppercase',
             letterSpacing: '2.5px',
@@ -709,7 +709,7 @@ export default function LuxuryCollectionEmail() {
       }}>
         {/* Invitation Label */}
         <Text style={{
-          fontSize: '11px',
+          fontSize: '14px',
           fontWeight: '400',
           color: '#808080',
           letterSpacing: '3px',
@@ -770,7 +770,7 @@ export default function LuxuryCollectionEmail() {
             display: 'inline-block',
             backgroundColor: 'transparent',
             color: '#000000',
-            fontSize: '13px',
+            fontSize: '14px',
             fontWeight: '400',
             textTransform: 'uppercase',
             letterSpacing: '2.5px',
@@ -792,7 +792,7 @@ export default function LuxuryCollectionEmail() {
         borderTop: '1px solid #e0e0e0'
       }}>
         <Text style={{
-          fontSize: '12px',
+          fontSize: '14px',
           color: '#808080',
           fontWeight: '300',
           letterSpacing: '1.5px',
@@ -803,7 +803,7 @@ export default function LuxuryCollectionEmail() {
         </Text>
         
         <Text style={{
-          fontSize: '11px',
+          fontSize: '14px',
           color: '#999999',
           fontWeight: '300',
           margin: 0

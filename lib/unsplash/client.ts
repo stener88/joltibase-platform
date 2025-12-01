@@ -2,8 +2,12 @@
  * Unsplash API Client
  * 
  * Fetches professional images from Unsplash API for email campaigns
- * Uses /photos/random endpoint for contextual image generation
+ * Uses /search/photos endpoint with relevance ranking and caching
  */
+
+// In-memory cache for popular queries (limit 100 entries)
+const imageCache = new Map<string, UnsplashPhoto[]>();
+const CACHE_MAX_SIZE = 100;
 
 interface UnsplashPhoto {
   id: string;
@@ -64,17 +68,49 @@ export async function fetchUnsplashImage(
 
   const { query, orientation = 'landscape', width, height } = options;
   
+  // Check cache first
+  const cacheKey = `${query}-${orientation}`;
+  if (imageCache.has(cacheKey)) {
+    const cachedResults = imageCache.get(cacheKey)!;
+    const randomIndex = Math.floor(Math.random() * cachedResults.length);
+    const photo = cachedResults[randomIndex];
+    console.log(`[Unsplash] 💾 Using cached result for: "${query}" (#${randomIndex + 1} of ${cachedResults.length})`);
+    
+    // Build image URL with dimensions (same as below)
+    let imageUrl = photo.urls.regular;
+    if (width || height) {
+      const params = new URLSearchParams();
+      if (width) params.set('w', width.toString());
+      if (height) params.set('h', height.toString());
+      params.set('fit', 'crop');
+      imageUrl = `${photo.urls.raw}&${params.toString()}`;
+    }
+    
+    return {
+      url: imageUrl,
+      credit: {
+        photographerName: photo.user.name,
+        photographerUrl: photo.user.links.html,
+        unsplashUrl: `https://unsplash.com/photos/${photo.id}`,
+      },
+      downloadLocation: photo.links.download_location,
+      alt: photo.alt_description || photo.description || query,
+    };
+  }
+  
   try {
-    // Build API URL
+    // Build Search API URL (more relevant results than random)
     const params = new URLSearchParams({
       query,
       orientation,
-      count: '1',
+      per_page: '5',           // Top 5 relevant results
+      order_by: 'relevant',    // Sort by relevance
+      content_filter: 'high',  // Quality filter
     });
     
-    const url = `https://api.unsplash.com/photos/random?${params}`;
+    const url = `https://api.unsplash.com/search/photos?${params}`;
     
-    console.log(`[Unsplash] Fetching image for: "${query}"`);
+    console.log(`[Unsplash] Searching for: "${query}"`);
     
     // Fetch with timeout
     const controller = new AbortController();
@@ -97,14 +133,23 @@ export async function fetchUnsplashImage(
     
     const responseData = await response.json();
     
-    // Unsplash /photos/random returns an array even when count=1
-    const photos = Array.isArray(responseData) ? responseData : [responseData];
-    if (photos.length === 0) {
-      console.error('[Unsplash] No photos returned');
+    // Search endpoint returns { total, total_pages, results: [...] }
+    if (!responseData.results || responseData.results.length === 0) {
+      console.warn(`[Unsplash] No images found for: "${query}"`);
       return null;
     }
     
-    const photo = photos[0] as UnsplashPhoto;
+    // Cache the results for future use
+    if (responseData.results.length > 0 && imageCache.size < CACHE_MAX_SIZE) {
+      imageCache.set(cacheKey, responseData.results);
+      console.log(`[Unsplash] 💾 Cached ${responseData.results.length} results for: "${query}"`);
+    }
+    
+    // Pick random from top 5 for variety while maintaining relevance
+    const randomIndex = Math.floor(Math.random() * responseData.results.length);
+    const photo = responseData.results[randomIndex] as UnsplashPhoto;
+    
+    console.log(`[Unsplash] ✅ Selected #${randomIndex + 1} of ${responseData.results.length} relevant results`);
     
     // Validate response structure
     if (!photo || !photo.urls || !photo.urls.regular) {

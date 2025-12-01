@@ -1134,7 +1134,7 @@ export default function FeatureAnnouncementEmail() {
         </Text>
         
         <Text style={{
-          fontSize: '12px',
+          fontSize: '14px',
           color: '#94a3b8',
           textAlign: 'center',
           margin: 0

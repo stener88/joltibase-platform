@@ -116,7 +116,7 @@ export const NewsletterDesignSystem = {
 
       {/* Footer */}
       <Section style={{ padding: '32px 24px', backgroundColor: '#f9fafb', textAlign: 'center' }}>
-        <Text style={{ fontSize: '12px', color: '#888' }}>
+        <Text style={{ fontSize: '14px', color: '#888' }}>
           © 2025 Newsletter Name | <Link href="#">Unsubscribe</Link>
         </Text>
       </Section>
@@ -243,7 +243,7 @@ export default function WeeklyNewsletter() {
             <Text style={{ fontSize: '14px', color: '#666', margin: '0 0 8px 0' }}>
               © 2025 The Weekly Roundup
             </Text>
-            <Text style={{ fontSize: '12px', color: '#888', margin: '0' }}>
+            <Text style={{ fontSize: '14px', color: '#888', margin: '0' }}>
               <Link href="https://example.com/unsubscribe" style={{ color: '#3b82f6' }}>
                 Unsubscribe
               </Link>

@@ -23,9 +23,29 @@ export interface ValidationResult {
 }
 
 /**
+ * Get maximum CTAs allowed for a specific design system
+ * Different email types have different CTA norms
+ */
+function getMaxCTAsForDesignSystem(designSystemId?: string): number {
+  if (!designSystemId) return 3; // Default fallback
+  
+  const limits: Record<string, number> = {
+    'newsletter-editorial': 6,      // Newsletters naturally have more "Read More" links
+    'ecommerce-conversion': 3,      // Focus on product CTAs
+    'saas-product': 2,              // Try it + Learn more
+    'event-conference': 2,          // RSVP + View details
+    'modern-startup': 3,            // Bold action-oriented
+    'corporate-professional': 2,    // Conservative, focused
+    'minimal-elegant': 2,           // Minimal, focused (primary + secondary)
+  };
+  
+  return limits[designSystemId] || 3;
+}
+
+/**
  * Comprehensive email validation
  */
-export function validateEmail(tsxCode: string): ValidationResult {
+export function validateEmail(tsxCode: string, designSystemId?: string): ValidationResult {
   const issues: ValidationIssue[] = [];
   
   // 1. Syntax validation
@@ -37,8 +57,8 @@ export function validateEmail(tsxCode: string): ValidationResult {
   // 3. Accessibility validation
   issues.push(...validateAccessibility(tsxCode));
   
-  // 4. Best practices validation
-  issues.push(...validateBestPractices(tsxCode));
+  // 4. Best practices validation (context-aware based on design system)
+  issues.push(...validateBestPractices(tsxCode, designSystemId));
   
   const errorCount = issues.filter(i => i.severity === 'error').length;
   const warningCount = issues.filter(i => i.severity === 'warning').length;
@@ -256,7 +276,7 @@ function validateAccessibility(code: string): ValidationIssue[] {
 /**
  * Layer 4: Best Practices Validation
  */
-function validateBestPractices(code: string): ValidationIssue[] {
+function validateBestPractices(code: string, designSystemId?: string): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   
   // Count CTAs (Call-to-Actions)
@@ -264,12 +284,16 @@ function validateBestPractices(code: string): ValidationIssue[] {
   const linkCount = (code.match(/<Link[^>]*href=/g) || []).length;
   const ctaCount = buttonCount + linkCount;
   
-  if (ctaCount > 3) {
+  // Get context-aware CTA limit based on design system
+  const maxCTAs = getMaxCTAsForDesignSystem(designSystemId);
+  
+  if (ctaCount > maxCTAs) {
+    const systemName = designSystemId?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'this email type';
     issues.push({
       severity: 'warning',
       type: 'best-practice',
-      message: `Found ${ctaCount} CTAs - too many competing calls-to-action`,
-      suggestion: 'Limit to 1-2 primary CTAs per email for better conversion'
+      message: `Found ${ctaCount} CTAs - too many for ${systemName} (max: ${maxCTAs})`,
+      suggestion: `Limit to ${maxCTAs} primary CTA${maxCTAs > 1 ? 's' : ''} for better conversion`
     });
   }
   
@@ -400,8 +424,8 @@ export function generateFixPrompt(issues: ValidationIssue[]): string {
 - Import ALL components used from @react-email/components
 - Replace ANY placeholder text with actual content
 - Minimum font size: 14px for all text
-- Maximum 2-3 CTAs per email
 - Use semantic components: <Heading>, <Text>, <Section>
+- Follow design system specifications for CTA count
 `;
   
   return prompt;

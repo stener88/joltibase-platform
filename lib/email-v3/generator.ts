@@ -76,7 +76,12 @@ const SYSTEM_INSTRUCTION = `You are an expert React Email developer creating pro
    - Include <Preview> text for email clients
    - Follow the design system specifications exactly
    - All images must have descriptive alt text
-   - Minimum font size: 16px for body text
+   - Minimum font size: 14px for all text (16px for body text)
+   - **Buttons/CTAs**: Use sufficient padding (14px+ vertical) to ensure touch targets are 44px+ tall
+   - **CTA Count**: Limit to 1-3 primary CTAs maximum (avoid decision paralysis)
+     * Single-purpose emails: 1 CTA
+     * Newsletters/digests: 2-3 CTAs max
+     * E-commerce: 2-3 product CTAs max
 
 7. **COMPLETE CODE ONLY**
    - NO placeholders, NO "...", NO incomplete sections
@@ -135,8 +140,8 @@ export async function generateEmail(prompt: string): Promise<GeneratedEmail> {
       const extractedCode = extractCodeFromMarkdown(result.text);
       const code = cleanGeneratedCode(extractedCode);
       
-      // NEW: Multi-layer validation
-      const validation = validateEmail(code);
+      // NEW: Multi-layer validation (context-aware based on design system)
+      const validation = validateEmail(code, designSystem.id);
       const summary = getValidationSummary(validation);
       console.log(`📋 [V3-GENERATOR] Validation: ${summary}`);
       
@@ -347,7 +352,8 @@ function buildUserPrompt(
     userPrompt += `2. ❌ Missing imports → ✅ Import ALL components you use from '@react-email/components'\n`;
     userPrompt += `3. ❌ {{placeholder}} syntax → ✅ Write actual static text\n`;
     userPrompt += `4. ❌ Missing alt text on images → ✅ Every <Img> needs descriptive alt="..."\n`;
-    userPrompt += `5. ❌ Too many CTAs → ✅ Maximum 2 CTAs per email\n\n`;
+    userPrompt += `5. ❌ Too many CTAs → ✅ Maximum 3 CTAs per email (1-2 for most emails)\n`;
+    userPrompt += `6. ❌ Small buttons → ✅ Use padding: '14px 28px' minimum for 44px+ touch target\n\n`;
     userPrompt += `**CRITICAL - INLINE STYLES ONLY:**\n`;
     userPrompt += `Every HTML attribute like padding, color, fontSize, etc. MUST be in a style prop object.\n`;
     userPrompt += `Example: <Section style={{ padding: '48px 24px', backgroundColor: '#ffffff' }}>\n`;

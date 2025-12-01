@@ -1015,7 +1015,7 @@ export default function ProductLaunchEmail() {
         </Text>
         
         <Text style={{
-          fontSize: '12px',
+          fontSize: '14px',
           color: '#9ca3af',
           textAlign: 'center',
           margin: 0

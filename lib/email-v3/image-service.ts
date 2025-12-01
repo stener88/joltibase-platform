@@ -205,6 +205,20 @@ export async function fetchImagesForPrompt(
 }
 
 /**
+ * Optimize keyword length for Unsplash search
+ * Keep under 60 chars for best relevance
+ */
+function optimizeKeywordLength(keyword: string): string {
+  if (keyword.length <= 60) return keyword;
+  
+  // Truncate but keep complete words
+  const truncated = keyword.substring(0, 60);
+  const lastSpace = truncated.lastIndexOf(' ');
+  
+  return lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated;
+}
+
+/**
  * Extract relevant keywords from user prompt for image search
  * If design system is provided, combines user intent with aesthetic keywords
  */
@@ -224,16 +238,18 @@ function extractImageKeywords(
   // Helper: Combine prompt keywords with design system aesthetics
   const enhance = (promptKeywords: string, type: 'hero' | 'feature' | 'product' | 'background' = 'feature'): string => {
     if (!designSystem || !('imageKeywords' in designSystem)) {
-      return promptKeywords;
+      return optimizeKeywordLength(promptKeywords);
     }
     const dsKeywords = (designSystem as any).imageKeywords[type];
     if (!dsKeywords || dsKeywords.length === 0) {
-      return promptKeywords;
+      return optimizeKeywordLength(promptKeywords);
     }
     // Pick a random keyword from the design system array for variety
     const randomKeyword = dsKeywords[Math.floor(Math.random() * dsKeywords.length)];
     // Combine: "user intent" + "design system aesthetic"
-    return `${promptKeywords} ${randomKeyword}`;
+    const combined = `${promptKeywords} ${randomKeyword}`;
+    
+    return optimizeKeywordLength(combined);
   };
   
   // Travel/Tourism
