@@ -852,7 +852,7 @@ export function LivePreview({
   }, [handleMessage]);
 
   return (
-    <div className="relative h-full w-full bg-gray-50">
+    <div className="relative h-full w-full bg-background">
       {/* Loading Overlay (AI generation, rendering, saving, or visual mode transitions) */}
       {(isGenerating || isRendering || isSaving || isEnteringVisualMode || isExitingVisualMode) && (
         <div 

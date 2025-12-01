@@ -18,19 +18,23 @@ export function SplitScreenLayout({
   isCollapsed = false,
 }: SplitScreenLayoutProps) {
   return (
-    <div className="flex h-full w-full overflow-hidden">
-      {/* Left Panel - Chat or Direct Editor (30% width) */}
-      <div
-        className={`flex-shrink-0 overflow-y-auto overflow-x-hidden bg-background border-r border-border ${
-          isCollapsed ? 'w-0 border-r-0' : 'flex-[0.30]'
-        }`}
-      >
-        {leftPanel}
-      </div>
+    // Outer container with padding for breathing room
+    <div className="h-full w-full p-6">
+      {/* Unified card with rounded edges and shadow */}
+      <div className="flex h-full w-full overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+        {/* Left Panel - Chat or Direct Editor (30% width) */}
+        <div
+          className={`flex-shrink-0 overflow-y-auto overflow-x-hidden bg-background border-r border-border ${
+            isCollapsed ? 'w-0 border-r-0' : 'flex-[0.30]'
+          }`}
+        >
+          {leftPanel}
+        </div>
 
-      {/* Right Panel - Email Preview (70% width) */}
-      <div className="flex-[0.70] overflow-hidden bg-background">
-        {rightPanel}
+        {/* Right Panel - Email Preview (70% width) */}
+        <div className="flex-[0.70] overflow-hidden bg-background">
+          {rightPanel}
+        </div>
       </div>
     </div>
   );
