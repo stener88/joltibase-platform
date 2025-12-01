@@ -852,7 +852,7 @@ export function LivePreview({
   }, [handleMessage]);
 
   return (
-    <div className="relative h-full w-full bg-background">
+    <div className="relative h-full w-full bg-background rounded-xl overflow-hidden">
       {/* Loading Overlay (AI generation, rendering, saving, or visual mode transitions) */}
       {(isGenerating || isRendering || isSaving || isEnteringVisualMode || isExitingVisualMode) && (
         <div 
@@ -884,7 +884,7 @@ export function LivePreview({
         ref={iframeRef}
         key={`email-preview-${iframeKey}`}
         srcDoc={previewHtml || placeholderHtml}
-        className="w-full h-full border-0"
+        className="w-full h-full border-0 rounded-xl"
         sandbox="allow-scripts allow-same-origin"
         tabIndex={-1}
         title="Email Preview"

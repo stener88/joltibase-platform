@@ -519,7 +519,7 @@ export function EmailEditorV3({
         <div className="h-[calc(100vh-3rem)]">
           <SplitScreenLayout
             leftPanel={
-              <div className="flex flex-col h-full">
+              <div className="flex flex-col h-full rounded-l-xl overflow-hidden">
                 {/* Left Panel Content */}
                 {mode === 'chat' ? (
                   <>
@@ -533,7 +533,7 @@ export function EmailEditorV3({
                     </div>
 
                     {/* Chat Input */}
-                    <div className="border-t p-4">
+                    <div className="p-4">
                       <PromptInput
                         value={input}
                         onChange={setInput}
@@ -561,7 +561,7 @@ export function EmailEditorV3({
                     </div>
 
                     {/* Prompt Input (also in visual mode) */}
-                    <div className="border-t p-4">
+                    <div className="p-4">
                       <PromptInput
                         value={input}
                         onChange={setInput}
@@ -580,7 +580,7 @@ export function EmailEditorV3({
               </div>
             }
             rightPanel={
-              <div className="relative h-full">
+              <div className="relative h-full rounded-r-xl overflow-hidden">
                 <LivePreview
                   workingTsxRef={workingTsxRef}
                   renderVersion={renderVersion}

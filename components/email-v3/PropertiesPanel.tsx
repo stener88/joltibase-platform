@@ -96,9 +96,11 @@ export function PropertiesPanel({
         paddingTop: '0',
         paddingBottom: '0',
         canEditText: false,
-        canEditTextColor: false,
-        canEditBackgroundColor: false,
+        canEditTypography: false,
+        canEditColors: false,
         canEditSpacing: false,
+        canEditBorders: false,
+        canEditLink: false,
         canEditImage: false,
       };
     }

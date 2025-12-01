@@ -68,7 +68,7 @@ export function DashboardHeader({ campaignEditor }: DashboardHeaderProps) {
   const breadcrumbs = generateBreadcrumbs();
 
   return (
-    <header className="sticky top-0 z-10 grid grid-cols-3 h-12 items-center gap-4 bg-background border-b border-border px-6">
+    <header className="sticky top-0 z-10 grid grid-cols-3 h-12 items-center gap-4 bg-background px-6">
       {/* Left: Sidebar toggle and breadcrumbs */}
       <div className="flex items-center gap-4 min-w-0">
         <Button
