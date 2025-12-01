@@ -5,6 +5,7 @@ import { detectIntent } from '@/lib/email-v3/intent-detector';
 import { resolveImage, extractImageKeyword } from '@/lib/email-v3/image-resolver';
 import { processCodeChanges } from '@/lib/email-v3/refiner-streaming';
 import { parseAndInjectIds } from '@/lib/email-v3/tsx-parser';
+import { getDesignSystemById } from '@/emails/lib/design-system-selector';
 
 const google = createGoogleGenerativeAI({
   apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
@@ -116,6 +117,17 @@ export async function POST(request: Request) {
 
     // EXECUTION MODE - Modify code
     
+    // Fetch campaign's design system for aesthetic-consistent image selection
+    const { data: campaign } = await supabase
+      .from('campaigns_v3')
+      .select('design_system_used')
+      .eq('id', campaignId)
+      .single();
+    
+    const designSystem = campaign?.design_system_used 
+      ? getDesignSystemById(campaign.design_system_used) 
+      : null;
+    
     // Resolve images if needed
     let imageUrl: string | null = null;
     const msg = userMessage.toLowerCase();
@@ -124,7 +136,20 @@ export async function POST(request: Request) {
        msg.includes('photo') || msg.includes('picture'));
 
     if (isImageRequest) {
-      const keyword = extractImageKeyword(userMessage);
+      let keyword = extractImageKeyword(userMessage);
+      
+      // NEW: Enhance with design system aesthetic if available
+      if (designSystem && 'imageKeywords' in designSystem) {
+        const dsKeywords = (designSystem as any).imageKeywords;
+        // Pick a random aesthetic keyword from hero or feature
+        const aestheticOptions = [...(dsKeywords.hero || []), ...(dsKeywords.feature || [])];
+        if (aestheticOptions.length > 0) {
+          const randomAesthetic = aestheticOptions[Math.floor(Math.random() * aestheticOptions.length)];
+          keyword = `${keyword} ${randomAesthetic}`;
+          console.log(`🎨 [REFINE-SDK] Enhanced image keyword with ${designSystem.name} aesthetic: "${keyword}"`);
+        }
+      }
+      
       const imageResult = await resolveImage(keyword, {
         orientation: 'landscape',
         width: 600,

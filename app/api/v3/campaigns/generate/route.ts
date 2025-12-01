@@ -43,7 +43,10 @@ export async function POST(request: NextRequest) {
     // Extract subject from prompt (basic heuristic)
     const subject = extractSubjectFromPrompt(prompt);
     
-    // Save to database
+    // Determine status based on validation
+    const status = !generated.isValid ? 'needs_review' : 'ready';
+    
+    // Save to database with validation metadata
     const { data: campaign, error: dbError } = await supabase
       .from('campaigns_v3')
       .insert({
@@ -53,15 +56,18 @@ export async function POST(request: NextRequest) {
         component_filename: generated.filename,
         component_code: generated.code,
         html_content: renderResult.html,
-        patterns_used: generated.patternsUsed,
+        design_system_used: generated.designSystemUsed,
         generation_prompt: prompt,
+        generation_attempts: generated.attempts,
+        validation_issues: generated.validationIssues,
+        status,
       })
       .select()
       .single();
     
     if (dbError) throw dbError;
     
-    console.log(`✅ [GENERATE-V3] Campaign created: ${campaign.id}`);
+    console.log(`✅ [GENERATE-V3] Campaign created: ${campaign.id} (${status})`);
     
     return NextResponse.json({
       success: true,
@@ -71,8 +77,12 @@ export async function POST(request: NextRequest) {
         subject_line: campaign.subject_line,
         html: renderResult.html,
         filename: generated.filename,
-        patternsUsed: generated.patternsUsed,
+        designSystemUsed: generated.designSystemUsed,
         created_at: campaign.created_at,
+        status,
+        attempts: generated.attempts,
+        validationIssues: generated.validationIssues,
+        isValid: generated.isValid,
       },
     });
     

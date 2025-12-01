@@ -2,10 +2,11 @@
  * Email Image Service
  * 
  * Fetches contextual images from Unsplash for email generation
- * Runs in parallel with RAG to avoid latency
+ * Runs in parallel with design system selection to avoid latency
  */
 
 import { fetchUnsplashImage, type ImageResult } from '@/lib/unsplash/client';
+import type { DesignSystem } from '@/emails/lib/design-system-selector';
 
 export interface EmailImage {
   url: string;
@@ -73,16 +74,22 @@ function getImageCountForPrompt(prompt: string): number {
 }
 
 /**
- * Fetch images for email generation based on prompt
+ * Fetch images for email generation based on prompt and design system
  * Adaptively fetches 3, 6, or 10 images based on email complexity
  */
-export async function fetchImagesForPrompt(prompt: string): Promise<ImageContext> {
+export async function fetchImagesForPrompt(
+  prompt: string,
+  designSystem?: DesignSystem
+): Promise<ImageContext> {
   const imageCount = getImageCountForPrompt(prompt);
   console.log(`🖼️ [IMAGE-SERVICE] Fetching ${imageCount} images for: "${prompt}"`);
+  if (designSystem) {
+    console.log(`🎨 [IMAGE-SERVICE] Using design system: ${designSystem.name}`);
+  }
   
   try {
-    // Extract keywords from prompt
-    const keywords = extractImageKeywords(prompt);
+    // Extract keywords from prompt, enhanced with design system aesthetics
+    const keywords = extractImageKeywords(prompt, designSystem);
     
     // Always fetch hero and logo (base 2 images)
     const baseImages = [
@@ -199,8 +206,12 @@ export async function fetchImagesForPrompt(prompt: string): Promise<ImageContext
 
 /**
  * Extract relevant keywords from user prompt for image search
+ * If design system is provided, combines user intent with aesthetic keywords
  */
-function extractImageKeywords(prompt: string): {
+function extractImageKeywords(
+  prompt: string,
+  designSystem?: DesignSystem
+): {
   hero: string;
   feature?: string;
   secondary?: string;
@@ -210,99 +221,114 @@ function extractImageKeywords(prompt: string): {
 } {
   const lower = prompt.toLowerCase();
   
+  // Helper: Combine prompt keywords with design system aesthetics
+  const enhance = (promptKeywords: string, type: 'hero' | 'feature' | 'product' | 'background' = 'feature'): string => {
+    if (!designSystem || !('imageKeywords' in designSystem)) {
+      return promptKeywords;
+    }
+    const dsKeywords = (designSystem as any).imageKeywords[type];
+    if (!dsKeywords || dsKeywords.length === 0) {
+      return promptKeywords;
+    }
+    // Pick a random keyword from the design system array for variety
+    const randomKeyword = dsKeywords[Math.floor(Math.random() * dsKeywords.length)];
+    // Combine: "user intent" + "design system aesthetic"
+    return `${promptKeywords} ${randomKeyword}`;
+  };
+  
   // Travel/Tourism
   if (lower.includes('travel') || lower.includes('destination') || lower.includes('trip')) {
     return {
-      hero: 'travel adventure vacation',
-      feature: 'travel activities tourism',
-      secondary: 'travel exploration',
-      tertiary: 'adventure journey',
-      product: 'travel destination scenic',
-      destination: 'beautiful city landscape',
+      hero: enhance('travel adventure vacation', 'hero'),
+      feature: enhance('travel activities tourism', 'feature'),
+      secondary: enhance('travel exploration', 'feature'),
+      tertiary: enhance('adventure journey', 'feature'),
+      product: enhance('travel destination scenic', 'product'),
+      destination: enhance('beautiful city landscape', 'background'),
     };
   }
   
   // Promotional/Retail
   if (lower.includes('sale') || lower.includes('promotion') || lower.includes('discount') || lower.includes('shopping')) {
     return {
-      hero: 'shopping sale retail store',
-      feature: 'product showcase retail',
-      secondary: 'shopping experience',
-      tertiary: 'sale celebration',
-      product: 'product display merchandise',
-      destination: 'store retail location',
+      hero: enhance('shopping sale retail store', 'hero'),
+      feature: enhance('product showcase retail', 'feature'),
+      secondary: enhance('shopping experience', 'feature'),
+      tertiary: enhance('sale celebration', 'background'),
+      product: enhance('product display merchandise', 'product'),
+      destination: enhance('store retail location', 'background'),
     };
   }
   
   // Events/Invitations
   if (lower.includes('event') || lower.includes('invitation') || lower.includes('conference') || lower.includes('webinar')) {
     return {
-      hero: 'conference event professional',
-      feature: 'business meeting presentation',
-      secondary: 'networking professional',
-      tertiary: 'workshop training',
-      product: 'speaker presentation',
-      destination: 'venue conference hall',
+      hero: enhance('conference event professional', 'hero'),
+      feature: enhance('business meeting presentation', 'feature'),
+      secondary: enhance('networking professional', 'feature'),
+      tertiary: enhance('workshop training', 'feature'),
+      product: enhance('speaker presentation', 'product'),
+      destination: enhance('venue conference hall', 'background'),
     };
   }
   
   // Product Launch/Update
   if (lower.includes('product') || lower.includes('launch') || lower.includes('announcement')) {
     return {
-      hero: 'product launch technology modern',
-      feature: 'modern product design',
-      secondary: 'innovation technology',
-      tertiary: 'digital product',
-      product: 'product showcase display',
-      destination: 'modern workspace office',
+      hero: enhance('product launch technology modern', 'hero'),
+      feature: enhance('modern product design', 'feature'),
+      secondary: enhance('innovation technology', 'feature'),
+      tertiary: enhance('digital product', 'product'),
+      product: enhance('product showcase display', 'product'),
+      destination: enhance('modern workspace office', 'background'),
     };
   }
   
   // Newsletter/Content
   if (lower.includes('newsletter') || lower.includes('digest') || lower.includes('tips')) {
     return {
-      hero: 'newsletter reading coffee workspace',
-      feature: 'creative workspace content',
-      secondary: 'reading learning',
-      tertiary: 'inspiration creativity',
-      product: 'content creation writing',
-      destination: 'library books learning',
+      hero: enhance('newsletter reading coffee workspace', 'hero'),
+      feature: enhance('creative workspace content', 'feature'),
+      secondary: enhance('reading learning', 'feature'),
+      tertiary: enhance('inspiration creativity', 'feature'),
+      product: enhance('content creation writing', 'product'),
+      destination: enhance('library books learning', 'background'),
     };
   }
   
   // Welcome/Onboarding
   if (lower.includes('welcome') || lower.includes('onboard')) {
     return {
-      hero: 'welcome handshake professional team',
-      feature: 'team collaboration workspace',
-      secondary: 'onboarding training',
-      tertiary: 'success celebration',
-      product: 'team member professional',
-      destination: 'office workspace modern',
+      hero: enhance('welcome handshake professional team', 'hero'),
+      feature: enhance('team collaboration workspace', 'feature'),
+      secondary: enhance('onboarding training', 'feature'),
+      tertiary: enhance('success celebration', 'feature'),
+      product: enhance('team member professional', 'product'),
+      destination: enhance('office workspace modern', 'background'),
     };
   }
   
   // Loyalty/Rewards
   if (lower.includes('loyalty') || lower.includes('reward') || lower.includes('points')) {
     return {
-      hero: 'reward celebration success',
-      feature: 'exclusive benefits vip',
-      secondary: 'achievement success',
-      tertiary: 'premium quality',
-      product: 'rewards benefits exclusive',
-      destination: 'luxury experience premium',
+      hero: enhance('reward celebration success', 'hero'),
+      feature: enhance('exclusive benefits vip', 'feature'),
+      secondary: enhance('achievement success', 'feature'),
+      tertiary: enhance('premium quality', 'product'),
+      product: enhance('rewards benefits exclusive', 'product'),
+      destination: enhance('luxury experience premium', 'background'),
     };
   }
   
   // Feedback/Survey
   if (lower.includes('feedback') || lower.includes('survey') || lower.includes('review')) {
     return {
-      hero: 'feedback conversation communication',
-      feature: 'rating review satisfaction',
-      secondary: 'customer service support',
-      tertiary: 'quality improvement',
-      product: 'feedback form survey',
-      destination: 'customer support office',
+      hero: enhance('feedback conversation communication', 'hero'),
+      feature: enhance('rating review satisfaction', 'feature'),
+      secondary: enhance('customer service support', 'feature'),
+      tertiary: enhance('quality improvement', 'feature'),
+      product: enhance('feedback form survey', 'product'),
+      destination: enhance('customer support office', 'background'),
     };
   }
   
@@ -316,12 +342,12 @@ function extractImageKeywords(prompt: string): {
     .join(' ');
   
   return {
-    hero: keywords || 'professional business workspace',
-    feature: 'modern technology design',
-    secondary: 'business professional',
-    tertiary: 'innovation digital',
-    product: 'product service business',
-    destination: 'office workspace modern',
+    hero: enhance(keywords || 'professional business workspace', 'hero'),
+    feature: enhance('modern technology design', 'feature'),
+    secondary: enhance('business professional', 'feature'),
+    tertiary: enhance('innovation digital', 'feature'),
+    product: enhance('product service business', 'product'),
+    destination: enhance('office workspace modern', 'background'),
   };
 }
 

@@ -7,9 +7,9 @@
 
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText } from 'ai';
-import { initializeRAG, retrievePatternsByEmbedding } from '@/emails/lib/rag';
-import type { Pattern } from '@/emails/lib/patterns';
-import { validateGeneratedCode, extractCodeFromMarkdown, cleanGeneratedCode } from '@/emails/lib/validator';
+import { detectDesignSystem, type DesignSystem } from '@/emails/lib/design-system-selector';
+import { extractCodeFromMarkdown, cleanGeneratedCode } from '@/emails/lib/validator';
+import { validateEmail, generateFixPrompt, getValidationSummary, type ValidationIssue } from '@/emails/lib/email-validator';
 import { fetchImagesForPrompt, type ImageContext } from './image-service';
 import fs from 'fs';
 import path from 'path';
@@ -25,155 +25,66 @@ const google = createGoogleGenerativeAI({
 export interface GeneratedEmail {
   filename: string;
   code: string;
-  patternsUsed: string[];
+  designSystemUsed: string;
   attempts: number;
+  validationIssues: Array<{ severity: string; type: string; message: string }>;
+  isValid: boolean;
 }
 
 /**
- * System instruction for React Email component generation with Tailwind
+ * System instruction for React Email component generation with Design Systems
  */
-const SYSTEM_INSTRUCTION = `You are an expert React Email developer creating production-ready email templates using Tailwind CSS.
+const SYSTEM_INSTRUCTION = `You are an expert React Email developer creating production-ready email templates following comprehensive design systems.
 
 # CRITICAL RULES
 
 1. **COMPLETE REACT EMAIL STRUCTURE**
    - Root element MUST be <Html>
-   - Include <Head /> for metadata
-   - Wrap entire content in <Tailwind> component (import from '@react-email/components')
-   - Use <Body> inside Tailwind wrapper
-   - Use <Container> for max-width (600px recommended)
-   - Import all components from '@react-email/components'
+   - Include <Head /> for metadata and title
+   - Use <Body> for the email body
+   - Use <Container> for max-width (600px standard)
+   - Import ALL components from '@react-email/components'
 
 2. **AVAILABLE COMPONENTS**
-   - Html, Head, Body, Container, Preview, Tailwind
+   - Html, Head, Body, Container, Preview
    - Section, Heading, Text, Button, Link
    - Column, Row, Img, Hr
    - ALL imported from '@react-email/components'
 
-3. **STYLING - MIXED APPROACH**
-   - **TAILWIND (className) - SAFE for**: text colors, backgrounds, basic spacing, typography
-     - Colors: Tailwind utilities (bg-{color}-{shade}, text-{color}-{shade}, border-{color}-{shade})
-     - Typography: text-sm, text-lg, font-bold, text-center
-     - Basic spacing: p-4, px-6, py-3, m-0, mt-4, mb-8
-     - Simple layout: flex, flex-col, items-center, justify-center, max-w-xl, w-full
-   
-   - **INLINE STYLES (style prop) - REQUIRED for**: layout gaps, spacing between elements, complex positioning
-     - For spacing between elements: style={{display: 'flex', gap: '12px'}} NOT gap-3
-     - For margins between siblings: style={{marginBottom: '16px'}} on each child, NOT space-y-4
-     - For dividers: Individual <Hr /> components, NOT divide-y
-   
-   - **FORBIDDEN CLASSES** (will cause rendering errors):
-     - ❌ space-x-*, space-y-* (use inline margin on children instead)
-     - ❌ gap-* (use inline style={{gap: '12px'}} instead)
-     - ❌ divide-* (use individual Hr or borders instead)
-     - ❌ hover:, focus:, active:, group-, dark: (no pseudo-classes)
-     - ❌ grid-cols-*, grid-rows-* (use Row/Column components or inline styles)
+3. **STYLING - INLINE STYLES ONLY (CRITICAL)**
+   - **ALWAYS use inline styles via style prop**
+   - **NEVER use className** - email clients strip className
+   - All styles must be inline style objects
+   - Example: style={{ padding: '24px', backgroundColor: '#ffffff' }}
 
 4. **TYPESCRIPT & CONTENT - CRITICAL**
-   - Define proper interface for props (optional, with defaults)
+   - No props needed (or empty props interface)
    - **STATIC CONTENT ONLY**: Write ALL text directly in JSX
-   - **NEVER use**: {variable}, {prop.text}, {item.description}, .map(), .forEach()
-   - **NEVER use**: Arrays or loops for repeated sections
-   - **INSTEAD**: If user wants "3 articles", write 3 separate Section components with full text
-   - **Example**: User asks for newsletter with articles → Write Section 1 fully, Section 2 fully, Section 3 fully
-   - Props can be used for URLs or names ONLY (not for body content)
+   - **NEVER use**: {variable}, {prop.text}, .map(), .forEach()
+   - **INSTEAD**: Write all content as literal strings
    - Export as default function
 
 5. **IMAGES**
    - Use <Img> component from '@react-email/components'
    - Real image URLs will be provided in the user prompt
-   - ALWAYS include width, height, and alt attributes
+   - ALWAYS include alt attributes (descriptive, 10-15 words)
    - Use the exact URLs provided (professional Unsplash images)
-   - DO NOT use placeholder.com, via.placeholder.com, or /static/ paths
-   - DO NOT use baseUrl variables or process.env patterns
-   - Example: <Img src="https://images.unsplash.com/..." width={600} height={300} alt="Description" />
+   - DO NOT use placeholder URLs
 
 6. **EMAIL BEST PRACTICES**
    - Max content width: 600px via Container
    - Include <Preview> text for email clients
-   - Clear visual hierarchy with Tailwind
-   - Accessible color contrast (text-gray-900 on white, etc.)
-   - Mobile-responsive with Tailwind utilities
+   - Follow the design system specifications exactly
+   - All images must have descriptive alt text
+   - Minimum font size: 16px for body text
 
 7. **COMPLETE CODE ONLY**
    - NO placeholders, NO "...", NO incomplete sections
-   - EVERY section fully implemented
+   - NO {{variables}}, NO template syntax
+   - EVERY section fully implemented with real text
    - NO TODO or FIXME comments
-   - NO template literals with missing values
 
-# EXAMPLE STRUCTURE
-
-\`\`\`tsx
-import { Html, Head, Body, Container, Section, Heading, Text, Button, Preview, Tailwind } from '@react-email/components';
-
-export default function WelcomeEmail() {
-  return (
-    <Html>
-      <Head />
-      <Tailwind>
-        <Body className="bg-gray-100 font-sans">
-          <Preview>Welcome to our platform!</Preview>
-          <Container className="mx-auto my-8 bg-white rounded-lg max-w-xl">
-            <Section className="p-8 text-center">
-              <Heading className="text-3xl font-bold text-gray-900 mb-4">
-                Welcome to Our Platform!
-              </Heading>
-              <Text className="text-base text-gray-600 leading-relaxed mb-4">
-                We're excited to have you on board. Your account has been successfully created and you're ready to get started.
-              </Text>
-              <Text className="text-base text-gray-600 leading-relaxed">
-                Explore our features, customize your settings, and join thousands of users who are already benefiting from our platform.
-              </Text>
-            </Section>
-            
-            <Section className="px-8 pb-8 text-center">
-              <Button 
-                href="https://example.com/get-started"
-                className="bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold"
-              >
-                Get Started Now
-              </Button>
-            </Section>
-          </Container>
-        </Body>
-      </Tailwind>
-    </Html>
-  );
-}
-\`\`\`
-
-# CONTENT GUIDELINES - CRITICAL
-
-**ALWAYS USE STATIC, COMPLETE TEXT:**
-- Write full sentences and paragraphs directly in the JSX
-- DO NOT use variables like {item.text} or {data.description}
-- DO NOT use .map() loops or array iterations
-- If the prompt asks for "multiple articles" or "several sections", write them out individually
-
-Examples:
-✅ CORRECT: <Text>Discover the latest trends in artificial intelligence and how they're shaping the future of technology.</Text>
-❌ WRONG: <Text>{article.description}</Text>
-❌ WRONG: {articles.map(a => <Text>{a.text}</Text>)}
-
-# TAILWIND GUIDELINES
-
-- Use semantic sizes: text-xs, text-sm, text-base, text-lg, text-xl, text-2xl, text-3xl
-- Use Tailwind color scales: {color}-50 (lightest) to {color}-900 (darkest)
-- Use spacing scale: p-2, p-4, p-6, p-8 (multiples of 4px)
-- Common patterns:
-  - Headers: bg-{brand}-600 text-white p-8
-  - Body text: text-gray-700 text-base leading-relaxed
-  - CTAs: bg-{brand}-500 or bg-{brand}-600 text-white px-6 py-3 rounded font-semibold
-  - Footer: text-gray-500 text-sm text-center
-
-# COLOR PALETTE
-
-- Observe and maintain the color scheme from the reference patterns below
-- If the pattern uses violet-600 as primary, use violet-* throughout (e.g., violet-50 for backgrounds, violet-600 for CTAs)
-- If the pattern uses emerald-600, use emerald-* throughout
-- Keep a cohesive palette: one primary brand color + neutral grays for text
-
-Generate COMPLETE, production-ready React Email components with Tailwind classes.`;
+Generate COMPLETE, production-ready React Email components using INLINE STYLES ONLY.`;
 
 /**
  * Generate a complete React Email component with retry logic
@@ -181,30 +92,22 @@ Generate COMPLETE, production-ready React Email components with Tailwind classes
 export async function generateEmail(prompt: string): Promise<GeneratedEmail> {
   console.log(`🚀 [V3-GENERATOR] Generating email for: "${prompt}"`);
   
-  // Initialize RAG first
-  const patternsWithEmbeddings = await initializeRAG();
+  // Detect appropriate design system based on keywords
+  const designSystem = detectDesignSystem(prompt);
   
-  // Run pattern retrieval and image fetch in parallel (no added latency!)
-  const [relevantPatterns, images] = await Promise.all([
-    retrievePatternsByEmbedding(prompt, patternsWithEmbeddings, 5), // Increased from 3 to 5 for better pattern coverage
-    fetchImagesForPrompt(prompt),
-  ]);
-  
-  if (relevantPatterns.length === 0) {
-    console.warn('⚠️ [V3-GENERATOR] No patterns found, proceeding without examples');
-  } else {
-    console.log(`📚 [V3-GENERATOR] Using ${relevantPatterns.length} patterns: ${relevantPatterns.map(p => p.name).join(', ')}`);
-  }
+  // Fetch images with design system aesthetic (runs independently)
+  const images = await fetchImagesForPrompt(prompt, designSystem);
   
   let lastError: Error | null = null;
+  let previousIssues: ValidationIssue[] = [];
   
-  // Retry loop for generation
+  // Retry loop for generation with auto-correction
   for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
     console.log(`🔄 [V3-GENERATOR] Attempt ${attempt}/${MAX_GENERATION_ATTEMPTS}`);
     
     try {
-      // Build user prompt with pattern context and images
-      const userPrompt = buildUserPrompt(prompt, relevantPatterns, attempt, images);
+      // Build user prompt with design system, images, and previous validation issues
+      const userPrompt = buildUserPrompt(prompt, designSystem, attempt, images, previousIssues);
       
       // Generate with Gemini
       const result = await generateText({
@@ -228,40 +131,52 @@ export async function generateEmail(prompt: string): Promise<GeneratedEmail> {
         console.log(`💰 [GENERATOR] Tokens: ${totalTokens} (in: ${inputTokens}, out: ${outputTokens}) | Cost: $${totalCost.toFixed(6)}`);
       }
       
-    // Extract and clean code
+      // Extract and clean code
       const extractedCode = extractCodeFromMarkdown(result.text);
       const code = cleanGeneratedCode(extractedCode);
       
-      // Validate code
-      const validation = validateGeneratedCode(code);
+      // NEW: Multi-layer validation
+      const validation = validateEmail(code);
+      const summary = getValidationSummary(validation);
+      console.log(`📋 [V3-GENERATOR] Validation: ${summary}`);
       
-      if (validation.warnings.length > 0) {
-        console.warn(`⚠️ [V3-GENERATOR] Warnings:`, validation.warnings);
+      // Log issues for debugging
+      if (validation.issues.length > 0) {
+        validation.issues.forEach(issue => {
+          const emoji = issue.severity === 'error' ? '❌' : '⚠️';
+          console.log(`  ${emoji} [${issue.type}] ${issue.message}`);
+        });
       }
       
-      if (!validation.valid) {
-        console.error(`❌ [V3-GENERATOR] Validation failed:`, validation.errors);
-        if (attempt < MAX_GENERATION_ATTEMPTS) {
-          lastError = new Error(`Validation failed: ${validation.errors.join(', ')}`);
-          continue;
+      // If valid or on last attempt, save and return
+      if (validation.isValid || attempt === MAX_GENERATION_ATTEMPTS) {
+        // Save to filesystem
+        const filename = await saveComponent(code);
+        
+        if (validation.isValid) {
+          console.log(`✅ [V3-GENERATOR] Successfully generated: ${filename}`);
+        } else {
+          console.warn(`⚠️ [V3-GENERATOR] Generated with errors on final attempt: ${filename}`);
         }
-        throw new Error(
-          `Code generation failed after ${MAX_GENERATION_ATTEMPTS} attempts. ` +
-          `Errors: ${validation.errors.join(', ')}`
-        );
+        
+        return {
+          filename,
+          code,
+          designSystemUsed: designSystem.id,
+          attempts: attempt,
+          validationIssues: validation.issues.map(i => ({
+            severity: i.severity,
+            type: i.type,
+            message: i.message
+          })),
+          isValid: validation.isValid,
+        };
       }
       
-      // Save to filesystem
-      const filename = await saveComponent(code);
-      
-      console.log(`✅ [V3-GENERATOR] Successfully generated: ${filename}`);
-      
-      return {
-        filename,
-        code,
-        patternsUsed: relevantPatterns.map(p => p.name),
-        attempts: attempt,
-      };
+      // Not valid and not last attempt - retry with feedback
+      console.log(`🔄 [V3-GENERATOR] Retrying with validation feedback...`);
+      previousIssues = validation.issues;
+      continue;
       
     } catch (error: any) {
       console.error(`❌ [V3-GENERATOR] Attempt ${attempt} failed:`, error.message);
@@ -280,23 +195,25 @@ export async function generateEmail(prompt: string): Promise<GeneratedEmail> {
 }
 
 /**
- * Build user prompt with pattern examples and images
+ * Build user prompt with design system specification, images, and validation feedback
  */
-function buildUserPrompt(prompt: string, patterns: Pattern[], attempt: number, images: ImageContext): string {
+function buildUserPrompt(
+  prompt: string, 
+  designSystem: DesignSystem, 
+  attempt: number, 
+  images: ImageContext,
+  previousIssues: ValidationIssue[] = []
+): string {
   let userPrompt = '';
   
-  // Add pattern examples if available
-  if (patterns.length > 0) {
-    userPrompt += '# RELEVANT PATTERN EXAMPLES\n\n';
-    userPrompt += 'Learn from these similar patterns:\n\n';
-    
-    patterns.forEach((pattern, index) => {
-      userPrompt += `## Pattern ${index + 1}: ${pattern.name}\n`;
-      userPrompt += `Description: ${pattern.description}\n`;
-      userPrompt += `Use Case: ${pattern.useCase}\n`;
-      userPrompt += `\`\`\`tsx\n${pattern.code.substring(0, 2000)}\n\`\`\`\n\n`;
-    });
-  }
+  // Add design system specification (replaces RAG patterns)
+  userPrompt += `# DESIGN SYSTEM: ${designSystem.name}\n\n`;
+  userPrompt += `${designSystem.system}\n\n`;
+  userPrompt += `---\n\n`;
+  userPrompt += `# COMPLETE REFERENCE EXAMPLE\n\n`;
+  userPrompt += `Study this complete, production-ready email that follows the design system:\n\n`;
+  userPrompt += `\`\`\`tsx\n${designSystem.exampleEmail}\n\`\`\`\n\n`;
+  userPrompt += `---\n\n`;
   
   // Add image URLs to use
   userPrompt += '# IMAGES TO USE\n\n';
@@ -391,53 +308,59 @@ function buildUserPrompt(prompt: string, patterns: Pattern[], attempt: number, i
   userPrompt += `❌ DO NOT use placeholder.com or via.placeholder.com\n\n`;
   
   // Add CRITICAL content rules
-  userPrompt += `# 🚨 CRITICAL - STATIC CONTENT ONLY 🚨\n\n`;
-  userPrompt += `**YOU MUST WRITE ALL TEXT CONTENT DIRECTLY IN THE JSX - NO EXCEPTIONS**\n\n`;
+  userPrompt += `# 🚨 CRITICAL REQUIREMENTS 🚨\n\n`;
+  userPrompt += `**FOLLOW THE DESIGN SYSTEM ABOVE EXACTLY**\n\n`;
   userPrompt += `FORBIDDEN (will cause errors):\n`;
-  userPrompt += `❌ {variableName} in JSX content (e.g., <Text>{title}</Text>)\n`;
+  userPrompt += `❌ className attributes - email clients strip them! Use inline styles ONLY\n`;
+  userPrompt += `❌ {variableName} or {{variable}} syntax in JSX\n`;
   userPrompt += `❌ {item.field} or {data.property}\n`;
   userPrompt += `❌ .map() loops or array iterations\n`;
-  userPrompt += `❌ hover:, focus:, active:, dark: pseudo-classes\n`;
-  userPrompt += `❌ Props interface with content fields (title, description, etc.)\n\n`;
-  userPrompt += `REQUIRED (write static content):\n`;
-  userPrompt += `✅ Write full text directly: <Text>Welcome to our platform! We're excited to have you here.</Text>\n`;
-  userPrompt += `✅ Write each section separately instead of using loops\n`;
-  userPrompt += `✅ If request says "3 articles", write 3 complete <Section> blocks with full text\n`;
-  userPrompt += `✅ Make content relevant to the topic - don't use generic placeholders\n\n`;
+  userPrompt += `❌ Props interface with content fields\n`;
+  userPrompt += `❌ Placeholder text like "Lorem ipsum" or "Your Company"\n\n`;
+  userPrompt += `REQUIRED:\n`;
+  userPrompt += `✅ INLINE STYLES ONLY: style={{ padding: '24px', color: '#1a1a1a' }}\n`;
+  userPrompt += `✅ Write full text directly: <Text style={{...}}>Complete sentence here.</Text>\n`;
+  userPrompt += `✅ Follow design system colors, typography, spacing EXACTLY\n`;
+  userPrompt += `✅ Every image must have descriptive alt text (10-15 words)\n`;
+  userPrompt += `✅ Make content relevant to the topic\n\n`;
   
   // Add user's request
   userPrompt += `# USER REQUEST\n\n`;
   userPrompt += `Generate a complete React Email component for:\n\n`;
   userPrompt += `"${prompt}"\n\n`;
   userPrompt += `Requirements:\n`;
-  userPrompt += `- Root element MUST be <Html>\n`;
-  userPrompt += `- Wrap content in <Tailwind> component\n`;
-  userPrompt += `- Include <Head />, <Body>, <Container>\n`;
+  userPrompt += `- Follow the ${designSystem.name} design system above\n`;
+  userPrompt += `- Use INLINE STYLES ONLY (no className)\n`;
+  userPrompt += `- Root element: <Html>\n`;
+  userPrompt += `- Include <Head />, <Body>, <Container style={{ maxWidth: '600px' }}>\n`;
   userPrompt += `- Include <Preview> text\n`;
-  userPrompt += `- Write ALL content as static text (no {variables} in JSX)\n`;
-  userPrompt += `- NO interface with props (or empty interface)\n`;
-  userPrompt += `- Complete code with NO placeholders or "..."\n`;
-  userPrompt += `- Use Tailwind classes via className (NO hover: or pseudo-classes)\n`;
-  userPrompt += `- Import Tailwind from '@react-email/components'\n\n`;
+  userPrompt += `- Write ALL content as static text (no variables)\n`;
+  userPrompt += `- NO props interface needed\n`;
+  userPrompt += `- Complete code with NO placeholders\n`;
+  userPrompt += `- Study the reference example and match that quality\n\n`;
   
   if (attempt > 1) {
-    userPrompt += `# IMPORTANT - ATTEMPT ${attempt}\n\n`;
-    userPrompt += `Previous attempts failed validation. Avoid:\n`;
-    userPrompt += `- Dynamic content like {variable} in JSX\n`;
-    userPrompt += `- .map() loops or iterations\n`;
-    userPrompt += `- hover:, focus:, or other pseudo-classes\n`;
-    userPrompt += `- Incomplete code with "..." or "rest of code" comments\n`;
-    userPrompt += `- Missing imports - if you use <Link>, <Hr>, <Font>, etc., you MUST import them from '@react-email/components'\n`;
-    userPrompt += `- Missing exports\n`;
-    userPrompt += `- Missing <Tailwind> wrapper\n`;
-    userPrompt += `- Mismatched braces or parentheses\n\n`;
-    userPrompt += `CRITICAL - Import ALL components you use:\n`;
-    userPrompt += `✅ If using <Link>, add Link to imports\n`;
-    userPrompt += `✅ If using <Hr>, add Hr to imports\n`;
-    userPrompt += `✅ If using <Font>, add Font to imports\n\n`;
+    userPrompt += `# IMPORTANT - RETRY ATTEMPT ${attempt}\n\n`;
+    userPrompt += `Previous attempts failed validation. CRITICAL FIXES NEEDED:\n\n`;
+    userPrompt += `**MOST COMMON ERRORS TO FIX:**\n`;
+    userPrompt += `1. ❌ Using className → ✅ Use inline styles only: style={{ padding: '24px' }}\n`;
+    userPrompt += `2. ❌ Missing imports → ✅ Import ALL components you use from '@react-email/components'\n`;
+    userPrompt += `3. ❌ {{placeholder}} syntax → ✅ Write actual static text\n`;
+    userPrompt += `4. ❌ Missing alt text on images → ✅ Every <Img> needs descriptive alt="..."\n`;
+    userPrompt += `5. ❌ Too many CTAs → ✅ Maximum 2 CTAs per email\n\n`;
+    userPrompt += `**CRITICAL - INLINE STYLES ONLY:**\n`;
+    userPrompt += `Every HTML attribute like padding, color, fontSize, etc. MUST be in a style prop object.\n`;
+    userPrompt += `Example: <Section style={{ padding: '48px 24px', backgroundColor: '#ffffff' }}>\n`;
+    userPrompt += `NEVER: <Section className="p-12 bg-white">\n\n`;
+    
+    // Add structured validation feedback
+    if (previousIssues.length > 0) {
+      const fixPrompt = generateFixPrompt(previousIssues);
+      userPrompt += fixPrompt;
+    }
   }
   
-  userPrompt += `Return ONLY the complete TSX code with static content written directly in JSX.`;
+  userPrompt += `\nReturn ONLY the complete TSX code. Study the reference example above and match that exact structure and quality.`;
   
   return userPrompt;
 }
