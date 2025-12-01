@@ -247,9 +247,16 @@ export function EmailEditorV3({
 
   // Handle component selection
   const handleComponentSelect = useCallback((componentId: string | null, position?: { top: number; left: number }) => {
-    setSelectedComponentId(componentId);
-    setComponentPosition(position || null);
-  }, []);
+    // ✅ FIX: Only update state if selecting a different component
+    // This prevents re-renders that steal focus from the floating toolbar
+    if (componentId !== selectedComponentId) {
+      console.log('[EDITOR] Selecting new component:', componentId);
+      setSelectedComponentId(componentId);
+      setComponentPosition(position || null);
+    } else {
+      console.log('[EDITOR] Same component clicked, maintaining focus');
+    }
+  }, [selectedComponentId]);
 
   // Send direct update to iframe (instant DOM update + silent ref update)
   const sendDirectUpdate = useCallback((componentId: string, property: string, value: string) => {
@@ -483,7 +490,7 @@ export function EmailEditorV3({
           style={{ zIndex: Z_INDEX.MODAL_BACKDROP }}
         >
           <div 
-            className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4"
+            className="bg-card rounded-lg shadow-xl p-6 max-w-md mx-4"
             style={{ zIndex: Z_INDEX.MODAL_CONTENT }}
           >
             <h3 className="text-lg font-semibold mb-2">Save visual edits?</h3>
@@ -597,7 +604,7 @@ export function EmailEditorV3({
         {/* Floating AI Toolbar - Rendered via Portal with smart positioning */}
         {isMounted && mode === 'visual' && selectedComponentId && componentPosition && createPortal(
           <div 
-            className="fixed bg-gradient-to-r from-gray-900 to-gray-800 shadow-2xl rounded-xl border border-gray-700 p-2.5 transition-all duration-200 ease-out"
+            className="fixed bg-card shadow-2xl rounded-xl border border-border p-2.5 transition-all duration-200 ease-out"
             style={{
               top: `${componentPosition.top}px`,
               left: `${componentPosition.left}px`,
@@ -614,7 +621,7 @@ export function EmailEditorV3({
                 value={floatingPrompt}
                 onChange={(e) => setFloatingPrompt(e.target.value)}
                 placeholder="Ask Jolti..."
-                className="flex-1 px-3 py-2 text-sm bg-gray-800/50 text-white placeholder-gray-400 border border-gray-600 rounded-lg outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors"
+                className="flex-1 px-3 py-2 text-sm bg-background text-foreground placeholder-muted-foreground border border-border rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && floatingPrompt.trim()) {
                     e.preventDefault();
@@ -634,7 +641,7 @@ export function EmailEditorV3({
               
               {/* Submit Button */}
               <button
-                className="w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-500 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-8 h-8 rounded-lg bg-primary hover:bg-primary/90 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!floatingPrompt.trim() || isGenerating}
                 onClick={() => {
                   if (floatingPrompt.trim()) {
@@ -652,14 +659,14 @@ export function EmailEditorV3({
               
               {/* Close Button */}
               <button
-                className="w-8 h-8 rounded-lg bg-gray-700 hover:bg-gray-600 flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-lg bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
                 onClick={() => {
                   setSelectedComponentId(null);
                   setComponentPosition(null);
                   setFloatingPrompt('');
                 }}
               >
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>

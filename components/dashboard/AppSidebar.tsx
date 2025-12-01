@@ -49,17 +49,17 @@ export function AppSidebar() {
   } : null;
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-[#e8e7e5]">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       {/* Logo Header */}
-      <SidebarHeader className="h-12 border-b border-[#e8e7e5] shrink-0">
+      <SidebarHeader className="h-12 border-b border-sidebar-border shrink-0">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Joltibase" className="hover:!bg-black/[0.07]">
+            <SidebarMenuButton asChild tooltip="Joltibase" className="hover:!bg-sidebar-accent">
               <Link href="/dashboard" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
                 <div className="w-8 h-8 bg-transparent flex items-center justify-center shrink-0 transition-none">
-                  <span className="text-[#6b6b6b] font-bold text-base">J</span>
+                  <span className="text-muted-foreground font-bold text-base">J</span>
                 </div>
-                <span className="text-xl font-medium text-[#3d3d3a] group-data-[collapsible=icon]:hidden">joltibase</span>
+                <span className="text-xl font-medium text-sidebar-foreground group-data-[collapsible=icon]:hidden">joltibase</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -84,11 +84,11 @@ export function AppSidebar() {
                       asChild 
                       isActive={isActive}
                       tooltip={item.name}
-                      className={isActive ? "!bg-black/[0.07] hover:!bg-black/[0.07]" : "hover:!bg-black/[0.07]"}
+                      className={isActive ? "!bg-muted !text-foreground border-l-2 border-primary hover:!bg-muted" : "hover:!bg-muted/50"}
                     >
                       <Link href={item.href} className="flex items-center gap-2">
-                        <Icon className="text-[#6b6b6b]" />
-                        <span className={isActive ? "text-[#3d3d3a] font-medium" : "text-[#6b6b6b]"}>{item.name}</span>
+                        <Icon className={isActive ? "text-foreground" : "text-muted-foreground"} />
+                        <span className={isActive ? "text-foreground font-medium" : "text-muted-foreground"}>{item.name}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -100,7 +100,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       {/* User Profile Footer */}
-      <SidebarFooter className="border-t border-[#e8e7e5]">
+      <SidebarFooter className="border-t border-sidebar-border">
         {userData && <NavUser user={userData} />}
       </SidebarFooter>
     </Sidebar>

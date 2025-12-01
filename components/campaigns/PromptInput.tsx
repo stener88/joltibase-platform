@@ -91,7 +91,7 @@ export function PromptInput({
     return (
       <div className="w-full max-w-3xl mx-auto">
         <div
-          className="relative bg-gray-800 rounded-2xl border border-gray-600"
+          className="relative bg-card rounded-2xl border border-border"
           style={{
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
           }}
@@ -123,16 +123,16 @@ export function PromptInput({
               disabled={!value.trim() || isLoading || disabled}
               className="absolute right-4 bottom-4 w-12 h-12 text-white rounded-lg flex items-center justify-center transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed group"
               style={{
-                backgroundColor: '#e9a589',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+                backgroundColor: '#5f6ad1',
+                boxShadow: '0 2px 4px rgba(95, 106, 209, 0.3)'
               }}
               onMouseEnter={(e) => {
                 if (!isLoading && !disabled && value.trim()) {
-                  e.currentTarget.style.backgroundColor = '#d89478';
+                  e.currentTarget.style.backgroundColor = '#4f5ab8';
                 }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#e9a589';
+                e.currentTarget.style.backgroundColor = '#5f6ad1';
               }}
             >
               {isLoading ? (
@@ -152,8 +152,8 @@ export function PromptInput({
     <div className="w-full">
       {/* Disabled Reason Message */}
       {disabled && disabledReason && (
-        <div className="mb-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
-          <p className="text-sm text-amber-800 flex items-center gap-2">
+        <div className="mb-2 px-3 py-2 bg-muted border border-border rounded-lg">
+          <p className="text-sm text-muted-foreground flex items-center gap-2">
             <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -162,7 +162,7 @@ export function PromptInput({
         </div>
       )}
       
-      <div className={`relative ${noBackground ? '' : 'bg-white rounded-2xl border border-[#e8e7e5] shadow-sm'}`}>
+      <div className={`relative ${noBackground ? '' : 'bg-card rounded-2xl border border-border shadow-sm'}`}>
         {/* Input container */}
         <div className="relative flex items-start">
           {/* Textarea */}
@@ -175,12 +175,12 @@ export function PromptInput({
             onKeyDown={handleKeyDown}
             placeholder={dynamicPlaceholder || "Reply..."}
             disabled={isLoading || disabled}
-            className="w-full min-h-[80px] px-4 pt-4 font-normal text-[#3d3d3a] placeholder-[#6b6b6b]/40 bg-transparent border-none outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full min-h-[80px] px-4 pt-4 font-normal text-foreground placeholder-muted-foreground/40 bg-transparent border-none outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ 
               fontSize: '15px',
               lineHeight: '1.6',
               fontFamily: 'system-ui, -apple-system, sans-serif',
-              caretColor: '#3d3d3a',
+              caretColor: '#5f6ad1',
               paddingBottom: '52px'
             }}
           />
@@ -192,7 +192,7 @@ export function PromptInput({
                 <button
                   onClick={onLightningToggle}
                   disabled={isLoading || disabled || showDiscardSaveButtons}
-                  className="absolute left-2 bottom-4 w-8 h-8 rounded-lg bg-transparent border border-[#e8e7e5] text-[#6b6b6b] hover:border-[#3d3d3a] hover:bg-black/[0.03] flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed z-10"
+                  className="absolute left-2 bottom-4 w-8 h-8 rounded-lg bg-transparent border border-border text-muted-foreground hover:border-foreground hover:bg-muted flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed z-10"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -229,8 +229,8 @@ export function PromptInput({
                     flex items-center justify-center
                     transition-all duration-200
                     disabled:opacity-40 disabled:cursor-not-allowed
-                    border border-[#e8e7e5]
-                    ${visualEditsMode ? 'bg-[#e9a589] text-white border-[#e9a589]' : 'bg-transparent text-[#6b6b6b] hover:bg-black/[0.03] hover:border-[#3d3d3a]'}
+                    border border-border
+                    ${visualEditsMode ? 'bg-primary text-white border-primary' : 'bg-transparent text-muted-foreground hover:bg-muted hover:border-foreground'}
                   `}
                 >
                   <MousePointer2 className="w-4 h-4" />
@@ -255,8 +255,8 @@ export function PromptInput({
                     flex items-center justify-center
                     transition-all duration-200
                     disabled:opacity-40 disabled:cursor-not-allowed
-                    border border-[#e8e7e5]
-                    ${chatOnly ? 'bg-[#e9a589] text-white border-[#e9a589]' : 'bg-transparent text-[#6b6b6b] hover:bg-black/[0.03] hover:border-[#3d3d3a]'}
+                    border border-border
+                    ${chatOnly ? 'bg-primary text-white border-primary' : 'bg-transparent text-muted-foreground hover:bg-muted hover:border-foreground'}
                   `}
                 >
                   <MessageSquare className="w-4 h-4" />
@@ -272,7 +272,7 @@ export function PromptInput({
           <button
             onClick={handleSubmitClick}
             disabled={!value.trim() || isLoading || disabled}
-            className="absolute right-4 bottom-4 w-8 h-8 bg-[#e9a589] text-white rounded-lg flex items-center justify-center transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#d89478] group"
+            className="absolute right-4 bottom-4 w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary/90 group"
           >
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

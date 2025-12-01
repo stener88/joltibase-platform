@@ -22,13 +22,13 @@ export function ContactsTable({ contacts, title, emptyMessage = 'No contacts fou
   const router = useRouter();
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+    <div className="bg-card rounded-lg border border-border overflow-hidden">
+      <div className="px-6 py-4 border-b border-border bg-muted">
         <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50">
+          <thead className="bg-muted">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Contact
@@ -38,7 +38,7 @@ export function ContactsTable({ contacts, title, emptyMessage = 'No contacts fou
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
+          <tbody className="divide-y divide-border bg-card">
             {contacts.length === 0 ? (
               <tr>
                 <td colSpan={2} className="px-6 py-8 text-center text-sm text-gray-500">
@@ -50,7 +50,7 @@ export function ContactsTable({ contacts, title, emptyMessage = 'No contacts fou
                 <tr
                   key={contact.id}
                   onClick={() => router.push(`/dashboard/contacts/${contact.id}`)}
-                  className="hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="hover:bg-muted cursor-pointer transition-colors"
                 >
                   <td className="px-6 py-4">
                     <div className="text-sm font-medium text-gray-900">

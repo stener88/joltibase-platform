@@ -24,13 +24,13 @@ export function CampaignFilters({
       {/* Search */}
       <div className="flex-1">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#6b6b6b]" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search campaigns by name..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-[#e8e7e5] rounded-lg focus:ring-2 focus:ring-[#e9a589] focus:border-transparent text-[#3d3d3a] placeholder-[#6b6b6b]"
+            className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder-muted-foreground bg-card"
           />
         </div>
       </div>
@@ -39,7 +39,7 @@ export function CampaignFilters({
       <select
         value={status}
         onChange={(e) => onStatusChange(e.target.value)}
-        className="px-4 py-2.5 border border-[#e8e7e5] rounded-lg focus:ring-2 focus:ring-[#e9a589] focus:border-transparent bg-white text-[#3d3d3a]"
+        className="px-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-card text-foreground"
       >
         <option value="">All Status</option>
         <option value="draft">Draft</option>
@@ -54,7 +54,7 @@ export function CampaignFilters({
       <select
         value={type}
         onChange={(e) => onTypeChange(e.target.value)}
-        className="px-4 py-2.5 border border-[#e8e7e5] rounded-lg focus:ring-2 focus:ring-[#e9a589] focus:border-transparent bg-white w-full sm:w-48 text-[#3d3d3a]"
+        className="px-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-card w-full sm:w-48 text-foreground"
       >
         <option value="">All Types</option>
         <option value="one-time">One-Time</option>

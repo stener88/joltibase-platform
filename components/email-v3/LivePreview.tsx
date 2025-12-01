@@ -118,13 +118,13 @@ export function LivePreview({
         /* Only show hover in visual mode, on direct hover, not on child elements */
         ${currentMode === 'visual' ? `
         [data-component-id]:hover:not(:has([data-component-id]:hover)) {
-          outline: 2px dashed #3b82f6;
+          outline: 2px dashed #5f6ad1;
           outline-offset: 2px;
         }
         ` : ''}
         /* Selected state - solid outline, NO background */
         [data-component-id].selected {
-          outline: 3px solid #3b82f6 !important;
+          outline: 3px solid #5f6ad1 !important;
           outline-offset: 2px;
         }
         /* Component type label - only in visual mode */
@@ -134,7 +134,7 @@ export function LivePreview({
           position: absolute;
           top: -22px;
           left: 0;
-          background: #3b82f6;
+          background: #5f6ad1;
           color: white;
           font-size: 10px;
           font-weight: 600;
@@ -513,7 +513,7 @@ export function LivePreview({
               margin: 0;
               padding: 20px;
               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-              background: #f0f0f0;
+              background: #000000;
             }
             .email-container {
               max-width: 600px;
@@ -528,19 +528,19 @@ export function LivePreview({
               transition: outline 0.15s ease;
             }
             [data-component-id]:hover {
-              outline: 2px dashed #3b82f6;
+              outline: 2px dashed #5f6ad1;
               outline-offset: 2px;
             }
             [data-component-id].selected {
-              outline: 2px solid #3b82f6;
+              outline: 2px solid #5f6ad1;
               outline-offset: 2px;
-              background: rgba(59, 130, 246, 0.05);
+              background: rgba(95, 106, 209, 0.05);
             }
             .component-label {
               position: absolute;
               top: -20px;
               left: 0;
-              background: #3b82f6;
+              background: #5f6ad1;
               color: white;
               font-size: 10px;
               padding: 2px 6px;
@@ -556,9 +556,9 @@ export function LivePreview({
           </style>
         </head>
         <body>
-          <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #f9fafb;">
+          <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #000000;">
             <div style="text-align: center;">
-              <div style="width: 48px; height: 48px; border: 4px solid #e5e7eb; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+              <div style="width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.1); border-top-color: #5f6ad1; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
               <p style="color: #6b7280; font-size: 14px; margin: 0;">Loading email preview...</p>
             </div>
           </div>
@@ -758,11 +758,11 @@ export function LivePreview({
           <meta charset="utf-8">
           <title>Render Error</title>
         </head>
-        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; background: #fef2f2;">
-          <div style="max-width: 600px; margin: 0 auto; background: white; padding: 32px; border-radius: 8px; border-left: 4px solid #dc2626;">
-            <h1 style="color: #dc2626; margin: 0 0 16px;">⚠️ Render Error</h1>
-            <p style="color: #374151; margin: 0 0 16px;">Failed to render email preview:</p>
-            <pre style="background: #f3f4f6; padding: 16px; border-radius: 4px; overflow-x: auto; font-size: 12px;">${error.message || String(error)}</pre>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; background: #000000;">
+          <div style="max-width: 600px; margin: 0 auto; background: #0a0a0a; padding: 32px; border-radius: 8px; border-left: 4px solid #ef4444;">
+            <h1 style="color: #ef4444; margin: 0 0 16px;">⚠️ Render Error</h1>
+            <p style="color: #ffffff; margin: 0 0 16px;">Failed to render email preview:</p>
+            <pre style="background: #1a1a1a; color: #ffffff; padding: 16px; border-radius: 4px; overflow-x: auto; font-size: 12px;">${error.message || String(error)}</pre>
           </div>
         </body>
       </html>
@@ -859,8 +859,8 @@ export function LivePreview({
           className="absolute inset-0 bg-black/50 flex items-center justify-center"
           style={{ zIndex: Z_INDEX.VISUAL_EDITOR_LOADING }}
         >
-          <div className="bg-white rounded-lg p-8 text-center max-w-sm">
-            <div className="w-12 h-12 border-4 border-[#e9a589] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="bg-card rounded-lg p-8 text-center max-w-sm">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">
               {isEnteringVisualMode ? 'Preparing visual editor...' :
                isExitingVisualMode ? 'Applying changes...' :

@@ -126,7 +126,7 @@ export function ImportWizard({ onComplete }: ImportWizardProps) {
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
                   step.completed || currentStep === step.key
                     ? 'bg-[#141413] border-[#141413] text-white'
-                    : 'bg-white border-[#e8e7e5] text-[#6b6b6b]'
+                    : 'bg-card border-[#e8e7e5] text-[#6b6b6b]'
                 }`}>
                   {step.completed ? (
                     <CheckCircle className="w-5 h-5" />
@@ -151,7 +151,7 @@ export function ImportWizard({ onComplete }: ImportWizardProps) {
       </div>
 
       {/* Step Content */}
-      <div className="bg-white rounded-lg border border-[#e8e7e5] p-8">
+      <div className="bg-card rounded-lg border border-[#e8e7e5] p-8">
         {currentStep === 'upload' && (
           <div>
             <h2 className="text-2xl font-bold text-[#3d3d3a] mb-4">Upload CSV File</h2>
@@ -174,7 +174,7 @@ export function ImportWizard({ onComplete }: ImportWizardProps) {
             <div className="flex items-center justify-between mt-8 pt-6 border-t border-[#e8e7e5]">
               <button
                 onClick={() => setCurrentStep('upload')}
-                className="px-6 py-2.5 bg-white border-2 border-[#e8e7e5] text-[#3d3d3a] rounded-lg hover:border-[#3d3d3a] transition-colors"
+                className="px-6 py-2.5 bg-card border-2 border-[#e8e7e5] text-[#3d3d3a] rounded-lg hover:border-[#3d3d3a] transition-colors"
               >
                 Back
               </button>

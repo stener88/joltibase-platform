@@ -21,7 +21,7 @@ export function SplitScreenLayout({
     <div className="flex h-full w-full overflow-hidden">
       {/* Left Panel - Chat or Direct Editor (30% width) */}
       <div
-        className={`flex-shrink-0 overflow-y-auto overflow-x-hidden bg-white border-r border-gray-200 ${
+        className={`flex-shrink-0 overflow-y-auto overflow-x-hidden bg-background border-r border-border ${
           isCollapsed ? 'w-0 border-r-0' : 'flex-[0.30]'
         }`}
       >
@@ -29,7 +29,7 @@ export function SplitScreenLayout({
       </div>
 
       {/* Right Panel - Email Preview (70% width) */}
-      <div className="flex-[0.70] overflow-hidden bg-gray-50">
+      <div className="flex-[0.70] overflow-hidden bg-background">
         {rightPanel}
       </div>
     </div>

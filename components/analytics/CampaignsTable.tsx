@@ -36,15 +36,15 @@ export function CampaignsTable({ campaigns, sortBy, sortOrder, onSort }: Campaig
       className="flex items-center gap-1 hover:text-gray-900 transition-colors"
     >
       {label}
-      <ArrowUpDown className={`w-4 h-4 ${sortBy === column ? 'text-[#1a1aff]' : 'text-gray-400'}`} />
+      <ArrowUpDown className={`w-4 h-4 ${sortBy === column ? 'text-primary' : 'text-muted-foreground'}`} />
     </button>
   );
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="bg-card rounded-lg border border-border overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-muted border-b border-border">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 <SortButton column="name" label="Campaign" />
@@ -78,7 +78,7 @@ export function CampaignsTable({ campaigns, sortBy, sortOrder, onSort }: Campaig
                 <tr
                   key={campaign.id}
                   onClick={() => router.push(`/dashboard/campaigns/${campaign.id}/analytics`)}
-                  className="hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="hover:bg-muted cursor-pointer transition-colors"
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{campaign.name}</div>

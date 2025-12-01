@@ -28,7 +28,7 @@ export function GenerationProgress({ prompt }: GenerationProgressProps) {
   }, [currentStep]);
 
   return (
-    <div className="flex flex-col h-full bg-[#faf9f5] p-8 border-r border-border">
+    <div className="flex flex-col h-full bg-background p-8 border-r border-border">
       {/* Header */}
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-foreground mb-2">
@@ -41,8 +41,8 @@ export function GenerationProgress({ prompt }: GenerationProgressProps) {
       <div className="bg-card rounded-lg border border-border p-6 mb-8 shadow-sm">
         <div className="flex items-start gap-3">
           <div className="mt-1">
-            <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-accent" />
+            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-foreground" />
             </div>
           </div>
           <div className="flex-1">
@@ -68,9 +68,9 @@ export function GenerationProgress({ prompt }: GenerationProgressProps) {
               className={`
                 flex items-center gap-4 p-4 rounded-lg
                 transition-all duration-300
-                ${isActive ? 'bg-accent/5 border border-accent' : ''}
+                ${isActive ? 'bg-muted border-l-2 border-primary' : ''}
                 ${isComplete ? 'bg-card border border-border' : ''}
-                ${isPending ? 'opacity-40 bg-muted/50' : ''}
+                ${isPending ? 'opacity-40 bg-muted/30' : ''}
               `}
             >
               {/* Icon */}
@@ -78,9 +78,9 @@ export function GenerationProgress({ prompt }: GenerationProgressProps) {
                 className={`
                   flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center
                   transition-all duration-300
-                  ${isActive ? 'bg-accent text-accent-foreground' : ''}
-                  ${isComplete ? 'bg-emerald-100 text-emerald-600' : ''}
-                  ${isPending ? 'bg-muted text-muted-foreground' : ''}
+                  ${isActive ? 'bg-muted text-foreground' : ''}
+                  ${isComplete ? 'bg-muted text-foreground' : ''}
+                  ${isPending ? 'bg-muted/30 text-muted-foreground' : ''}
                 `}
               >
                 {isComplete ? (
@@ -105,16 +105,16 @@ export function GenerationProgress({ prompt }: GenerationProgressProps) {
                   {step.label}
                 </p>
                 {isComplete && (
-                  <p className="text-xs text-emerald-600 mt-0.5">✓ Complete</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">✓ Complete</p>
                 )}
               </div>
 
               {/* Status indicator */}
               {isActive && (
                 <div className="flex gap-1.5">
-                  <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="w-2 h-2 bg-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 bg-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 bg-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
               )}
             </div>

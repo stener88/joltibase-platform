@@ -149,7 +149,7 @@ export default function AnalyticsPage() {
                   type="checkbox"
                   checked={autoRefresh}
                   onChange={(e) => setAutoRefresh(e.target.checked)}
-                  className="w-4 h-4 text-[#1a1aff] border-gray-300 rounded focus:ring-[#1a1aff]"
+                  className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
                 />
                 Auto-refresh
               </label>
@@ -158,7 +158,7 @@ export default function AnalyticsPage() {
               <button
                 onClick={loadAnalytics}
                 disabled={isLoading}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-card border border-border text-foreground rounded-lg hover:bg-muted transition-colors disabled:opacity-50"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
                 Refresh
@@ -168,7 +168,7 @@ export default function AnalyticsPage() {
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#1a1aff] focus:border-transparent bg-white"
+                className="px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-card text-foreground"
               >
                 <option value="7">Last 7 days</option>
                 <option value="30">Last 30 days</option>
@@ -183,7 +183,7 @@ export default function AnalyticsPage() {
         {isLoading && !overviewData ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <RefreshCw className="w-12 h-12 text-[#e9a589] mx-auto mb-4 animate-spin" />
+              <RefreshCw className="w-12 h-12 text-foreground mx-auto mb-4 animate-spin" />
               <p className="text-gray-600">Loading analytics...</p>
             </div>
           </div>
@@ -217,7 +217,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Performance Chart */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+            <div className="bg-card rounded-lg border border-border p-6 mb-8">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Performance Over Time
               </h2>
@@ -226,7 +226,7 @@ export default function AnalyticsPage() {
 
             {/* Top Campaigns */}
             {overviewData.topCampaigns.length > 0 && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+              <div className="bg-card rounded-lg border border-border p-6 mb-8">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">
                   Top Performing Campaigns
                 </h2>
@@ -281,7 +281,7 @@ export default function AnalyticsPage() {
                 </div>
 
                 {/* Growth Chart */}
-                <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+                <div className="bg-card rounded-lg border border-border p-6 mb-8">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     Subscriber Growth (Last 90 Days)
                   </h3>
@@ -289,7 +289,7 @@ export default function AnalyticsPage() {
                 </div>
 
                 {/* Engagement Distribution */}
-                <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+                <div className="bg-card rounded-lg border border-border p-6 mb-8">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     Engagement Score Distribution
                   </h3>
@@ -324,7 +324,7 @@ export default function AnalyticsPage() {
             </div>
           </>
         ) : (
-          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+          <div className="bg-card rounded-lg border border-border p-12 text-center">
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No Data Available</h3>
             <p className="text-gray-600">
               Start sending campaigns to see analytics data

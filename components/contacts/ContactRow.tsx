@@ -35,7 +35,7 @@ export function ContactRow({ contact, isSelected, onSelect, onDelete }: ContactR
   const fullName = [contact.first_name, contact.last_name].filter(Boolean).join(' ') || '-';
 
   return (
-    <tr className="hover:bg-gray-50 transition-colors">
+    <tr className="hover:bg-muted transition-colors">
       {/* Checkbox */}
       <td className="px-6 py-4 whitespace-nowrap">
         <input
@@ -73,7 +73,7 @@ export function ContactRow({ contact, isSelected, onSelect, onDelete }: ContactR
             contact.tags.slice(0, 3).map((tag, idx) => (
               <span 
                 key={idx}
-                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700"
+                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted text-foreground"
               >
                 {tag}
               </span>
@@ -116,10 +116,10 @@ export function ContactRow({ contact, isSelected, onSelect, onDelete }: ContactR
           </button>
 
           {showMenu && (
-            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10">
+            <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg py-1 z-10">
               <Link
                 href={`/dashboard/contacts/${contact.id}/edit`}
-                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted"
               >
                 <Edit2 className="w-4 h-4" />
                 Edit

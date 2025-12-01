@@ -34,7 +34,7 @@ export function ContactTable({
 
   if (contacts.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-[#e8e7e5] p-12 text-center">
+      <div className="bg-card rounded-lg border border-[#e8e7e5] p-12 text-center">
         <div className="text-6xl mb-4">📭</div>
         <h3 className="text-xl font-semibold text-[#3d3d3a] mb-2">No contacts found</h3>
         <p className="text-[#6b6b6b] mb-6">
@@ -45,10 +45,10 @@ export function ContactTable({
   }
 
   return (
-    <div className="bg-white rounded-lg border border-[#e8e7e5] overflow-hidden">
+    <div className="bg-card rounded-lg border border-[#e8e7e5] overflow-hidden">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-[#e8e7e5]">
-          <thead className="bg-[#f5f4ed]">
+          <thead className="bg-muted">
             <tr>
               <th scope="col" className="px-6 py-3 text-left">
                 <input
@@ -86,7 +86,7 @@ export function ContactTable({
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-[#e8e7e5]">
+          <tbody className="bg-card divide-y divide-[#e8e7e5]">
             {contacts.map((contact) => (
               <ContactRow
                 key={contact.id}
@@ -111,14 +111,14 @@ export function ContactTable({
           <button
             onClick={() => onPageChange(pagination.page - 1)}
             disabled={pagination.page === 1}
-            className="p-2 rounded-lg border border-[#e8e7e5] hover:bg-[#f5f4ed] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-[#3d3d3a]"
+            className="p-2 rounded-lg border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-foreground"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             onClick={() => onPageChange(pagination.page + 1)}
             disabled={pagination.page >= pagination.totalPages}
-            className="p-2 rounded-lg border border-[#e8e7e5] hover:bg-[#f5f4ed] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-[#3d3d3a]"
+            className="p-2 rounded-lg border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-foreground"
           >
             <ChevronRight className="w-5 h-5" />
           </button>

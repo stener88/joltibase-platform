@@ -47,7 +47,7 @@ export function ExportButton({ label, endpoint, filename }: ExportButtonProps) {
     <button
       onClick={handleExport}
       disabled={isExporting}
-      className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="flex items-center gap-2 px-4 py-2 bg-card border border-border text-foreground700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <Download className={`w-4 h-4 ${isExporting ? 'animate-bounce' : ''}`} />
       {isExporting ? 'Exporting...' : label}

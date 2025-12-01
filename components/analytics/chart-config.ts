@@ -12,10 +12,11 @@
  * Shared tooltip styling for all charts
  */
 export const CHART_TOOLTIP_STYLE = {
-  backgroundColor: 'white',
-  border: '1px solid #e5e7eb',
+  backgroundColor: '#0a0a0a',
+  border: '1px solid rgba(255, 255, 255, 0.1)',
   borderRadius: '8px',
   padding: '12px',
+  color: '#ffffff',
 };
 
 /**
@@ -23,15 +24,15 @@ export const CHART_TOOLTIP_STYLE = {
  */
 export const CHART_GRID_PROPS = {
   strokeDasharray: '3 3' as const,
-  stroke: '#f0f0f0',
+  stroke: 'rgba(255, 255, 255, 0.1)',
 };
 
 /**
  * Shared axis styling
  */
 export const CHART_AXIS_STYLE = {
-  tick: { fontSize: 12 },
-  stroke: '#999',
+  tick: { fontSize: 12, fill: '#9ca3af' },
+  stroke: 'rgba(255, 255, 255, 0.1)',
 };
 
 // ============================================================================

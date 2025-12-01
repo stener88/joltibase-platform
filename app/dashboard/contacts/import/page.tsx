@@ -16,8 +16,8 @@ export default function ImportContactsPage() {
       <div className="max-w-5xl mx-auto px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#3d3d3a] mb-2">Import Contacts</h1>
-          <p className="text-[#6b6b6b]">Upload a CSV file to import your contacts</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Import Contacts</h1>
+          <p className="text-muted-foreground">Upload a CSV file to import your contacts</p>
         </div>
 
         {/* Wizard */}

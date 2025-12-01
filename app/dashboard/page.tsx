@@ -138,7 +138,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <svg
-              className="animate-spin h-12 w-12 text-[#e9a589] mx-auto mb-4"
+              className="animate-spin h-12 w-12 text-foreground mx-auto mb-4"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -157,7 +157,7 @@ export default function DashboardPage() {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               ></path>
             </svg>
-            <p className="text-gray-600">Loading dashboard...</p>
+            <p className="text-muted-foreground">Loading dashboard...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -207,34 +207,34 @@ export default function DashboardPage() {
             <div className="space-y-2">
               <button
                 onClick={() => router.push('/dashboard/campaigns/generate')}
-                className="group w-full flex items-center gap-3 p-3 bg-transparent border border-gray-200 text-gray-700 rounded-lg hover:bg-[#e9a589]/10 hover:border-[#e9a589] transition-colors"
+                className="group w-full flex items-center gap-3 p-3 bg-transparent border border-border text-foreground rounded-lg hover:bg-muted hover:border-foreground transition-colors"
               >
-                <Plus className="w-4 h-4 text-gray-500 group-hover:text-[#e9a589] transition-colors" />
+                <Plus className="w-4 h-4 text-muted-foreground transition-colors" />
                 <div className="text-left">
-                  <div className="text-sm font-semibold text-gray-900">Create Campaign</div>
-                  <div className="text-sm font-normal text-gray-500">Start a new email campaign with AI</div>
+                  <div className="text-sm font-semibold text-foreground">Create Campaign</div>
+                  <div className="text-sm font-normal text-muted-foreground">Start a new email campaign with AI</div>
                 </div>
               </button>
               
               <button
                 onClick={() => router.push('/dashboard/contacts/new')}
-                className="group w-full flex items-center gap-3 p-3 bg-transparent border border-gray-200 text-gray-700 rounded-lg hover:bg-[#e9a589]/10 hover:border-[#e9a589] transition-colors"
+                className="group w-full flex items-center gap-3 p-3 bg-transparent border border-border text-foreground rounded-lg hover:bg-muted hover:border-foreground transition-colors"
               >
-                <Plus className="w-4 h-4 text-gray-500 group-hover:text-[#e9a589] transition-colors" />
+                <Plus className="w-4 h-4 text-muted-foreground transition-colors" />
                 <div className="text-left">
-                  <div className="text-sm font-semibold text-gray-900">Add Contact</div>
-                  <div className="text-sm font-normal text-gray-500">Manually add a new contact</div>
+                  <div className="text-sm font-semibold text-foreground">Add Contact</div>
+                  <div className="text-sm font-normal text-muted-foreground">Manually add a new contact</div>
                 </div>
               </button>
               
               <button
                 onClick={() => router.push('/dashboard/contacts/import')}
-                className="group w-full flex items-center gap-3 p-3 bg-transparent border border-gray-200 text-gray-700 rounded-lg hover:bg-[#e9a589]/10 hover:border-[#e9a589] transition-colors"
+                className="group w-full flex items-center gap-3 p-3 bg-transparent border border-border text-foreground rounded-lg hover:bg-muted hover:border-foreground transition-colors"
               >
-                <Upload className="w-4 h-4 text-gray-500 group-hover:text-[#e9a589] transition-colors" />
+                <Upload className="w-4 h-4 text-muted-foreground transition-colors" />
                 <div className="text-left">
-                  <div className="text-sm font-semibold text-gray-900">Import Contacts</div>
-                  <div className="text-sm font-normal text-gray-500">Upload contacts from CSV</div>
+                  <div className="text-sm font-semibold text-foreground">Import Contacts</div>
+                  <div className="text-sm font-normal text-muted-foreground">Upload contacts from CSV</div>
                 </div>
               </button>
             </div>
@@ -249,7 +249,7 @@ export default function DashboardPage() {
             }}
           >
             {recentActivity.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 <p>No recent activity</p>
                 <p className="text-sm mt-2">Start by creating a campaign or adding contacts</p>
               </div>
@@ -257,7 +257,7 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 {recentActivity.map((activity) => (
                   <div key={activity.id} className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 bg-muted rounded flex items-center justify-center shrink-0">
                       {activity.type === 'contact' ? (
                         <Users className="w-4 h-4 text-black" />
                       ) : (
@@ -265,8 +265,8 @@ export default function DashboardPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900">{activity.description}</p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-sm text-foreground">{activity.description}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
                         {new Date(activity.timestamp).toLocaleString()}
                       </p>
                     </div>

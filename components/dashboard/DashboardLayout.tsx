@@ -27,7 +27,7 @@ export function DashboardLayout({ children, campaignEditor }: DashboardLayoutPro
         <AppSidebar />
         <SidebarInset>
           <DashboardHeader campaignEditor={campaignEditor} />
-          <main className="flex-1 bg-[#faf9f5] overflow-y-auto">
+          <main className="flex-1 bg-background overflow-y-auto">
             {children}
           </main>
         </SidebarInset>

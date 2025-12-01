@@ -41,7 +41,7 @@ export default function CampaignAnalyticsPage() {
         <div className="max-w-7xl mx-auto px-8 py-8">
           <div className="text-center py-12">
             <svg
-              className="animate-spin h-12 w-12 text-[#e9a589] mx-auto mb-4"
+              className="animate-spin h-12 w-12 text-foreground mx-auto mb-4"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -60,7 +60,7 @@ export default function CampaignAnalyticsPage() {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               ></path>
             </svg>
-            <p className="text-gray-600">Loading campaign...</p>
+            <p className="text-muted-foreground">Loading campaign...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -72,10 +72,10 @@ export default function CampaignAnalyticsPage() {
       <DashboardLayout>
         <div className="max-w-7xl mx-auto px-8 py-8">
           <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Campaign not found</h2>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Campaign not found</h2>
             <button
               onClick={() => router.push('/dashboard/campaigns')}
-              className="text-[#e9a589] hover:text-[#e9a589]/80"
+              className="text-primary hover:text-primary/80"
             >
               Back to campaigns
             </button>
@@ -100,10 +100,10 @@ export default function CampaignAnalyticsPage() {
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-gray-900">{campaign.name}</h1>
+                <h1 className="text-3xl font-bold text-foreground">{campaign.name}</h1>
                 <CampaignStatusBadge status={campaign.status} />
               </div>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 {campaign.sent_at
                   ? `Sent ${format(new Date(campaign.sent_at), 'MMM dd, yyyy \'at\' HH:mm')}`
                   : campaign.scheduled_at
@@ -116,9 +116,9 @@ export default function CampaignAnalyticsPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => router.push(`/dashboard/campaigns/${campaignId}/edit`)}
-                className="group px-3 py-2 bg-transparent border border-gray-200 text-gray-900 rounded-lg hover:bg-[#e9a589]/10 hover:border-[#e9a589] transition-colors flex items-center gap-2 text-sm font-semibold"
+                className="group px-3 py-2 bg-transparent border border-border text-foreground rounded-lg hover:bg-muted hover:border-foreground transition-colors flex items-center gap-2 text-sm font-semibold"
               >
-                <Edit3 className="w-4 h-4 text-gray-500 group-hover:text-[#e9a589] transition-colors" />
+                <Edit3 className="w-4 h-4 text-muted-foreground transition-colors" />
                 Edit Campaign
               </button>
             </div>
@@ -154,49 +154,49 @@ export default function CampaignAnalyticsPage() {
 
         {/* Additional Stats */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Campaign Performance</h3>
+          <div className="bg-card rounded-lg border border-border p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Campaign Performance</h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Delivery Rate</span>
+                <span className="text-sm text-muted-foreground">Delivery Rate</span>
                 <div className="flex items-center gap-2">
-                  <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-[#e9a589] rounded-full"
+                      className="h-full bg-primary rounded-full"
                       style={{ width: `${deliveryRate}%` }}
                     />
                   </div>
-                  <span className="text-sm font-medium text-gray-900 w-12 text-right">{deliveryRate}%</span>
+                  <span className="text-sm font-medium text-foreground w-12 text-right">{deliveryRate}%</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Open Rate</span>
+                <span className="text-sm text-muted-foreground">Open Rate</span>
                 <div className="flex items-center gap-2">
-                  <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-[#e9a589] rounded-full"
+                      className="h-full bg-primary rounded-full"
                       style={{ width: `${openRate}%` }}
                     />
                   </div>
-                  <span className="text-sm font-medium text-gray-900 w-12 text-right">{openRate}%</span>
+                  <span className="text-sm font-medium text-foreground w-12 text-right">{openRate}%</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Click Rate</span>
+                <span className="text-sm text-muted-foreground">Click Rate</span>
                 <div className="flex items-center gap-2">
-                  <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-[#e9a589] rounded-full"
+                      className="h-full bg-primary rounded-full"
                       style={{ width: `${clickRate}%` }}
                     />
                   </div>
-                  <span className="text-sm font-medium text-gray-900 w-12 text-right">{clickRate}%</span>
+                  <span className="text-sm font-medium text-foreground w-12 text-right">{clickRate}%</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="bg-card rounded-lg border border-border p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Campaign Details</h3>
             <dl className="space-y-3">
               <div className="flex justify-between text-sm">
@@ -232,7 +232,7 @@ export default function CampaignAnalyticsPage() {
         {/* Email Content Preview */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Email Content</h3>
-          <div className="p-4 bg-gray-50 rounded-lg">
+          <div className="p-4 bg-muted rounded-lg">
             <p className="text-sm text-gray-600 mb-2">Subject:</p>
             <p className="font-medium text-gray-900 mb-4">{campaign.subject_line}</p>
             {campaign.preview_text && (

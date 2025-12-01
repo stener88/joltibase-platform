@@ -89,7 +89,7 @@ export function PropertiesPanel({
       return {
         type: 'Unknown',
         text: '',
-        textColor: '#000000',
+        textColor: '#0a0a0a',
         backgroundColor: 'transparent',
         marginTop: '0',
         marginBottom: '0',
@@ -162,8 +162,8 @@ export function PropertiesPanel({
     };
 
     const backgroundColor = getStyleValue('background-color', 'transparent');
-    const textColor = getStyleValue('color', '#000000');
-    const borderColor = getStyleValue('border-color', '#000000');
+    const textColor = getStyleValue('color', '#0a0a0a');
+    const borderColor = getStyleValue('border-color', '#0a0a0a');
 
     const isLinkComponent = componentType === 'Link' || componentType === 'Button';
 
@@ -445,11 +445,11 @@ export function PropertiesPanel({
 
   if (!selectedComponentId || !componentProperties) {
     return (
-      <div className="h-full flex items-center justify-center p-8 text-center bg-gray-50">
+      <div className="h-full flex items-center justify-center p-8 text-center bg-background">
         <div className="max-w-sm">
           <div className="text-5xl mb-4">🎨</div>
-          <h3 className="text-lg font-semibold mb-2 text-gray-900">Select an element</h3>
-          <p className="text-sm text-gray-600">
+          <h3 className="text-lg font-semibold mb-2 text-foreground">Select an element</h3>
+          <p className="text-sm text-muted-foreground">
             Click on any element in the preview to edit its properties
           </p>
         </div>
@@ -458,12 +458,12 @@ export function PropertiesPanel({
   }
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-card">
       {/* Header with component type badge */}
-      <div className="p-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+      <div className="p-4 border-b bg-background">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <div className="bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wide">
+            <div className="bg-primary text-primary-foreground px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wide">
               {componentProperties.type}
             </div>
           </div>
@@ -472,13 +472,13 @@ export function PropertiesPanel({
               // TODO: Implement reset
               console.log('[PROPERTIES] Reset to default');
             }}
-            className="text-xs text-gray-600 hover:text-gray-900 flex items-center gap-1"
+            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
             title="Reset to default"
           >
             <RotateCcw className="w-3 h-3" />
           </button>
         </div>
-        <p className="text-xs text-gray-600">
+        <p className="text-xs text-muted-foreground">
           Edit properties to customize this element
         </p>
       </div>
@@ -491,7 +491,7 @@ export function PropertiesPanel({
           <div className="border-b">
             <button
               onClick={() => toggleSection('content')}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted transition-colors"
             >
               <div className="flex items-center gap-2">
                 <span className="text-lg">📝</span>
@@ -500,7 +500,7 @@ export function PropertiesPanel({
               {openSections.content ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             {openSections.content && (
-              <div className="px-4 py-3 bg-gray-50">
+              <div className="px-4 py-3 bg-background">
                 <textarea
                   value={text}
                   onChange={(e) => handleTextChange(e.target.value)}
@@ -517,7 +517,7 @@ export function PropertiesPanel({
           <div className="border-b">
             <button
               onClick={() => toggleSection('typography')}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted transition-colors"
             >
               <div className="flex items-center gap-2">
                 <span className="text-lg">🔤</span>
@@ -526,10 +526,10 @@ export function PropertiesPanel({
               {openSections.typography ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             {openSections.typography && (
-              <div className="px-4 py-3 space-y-4 bg-gray-50">
+              <div className="px-4 py-3 space-y-4 bg-background">
                 {/* Font Size */}
                 <div>
-                  <label className="block text-xs font-medium mb-2 text-gray-700">Font Size</label>
+                  <label className="block text-xs font-medium mb-2 text-foreground">Font Size</label>
                   <div className="flex gap-2">
                     {['12px', '14px', '16px', '18px', '24px', '32px'].map(size => (
                       <button
@@ -537,8 +537,8 @@ export function PropertiesPanel({
                         onClick={() => handleTypographyChange('fontSize', size)}
                         className={`px-2 py-1 text-xs rounded border ${
                           fontSize === size 
-                            ? 'bg-blue-600 text-white border-blue-600' 
-                            : 'bg-white border-gray-300 hover:border-blue-400'
+                            ? 'bg-primary text-primary-foreground border-primary' 
+                            : 'bg-card border-border hover:border-foreground'
                         }`}
                       >
                         {size}
@@ -549,7 +549,7 @@ export function PropertiesPanel({
 
                 {/* Font Weight */}
                 <div>
-                  <label className="block text-xs font-medium mb-2 text-gray-700">Font Weight</label>
+                  <label className="block text-xs font-medium mb-2 text-foreground">Font Weight</label>
                   <div className="flex gap-2">
                     {[
                       { value: '300', label: 'Light' },
@@ -562,8 +562,8 @@ export function PropertiesPanel({
                         onClick={() => handleTypographyChange('fontWeight', weight.value)}
                         className={`px-3 py-1 text-xs rounded border flex-1 ${
                           fontWeight === weight.value 
-                            ? 'bg-blue-600 text-white border-blue-600' 
-                            : 'bg-white border-gray-300 hover:border-blue-400'
+                            ? 'bg-primary text-primary-foreground border-primary' 
+                            : 'bg-card border-border hover:border-foreground'
                         }`}
                       >
                         {weight.label}
@@ -574,7 +574,7 @@ export function PropertiesPanel({
 
                 {/* Line Height */}
                 <div>
-                  <label className="block text-xs font-medium mb-2 text-gray-700">
+                  <label className="block text-xs font-medium mb-2 text-foreground">
                     Line Height: {lineHeight || 'normal'}
                   </label>
                   <input
@@ -590,7 +590,7 @@ export function PropertiesPanel({
 
                 {/* Text Align */}
                 <div>
-                  <label className="block text-xs font-medium mb-2 text-gray-700">Text Align</label>
+                  <label className="block text-xs font-medium mb-2 text-foreground">Text Align</label>
                   <div className="flex gap-2">
                     {[
                       { value: 'left', icon: AlignLeft },
@@ -606,7 +606,7 @@ export function PropertiesPanel({
                           className={`px-3 py-2 rounded border flex-1 flex items-center justify-center ${
                             textAlign === align.value 
                               ? 'bg-blue-600 text-white border-blue-600' 
-                              : 'bg-white border-gray-300 hover:border-blue-400'
+                              : 'bg-card border-border hover:border-foreground'
                           }`}
                           title={align.value}
                         >
@@ -626,7 +626,7 @@ export function PropertiesPanel({
           <div className="border-b">
             <button
               onClick={() => toggleSection('colors')}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted transition-colors"
             >
               <div className="flex items-center gap-2">
                 <span className="text-lg">🎨</span>
@@ -635,11 +635,11 @@ export function PropertiesPanel({
               {openSections.colors ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             {openSections.colors && (
-              <div className="px-4 py-3 space-y-4 bg-gray-50">
+              <div className="px-4 py-3 space-y-4 bg-background">
                 {/* Text Color */}
                 {componentProperties.canEditTypography && (
                   <div>
-                    <label className="block text-xs font-medium mb-2 text-gray-700">Text Color</label>
+                    <label className="block text-xs font-medium mb-2 text-foreground">Text Color</label>
                     <div className="flex gap-2">
                       <Input
                         type="color"
@@ -660,7 +660,7 @@ export function PropertiesPanel({
 
                 {/* Background Color */}
                 <div>
-                  <label className="block text-xs font-medium mb-2 text-gray-700">Background Color</label>
+                  <label className="block text-xs font-medium mb-2 text-foreground">Background Color</label>
                   <div className="flex gap-2">
                     <Input
                       type="color"
@@ -682,7 +682,7 @@ export function PropertiesPanel({
                         key={color}
                         onClick={() => handleColorChange(color, 'background')}
                         className={`w-8 h-8 rounded border-2 ${
-                          backgroundColor === color ? 'border-blue-600' : 'border-gray-300'
+                          backgroundColor === color ? 'border-primary' : 'border-border'
                         }`}
                         style={{ 
                           backgroundColor: color === 'transparent' ? 'white' : color,
@@ -707,7 +707,7 @@ export function PropertiesPanel({
           <div className="border-b">
             <button
               onClick={() => toggleSection('spacing')}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted transition-colors"
             >
               <div className="flex items-center gap-2">
                 <span className="text-lg">📏</span>
@@ -716,10 +716,10 @@ export function PropertiesPanel({
               {openSections.spacing ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             {openSections.spacing && (
-              <div className="px-4 py-3 space-y-4 bg-gray-50">
+              <div className="px-4 py-3 space-y-4 bg-background">
                 {/* Margin */}
                 <div>
-                  <label className="block text-xs font-medium mb-2 text-gray-700">Margin</label>
+                  <label className="block text-xs font-medium mb-2 text-foreground">Margin</label>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       { key: 'marginTop', label: 'Top', value: marginTop },
@@ -729,7 +729,7 @@ export function PropertiesPanel({
                     ].map(item => (
                       <div key={item.key}>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs text-gray-600">{item.label}</span>
+                          <span className="text-xs text-muted-foreground">{item.label}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Input
@@ -739,7 +739,7 @@ export function PropertiesPanel({
                             className="w-full text-sm"
                             min="0"
                           />
-                          <span className="text-xs text-gray-500 whitespace-nowrap">px</span>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">px</span>
                         </div>
                       </div>
                     ))}
@@ -748,7 +748,7 @@ export function PropertiesPanel({
 
                 {/* Padding */}
                 <div>
-                  <label className="block text-xs font-medium mb-2 text-gray-700">Padding</label>
+                  <label className="block text-xs font-medium mb-2 text-foreground">Padding</label>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       { key: 'paddingTop', label: 'Top', value: paddingTop },
@@ -758,7 +758,7 @@ export function PropertiesPanel({
                     ].map(item => (
                       <div key={item.key}>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs text-gray-600">{item.label}</span>
+                          <span className="text-xs text-muted-foreground">{item.label}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Input
@@ -768,7 +768,7 @@ export function PropertiesPanel({
                             className="w-full text-sm"
                             min="0"
                           />
-                          <span className="text-xs text-gray-500 whitespace-nowrap">px</span>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">px</span>
                         </div>
                       </div>
                     ))}
@@ -777,7 +777,7 @@ export function PropertiesPanel({
 
                 {/* Quick Presets */}
                 <div>
-                  <label className="block text-xs font-medium mb-2 text-gray-700">Quick Presets</label>
+                  <label className="block text-xs font-medium mb-2 text-foreground">Quick Presets</label>
                   <div className="flex gap-2">
                     {['0', '8', '16', '24', '32'].map(preset => (
                       <button
@@ -787,7 +787,7 @@ export function PropertiesPanel({
                             handleSpacingChange(preset, key)
                           );
                         }}
-                        className="px-2 py-1 text-xs rounded border bg-white border-gray-300 hover:border-blue-400"
+                        className="px-2 py-1 text-xs rounded border bg-card border-border hover:border-foreground"
                         title={`Set all margins to ${preset}px`}
                       >
                         {preset}px
@@ -805,7 +805,7 @@ export function PropertiesPanel({
           <div className="border-b">
             <button
               onClick={() => toggleSection('borders')}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted transition-colors"
             >
               <div className="flex items-center gap-2">
                 <span className="text-lg">⬜</span>
@@ -814,10 +814,10 @@ export function PropertiesPanel({
               {openSections.borders ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             {openSections.borders && (
-              <div className="px-4 py-3 space-y-4 bg-gray-50">
+              <div className="px-4 py-3 space-y-4 bg-background">
                 {/* Border Radius */}
                 <div>
-                  <label className="block text-xs font-medium mb-2 text-gray-700">
+                  <label className="block text-xs font-medium mb-2 text-foreground">
                     Border Radius: {borderRadius || '0px'}
                   </label>
                   <input
@@ -836,8 +836,8 @@ export function PropertiesPanel({
                         onClick={() => handleBorderChange('borderRadius', radius)}
                         className={`px-2 py-1 text-xs rounded border ${
                           borderRadius === radius 
-                            ? 'bg-blue-600 text-white border-blue-600' 
-                            : 'bg-white border-gray-300 hover:border-blue-400'
+                            ? 'bg-primary text-primary-foreground border-primary' 
+                            : 'bg-card border-border hover:border-foreground'
                         }`}
                       >
                         {radius}
@@ -848,7 +848,7 @@ export function PropertiesPanel({
 
                 {/* Border Width */}
                 <div>
-                  <label className="block text-xs font-medium mb-2 text-gray-700">
+                  <label className="block text-xs font-medium mb-2 text-foreground">
                     Border Width: {borderWidth || '0px'}
                   </label>
                   <div className="flex items-center gap-2">
@@ -866,7 +866,7 @@ export function PropertiesPanel({
 
                 {/* Border Color */}
                 <div>
-                  <label className="block text-xs font-medium mb-2 text-gray-700">Border Color</label>
+                  <label className="block text-xs font-medium mb-2 text-foreground">Border Color</label>
                   <div className="flex gap-2">
                     <Input
                       type="color"
@@ -886,7 +886,7 @@ export function PropertiesPanel({
 
                 {/* Border Style */}
                 <div>
-                  <label className="block text-xs font-medium mb-2 text-gray-700">Border Style</label>
+                  <label className="block text-xs font-medium mb-2 text-foreground">Border Style</label>
                   <div className="flex gap-2">
                     {['solid', 'dashed', 'dotted'].map(style => (
                       <button
@@ -894,8 +894,8 @@ export function PropertiesPanel({
                         onClick={() => handleBorderChange('borderStyle', style)}
                         className={`px-3 py-2 text-xs rounded border flex-1 ${
                           borderStyle === style 
-                            ? 'bg-blue-600 text-white border-blue-600' 
-                            : 'bg-white border-gray-300 hover:border-blue-400'
+                            ? 'bg-primary text-primary-foreground border-primary' 
+                            : 'bg-card border-border hover:border-foreground'
                         }`}
                       >
                         {style}
@@ -913,7 +913,7 @@ export function PropertiesPanel({
           <div className="border-b">
             <button
               onClick={() => toggleSection('link')}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted transition-colors"
             >
               <div className="flex items-center gap-2">
                 <span className="text-lg">🔗</span>
@@ -922,9 +922,9 @@ export function PropertiesPanel({
               {openSections.link ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             {openSections.link && (
-              <div className="px-4 py-3 space-y-3 bg-gray-50">
+              <div className="px-4 py-3 space-y-3 bg-background">
                 <div>
-                  <label className="block text-xs font-medium mb-2 text-gray-700">URL</label>
+                  <label className="block text-xs font-medium mb-2 text-foreground">URL</label>
                   <Input
                     type="url"
                     value={href}
@@ -933,7 +933,7 @@ export function PropertiesPanel({
                     className="w-full text-sm font-mono"
                   />
                   {href && !/^https?:\/\/.+/.test(href) && (
-                    <p className="mt-1 text-xs text-amber-600">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       ⚠️ URL should start with http:// or https://
                     </p>
                   )}
@@ -948,7 +948,7 @@ export function PropertiesPanel({
           <div className="border-b">
             <button
               onClick={() => toggleSection('image')}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted transition-colors"
             >
               <div className="flex items-center gap-2">
                 <span className="text-lg">🖼️</span>
@@ -957,10 +957,10 @@ export function PropertiesPanel({
               {openSections.image ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             {openSections.image && (
-          <div className="px-4 py-3 space-y-4 bg-gray-50">
+          <div className="px-4 py-3 space-y-4 bg-background">
             <div>
-              <label className="block text-xs font-medium mb-2 text-gray-700">Current Image</label>
-              <div className="border rounded-lg p-3 bg-white">
+              <label className="block text-xs font-medium mb-2 text-foreground">Current Image</label>
+              <div className="border rounded-lg p-3 bg-card">
                 {imageSrc ? (
                   <img
                     src={imageSrc}
@@ -968,7 +968,7 @@ export function PropertiesPanel({
                     className="w-full h-auto rounded"
                   />
                 ) : (
-                  <div className="h-32 flex items-center justify-center text-gray-400">
+                  <div className="h-32 flex items-center justify-center text-muted-foreground">
                     No image
                   </div>
                 )}
@@ -984,7 +984,7 @@ export function PropertiesPanel({
             </Button>
 
             <div>
-              <label className="block text-xs font-medium mb-2 text-gray-700">Alt Text</label>
+              <label className="block text-xs font-medium mb-2 text-foreground">Alt Text</label>
               <Input
                 type="text"
                 value={imageAlt}
@@ -992,7 +992,7 @@ export function PropertiesPanel({
                 placeholder="Description for accessibility"
                 className="w-full text-sm"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Describe what the image shows for accessibility
               </p>
             </div>
@@ -1000,7 +1000,7 @@ export function PropertiesPanel({
             {componentProperties.width && componentProperties.height && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium mb-2 text-gray-700">Width</label>
+                  <label className="block text-xs font-medium mb-2 text-foreground">Width</label>
                   <div className="flex items-center gap-1">
                     <Input
                       type="text"
@@ -1013,7 +1013,7 @@ export function PropertiesPanel({
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-2 text-gray-700">Height</label>
+                  <label className="block text-xs font-medium mb-2 text-foreground">Height</label>
                   <div className="flex items-center gap-1">
                     <Input
                       type="text"

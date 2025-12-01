@@ -54,11 +54,11 @@ export function ImagePickerUrl({ onSelect, onClose, currentSrc = '', currentAlt 
     <div className="space-y-4">
       {/* URL Input */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-muted-foreground700 mb-2">
           Image URL
         </label>
         <div className="relative">
-          <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground400" />
           <input
             type="url"
             placeholder="https://example.com/image.jpg"
@@ -70,7 +70,7 @@ export function ImagePickerUrl({ onSelect, onClose, currentSrc = '', currentAlt 
             className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
               imageError 
                 ? 'border-red-300 focus:ring-red-500' 
-                : 'border-gray-300 focus:ring-blue-500'
+                : 'border-border focus:ring-blue-500'
             }`}
           />
         </div>
@@ -83,7 +83,7 @@ export function ImagePickerUrl({ onSelect, onClose, currentSrc = '', currentAlt 
 
       {/* Alt Text */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-muted-foreground700 mb-2">
           Alt Text (Description)
         </label>
         <input
@@ -91,9 +91,9 @@ export function ImagePickerUrl({ onSelect, onClose, currentSrc = '', currentAlt 
           placeholder="Descriptive text for accessibility"
           value={alt}
           onChange={(e) => setAlt(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-muted-foreground500">
           Describe what the image shows for accessibility
         </p>
       </div>
@@ -111,9 +111,9 @@ export function ImagePickerUrl({ onSelect, onClose, currentSrc = '', currentAlt 
 
       {/* Image Preview */}
       {preview && (
-        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-          <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
-          <div className="relative bg-white rounded border border-gray-200 overflow-hidden">
+        <div className="border border-border rounded-lg p-4 bg-muted">
+          <p className="text-sm font-medium text-muted-foreground700 mb-2">Preview:</p>
+          <div className="relative bg-card rounded border border-border overflow-hidden">
             {loading && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>

@@ -82,13 +82,13 @@ export function LiveActivityFeed({ pollingInterval = 10000 }: LiveActivityFeedPr
       case 'delivered':
         return 'bg-blue-50 border-blue-200';
       default:
-        return 'bg-gray-50 border-gray-200';
+        return 'bg-muted border-border';
     }
   };
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-card rounded-lg border border-border p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Live Activity</h3>
         <div className="text-center py-8 text-gray-500">Loading activity...</div>
       </div>
@@ -96,7 +96,7 @@ export function LiveActivityFeed({ pollingInterval = 10000 }: LiveActivityFeedPr
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="bg-card rounded-lg border border-border p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">Live Activity</h3>
         <span className="flex items-center gap-2 text-xs text-gray-500">

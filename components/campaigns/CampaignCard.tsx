@@ -108,16 +108,16 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
   return (
     <>
       <Link href={`/dashboard/campaigns/${campaign.id}/analytics`}>
-        <div className="bg-white rounded-lg border border-[#e8e7e5] p-6 hover:shadow-lg transition-all cursor-pointer">
+        <div className="bg-card rounded-lg border border-border p-6 hover:shadow-lg transition-all cursor-pointer">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-[#3d3d3a] mb-1 truncate">
+            <h3 className="text-lg font-semibold text-foreground mb-1 truncate">
               {campaign.name}
             </h3>
-            <div className="flex items-center gap-2 text-sm text-[#6b6b6b]">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               {(campaign.ai_generated || campaign.generation_prompt) && (
-                <span className="inline-flex items-center gap-1 text-xs bg-[#e9a589]/10 text-[#e9a589] px-2 py-0.5 rounded-full border border-[#e9a589]/20">
+                <span className="inline-flex items-center gap-1 text-xs bg-muted text-foreground px-2 py-0.5 rounded-full border border-border">
                   ✨ AI Generated
                 </span>
               )}
@@ -165,8 +165,8 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
 
         {/* Subject Line */}
         {campaign.subject_line && (
-          <div className="mb-4 pb-4 border-b border-[#e8e7e5]">
-            <p className="text-sm text-[#6b6b6b] line-clamp-2">
+          <div className="mb-4 pb-4 border-b border-border">
+            <p className="text-sm text-muted-foreground line-clamp-2">
               {campaign.subject_line}
             </p>
           </div>
@@ -176,39 +176,39 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
         {campaign.status !== 'draft' && hasStats && (
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="flex items-center gap-2">
-              <Mail className="w-4 h-4 text-[#6b6b6b]" />
+              <Mail className="w-4 h-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-[#6b6b6b]">Sent</p>
-                <p className="text-sm font-semibold text-[#3d3d3a]">{stats.sent.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Sent</p>
+                <p className="text-sm font-semibold text-foreground">{stats.sent.toLocaleString()}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-[#6b6b6b]" />
+              <Users className="w-4 h-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-[#6b6b6b]">Delivered</p>
-                <p className="text-sm font-semibold text-[#3d3d3a]">{stats.delivered.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Delivered</p>
+                <p className="text-sm font-semibold text-foreground">{stats.delivered.toLocaleString()}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-[#6b6b6b]" />
+              <TrendingUp className="w-4 h-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-[#6b6b6b]">Open Rate</p>
-                <p className="text-sm font-semibold text-[#3d3d3a]">{openRate}%</p>
+                <p className="text-xs text-muted-foreground">Open Rate</p>
+                <p className="text-sm font-semibold text-foreground">{openRate}%</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-[#6b6b6b]" />
+              <TrendingUp className="w-4 h-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-[#6b6b6b]">Click Rate</p>
-                <p className="text-sm font-semibold text-[#3d3d3a]">{clickRate}%</p>
+                <p className="text-xs text-muted-foreground">Click Rate</p>
+                <p className="text-sm font-semibold text-foreground">{clickRate}%</p>
               </div>
             </div>
           </div>
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-[#e8e7e5]">
-          <div className="flex items-center gap-2 text-xs text-[#6b6b6b]">
+        <div className="flex items-center justify-between pt-4 border-t border-border">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Calendar className="w-3.5 h-3.5" />
             {campaign.sent_at ? (
               <span>Sent {new Date(campaign.sent_at).toLocaleDateString()}</span>
@@ -219,7 +219,7 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
             )}
           </div>
           {campaign.list_ids && (
-            <div className="text-xs text-[#6b6b6b]">
+            <div className="text-xs text-muted-foreground">
               {campaign.list_ids.length} list{campaign.list_ids.length !== 1 ? 's' : ''}
             </div>
           )}
@@ -238,21 +238,21 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
           }}
         >
           <div
-            className="bg-white rounded-xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200"
+            className="bg-card rounded-xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8e7e5]">
-              <h3 className="text-lg font-semibold text-[#3d3d3a]">Rename Campaign</h3>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <h3 className="text-lg font-semibold text-foreground">Rename Campaign</h3>
               <button
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   setIsRenameDialogOpen(false);
                 }}
-                className="p-2 rounded-lg hover:bg-[#f5f4ed] transition-colors"
+                className="p-2 rounded-lg hover:bg-muted transition-colors"
               >
-                <X className="w-5 h-5 text-[#6b6b6b]" />
+                <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
 
@@ -260,7 +260,7 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
             <form onSubmit={handleRenameSubmit}>
               <div className="p-6 space-y-4">
                 <div>
-                  <label htmlFor="campaign-name" className="block text-sm font-medium text-[#3d3d3a] mb-2">
+                  <label htmlFor="campaign-name" className="block text-sm font-medium text-foreground mb-2">
                     Campaign Name
                   </label>
                   <input
@@ -273,7 +273,7 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
                         setIsRenameDialogOpen(false);
                       }
                     }}
-                    className="w-full px-3 py-2 border border-[#e8e7e5] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e9a589] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-card text-foreground"
                     placeholder="Enter campaign name"
                     autoFocus
                     disabled={isRenaming}
@@ -282,7 +282,7 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e8e7e5]">
+              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border">
                 <button
                   type="button"
                   onClick={(e) => {
@@ -290,14 +290,14 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
                     e.stopPropagation();
                     setIsRenameDialogOpen(false);
                   }}
-                  className="px-4 py-2 text-sm font-medium text-[#3d3d3a] bg-white border border-[#e8e7e5] rounded-lg hover:bg-[#f5f4ed] transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-lg hover:bg-muted transition-colors"
                   disabled={isRenaming}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-[#141413] rounded-lg hover:bg-[#3d3d3a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isRenaming || !newName.trim()}
                 >
                   {isRenaming ? 'Saving...' : 'Save'}

@@ -45,19 +45,19 @@ export function PerformanceChart({ data, height = 300 }: PerformanceChartProps) 
           <Line 
             type="monotone" 
             dataKey="openRate" 
-            stroke="#e9a589" 
+            stroke="#5f6ad1" 
             strokeWidth={2}
             name="Open Rate"
-            dot={{ fill: '#e9a589', r: 4 }}
+            dot={{ fill: '#5f6ad1', r: 4 }}
             activeDot={{ r: 6 }}
           />
           <Line 
             type="monotone" 
             dataKey="clickRate" 
-            stroke="#e9a589" 
+            stroke="#9ca3af" 
             strokeWidth={2}
             name="Click Rate"
-            dot={{ fill: '#e9a589', r: 4 }}
+            dot={{ fill: '#9ca3af', r: 4 }}
             activeDot={{ r: 6 }}
           />
         </LineChart>

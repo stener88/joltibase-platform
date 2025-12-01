@@ -49,7 +49,7 @@ export default function NewContactPage() {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-lg border border-gray-200 p-8">
+        <div className="bg-card rounded-lg border border-border p-8">
           <ContactForm
             onSubmit={handleSubmit}
             onCancel={() => router.back()}

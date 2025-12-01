@@ -58,7 +58,7 @@ export function SendingProgress({ pollingInterval = 10000 }: SendingProgressProp
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-card rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Sending Progress</h3>
         <div className="text-center py-8 text-gray-500">Loading...</div>
       </div>
@@ -67,7 +67,7 @@ export function SendingProgress({ pollingInterval = 10000 }: SendingProgressProp
 
   if (campaigns.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-card rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Sending Progress</h3>
         <div className="text-center py-8 text-gray-500">
           No campaigns currently sending
@@ -77,7 +77,7 @@ export function SendingProgress({ pollingInterval = 10000 }: SendingProgressProp
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="bg-card rounded-lg border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">Sending Progress</h3>
         <span className="text-xs text-gray-500">
@@ -91,7 +91,7 @@ export function SendingProgress({ pollingInterval = 10000 }: SendingProgressProp
           const timeRemaining = estimateTimeRemaining(campaign);
 
           return (
-            <div key={campaign.id} className="p-4 bg-gray-50 rounded-lg">
+            <div key={campaign.id} className="p-4 bg-muted rounded-lg">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <Send className="w-4 h-4 text-blue-600 flex-shrink-0" />

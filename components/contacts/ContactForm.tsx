@@ -118,7 +118,7 @@ export function ContactForm({
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-[#1a1aff] focus:border-transparent ${
-            errors.email ? 'border-red-300' : 'border-gray-300'
+            errors.email ? 'border-red-300' : 'border-border'
           }`}
           placeholder="contact@example.com"
         />
@@ -143,7 +143,7 @@ export function ContactForm({
           id="firstName"
           value={formData.firstName}
           onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1a1aff] focus:border-transparent"
+          className="w-full px-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-[#1a1aff] focus:border-transparent"
           placeholder="John"
         />
       </div>
@@ -158,7 +158,7 @@ export function ContactForm({
           id="lastName"
           value={formData.lastName}
           onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1a1aff] focus:border-transparent"
+          className="w-full px-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-[#1a1aff] focus:border-transparent"
           placeholder="Doe"
         />
       </div>
@@ -172,7 +172,7 @@ export function ContactForm({
           id="status"
           value={formData.status}
           onChange={(e) => setFormData({ ...formData, status: e.target.value as ContactStatus })}
-          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1a1aff] focus:border-transparent bg-white"
+          className="w-full px-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-[#1a1aff] focus:border-transparent bg-card"
         >
           <option value="subscribed">Subscribed</option>
           <option value="unsubscribed">Unsubscribed</option>
@@ -194,11 +194,11 @@ export function ContactForm({
       />
 
       {/* Actions */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
         <button
           type="button"
           onClick={onCancel}
-          className="px-6 py-2.5 bg-white border-2 border-gray-200 text-gray-900 rounded-lg hover:border-gray-300 transition-colors"
+          className="px-6 py-2.5 bg-card border-2 border-border text-foreground rounded-lg hover:border-border transition-colors"
         >
           Cancel
         </button>

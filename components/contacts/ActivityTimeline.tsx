@@ -18,10 +18,10 @@ interface ActivityTimelineProps {
 export function ActivityTimeline({ emailHistory }: ActivityTimelineProps) {
   if (!emailHistory || emailHistory.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-        <Mail className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">No email activity yet</h3>
-        <p className="text-gray-600">
+      <div className="bg-card rounded-lg border border-border p-12 text-center">
+        <Mail className="w-12 h-12 text-muted-foreground300 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-muted-foreground900 mb-2">No email activity yet</h3>
+        <p className="text-muted-foreground600">
           This contact hasn't received any emails from your campaigns
         </p>
       </div>
@@ -41,7 +41,7 @@ export function ActivityTimeline({ emailHistory }: ActivityTimelineProps) {
       case 'failed':
         return <AlertCircle className="w-5 h-5 text-red-600" />;
       default:
-        return <Mail className="w-5 h-5 text-gray-400" />;
+        return <Mail className="w-5 h-5 text-muted-foreground400" />;
     }
   };
 
@@ -58,13 +58,13 @@ export function ActivityTimeline({ emailHistory }: ActivityTimelineProps) {
       case 'failed':
         return 'bg-red-50 border-red-200';
       default:
-        return 'bg-gray-50 border-gray-200';
+        return 'bg-muted border-border';
     }
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">Email Activity</h3>
+    <div className="bg-card rounded-lg border border-border p-6">
+      <h3 className="text-lg font-semibold text-muted-foreground900 mb-6">Email Activity</h3>
       
       <div className="space-y-4">
         {emailHistory.map((event, idx) => (
@@ -80,22 +80,22 @@ export function ActivityTimeline({ emailHistory }: ActivityTimelineProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">
+                    <p className="text-sm font-semibold text-muted-foreground900 truncate">
                       {event.subject}
                     </p>
                     {event.campaigns && (
-                      <p className="text-xs text-gray-600 mt-1">
+                      <p className="text-xs text-muted-foreground600 mt-1">
                         Campaign: {event.campaigns.name}
                       </p>
                     )}
                   </div>
-                  <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
+                  <span className="text-xs text-muted-foreground500 ml-2 flex-shrink-0">
                     {event.sent_at ? new Date(event.sent_at).toLocaleDateString() : 'N/A'}
                   </span>
                 </div>
 
                 {/* Event Details */}
-                <div className="flex flex-wrap gap-3 text-xs text-gray-600">
+                <div className="flex flex-wrap gap-3 text-xs text-muted-foreground600">
                   {event.sent_at && (
                     <div className="flex items-center gap-1">
                       <CheckCircle className="w-3 h-3" />

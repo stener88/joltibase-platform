@@ -54,7 +54,7 @@ export default function CampaignEditPage({ params }: EditPageProps) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-screen">
-          <div className="text-gray-600">Loading campaign...</div>
+          <div className="text-muted-foreground">Loading campaign...</div>
         </div>
       </DashboardLayout>
     );

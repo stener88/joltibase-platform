@@ -6,12 +6,12 @@ interface CampaignStatusBadgeProps {
 
 export function CampaignStatusBadge({ status }: CampaignStatusBadgeProps) {
   const styles = {
-    draft: 'bg-gray-50 text-gray-700 border-gray-200',
-    scheduled: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-    sending: 'bg-blue-50 text-blue-700 border-blue-200 animate-pulse',
-    sent: 'bg-green-50 text-green-700 border-green-200',
-    paused: 'bg-orange-50 text-orange-700 border-orange-200',
-    cancelled: 'bg-red-50 text-red-700 border-red-200',
+    draft: 'bg-muted text-muted-foreground border-border',
+    scheduled: 'bg-muted text-foreground border-primary',
+    sending: 'bg-primary/10 text-primary border-primary animate-pulse',
+    sent: 'bg-muted text-foreground border-border',
+    paused: 'bg-muted text-muted-foreground border-border',
+    cancelled: 'bg-destructive/10 text-destructive border-destructive',
   };
 
   const labels = {

@@ -17,14 +17,14 @@ export function ContactInfo({ contact, onEdit, onDelete }: ContactInfoProps) {
   const initial = contact.first_name?.charAt(0) || contact.email.charAt(0);
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="bg-card rounded-lg border border-border p-6">
       {/* Avatar and Name */}
-      <div className="text-center mb-6 pb-6 border-b border-gray-200">
+      <div className="text-center mb-6 pb-6 border-b border-border">
         <div className="w-20 h-20 rounded-full bg-[#1a1aff] text-white flex items-center justify-center text-3xl font-bold mx-auto mb-4">
           {initial.toUpperCase()}
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-1">{fullName}</h2>
-        <p className="text-gray-600 mb-3">{contact.email}</p>
+        <p className="text-muted-foreground mb-3">{contact.email}</p>
         <StatusBadge status={contact.status} />
       </div>
 
@@ -60,7 +60,7 @@ export function ContactInfo({ contact, onEdit, onDelete }: ContactInfoProps) {
                 {contact.tags.map((tag, idx) => (
                   <span
                     key={idx}
-                    className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700"
+                    className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-foreground"
                   >
                     {tag}
                   </span>
@@ -120,7 +120,7 @@ export function ContactInfo({ contact, onEdit, onDelete }: ContactInfoProps) {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 pt-6 border-t border-gray-200">
+      <div className="flex gap-3 pt-6 border-t border-border">
         <button
           onClick={onEdit}
           className="flex-1 px-4 py-2.5 bg-[#1a1aff] text-white rounded-lg hover:bg-[#0000cc] transition-colors"
@@ -129,7 +129,7 @@ export function ContactInfo({ contact, onEdit, onDelete }: ContactInfoProps) {
         </button>
         <button
           onClick={onDelete}
-          className="px-4 py-2.5 bg-white border-2 border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+          className="px-4 py-2.5 bg-card border-2 border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
         >
           Delete
         </button>

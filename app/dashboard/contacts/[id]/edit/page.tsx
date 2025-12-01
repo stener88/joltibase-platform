@@ -67,7 +67,7 @@ export default function EditContactPage() {
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <svg
-              className="animate-spin h-12 w-12 text-[#e9a589] mx-auto mb-4"
+              className="animate-spin h-12 w-12 text-foreground mx-auto mb-4"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -97,7 +97,7 @@ export default function EditContactPage() {
     return (
       <DashboardLayout>
         <div className="max-w-7xl mx-auto px-8 py-8">
-          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+          <div className="bg-card rounded-lg border border-border p-12 text-center">
             <div className="text-6xl mb-4">😞</div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">{error || 'Contact not found'}</h1>
             <p className="text-gray-600 mb-6">
@@ -105,7 +105,7 @@ export default function EditContactPage() {
             </p>
             <button
               onClick={() => router.push('/dashboard/contacts')}
-              className="px-6 py-3 bg-[#1a1aff] text-white rounded-lg hover:bg-[#0000cc] transition-colors"
+              className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
             >
               Back to Contacts
             </button>
@@ -132,7 +132,7 @@ export default function EditContactPage() {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-lg border border-gray-200 p-8">
+        <div className="bg-card rounded-lg border border-border p-8">
           <ContactForm
             initialData={{
               email: contact.email,

@@ -7,7 +7,7 @@ interface StatusBadgeProps {
 export function StatusBadge({ status }: StatusBadgeProps) {
   const styles = {
     subscribed: 'bg-green-50 text-green-700 border-green-200',
-    unsubscribed: 'bg-gray-50 text-gray-700 border-gray-200',
+    unsubscribed: 'bg-muted text-muted-foreground700 border-border',
     bounced: 'bg-red-50 text-red-700 border-red-200',
     complained: 'bg-orange-50 text-orange-700 border-orange-200',
   };

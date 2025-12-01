@@ -44,14 +44,14 @@ export function TagSelector({ tags, onChange }: TagSelectorProps) {
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
+      <label className="block text-sm font-medium text-foreground mb-2">
         Tags
       </label>
       <div className="flex flex-wrap gap-2">
         {tags.map((tag, idx) => (
           <span
             key={idx}
-            className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm"
+            className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-foreground rounded-lg text-sm"
           >
             {tag}
             <button
@@ -73,13 +73,13 @@ export function TagSelector({ tags, onChange }: TagSelectorProps) {
             onKeyDown={handleKeyDown}
             onBlur={handleAddTag}
             placeholder="Type tag name..."
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1a1aff] focus:border-transparent"
+            className="px-3 py-1.5 border border-border rounded-lg text-sm focus:ring-2 focus:ring-[#1a1aff] focus:border-transparent"
           />
         ) : (
           <button
             type="button"
             onClick={() => setShowInput(true)}
-            className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border-2 border-dashed border-gray-300 text-gray-600 rounded-lg text-sm hover:border-[#1a1aff] hover:text-[#1a1aff] transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 bg-card border-2 border-dashed border-border text-muted-foreground rounded-lg text-sm hover:border-[#1a1aff] hover:text-[#1a1aff] transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             Add tag

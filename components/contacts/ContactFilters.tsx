@@ -39,7 +39,7 @@ export function ContactFilters({
       <select
         value={status}
         onChange={(e) => onStatusChange(e.target.value)}
-        className="px-4 py-2.5 border border-[#e8e7e5] rounded-lg focus:ring-2 focus:ring-[#e9a589] focus:border-transparent bg-white text-[#3d3d3a]"
+        className="px-4 py-2.5 border border-[#e8e7e5] rounded-lg focus:ring-2 focus:ring-[#e9a589] focus:border-transparent bg-card text-[#3d3d3a]"
       >
         <option value="">All Status</option>
         <option value="subscribed">Subscribed</option>

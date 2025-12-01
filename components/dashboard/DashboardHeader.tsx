@@ -68,20 +68,20 @@ export function DashboardHeader({ campaignEditor }: DashboardHeaderProps) {
   const breadcrumbs = generateBreadcrumbs();
 
   return (
-    <header className="sticky top-0 z-10 grid grid-cols-3 h-12 items-center gap-4 bg-[#f5f4ed] border-b border-[#e8e7e5] px-6">
+    <header className="sticky top-0 z-10 grid grid-cols-3 h-12 items-center gap-4 bg-background border-b border-border px-6">
       {/* Left: Sidebar toggle and breadcrumbs */}
       <div className="flex items-center gap-4 min-w-0">
         <Button
           variant="ghost"
           size="icon"
           onClick={toggleSidebar}
-          className="h-8 w-8 flex-shrink-0 text-[#3d3d3a] hover:text-[#3d3d3a] hover:bg-black/[0.07]"
+          className="h-8 w-8 flex-shrink-0 text-foreground hover:text-foreground hover:bg-muted"
         >
           <PanelLeft className="h-5 w-5" />
           <span className="sr-only">Toggle sidebar</span>
         </Button>
 
-        <div className="h-6 w-px bg-[#e8e7e5] flex-shrink-0" />
+        <div className="h-6 w-px bg-border flex-shrink-0" />
 
         <nav className="flex items-center gap-2 text-sm min-w-0">
           {breadcrumbs.map((crumb, index) => {
@@ -96,16 +96,16 @@ export function DashboardHeader({ campaignEditor }: DashboardHeaderProps) {
             return (
               <div key={crumb.href} className="flex items-center gap-2">
                 {isLast || isUUID ? (
-                  <span className="font-medium text-[#3d3d3a]">{crumb.label}</span>
+                  <span className="font-medium text-foreground">{crumb.label}</span>
                 ) : (
                   <>
                     <Link
                       href={crumb.href}
-                      className="text-[#6b6b6b] hover:text-[#3d3d3a] transition-colors"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {crumb.label}
                     </Link>
-                    <ChevronRight className="h-4 w-4 text-[#6b6b6b]" />
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </>
                 )}
               </div>

@@ -138,16 +138,16 @@ export default function ContactsPage() {
           <div className="flex items-center justify-end gap-3 mb-6">
               <button
                 onClick={() => router.push('/dashboard/contacts/import')}
-                className="group px-3 py-2 bg-transparent border border-gray-200 text-gray-900 rounded-lg hover:bg-[#e9a589]/10 hover:border-[#e9a589] transition-colors flex items-center gap-2 text-sm font-semibold"
+                className="group px-3 py-2 bg-transparent border border-border text-foreground rounded-lg hover:bg-muted hover:border-foreground transition-colors flex items-center gap-2 text-sm font-semibold"
               >
-                <Upload className="w-4 h-4 text-gray-500 group-hover:text-[#e9a589] transition-colors" />
+                <Upload className="w-4 h-4 text-muted-foreground transition-colors" />
                 Import CSV
               </button>
               <button
                 onClick={() => router.push('/dashboard/contacts/new')}
-                className="group px-3 py-2 bg-transparent border border-gray-200 text-gray-900 rounded-lg hover:bg-[#e9a589]/10 hover:border-[#e9a589] transition-colors flex items-center gap-2 text-sm font-semibold"
+                className="group px-3 py-2 bg-transparent border border-border text-foreground rounded-lg hover:bg-muted hover:border-foreground transition-colors flex items-center gap-2 text-sm font-semibold"
               >
-                <Plus className="w-4 h-4 text-gray-500 group-hover:text-[#e9a589] transition-colors" />
+                <Plus className="w-4 h-4 text-muted-foreground transition-colors" />
                 Add Contact
               </button>
           </div>
@@ -165,14 +165,14 @@ export default function ContactsPage() {
 
         {/* Bulk Actions */}
         {selectedIds.size > 0 && (
-          <div className="mb-4 p-4 bg-[#e9a589]/10 border border-[#e9a589]/30 rounded-lg flex items-center justify-between">
-            <span className="text-sm font-medium text-[#e9a589]">
+          <div className="mb-4 p-4 bg-muted border border-border rounded-lg flex items-center justify-between">
+            <span className="text-sm font-medium text-foreground">
               {selectedIds.size} contact{selectedIds.size !== 1 ? 's' : ''} selected
             </span>
             <div className="flex items-center gap-3">
               <button
                 onClick={handleBulkDelete}
-                className="px-4 py-2 bg-[#ea7a76] text-white rounded-lg hover:bg-[#ea7a76]/90 transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-destructive text-white rounded-lg hover:bg-destructive/90 transition-colors flex items-center gap-2"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete Selected
@@ -183,9 +183,9 @@ export default function ContactsPage() {
 
         {/* Loading State */}
         {isLoading && contacts.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+          <div className="bg-card rounded-lg border border-border p-12 text-center">
             <svg
-              className="animate-spin h-12 w-12 text-[#e9a589] mx-auto mb-4"
+              className="animate-spin h-12 w-12 text-foreground mx-auto mb-4"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
