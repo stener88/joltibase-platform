@@ -88,8 +88,10 @@ export async function fetchImagesForPrompt(
   }
   
   try {
-    // Extract keywords from prompt, enhanced with design system aesthetics
+    // Extract simple, focused keywords (1-2 words max)
     const keywords = extractImageKeywords(prompt, designSystem);
+    
+    console.log(`🎯 [IMAGE-SERVICE] Keywords: hero="${keywords.hero}", feature="${keywords.feature}", product="${keywords.product}"`);
     
     // Always fetch hero and logo (base 2 images)
     const baseImages = [
@@ -97,7 +99,7 @@ export async function fetchImagesForPrompt(
         query: keywords.hero, 
         orientation: 'landscape', 
         width: 600, 
-        height: 400 
+        height: 400
       }),
       fetchUnsplashImage({ 
         query: 'minimal logo modern abstract', 
@@ -117,7 +119,7 @@ export async function fetchImagesForPrompt(
           query: keywords.feature || keywords.hero, 
           orientation: 'landscape', 
           width: 400, 
-          height: 300 
+          height: 300
         })
       );
     }
@@ -129,19 +131,19 @@ export async function fetchImagesForPrompt(
           query: keywords.secondary || keywords.feature || keywords.hero, 
           orientation: 'landscape', 
           width: 400, 
-          height: 300 
+          height: 300
         }),
         fetchUnsplashImage({ 
           query: keywords.tertiary || keywords.feature || keywords.hero, 
           orientation: 'landscape', 
           width: 400, 
-          height: 300 
+          height: 300
         }),
         fetchUnsplashImage({ 
           query: keywords.product || keywords.hero, 
           orientation: 'portrait', 
           width: 300, 
-          height: 400 
+          height: 400
         })
       );
     }
@@ -153,19 +155,19 @@ export async function fetchImagesForPrompt(
           query: keywords.product || keywords.hero, 
           orientation: 'portrait', 
           width: 300, 
-          height: 400 
+          height: 400
         }),
         fetchUnsplashImage({ 
           query: keywords.destination || keywords.hero, 
           orientation: 'landscape', 
           width: 300, 
-          height: 250 
+          height: 250
         }),
         fetchUnsplashImage({ 
           query: keywords.destination || keywords.hero, 
           orientation: 'landscape', 
           width: 300, 
-          height: 250 
+          height: 250
         }),
         fetchUnsplashImage({ 
           query: 'minimal icon badge modern', 
@@ -205,22 +207,70 @@ export async function fetchImagesForPrompt(
 }
 
 /**
- * Optimize keyword length for Unsplash search
- * Keep under 60 chars for best relevance
+ * Extract the core product/subject noun from prompt
+ * Returns SINGLE most relevant word for focused Unsplash search
  */
-function optimizeKeywordLength(keyword: string): string {
-  if (keyword.length <= 60) return keyword;
+function extractCoreNoun(prompt: string): string {
+  const lower = prompt.toLowerCase();
   
-  // Truncate but keep complete words
-  const truncated = keyword.substring(0, 60);
-  const lastSpace = truncated.lastIndexOf(' ');
+  // Common product nouns - expand as needed
+  const knownProducts = [
+    'headset', 'headphones', 'earbuds', 'speaker', 'audio',
+    'phone', 'smartphone', 'iphone', 'android', 'mobile',
+    'laptop', 'computer', 'macbook', 'pc', 'tablet',
+    'watch', 'smartwatch', 'timepiece',
+    'car', 'vehicle', 'bike', 'bicycle', 'scooter',
+    'shoes', 'sneakers', 'boots', 'footwear',
+    'bag', 'backpack', 'purse', 'luggage',
+    'bottle', 'cup', 'mug', 'glass',
+    'shirt', 'clothing', 'dress', 'jacket',
+    'furniture', 'chair', 'desk', 'table', 'sofa',
+    'book', 'magazine', 'newspaper', 'publication',
+    'camera', 'lens', 'photography',
+    'glasses', 'sunglasses', 'eyewear',
+    'keyboard', 'mouse', 'monitor', 'screen',
+    'software', 'app', 'platform', 'tool', 'service',
+  ];
   
-  return lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated;
+  // Check if any known product is mentioned
+  for (const product of knownProducts) {
+    if (lower.includes(product)) {
+      return product;
+    }
+  }
+  
+  // Fallback: extract first meaningful noun after removing filler words
+  const cleaned = lower
+    .replace(/\b(can|you|please|help|create|make|build|design|write|generate|email|newsletter|campaign|we|are|our|is|the|a|an|for|about|to|launching|launch|announce|announcement|introducing|introduce|new|premium|modern|beautiful|professional|exclusive|limited|best|great|amazing|quarterly|annual|monthly|weekly|daily)\b/gi, '')
+    .trim();
+  
+  const words = cleaned.split(/\s+/).filter(w => w.length > 2);
+  
+  return words.length > 0 ? words[0] : 'modern';
 }
 
 /**
- * Extract relevant keywords from user prompt for image search
- * If design system is provided, combines user intent with aesthetic keywords
+ * Get category-based fallback if no specific product found
+ */
+function getCategoryKeyword(prompt: string): string {
+  const lower = prompt.toLowerCase();
+  
+  if (lower.includes('travel') || lower.includes('vacation') || lower.includes('destination')) return 'travel';
+  if (lower.includes('food') || lower.includes('restaurant') || lower.includes('dining')) return 'food';
+  if (lower.includes('fitness') || lower.includes('gym') || lower.includes('workout')) return 'fitness';
+  if (lower.includes('business') || lower.includes('office') || lower.includes('corporate')) return 'office';
+  if (lower.includes('tech') || lower.includes('software') || lower.includes('digital')) return 'technology';
+  if (lower.includes('fashion') || lower.includes('style') || lower.includes('clothing')) return 'fashion';
+  if (lower.includes('event') || lower.includes('conference') || lower.includes('summit')) return 'conference';
+  if (lower.includes('education') || lower.includes('learning') || lower.includes('course')) return 'education';
+  if (lower.includes('health') || lower.includes('medical') || lower.includes('wellness')) return 'healthcare';
+  
+  return 'business';
+}
+
+/**
+ * Extract simple, focused keywords for Unsplash search
+ * Uses core noun extraction for maximum relevance
  */
 function extractImageKeywords(
   prompt: string,
@@ -233,137 +283,33 @@ function extractImageKeywords(
   product?: string;
   destination?: string;
 } {
-  const lower = prompt.toLowerCase();
+  // Extract the core subject/product from prompt
+  const coreNoun = extractCoreNoun(prompt);
+  const category = getCategoryKeyword(prompt);
   
-  // Helper: Combine prompt keywords with design system aesthetics
-  const enhance = (promptKeywords: string, type: 'hero' | 'feature' | 'product' | 'background' = 'feature'): string => {
-    if (!designSystem || !('imageKeywords' in designSystem)) {
-      return optimizeKeywordLength(promptKeywords);
-    }
-    const dsKeywords = (designSystem as any).imageKeywords[type];
-    if (!dsKeywords || dsKeywords.length === 0) {
-      return optimizeKeywordLength(promptKeywords);
-    }
-    // Pick a random keyword from the design system array for variety
-    const randomKeyword = dsKeywords[Math.floor(Math.random() * dsKeywords.length)];
-    // Combine: "user intent" + "design system aesthetic"
-    const combined = `${promptKeywords} ${randomKeyword}`;
-    
-    return optimizeKeywordLength(combined);
-  };
+  // SIMPLE APPROACH: Use core noun + category fallback
+  // Let Unsplash relevance + color filter handle aesthetics
   
-  // Travel/Tourism
-  if (lower.includes('travel') || lower.includes('destination') || lower.includes('trip')) {
+  // If we found a specific product, use it
+  if (coreNoun !== 'modern') {
     return {
-      hero: enhance('travel adventure vacation', 'hero'),
-      feature: enhance('travel activities tourism', 'feature'),
-      secondary: enhance('travel exploration', 'feature'),
-      tertiary: enhance('adventure journey', 'feature'),
-      product: enhance('travel destination scenic', 'product'),
-      destination: enhance('beautiful city landscape', 'background'),
+      hero: coreNoun,                      // "headset"
+      feature: coreNoun,                   // "headset" (Unsplash will pick different image)
+      secondary: `${coreNoun} detail`,     // "headset detail"
+      tertiary: coreNoun,                  // "headset"
+      product: `${coreNoun} product`,      // "headset product"
+      destination: category,               // Category fallback (e.g., "technology")
     };
   }
   
-  // Promotional/Retail
-  if (lower.includes('sale') || lower.includes('promotion') || lower.includes('discount') || lower.includes('shopping')) {
-    return {
-      hero: enhance('shopping sale retail store', 'hero'),
-      feature: enhance('product showcase retail', 'feature'),
-      secondary: enhance('shopping experience', 'feature'),
-      tertiary: enhance('sale celebration', 'background'),
-      product: enhance('product display merchandise', 'product'),
-      destination: enhance('store retail location', 'background'),
-    };
-  }
-  
-  // Events/Invitations
-  if (lower.includes('event') || lower.includes('invitation') || lower.includes('conference') || lower.includes('webinar')) {
-    return {
-      hero: enhance('conference event professional', 'hero'),
-      feature: enhance('business meeting presentation', 'feature'),
-      secondary: enhance('networking professional', 'feature'),
-      tertiary: enhance('workshop training', 'feature'),
-      product: enhance('speaker presentation', 'product'),
-      destination: enhance('venue conference hall', 'background'),
-    };
-  }
-  
-  // Product Launch/Update
-  if (lower.includes('product') || lower.includes('launch') || lower.includes('announcement')) {
-    return {
-      hero: enhance('product launch technology modern', 'hero'),
-      feature: enhance('modern product design', 'feature'),
-      secondary: enhance('innovation technology', 'feature'),
-      tertiary: enhance('digital product', 'product'),
-      product: enhance('product showcase display', 'product'),
-      destination: enhance('modern workspace office', 'background'),
-    };
-  }
-  
-  // Newsletter/Content
-  if (lower.includes('newsletter') || lower.includes('digest') || lower.includes('tips')) {
-    return {
-      hero: enhance('newsletter reading coffee workspace', 'hero'),
-      feature: enhance('creative workspace content', 'feature'),
-      secondary: enhance('reading learning', 'feature'),
-      tertiary: enhance('inspiration creativity', 'feature'),
-      product: enhance('content creation writing', 'product'),
-      destination: enhance('library books learning', 'background'),
-    };
-  }
-  
-  // Welcome/Onboarding
-  if (lower.includes('welcome') || lower.includes('onboard')) {
-    return {
-      hero: enhance('welcome handshake professional team', 'hero'),
-      feature: enhance('team collaboration workspace', 'feature'),
-      secondary: enhance('onboarding training', 'feature'),
-      tertiary: enhance('success celebration', 'feature'),
-      product: enhance('team member professional', 'product'),
-      destination: enhance('office workspace modern', 'background'),
-    };
-  }
-  
-  // Loyalty/Rewards
-  if (lower.includes('loyalty') || lower.includes('reward') || lower.includes('points')) {
-    return {
-      hero: enhance('reward celebration success', 'hero'),
-      feature: enhance('exclusive benefits vip', 'feature'),
-      secondary: enhance('achievement success', 'feature'),
-      tertiary: enhance('premium quality', 'product'),
-      product: enhance('rewards benefits exclusive', 'product'),
-      destination: enhance('luxury experience premium', 'background'),
-    };
-  }
-  
-  // Feedback/Survey
-  if (lower.includes('feedback') || lower.includes('survey') || lower.includes('review')) {
-    return {
-      hero: enhance('feedback conversation communication', 'hero'),
-      feature: enhance('rating review satisfaction', 'feature'),
-      secondary: enhance('customer service support', 'feature'),
-      tertiary: enhance('quality improvement', 'feature'),
-      product: enhance('feedback form survey', 'product'),
-      destination: enhance('customer support office', 'background'),
-    };
-  }
-  
-  // Default: extract key nouns or use generic business
-  const keywords = prompt
-    .toLowerCase()
-    .replace(/email|newsletter|campaign|create|build|generate/gi, '')
-    .split(' ')
-    .filter(word => word.length > 3)
-    .slice(0, 2)
-    .join(' ');
-  
+  // No specific product found - use category
   return {
-    hero: enhance(keywords || 'professional business workspace', 'hero'),
-    feature: enhance('modern technology design', 'feature'),
-    secondary: enhance('business professional', 'feature'),
-    tertiary: enhance('innovation digital', 'feature'),
-    product: enhance('product service business', 'product'),
-    destination: enhance('office workspace modern', 'background'),
+    hero: category,                        // e.g., "conference"
+    feature: category,                     // e.g., "conference"
+    secondary: `${category} professional`, // e.g., "conference professional"
+    tertiary: category,                    // e.g., "conference"
+    product: `${category} modern`,         // e.g., "conference modern"
+    destination: category,                 // e.g., "conference"
   };
 }
 
