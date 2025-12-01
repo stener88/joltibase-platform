@@ -11,10 +11,10 @@ import {
   AlignCenter, 
   AlignRight, 
   AlignJustify,
-  ChevronDown,
-  ChevronUp,
-  Copy,
-  RotateCcw,
+  MoveVertical,
+  MoveHorizontal,
+  ArrowUp,
+  ChevronRight,
 } from 'lucide-react';
 
 interface PropertiesPanelProps {
@@ -22,6 +22,7 @@ interface PropertiesPanelProps {
   selectedComponentId: string | null;
   componentMap: ComponentMap;
   onDirectUpdate: (componentId: string, property: string, value: string) => void;
+  onSelectParent?: () => void; // Callback to select parent component
 }
 
 interface ComponentProperties {
@@ -71,6 +72,7 @@ export function PropertiesPanel({
   selectedComponentId,
   componentMap,
   onDirectUpdate,
+  onSelectParent,
 }: PropertiesPanelProps) {
   // Extract properties from selected component
   const componentProperties = useMemo<ComponentProperties | null>(() => {
@@ -215,11 +217,13 @@ export function PropertiesPanel({
   // Local state for editing
   const [text, setText] = useState('');
   const [textColor, setTextColor] = useState('');
+  const [textColorInherit, setTextColorInherit] = useState(true);
   const [fontSize, setFontSize] = useState('');
   const [fontWeight, setFontWeight] = useState('');
   const [lineHeight, setLineHeight] = useState('');
   const [textAlign, setTextAlign] = useState('');
   const [backgroundColor, setBackgroundColor] = useState('');
+  const [backgroundColorInherit, setBackgroundColorInherit] = useState(true);
   const [marginTop, setMarginTop] = useState('0');
   const [marginBottom, setMarginBottom] = useState('0');
   const [marginLeft, setMarginLeft] = useState('0');
@@ -238,17 +242,6 @@ export function PropertiesPanel({
   const [imageWidth, setImageWidth] = useState('');
   const [imageHeight, setImageHeight] = useState('');
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
-  
-  // UI state for collapsible sections
-  const [openSections, setOpenSections] = useState({
-    content: true,
-    typography: true,
-    colors: true,
-    spacing: false,
-    borders: false,
-    link: true,
-    image: true,
-  });
 
   // Sync local state with component properties
   useEffect(() => {
@@ -280,12 +273,10 @@ export function PropertiesPanel({
     }
   }, [componentProperties]);
 
-  // Handle instant updates (direct DOM manipulation only - TSX updated on save)
+  // Handle instant updates
   const handleTextChange = (newText: string) => {
     setText(newText);
-    
     if (selectedComponentId) {
-      // Instant visual update (no re-render, no TSX update!)
       onDirectUpdate(selectedComponentId, 'text', newText);
     }
   };
@@ -293,11 +284,13 @@ export function PropertiesPanel({
   const handleColorChange = (newColor: string, type: 'text' | 'background') => {
     if (type === 'text') {
       setTextColor(newColor);
+      setTextColorInherit(false);
       if (selectedComponentId) {
         onDirectUpdate(selectedComponentId, 'textColor', newColor);
       }
     } else {
       setBackgroundColor(newColor);
+      setBackgroundColorInherit(false);
       if (selectedComponentId) {
         onDirectUpdate(selectedComponentId, 'backgroundColor', newColor);
       }
@@ -403,7 +396,6 @@ export function PropertiesPanel({
     setImageWidth(image.width?.toString() || '');
     setImageHeight(image.height?.toString() || '');
     
-    // Send image update to parent
     onDirectUpdate(selectedComponentId, 'imageSrc', JSON.stringify({
       url: image.url,
       alt: image.alt,
@@ -416,15 +408,12 @@ export function PropertiesPanel({
 
   const handleAltChange = (newAlt: string) => {
     if (!selectedComponentId) return;
-    
     setImageAlt(newAlt);
     onDirectUpdate(selectedComponentId, 'imageAlt', newAlt);
   };
 
   const handleDimensionChange = (dimension: 'width' | 'height', value: string) => {
     if (!selectedComponentId) return;
-    
-    // Allow only numbers
     if (value && !/^\d+$/.test(value)) return;
     
     if (dimension === 'width') {
@@ -440,18 +429,12 @@ export function PropertiesPanel({
     }
   };
 
-  // Helper to toggle sections
-  const toggleSection = (section: keyof typeof openSections) => {
-    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
-
   if (!selectedComponentId || !componentProperties) {
     return (
-      <div className="h-full flex items-center justify-center p-8 text-center bg-background">
+      <div className="h-full flex items-center justify-center p-6 text-center bg-background">
         <div className="max-w-sm">
-          <div className="text-5xl mb-4">🎨</div>
-          <h3 className="text-lg font-semibold mb-2 text-foreground">Select an element</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="text-sm font-semibold mb-1.5 text-foreground">Select an element</h3>
+          <p className="text-xs text-muted-foreground">
             Click on any element in the preview to edit its properties
           </p>
         </div>
@@ -460,521 +443,359 @@ export function PropertiesPanel({
   }
 
   return (
-    <div className="h-full flex flex-col bg-card">
-      {/* Header with component type badge */}
-      <div className="p-4 border-b bg-background">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div className="bg-primary text-primary-foreground px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wide">
-              {componentProperties.type}
-            </div>
+    <div className="h-full flex flex-col bg-background">
+      {/* Compact Header with breadcrumb & Select Parent */}
+      <div className="px-3 py-2.5 border-b border-border">
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground overflow-hidden">
+            <span>Design</span>
+            <ChevronRight className="w-3 h-3" />
+            <span className="text-foreground font-medium truncate">{componentProperties.type}</span>
           </div>
           <button
             onClick={() => {
-              // TODO: Implement reset
-              console.log('[PROPERTIES] Reset to default');
+              if (onSelectParent) {
+                onSelectParent();
+              } else {
+                console.log('[PROPERTIES] Select parent - no callback provided');
+              }
             }}
-            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
-            title="Reset to default"
+            disabled={!onSelectParent}
+            className="flex items-center gap-1 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Select parent element"
           >
-            <RotateCcw className="w-3 h-3" />
+            <ArrowUp className="w-3 h-3" />
+            <span>Select parent</span>
           </button>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Edit properties to customize this element
-        </p>
       </div>
 
-      {/* Properties Form with Collapsible Sections */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Properties Form - Clean Lovable-style */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 properties-panel-scroll">
         
-        {/* CONTENT SECTION - Text editing */}
+        {/* CONTENT - Text editing */}
         {componentProperties.canEditText && (
-          <div className="border-b">
-            <button
-              onClick={() => toggleSection('content')}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-lg">📝</span>
-                <span className="font-semibold text-sm">Content</span>
-              </div>
-              {openSections.content ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
-            {openSections.content && (
-              <div className="px-4 py-3 bg-background">
-                <textarea
-                  value={text}
-                  onChange={(e) => handleTextChange(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg text-sm min-h-[100px] resize-y focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter text content..."
-                />
-              </div>
-            )}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-foreground">Content</label>
+            <textarea
+              value={text}
+              onChange={(e) => handleTextChange(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary min-h-[80px] resize-y"
+              placeholder="Enter text content..."
+            />
           </div>
         )}
 
-        {/* TYPOGRAPHY SECTION */}
+        {/* TYPOGRAPHY */}
         {componentProperties.canEditTypography && (
-          <div className="border-b">
-            <button
-              onClick={() => toggleSection('typography')}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🔤</span>
-                <span className="font-semibold text-sm">Typography</span>
-              </div>
-              {openSections.typography ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
-            {openSections.typography && (
-              <div className="px-4 py-3 space-y-4 bg-background">
-                {/* Font Size */}
-                <div>
-                  <label className="block text-xs font-medium mb-2 text-foreground">Font Size</label>
-                  <div className="flex gap-2">
-                    {['12px', '14px', '16px', '18px', '24px', '32px'].map(size => (
-                      <button
-                        key={size}
-                        onClick={() => handleTypographyChange('fontSize', size)}
-                        className={`px-2 py-1 text-xs rounded border ${
-                          fontSize === size 
-                            ? 'bg-primary text-primary-foreground border-primary' 
-                            : 'bg-card border-border hover:border-foreground'
-                        }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-foreground">Typography</h3>
+            
+            {/* Font Size */}
+            <div className="flex flex-wrap gap-1.5">
+              {['12px', '14px', '16px', '18px', '24px', '32px'].map(size => (
+                <button
+                  key={size}
+                  onClick={() => handleTypographyChange('fontSize', size)}
+                  className={`px-2.5 py-1 text-xs rounded border transition-colors ${
+                    fontSize === size 
+                      ? 'bg-primary text-primary-foreground border-primary' 
+                      : 'bg-card border-border hover:border-foreground text-foreground'
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
 
-                {/* Font Weight */}
-                <div>
-                  <label className="block text-xs font-medium mb-2 text-foreground">Font Weight</label>
-                  <div className="flex gap-2">
-                    {[
-                      { value: '300', label: 'Light' },
-                      { value: '400', label: 'Normal' },
-                      { value: '600', label: 'Semi' },
-                      { value: '700', label: 'Bold' },
-                    ].map(weight => (
-                      <button
-                        key={weight.value}
-                        onClick={() => handleTypographyChange('fontWeight', weight.value)}
-                        className={`px-3 py-1 text-xs rounded border flex-1 ${
-                          fontWeight === weight.value 
-                            ? 'bg-primary text-primary-foreground border-primary' 
-                            : 'bg-card border-border hover:border-foreground'
-                        }`}
-                      >
-                        {weight.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+            {/* Font Weight */}
+            <div className="flex gap-1.5">
+              {[
+                { value: '400', label: 'Normal' },
+                { value: '600', label: 'Semi' },
+                { value: '700', label: 'Bold' },
+              ].map(weight => (
+                <button
+                  key={weight.value}
+                  onClick={() => handleTypographyChange('fontWeight', weight.value)}
+                  className={`flex-1 px-2.5 py-1 text-xs rounded border transition-colors ${
+                    fontWeight === weight.value 
+                      ? 'bg-primary text-primary-foreground border-primary' 
+                      : 'bg-card border-border hover:border-foreground text-foreground'
+                  }`}
+                >
+                  {weight.label}
+                </button>
+              ))}
+            </div>
 
-                {/* Line Height */}
-                <div>
-                  <label className="block text-xs font-medium mb-2 text-foreground">
-                    Line Height: {lineHeight || 'normal'}
-                  </label>
-                  <input
-                    type="range"
-                    min="1"
-                    max="2.5"
-                    step="0.1"
-                    value={parseFloat(lineHeight || '1.5')}
-                    onChange={(e) => handleTypographyChange('lineHeight', e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-
-                {/* Text Align */}
-                <div>
-                  <label className="block text-xs font-medium mb-2 text-foreground">Text Align</label>
-                  <div className="flex gap-2">
-                    {[
-                      { value: 'left', icon: AlignLeft },
-                      { value: 'center', icon: AlignCenter },
-                      { value: 'right', icon: AlignRight },
-                      { value: 'justify', icon: AlignJustify },
-                    ].map(align => {
-                      const Icon = align.icon;
-                      return (
-                        <button
-                          key={align.value}
-                          onClick={() => handleTypographyChange('textAlign', align.value)}
-                          className={`px-3 py-2 rounded border flex-1 flex items-center justify-center ${
-                            textAlign === align.value 
-                              ? 'bg-blue-600 text-white border-blue-600' 
-                              : 'bg-card border-border hover:border-foreground'
-                          }`}
-                          title={align.value}
-                        >
-                          <Icon className="w-4 h-4" />
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Text Align */}
+            <div className="flex gap-1.5">
+              {[
+                { value: 'left', icon: AlignLeft },
+                { value: 'center', icon: AlignCenter },
+                { value: 'right', icon: AlignRight },
+                { value: 'justify', icon: AlignJustify },
+              ].map(align => {
+                const Icon = align.icon;
+                return (
+                  <button
+                    key={align.value}
+                    onClick={() => handleTypographyChange('textAlign', align.value)}
+                    className={`flex-1 px-2.5 py-2 rounded border transition-colors flex items-center justify-center ${
+                      textAlign === align.value 
+                        ? 'bg-primary text-primary-foreground border-primary' 
+                        : 'bg-card border-border hover:border-foreground text-foreground'
+                    }`}
+                    title={align.value}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
-        {/* COLORS SECTION */}
+        {/* COLORS */}
         {componentProperties.canEditColors && (
-          <div className="border-b">
-            <button
-              onClick={() => toggleSection('colors')}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🎨</span>
-                <span className="font-semibold text-sm">Colors</span>
-              </div>
-              {openSections.colors ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
-            {openSections.colors && (
-              <div className="px-4 py-3 space-y-4 bg-background">
-                {/* Text Color */}
-                {componentProperties.canEditTypography && (
-                  <div>
-                    <label className="block text-xs font-medium mb-2 text-foreground">Text Color</label>
-                    <div className="flex gap-2">
-                      <Input
-                        type="color"
-                        value={textColor || '#000000'}
-                        onChange={(e) => handleColorChange(e.target.value, 'text')}
-                        className="w-14 h-10 p-1 cursor-pointer"
-                      />
-                      <Input
-                        type="text"
-                        value={textColor}
-                        onChange={(e) => handleColorChange(e.target.value, 'text')}
-                        className="flex-1 font-mono text-sm"
-                        placeholder="#000000"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Background Color */}
-                <div>
-                  <label className="block text-xs font-medium mb-2 text-foreground">Background Color</label>
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-foreground">Colors</h3>
+            
+            {/* Text Color */}
+            {componentProperties.canEditTypography && (
+              <div className="space-y-2">
+                <label className="block text-xs text-muted-foreground">Text color</label>
+                {textColorInherit ? (
+                  <button
+                    onClick={() => setTextColorInherit(false)}
+                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card text-foreground hover:bg-muted transition-colors text-left"
+                  >
+                    <span className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 border border-border" />
+                      Inherit
+                    </span>
+                  </button>
+                ) : (
                   <div className="flex gap-2">
                     <Input
                       type="color"
-                      value={backgroundColor === 'transparent' ? '#ffffff' : backgroundColor}
-                      onChange={(e) => handleColorChange(e.target.value, 'background')}
+                      value={textColor || '#000000'}
+                      onChange={(e) => handleColorChange(e.target.value, 'text')}
                       className="w-14 h-10 p-1 cursor-pointer"
                     />
                     <Input
                       type="text"
-                      value={backgroundColor}
-                      onChange={(e) => handleColorChange(e.target.value, 'background')}
-                      className="flex-1 font-mono text-sm"
-                      placeholder="transparent"
-                    />
-                  </div>
-                  <div className="mt-2 flex gap-2">
-                    {['transparent', '#ffffff', '#f3f4f6', '#000000', '#3b82f6', '#10b981'].map(color => (
-                      <button
-                        key={color}
-                        onClick={() => handleColorChange(color, 'background')}
-                        className={`w-8 h-8 rounded border-2 ${
-                          backgroundColor === color ? 'border-primary' : 'border-border'
-                        }`}
-                        style={{ 
-                          backgroundColor: color === 'transparent' ? 'white' : color,
-                          backgroundImage: color === 'transparent' 
-                            ? 'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)'
-                            : 'none',
-                          backgroundSize: color === 'transparent' ? '8px 8px' : 'auto',
-                          backgroundPosition: color === 'transparent' ? '0 0, 0 4px, 4px -4px, -4px 0px' : 'auto'
-                        }}
-                        title={color}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* SPACING SECTION */}
-        {componentProperties.canEditSpacing && (
-          <div className="border-b">
-            <button
-              onClick={() => toggleSection('spacing')}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-lg">📏</span>
-                <span className="font-semibold text-sm">Spacing</span>
-              </div>
-              {openSections.spacing ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
-            {openSections.spacing && (
-              <div className="px-4 py-3 space-y-4 bg-background">
-                {/* Margin */}
-                <div>
-                  <label className="block text-xs font-medium mb-2 text-foreground">Margin</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { key: 'marginTop', label: 'Top', value: marginTop },
-                      { key: 'marginRight', label: 'Right', value: marginRight },
-                      { key: 'marginBottom', label: 'Bottom', value: marginBottom },
-                      { key: 'marginLeft', label: 'Left', value: marginLeft },
-                    ].map(item => (
-                      <div key={item.key}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs text-muted-foreground">{item.label}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Input
-                            type="number"
-                            value={item.value}
-                            onChange={(e) => handleSpacingChange(e.target.value, item.key)}
-                            className="w-full text-sm"
-                            min="0"
-                          />
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">px</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Padding */}
-                <div>
-                  <label className="block text-xs font-medium mb-2 text-foreground">Padding</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { key: 'paddingTop', label: 'Top', value: paddingTop },
-                      { key: 'paddingRight', label: 'Right', value: paddingRight },
-                      { key: 'paddingBottom', label: 'Bottom', value: paddingBottom },
-                      { key: 'paddingLeft', label: 'Left', value: paddingLeft },
-                    ].map(item => (
-                      <div key={item.key}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs text-muted-foreground">{item.label}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Input
-                            type="number"
-                            value={item.value}
-                            onChange={(e) => handleSpacingChange(e.target.value, item.key)}
-                            className="w-full text-sm"
-                            min="0"
-                          />
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">px</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Quick Presets */}
-                <div>
-                  <label className="block text-xs font-medium mb-2 text-foreground">Quick Presets</label>
-                  <div className="flex gap-2">
-                    {['0', '8', '16', '24', '32'].map(preset => (
-                      <button
-                        key={preset}
-                        onClick={() => {
-                          ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'].forEach(key => 
-                            handleSpacingChange(preset, key)
-                          );
-                        }}
-                        className="px-2 py-1 text-xs rounded border bg-card border-border hover:border-foreground"
-                        title={`Set all margins to ${preset}px`}
-                      >
-                        {preset}px
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* BORDERS SECTION */}
-        {componentProperties.canEditBorders && (
-          <div className="border-b">
-            <button
-              onClick={() => toggleSection('borders')}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-lg">⬜</span>
-                <span className="font-semibold text-sm">Borders</span>
-              </div>
-              {openSections.borders ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
-            {openSections.borders && (
-              <div className="px-4 py-3 space-y-4 bg-background">
-                {/* Border Radius */}
-                <div>
-                  <label className="block text-xs font-medium mb-2 text-foreground">
-                    Border Radius: {borderRadius || '0px'}
-                  </label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="50"
-                    step="1"
-                    value={parseInt(borderRadius || '0')}
-                    onChange={(e) => handleBorderChange('borderRadius', e.target.value + 'px')}
-                    className="w-full"
-                  />
-                  <div className="mt-2 flex gap-2">
-                    {['0px', '4px', '8px', '12px', '16px', '50px'].map(radius => (
-                      <button
-                        key={radius}
-                        onClick={() => handleBorderChange('borderRadius', radius)}
-                        className={`px-2 py-1 text-xs rounded border ${
-                          borderRadius === radius 
-                            ? 'bg-primary text-primary-foreground border-primary' 
-                            : 'bg-card border-border hover:border-foreground'
-                        }`}
-                      >
-                        {radius}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Border Width */}
-                <div>
-                  <label className="block text-xs font-medium mb-2 text-foreground">
-                    Border Width: {borderWidth || '0px'}
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      value={parseInt(borderWidth || '0')}
-                      onChange={(e) => handleBorderChange('borderWidth', e.target.value + 'px')}
-                      className="w-full text-sm"
-                      min="0"
-                      max="10"
-                    />
-                    <span className="text-xs text-gray-500">px</span>
-                  </div>
-                </div>
-
-                {/* Border Color */}
-                <div>
-                  <label className="block text-xs font-medium mb-2 text-foreground">Border Color</label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="color"
-                      value={borderColor || '#000000'}
-                      onChange={(e) => handleBorderChange('borderColor', e.target.value)}
-                      className="w-14 h-10 p-1 cursor-pointer"
-                    />
-                    <Input
-                      type="text"
-                      value={borderColor}
-                      onChange={(e) => handleBorderChange('borderColor', e.target.value)}
+                      value={textColor}
+                      onChange={(e) => handleColorChange(e.target.value, 'text')}
                       className="flex-1 font-mono text-sm"
                       placeholder="#000000"
                     />
-                  </div>
-                </div>
-
-                {/* Border Style */}
-                <div>
-                  <label className="block text-xs font-medium mb-2 text-foreground">Border Style</label>
-                  <div className="flex gap-2">
-                    {['solid', 'dashed', 'dotted'].map(style => (
-                      <button
-                        key={style}
-                        onClick={() => handleBorderChange('borderStyle', style)}
-                        className={`px-3 py-2 text-xs rounded border flex-1 ${
-                          borderStyle === style 
-                            ? 'bg-primary text-primary-foreground border-primary' 
-                            : 'bg-card border-border hover:border-foreground'
-                        }`}
-                      >
-                        {style}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* LINK SECTION */}
-        {componentProperties.canEditLink && (
-          <div className="border-b">
-            <button
-              onClick={() => toggleSection('link')}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🔗</span>
-                <span className="font-semibold text-sm">Link</span>
-              </div>
-              {openSections.link ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
-            {openSections.link && (
-              <div className="px-4 py-3 space-y-3 bg-background">
-                <div>
-                  <label className="block text-xs font-medium mb-2 text-foreground">URL</label>
-                  <Input
-                    type="url"
-                    value={href}
-                    onChange={(e) => handleHrefChange(e.target.value)}
-                    placeholder="https://example.com"
-                    className="w-full text-sm font-mono"
-                  />
-                  {href && !/^https?:\/\/.+/.test(href) && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      ⚠️ URL should start with http:// or https://
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Image Properties - Only for Img components */}
-        {componentProperties.canEditImage && (
-          <div className="border-b">
-            <button
-              onClick={() => toggleSection('image')}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🖼️</span>
-                <span className="font-semibold text-sm">Image</span>
-              </div>
-              {openSections.image ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
-            {openSections.image && (
-          <div className="px-4 py-3 space-y-4 bg-background">
-            <div>
-              <label className="block text-xs font-medium mb-2 text-foreground">Current Image</label>
-              <div className="border rounded-lg p-3 bg-card">
-                {imageSrc ? (
-                  <img
-                    src={imageSrc}
-                    alt={imageAlt}
-                    className="w-full h-auto rounded"
-                  />
-                ) : (
-                  <div className="h-32 flex items-center justify-center text-muted-foreground">
-                    No image
+                    <button
+                      onClick={() => setTextColorInherit(true)}
+                      className="px-2 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      Reset
+                    </button>
                   </div>
                 )}
               </div>
+            )}
+
+            {/* Background Color */}
+            <div className="space-y-2">
+              <label className="block text-xs text-muted-foreground">Background color</label>
+              {backgroundColorInherit ? (
+                <button
+                  onClick={() => setBackgroundColorInherit(false)}
+                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card text-foreground hover:bg-muted transition-colors text-left"
+                >
+                  <span className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 border border-border" />
+                    Inherit
+                  </span>
+                </button>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    type="color"
+                    value={backgroundColor === 'transparent' ? '#ffffff' : backgroundColor}
+                    onChange={(e) => handleColorChange(e.target.value, 'background')}
+                    className="w-14 h-10 p-1 cursor-pointer"
+                  />
+                  <Input
+                    type="text"
+                    value={backgroundColor}
+                    onChange={(e) => handleColorChange(e.target.value, 'background')}
+                    className="flex-1 font-mono text-sm"
+                    placeholder="transparent"
+                  />
+                  <button
+                    onClick={() => setBackgroundColorInherit(true)}
+                    className="px-2 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Reset
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* SPACING */}
+        {componentProperties.canEditSpacing && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-foreground">Spacing</h3>
+            
+            {/* Margin */}
+            <div className="space-y-2">
+              <label className="block text-xs text-muted-foreground">Margin</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { key: 'marginTop', value: marginTop, icon: <MoveHorizontal className="w-3.5 h-3.5 rotate-90" /> },
+                  { key: 'marginRight', value: marginRight, icon: <MoveHorizontal className="w-3.5 h-3.5" /> },
+                  { key: 'marginBottom', value: marginBottom, icon: <MoveHorizontal className="w-3.5 h-3.5 rotate-90" /> },
+                  { key: 'marginLeft', value: marginLeft, icon: <MoveHorizontal className="w-3.5 h-3.5" /> },
+                ].map(item => (
+                  <div key={item.key} className="flex items-center gap-1.5 bg-card border border-border rounded-lg px-2 py-1.5">
+                    <span className="text-muted-foreground">{item.icon}</span>
+                    <Input
+                      type="number"
+                      value={item.value}
+                      onChange={(e) => handleSpacingChange(e.target.value, item.key)}
+                      className="flex-1 text-sm border-0 p-0 h-6 bg-transparent"
+                      min="0"
+                      placeholder="0"
+                    />
+                    <span className="text-xs text-muted-foreground">px</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Padding */}
+            <div className="space-y-2">
+              <label className="block text-xs text-muted-foreground">Padding</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { key: 'paddingTop', value: paddingTop, icon: <MoveVertical className="w-3.5 h-3.5" /> },
+                  { key: 'paddingRight', value: paddingRight, icon: <MoveHorizontal className="w-3.5 h-3.5" /> },
+                  { key: 'paddingBottom', value: paddingBottom, icon: <MoveVertical className="w-3.5 h-3.5" /> },
+                  { key: 'paddingLeft', value: paddingLeft, icon: <MoveHorizontal className="w-3.5 h-3.5" /> },
+                ].map(item => (
+                  <div key={item.key} className="flex items-center gap-1.5 bg-card border border-border rounded-lg px-2 py-1.5">
+                    <span className="text-muted-foreground">{item.icon}</span>
+                    <Input
+                      type="number"
+                      value={item.value}
+                      onChange={(e) => handleSpacingChange(e.target.value, item.key)}
+                      className="flex-1 text-sm border-0 p-0 h-6 bg-transparent"
+                      min="0"
+                      placeholder="0"
+                    />
+                    <span className="text-xs text-muted-foreground">px</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* BORDERS */}
+        {componentProperties.canEditBorders && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-foreground">Border</h3>
+            
+            {/* Border Radius */}
+            <div className="space-y-2">
+              <label className="block text-xs text-muted-foreground">Border radius</label>
+              <div className="flex flex-wrap gap-1.5">
+                {['0px', '4px', '8px', '12px', '16px', '50px'].map(radius => (
+                  <button
+                    key={radius}
+                    onClick={() => handleBorderChange('borderRadius', radius)}
+                    className={`px-2.5 py-1 text-xs rounded border transition-colors ${
+                      borderRadius === radius 
+                        ? 'bg-primary text-primary-foreground border-primary' 
+                        : 'bg-card border-border hover:border-foreground text-foreground'
+                    }`}
+                  >
+                    {radius}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Border Width */}
+            <div className="space-y-2">
+              <label className="block text-xs text-muted-foreground">Border width</label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  value={parseInt(borderWidth || '0')}
+                  onChange={(e) => handleBorderChange('borderWidth', e.target.value + 'px')}
+                  className="flex-1 text-sm"
+                  min="0"
+                  max="10"
+                />
+                <span className="text-xs text-muted-foreground">px</span>
+              </div>
+            </div>
+
+            {/* Border Style */}
+            <div className="space-y-2">
+              <label className="block text-xs text-muted-foreground">Border style</label>
+              <div className="flex gap-1.5">
+                {['solid', 'dashed', 'dotted'].map(style => (
+                  <button
+                    key={style}
+                    onClick={() => handleBorderChange('borderStyle', style)}
+                    className={`flex-1 px-2.5 py-1.5 text-xs rounded border transition-colors ${
+                      borderStyle === style 
+                        ? 'bg-primary text-primary-foreground border-primary' 
+                        : 'bg-card border-border hover:border-foreground text-foreground'
+                    }`}
+                  >
+                    {style}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* LINK */}
+        {componentProperties.canEditLink && (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-foreground">Link</label>
+            <Input
+              type="url"
+              value={href}
+              onChange={(e) => handleHrefChange(e.target.value)}
+              placeholder="https://example.com"
+              className="w-full text-sm font-mono"
+            />
+            {href && !/^https?:\/\/.+/.test(href) && (
+              <p className="text-xs text-destructive">
+                ⚠️ URL should start with http:// or https://
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* IMAGE */}
+        {componentProperties.canEditImage && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-foreground">Image</h3>
+            
+            <div className="border border-border rounded-lg p-3 bg-card">
+              {imageSrc ? (
+                <img src={imageSrc} alt={imageAlt} className="w-full h-auto rounded" />
+              ) : (
+                <div className="h-32 flex items-center justify-center text-muted-foreground text-sm">
+                  No image
+                </div>
+              )}
             </div>
 
             <Button
@@ -985,8 +806,8 @@ export function PropertiesPanel({
               Change Image
             </Button>
 
-            <div>
-              <label className="block text-xs font-medium mb-2 text-foreground">Alt Text</label>
+            <div className="space-y-2">
+              <label className="block text-xs text-muted-foreground">Alt text</label>
               <Input
                 type="text"
                 value={imageAlt}
@@ -994,42 +815,37 @@ export function PropertiesPanel({
                 placeholder="Description for accessibility"
                 className="w-full text-sm"
               />
-              <p className="mt-1 text-xs text-muted-foreground">
-                Describe what the image shows for accessibility
-              </p>
             </div>
 
             {componentProperties.width && componentProperties.height && (
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium mb-2 text-foreground">Width</label>
+                <div className="space-y-2">
+                  <label className="block text-xs text-muted-foreground">Width</label>
                   <div className="flex items-center gap-1">
                     <Input
                       type="text"
                       value={imageWidth}
                       onChange={(e) => handleDimensionChange('width', e.target.value)}
                       className="w-full text-sm"
-                      placeholder="Width"
+                      placeholder="Auto"
                     />
-                    <span className="text-xs text-gray-500">px</span>
+                    <span className="text-xs text-muted-foreground">px</span>
                   </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium mb-2 text-foreground">Height</label>
+                <div className="space-y-2">
+                  <label className="block text-xs text-muted-foreground">Height</label>
                   <div className="flex items-center gap-1">
                     <Input
                       type="text"
                       value={imageHeight}
                       onChange={(e) => handleDimensionChange('height', e.target.value)}
                       className="w-full text-sm"
-                      placeholder="Height"
+                      placeholder="Auto"
                     />
-                    <span className="text-xs text-gray-500">px</span>
+                    <span className="text-xs text-muted-foreground">px</span>
                   </div>
                 </div>
               </div>
-            )}
-          </div>
             )}
           </div>
         )}
@@ -1048,4 +864,3 @@ export function PropertiesPanel({
     </div>
   );
 }
-

@@ -247,14 +247,17 @@ export function EmailEditorV3({
 
   // Handle component selection
   const handleComponentSelect = useCallback((componentId: string | null, position?: { top: number; left: number }) => {
-    // ✅ FIX: Only update state if selecting a different component
-    // This prevents re-renders that steal focus from the floating toolbar
     if (componentId !== selectedComponentId) {
+      // Selecting a different component
       console.log('[EDITOR] Selecting new component:', componentId);
       setSelectedComponentId(componentId);
       setComponentPosition(position || null);
-    } else {
-      console.log('[EDITOR] Same component clicked, maintaining focus');
+    } else if (componentId) {
+      // Same component clicked - manually refocus the input
+      console.log('[EDITOR] Same component clicked, refocusing input');
+      setTimeout(() => {
+        floatingToolbarInputRef.current?.focus();
+      }, 0);
     }
   }, [selectedComponentId]);
 
@@ -557,6 +560,11 @@ export function EmailEditorV3({
                         selectedComponentId={selectedComponentId}
                         componentMap={componentMap}
                         onDirectUpdate={sendDirectUpdate}
+                        onSelectParent={() => {
+                          // TODO: Implement parent selection logic
+                          // Would need to track parent-child relationships in componentMap
+                          console.log('[EDITOR] Select parent - needs hierarchy tracking in tsx-parser');
+                        }}
                       />
                     </div>
 
@@ -604,11 +612,11 @@ export function EmailEditorV3({
         {/* Floating AI Toolbar - Rendered via Portal with smart positioning */}
         {isMounted && mode === 'visual' && selectedComponentId && componentPosition && createPortal(
           <div 
-            className="fixed bg-card shadow-2xl rounded-xl border border-border p-2.5 transition-all duration-200 ease-out"
+            className="fixed bg-card shadow-2xl rounded-lg border border-border p-2 transition-all duration-200 ease-out"
             style={{
               top: `${componentPosition.top}px`,
               left: `${componentPosition.left}px`,
-              width: '320px',
+              width: '280px',
               zIndex: Z_INDEX.VISUAL_EDITOR_TOOLBAR,
             }}
             onMouseDown={(e) => e.preventDefault()} // ✅ Prevent blur on toolbar clicks
@@ -621,7 +629,8 @@ export function EmailEditorV3({
                 value={floatingPrompt}
                 onChange={(e) => setFloatingPrompt(e.target.value)}
                 placeholder="Ask Jolti..."
-                className="flex-1 px-3 py-2 text-sm bg-background text-foreground placeholder-muted-foreground border border-border rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                autoFocus
+                className="flex-1 px-2.5 py-1.5 text-sm bg-background text-foreground placeholder-muted-foreground border border-border rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && floatingPrompt.trim()) {
                     e.preventDefault();

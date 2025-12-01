@@ -793,7 +793,7 @@ export function LivePreview({
             height: iframeRect.height,
           },
           elementRect as ElementRect,
-          { width: 320, height: 60 }, // Toolbar dimensions
+          { width: 280, height: 48 }, // Toolbar dimensions
           { 
             left: iframeRect.left,
             top: iframeRect.top,
@@ -811,7 +811,9 @@ export function LivePreview({
       // Handle scroll updates - recalculate position
       const { componentId, elementRect } = event.data;
       
-      if (componentId && elementRect && iframeRef.current) {
+      // ✅ Only update position if this component is still selected
+      // This prevents toolbar from reappearing after user closes it
+      if (componentId === selectedComponentId && elementRect && iframeRef.current) {
         const iframeRect = iframeRef.current.getBoundingClientRect();
         
         const smartPosition = calculateSmartToolbarPosition(
@@ -824,7 +826,7 @@ export function LivePreview({
             height: iframeRect.height,
           },
           elementRect as ElementRect,
-          { width: 320, height: 60 },
+          { width: 280, height: 48 },
           { 
             left: iframeRect.left,
             top: iframeRect.top,
@@ -839,7 +841,7 @@ export function LivePreview({
       console.log('[LIVE-PREVIEW] Component hovered:', event.data.componentId);
       onComponentHover(event.data.componentId);
     }
-  }, [onComponentSelect, onComponentHover]);
+  }, [onComponentSelect, onComponentHover, selectedComponentId]);
 
   // Set up message listener
   useEffect(() => {
