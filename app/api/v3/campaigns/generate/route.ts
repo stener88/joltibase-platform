@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/api/auth';
 import { generateEmail } from '@/lib/email-v3/generator';
 import { renderEmail } from '@/lib/email-v3/renderer';
+import { fromDbRow, type BrandIdentity, type BrandKitDbRow } from '@/lib/types/brand';
 import { z } from 'zod';
 
 const GenerateRequestSchema = z.object({
@@ -30,8 +31,26 @@ export async function POST(request: NextRequest) {
     
     console.log(`📧 [GENERATE-V3] User ${user.id}: "${prompt}"`);
     
-    // Generate wrapper-free component with RAG
-    const generated = await generateEmail(prompt);
+    // Fetch user's brand settings
+    let brand: BrandIdentity | null = null;
+    try {
+      const { data: brandData } = await supabase
+        .from('brand_kits')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (brandData) {
+        brand = fromDbRow(brandData as BrandKitDbRow);
+        console.log(`🎨 [GENERATE-V3] Using brand: ${brand.companyName}`);
+      }
+    } catch (error) {
+      // Brand not found is OK - user hasn't set one up yet
+      console.log(`[GENERATE-V3] No brand settings found`);
+    }
+    
+    // Generate wrapper-free component with RAG and brand
+    const generated = await generateEmail(prompt, brand);
     
     // Render to HTML (applies wrappers at render time)
     const renderResult = await renderEmail(generated.filename);

@@ -11,6 +11,7 @@ import { detectDesignSystem, type DesignSystem } from '@/emails/lib/design-syste
 import { extractCodeFromMarkdown, cleanGeneratedCode } from '@/emails/lib/validator';
 import { validateEmail, generateFixPrompt, getValidationSummary, type ValidationIssue } from '@/emails/lib/email-validator';
 import { fetchImagesForPrompt, type ImageContext } from './image-service';
+import type { BrandIdentity } from '@/lib/types/brand';
 import fs from 'fs';
 import path from 'path';
 
@@ -70,13 +71,19 @@ const SYSTEM_INSTRUCTION = `You are an expert React Email developer creating pro
    - ALWAYS include alt attributes (descriptive, 10-15 words)
    - Use the exact URLs provided (professional Unsplash images)
    - DO NOT use placeholder URLs
+   - **CRITICAL - Prevent Stretching**:
+     * Set width and height as hints: width={600} height={400}
+     * Use responsive styles: style={{ width: '100%', height: 'auto' }}
+     * For hero/banner images: Add objectFit: 'cover' if needed
+     * NEVER use fixed height in styles - always use 'auto' to maintain aspect ratio
+     * Example: <Img src="..." width={600} height={400} style={{ width: '100%', height: 'auto' }} />
 
 6. **EMAIL BEST PRACTICES**
    - Max content width: 600px via Container
    - Include <Preview> text for email clients
    - Follow the design system specifications exactly
    - All images must have descriptive alt text
-   - Minimum font size: 14px for all text (16px for body text)
+  - Minimum font size: 14px for all text (16px for body text)
    - **Buttons/CTAs**: Use sufficient padding (14px+ vertical) to ensure touch targets are 44px+ tall
    - **CTA Count**: Limit to 1-3 primary CTAs maximum (avoid decision paralysis)
      * Single-purpose emails: 1 CTA
@@ -94,8 +101,11 @@ Generate COMPLETE, production-ready React Email components using INLINE STYLES O
 /**
  * Generate a complete React Email component with retry logic
  */
-export async function generateEmail(prompt: string): Promise<GeneratedEmail> {
+export async function generateEmail(prompt: string, brand?: BrandIdentity | null): Promise<GeneratedEmail> {
   console.log(`🚀 [V3-GENERATOR] Generating email for: "${prompt}"`);
+  if (brand) {
+    console.log(`🎨 [V3-GENERATOR] Using brand: ${brand.companyName} (${brand.primaryColor})`);
+  }
   
   // Detect appropriate design system based on keywords
   const designSystem = detectDesignSystem(prompt);
@@ -111,8 +121,8 @@ export async function generateEmail(prompt: string): Promise<GeneratedEmail> {
     console.log(`🔄 [V3-GENERATOR] Attempt ${attempt}/${MAX_GENERATION_ATTEMPTS}`);
     
     try {
-      // Build user prompt with design system, images, and previous validation issues
-      const userPrompt = buildUserPrompt(prompt, designSystem, attempt, images, previousIssues);
+      // Build user prompt with design system, images, brand identity, and previous validation issues
+      const userPrompt = buildUserPrompt(prompt, designSystem, attempt, images, previousIssues, brand);
       
       // Generate with Gemini
       const result = await generateText({
@@ -200,16 +210,39 @@ export async function generateEmail(prompt: string): Promise<GeneratedEmail> {
 }
 
 /**
- * Build user prompt with design system specification, images, and validation feedback
+ * Build user prompt with design system specification, images, brand identity, and validation feedback
  */
 function buildUserPrompt(
   prompt: string, 
   designSystem: DesignSystem, 
   attempt: number, 
   images: ImageContext,
-  previousIssues: ValidationIssue[] = []
+  previousIssues: ValidationIssue[] = [],
+  brand?: BrandIdentity | null
 ): string {
   let userPrompt = '';
+  
+  // Add brand identity context FIRST (highest priority) - only if enabled
+  if (brand && brand.enabled !== false) {
+    userPrompt += `# BRAND IDENTITY\n\n`;
+    userPrompt += `Apply this brand identity to the email:\n`;
+    userPrompt += `- **Company**: ${brand.companyName}\n`;
+    userPrompt += `- **Primary Color**: ${brand.primaryColor} (use for buttons, CTAs, key accents)\n`;
+    if (brand.secondaryColor) {
+      userPrompt += `- **Secondary Color**: ${brand.secondaryColor} (use for text, borders)\n`;
+    }
+    if (brand.logoUrl) {
+      userPrompt += `- **Logo URL**: ${brand.logoUrl} (use in email header)\n`;
+    }
+    if (brand.tone && brand.formality) {
+      userPrompt += `- **Tone**: ${brand.tone}, ${brand.formality}\n`;
+    }
+    if (brand.personality) {
+      userPrompt += `- **Voice**: ${brand.personality}\n`;
+    }
+    userPrompt += `\n**CRITICAL**: Replace ALL button/CTA colors with the brand primary color (${brand.primaryColor}). Replace ALL company names with "${brand.companyName}". Use the brand logo if provided.\n\n`;
+    userPrompt += `---\n\n`;
+  }
   
   // Add design system specification (replaces RAG patterns)
   userPrompt += `# DESIGN SYSTEM: ${designSystem.name}\n\n`;

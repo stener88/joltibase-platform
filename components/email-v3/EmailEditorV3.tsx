@@ -9,12 +9,13 @@ import { LivePreview } from './LivePreview';
 import { PropertiesPanel } from './PropertiesPanel';
 import { ChatHistory } from './ChatHistory';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Save, X } from 'lucide-react';
+import { Save, X, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { updateComponentText, updateInlineStyle, updateImageSrc } from '@/lib/email-v3/tsx-manipulator';
 import { parseAndInjectIds } from '@/lib/email-v3/tsx-parser';
 import { Z_INDEX } from '@/lib/ui-constants';
 import type { CodeChange } from '@/lib/email-v3/diff-generator';
+import type { BrandIdentity } from '@/lib/types/brand';
 
 interface EmailEditorV3Props {
   campaignId: string;
@@ -76,6 +77,8 @@ export function EmailEditorV3({
   const [isExitingVisualMode, setIsExitingVisualMode] = useState(false);
   const [floatingPrompt, setFloatingPrompt] = useState('');
   const [isMounted, setIsMounted] = useState(false);
+  const [brandSettings, setBrandSettings] = useState<BrandIdentity | null>(null);
+  const [hasShownBrandPrompt, setHasShownBrandPrompt] = useState(false);
 
   // ✅ Working TSX ref - holds current code with visual edits (no re-renders!)
   const workingTsxRef = useRef(initialTsxCode);
@@ -100,6 +103,46 @@ export function EmailEditorV3({
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Fetch brand settings on mount
+  useEffect(() => {
+    const fetchBrand = async () => {
+      try {
+        const response = await fetch('/api/brand');
+        if (response.ok) {
+          const data = await response.json();
+          setBrandSettings(data.brand);
+        }
+      } catch (error) {
+        console.error('[EmailEditor] Failed to fetch brand:', error);
+      }
+    };
+    fetchBrand();
+  }, []);
+
+  // Save brand settings handler
+  const handleBrandSettingsSave = useCallback(async (brand: BrandIdentity) => {
+    try {
+      const response = await fetch('/api/brand', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(brand),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setBrandSettings(data.brand);
+      }
+    } catch (error) {
+      console.error('[EmailEditor] Failed to save brand:', error);
+    }
+  }, []);
+
+  // Show brand prompt after first successful generation
+  useEffect(() => {
+    if (messages.length > 2 && !brandSettings && !hasShownBrandPrompt) {
+      setHasShownBrandPrompt(true);
+    }
+  }, [messages.length, brandSettings, hasShownBrandPrompt]);
 
   // Derived state
   const hasUnsavedChanges = draftTsxCode !== savedTsxCode;
@@ -164,6 +207,7 @@ export function EmailEditorV3({
           selectedComponentType: selectedComponentId && componentMap[selectedComponentId]
             ? componentMap[selectedComponentId].type
             : null,
+          brandSettings, // Include brand identity
         }),
       });
 
@@ -526,8 +570,50 @@ export function EmailEditorV3({
                 {/* Left Panel Content */}
                 {mode === 'chat' ? (
                   <>
+                    {/* Brand Prompt Banner */}
+                    {hasShownBrandPrompt && !brandSettings && (
+                      <div className="mx-4 mt-3 mb-3 p-3 bg-primary/10 border border-primary/20 rounded-lg flex items-start gap-3">
+                        <Sparkles className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-foreground mb-1">
+                            Add your brand identity
+                          </p>
+                          <p className="text-[10px] text-muted-foreground mb-2">
+                            Set your company colors and logo to personalize all emails
+                          </p>
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              onClick={() => {
+                                // Open brand settings modal
+                                const settingsButton = document.querySelector('[data-brand-settings-button]') as HTMLButtonElement;
+                                settingsButton?.click();
+                              }}
+                              className="h-7 text-xs"
+                            >
+                              Add Brand →
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => setHasShownBrandPrompt(false)}
+                              className="h-7 text-xs"
+                            >
+                              Dismiss
+                            </Button>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => setHasShownBrandPrompt(false)}
+                          className="text-muted-foreground hover:text-foreground flex-shrink-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+
                     {/* Chat History */}
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="flex-1 overflow-y-auto chat-history-scroll">
                       <ChatHistory 
                         messages={messages} 
                         messageMetadata={messageMetadataRef.current}
@@ -548,6 +634,8 @@ export function EmailEditorV3({
                         visualEditsMode={false}
                         onVisualEditsToggle={handleModeToggle}
                         showDiscardSaveButtons={false}
+                        brandSettings={brandSettings}
+                        onBrandSettingsSave={handleBrandSettingsSave}
                       />
                     </div>
                   </>
@@ -581,6 +669,8 @@ export function EmailEditorV3({
                         visualEditsMode={true}
                         onVisualEditsToggle={handleModeToggle}
                         showDiscardSaveButtons={false}
+                        brandSettings={brandSettings}
+                        onBrandSettingsSave={handleBrandSettingsSave}
                       />
                     </div>
                   </>

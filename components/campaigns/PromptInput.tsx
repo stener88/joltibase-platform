@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ArrowUp, MessageSquare, MousePointer2 } from 'lucide-react';
+import { ArrowUp, MessageSquare, MousePointer2, Settings2 } from 'lucide-react';
 import { useTypingAnimation } from '@/hooks/useTypingAnimation';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { BrandSettingsModal } from './BrandSettingsModal';
+import type { BrandIdentity } from '@/lib/types/brand';
 
 interface PromptInputProps {
   value: string;
@@ -24,6 +26,9 @@ interface PromptInputProps {
   visualEditsMode?: boolean;
   onVisualEditsToggle?: () => void;
   showDiscardSaveButtons?: boolean;
+  // Brand Settings
+  brandSettings?: BrandIdentity | null;
+  onBrandSettingsSave?: (brand: BrandIdentity) => void;
 }
 
 const TYPING_EXAMPLES = [
@@ -54,10 +59,13 @@ export function PromptInput({
   visualEditsMode = false,
   onVisualEditsToggle,
   showDiscardSaveButtons = false,
+  brandSettings,
+  onBrandSettingsSave,
 }: PromptInputProps) {
   const internalTextareaRef = useRef<HTMLTextAreaElement>(null);
   const textareaRef = inputRef || internalTextareaRef;
   const [isFocused, setIsFocused] = useState(false);
+  const [showBrandSettings, setShowBrandSettings] = useState(false);
   
   // Animated typing effect - only active when input is empty and animation is enabled
   const animatedText = useTypingAnimation(TYPING_EXAMPLES, value === '' && !disableAnimation);
@@ -162,6 +170,26 @@ export function PromptInput({
         </div>
       )}
       
+      {/* Brand Indicator - Above the input (Lovable style) - Only show when enabled */}
+      {compact && brandSettings && brandSettings.enabled !== false && onBrandSettingsSave && (
+        <div className="mb-2 flex items-center gap-2 text-xs px-1">
+          <div 
+            className="w-3 h-3 rounded-full border border-border" 
+            style={{ backgroundColor: brandSettings.primaryColor }}
+          />
+          <span className="text-muted-foreground">
+            Generating as <span className="text-foreground font-medium">{brandSettings.companyName}</span>
+          </span>
+          <button 
+            onClick={() => setShowBrandSettings(true)}
+            className="text-primary hover:underline ml-1"
+            type="button"
+          >
+            Change
+          </button>
+        </div>
+      )}
+      
       <div className={`relative ${noBackground ? '' : 'bg-card rounded-2xl border border-border shadow-sm'}`}>
         {/* Input container */}
         <div className="relative flex items-start">
@@ -242,6 +270,33 @@ export function PromptInput({
             </Tooltip>
           )}
 
+          {/* Brand Settings button (only in compact mode with save handler) */}
+          {onBrandSettingsSave && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setShowBrandSettings(true)}
+                  disabled={isLoading || showDiscardSaveButtons}
+                  className={`
+                    absolute left-14 bottom-4 w-8 h-8
+                    rounded-lg
+                    flex items-center justify-center
+                    transition-all duration-200
+                    disabled:opacity-40 disabled:cursor-not-allowed
+                    border border-border
+                    ${brandSettings ? 'bg-muted text-foreground border-foreground' : 'bg-transparent text-muted-foreground hover:bg-muted hover:border-foreground'}
+                  `}
+                >
+                  <Settings2 className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>Brand Settings - Customize colors, logo, and voice</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+
           {/* Chat mode toggle button (only in compact mode with toggle handler) */}
           {onChatOnlyToggle && (
             <Tooltip>
@@ -282,6 +337,19 @@ export function PromptInput({
           </button>
         </div>
       </div>
+
+      {/* Brand Settings Modal */}
+      {onBrandSettingsSave && (
+        <BrandSettingsModal
+          isOpen={showBrandSettings}
+          onClose={() => setShowBrandSettings(false)}
+          currentBrand={brandSettings}
+          onSave={(brand) => {
+            onBrandSettingsSave(brand);
+            setShowBrandSettings(false);
+          }}
+        />
+      )}
     </div>
   );
 }

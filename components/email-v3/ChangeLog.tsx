@@ -30,22 +30,22 @@ function ChangeItem({ change, delay }: ChangeItemProps) {
   const getIcon = () => {
     switch (change.type) {
       case 'added':
-        return <Plus className="w-3.5 h-3.5 text-green-600" />;
+        return <Plus className="w-3.5 h-3.5 text-green-500" />;
       case 'modified':
-        return <Edit className="w-3.5 h-3.5 text-blue-600" />;
+        return <Edit className="w-3.5 h-3.5 text-primary" />;
       case 'removed':
-        return <Trash2 className="w-3.5 h-3.5 text-red-600" />;
+        return <Trash2 className="w-3.5 h-3.5 text-red-500" />;
     }
   };
 
   const getColor = () => {
     switch (change.type) {
       case 'added':
-        return 'bg-green-50 border-green-200';
+        return 'bg-green-500/10 border-green-500/20';
       case 'modified':
-        return 'bg-blue-50 border-blue-200';
+        return 'bg-primary/10 border-primary/20';
       case 'removed':
-        return 'bg-red-50 border-red-200';
+        return 'bg-red-500/10 border-red-500/20';
     }
   };
 
@@ -57,15 +57,15 @@ function ChangeItem({ change, delay }: ChangeItemProps) {
       <div className="mt-0.5">{getIcon()}</div>
       
       <div className="flex-1 min-w-0">
-        <span className="text-gray-800 font-medium">{change.description}</span>
+        <span className="text-foreground font-medium">{change.description}</span>
         
         {/* Show before/after for text changes */}
         {change.oldValue && change.newValue && change.property === 'text' && (
           <div className="mt-1 space-y-0.5">
-            <div className="text-gray-500 line-through truncate">
+            <div className="text-muted-foreground line-through truncate">
               {truncate(change.oldValue, 40)}
             </div>
-            <div className="text-green-700 truncate">
+            <div className="text-green-400 truncate">
               {truncate(change.newValue, 40)}
             </div>
           </div>
@@ -73,14 +73,14 @@ function ChangeItem({ change, delay }: ChangeItemProps) {
         
         {/* Show property changes (colors, sizes, etc.) */}
         {change.oldValue && change.newValue && change.property !== 'text' && (
-          <div className="mt-1 text-gray-600">
+          <div className="mt-1 text-muted-foreground">
             {isUrl(change.oldValue) ? (
               // Special handling for URLs - show truncated version
               <div className="space-y-0.5">
-                <div className="text-gray-500 line-through truncate text-xs" title={change.oldValue}>
+                <div className="text-muted-foreground line-through truncate text-xs" title={change.oldValue}>
                   {truncateUrl(change.oldValue)}
                 </div>
-                <div className="text-green-700 truncate text-xs" title={change.newValue}>
+                <div className="text-green-400 truncate text-xs" title={change.newValue}>
                   {truncateUrl(change.newValue)}
                 </div>
               </div>
@@ -89,7 +89,7 @@ function ChangeItem({ change, delay }: ChangeItemProps) {
               <>
                 <span className="line-through">{change.oldValue}</span>
                 {' → '}
-                <span className="text-green-700 font-medium">{change.newValue}</span>
+                <span className="text-green-400 font-medium">{change.newValue}</span>
               </>
             )}
           </div>

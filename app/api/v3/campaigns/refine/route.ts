@@ -6,6 +6,7 @@ import { resolveImage, extractImageKeyword } from '@/lib/email-v3/image-resolver
 import { processCodeChanges } from '@/lib/email-v3/refiner-streaming';
 import { parseAndInjectIds } from '@/lib/email-v3/tsx-parser';
 import { getDesignSystemById } from '@/emails/lib/design-system-selector';
+import type { BrandIdentity } from '@/lib/types/brand';
 
 const google = createGoogleGenerativeAI({
   apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
@@ -58,9 +59,10 @@ const EXECUTION_PROMPT = `You are an expert React Email developer modifying emai
    - ❌ hover:, focus:, active:, group-, dark:
 
 4. **IMAGES**
-   - ONLY use image URLs that are explicitly provided
-   - NEVER generate or make up image URLs
-   - If no image URL is provided, keep the existing src attribute
+   - When adding new images, use descriptive alt text and a placeholder URL like "https://placeholder.com/image"
+   - The system will automatically fetch real images based on your alt text
+   - If an image URL is explicitly provided in the prompt, use that exact URL
+   - For existing images, keep the current src attribute unless asked to change it
 
 # OUTPUT FORMAT
 Return ONLY the complete modified TSX code. No explanations, no markdown, just code.`;
@@ -74,11 +76,16 @@ export async function POST(request: Request) {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const { campaignId, currentTsxCode, userMessage, selectedComponentId, selectedComponentType } = 
+    const { campaignId, currentTsxCode, userMessage, selectedComponentId, selectedComponentType, brandSettings } = 
       await request.json();
 
     if (!campaignId || !currentTsxCode || !userMessage) {
       return new Response('Missing required fields', { status: 400 });
+    }
+
+    // Log brand settings if present
+    if (brandSettings) {
+      console.log(`🎨 [REFINE-SDK] Using brand: ${brandSettings.companyName}`);
     }
 
     console.log(`🔄 [REFINE-SDK] User message: "${userMessage}"`);
@@ -162,6 +169,27 @@ export async function POST(request: Request) {
     // Build execution prompt
     let executionPrompt = `# CURRENT EMAIL CODE\n\n\`\`\`tsx\n${currentTsxCode}\n\`\`\`\n\n`;
 
+    // Add brand identity context if available and enabled
+    if (brandSettings && brandSettings.enabled !== false) {
+      executionPrompt += `# BRAND IDENTITY\n\n`;
+      executionPrompt += `This email uses the following brand identity:\n`;
+      executionPrompt += `- **Company**: ${brandSettings.companyName}\n`;
+      executionPrompt += `- **Primary Color**: ${brandSettings.primaryColor} (buttons, CTAs)\n`;
+      if (brandSettings.secondaryColor) {
+        executionPrompt += `- **Secondary Color**: ${brandSettings.secondaryColor} (text, borders)\n`;
+      }
+      if (brandSettings.logoUrl) {
+        executionPrompt += `- **Logo**: ${brandSettings.logoUrl}\n`;
+      }
+      if (brandSettings.tone && brandSettings.formality) {
+        executionPrompt += `- **Tone**: ${brandSettings.tone}, ${brandSettings.formality}\n`;
+      }
+      if (brandSettings.personality) {
+        executionPrompt += `- **Voice**: ${brandSettings.personality}\n`;
+      }
+      executionPrompt += `\n**IMPORTANT**: When changing colors, use the brand primary color (${brandSettings.primaryColor}) for CTAs and buttons. Maintain this brand consistency in all modifications.\n\n`;
+    }
+
     // Add selected component context
     if (selectedComponentId && selectedComponentType && componentMap) {
       const componentLocation = componentMap[selectedComponentId];
@@ -194,7 +222,53 @@ export async function POST(request: Request) {
     // Extract code from AI response
     const { text, usage } = aiResult;
     const codeMatch = text.match(/```(?:tsx|typescript)?\n([\s\S]*?)\n```/);
-    const finalCode = codeMatch ? codeMatch[1].trim() : text.trim();
+    let finalCode = codeMatch ? codeMatch[1].trim() : text.trim();
+
+    // Smart image fetching: Replace placeholder/broken image URLs with real ones
+    const imgMatches = finalCode.matchAll(/<Img[^>]*?src=["']([^"']+)["'][^>]*?alt=["']([^"']+)["'][^>]*?>/g);
+    const imagesToFetch: Array<{ url: string; alt: string }> = [];
+    
+    for (const match of imgMatches) {
+      const [fullMatch, srcUrl, altText] = match;
+      // Check if URL looks like a placeholder or broken link
+      const isPlaceholder = srcUrl.includes('placeholder') || 
+                           srcUrl.includes('example.com') ||
+                           srcUrl.includes('...') ||
+                           !srcUrl.startsWith('http');
+      
+      // Don't replace brand logo (if brand is active and logo exists)
+      const isBrandLogo = brandSettings?.enabled !== false && 
+                          brandSettings?.logoUrl && 
+                          srcUrl === brandSettings.logoUrl;
+      
+      if (isPlaceholder && altText && !isBrandLogo) {
+        imagesToFetch.push({ url: srcUrl, alt: altText });
+      }
+    }
+
+    // Fetch real images for placeholders
+    if (imagesToFetch.length > 0) {
+      console.log(`🖼️ [REFINE-SDK] Fetching ${imagesToFetch.length} real images...`);
+      
+      for (const { url: placeholderUrl, alt } of imagesToFetch) {
+        try {
+          // Extract keyword from alt text
+          const keyword = alt.split(' ').slice(0, 3).join(' '); // First 3 words
+          
+          const imageResult = await resolveImage(keyword, {
+            orientation: 'landscape',
+            width: 600,
+            height: 400,
+          });
+          
+          // Replace placeholder URL with real URL
+          finalCode = finalCode.replace(placeholderUrl, imageResult.url);
+          console.log(`✅ [REFINE-SDK] Replaced "${keyword}" image: ${imageResult.url.substring(0, 60)}...`);
+        } catch (error) {
+          console.error(`❌ [REFINE-SDK] Failed to fetch image for "${alt}":`, error);
+        }
+      }
+    }
 
     // Validate and generate diff
     const processResult = processCodeChanges({
