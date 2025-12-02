@@ -176,3 +176,46 @@ export function extractStyles(
   return styles;
 }
 
+/**
+ * Find the immediate parent component of a given component
+ * Uses character position containment: parent.start < child.start && parent.end > child.end
+ * Returns the SMALLEST containing component (immediate parent, not grandparent)
+ */
+export function findParentComponent(
+  componentId: string,
+  componentMap: ComponentMap
+): string | null {
+  const target = componentMap[componentId];
+  if (!target) {
+    console.warn('[TSX-PARSER] Component not found:', componentId);
+    return null;
+  }
+  
+  let parent: { id: string; size: number } | null = null;
+  
+  for (const [id, comp] of Object.entries(componentMap)) {
+    // Skip self
+    if (id === componentId) continue;
+    
+    // Check if comp fully contains target (character position containment)
+    const containsTarget = comp.startChar < target.startChar && comp.endChar > target.endChar;
+    
+    if (containsTarget) {
+      const size = comp.endChar - comp.startChar;
+      
+      // Find smallest containing component (immediate parent)
+      if (!parent || size < parent.size) {
+        parent = { id, size };
+      }
+    }
+  }
+  
+  if (parent) {
+    console.log(`[TSX-PARSER] Found parent of ${componentId}: ${parent.id}`);
+  } else {
+    console.log(`[TSX-PARSER] No parent found for ${componentId} (root component)`);
+  }
+  
+  return parent?.id || null;
+}
+

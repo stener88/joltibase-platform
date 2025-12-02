@@ -1,0 +1,36 @@
+<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#0a0a0a"/>
+  
+  <!-- Modal backdrop -->
+  <rect x="60" y="40" width="280" height="220" rx="12" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1"/>
+  
+  <!-- Modal header -->
+  <rect x="80" y="60" width="100" height="8" rx="2" fill="#ffffff"/>
+  <rect x="80" y="75" width="180" height="5" rx="2" fill="#4a4a4a"/>
+  
+  <!-- Logo upload area -->
+  <rect x="80" y="95" width="60" height="60" rx="8" fill="#2a2a2a" stroke="#3a3a3a" stroke-width="1" stroke-dasharray="4 2"/>
+  <circle cx="110" cy="120" r="12" fill="#3a3a3a"/>
+  <rect x="103" y="135" width="14" height="3" rx="1" fill="#4a4a4a"/>
+  
+  <!-- Color pickers -->
+  <rect x="160" y="95" width="160" height="25" rx="6" fill="#2a2a2a"/>
+  <circle cx="175" cy="107" r="8" fill="#5f6ad1"/>
+  <rect x="190" y="103" width="60" height="8" rx="2" fill="#3a3a3a"/>
+  
+  <rect x="160" y="130" width="160" height="25" rx="6" fill="#2a2a2a"/>
+  <circle cx="175" cy="142" r="8" fill="#8b5cf6"/>
+  <rect x="190" y="138" width="50" height="8" rx="2" fill="#3a3a3a"/>
+  
+  <!-- Tone selector -->
+  <rect x="80" y="170" width="240" height="30" rx="6" fill="#2a2a2a"/>
+  <rect x="90" y="178" width="50" height="14" rx="4" fill="#5f6ad1"/>
+  <rect x="150" y="180" width="40" height="10" rx="3" fill="#3a3a3a"/>
+  <rect x="200" y="180" width="35" height="10" rx="3" fill="#3a3a3a"/>
+  <rect x="245" y="180" width="45" height="10" rx="3" fill="#3a3a3a"/>
+  
+  <!-- Save button -->
+  <rect x="230" y="215" width="90" height="30" rx="6" fill="#5f6ad1"/>
+  <rect x="255" y="226" width="40" height="8" rx="2" fill="#ffffff"/>
+</svg>
+

@@ -30,12 +30,12 @@ function getMaxCTAsForDesignSystem(designSystemId?: string): number {
   if (!designSystemId) return 3; // Default fallback
   
   const limits: Record<string, number> = {
-    'newsletter-editorial': 6,      // Newsletters naturally have more "Read More" links
-    'ecommerce-conversion': 3,      // Focus on product CTAs
-    'saas-product': 2,              // Try it + Learn more
-    'event-conference': 2,          // RSVP + View details
-    'modern-startup': 3,            // Bold action-oriented
-    'corporate-professional': 2,    // Conservative, focused
+    'newsletter-editorial': 8,      // Newsletters have multiple article links
+    'ecommerce-conversion': 10,     // Product grids can have 8+ items
+    'saas-product': 3,              // Try it + Learn more + secondary
+    'event-conference': 3,          // RSVP + View details + secondary
+    'modern-startup': 4,            // Bold action-oriented with features
+    'corporate-professional': 3,    // Conservative but allows sections
     'minimal-elegant': 2,           // Minimal, focused (primary + secondary)
   };
   

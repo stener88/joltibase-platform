@@ -12,7 +12,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Save, X, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { updateComponentText, updateInlineStyle, updateImageSrc } from '@/lib/email-v3/tsx-manipulator';
-import { parseAndInjectIds } from '@/lib/email-v3/tsx-parser';
+import { parseAndInjectIds, findParentComponent } from '@/lib/email-v3/tsx-parser';
 import { Z_INDEX } from '@/lib/ui-constants';
 import type { CodeChange } from '@/lib/email-v3/diff-generator';
 import type { BrandIdentity } from '@/lib/types/brand';
@@ -79,6 +79,10 @@ export function EmailEditorV3({
   const [isMounted, setIsMounted] = useState(false);
   const [brandSettings, setBrandSettings] = useState<BrandIdentity | null>(null);
   const [hasShownBrandPrompt, setHasShownBrandPrompt] = useState(false);
+  const [toolbarStatus, setToolbarStatus] = useState<{
+    type: 'idle' | 'loading' | 'error' | 'success';
+    message?: string;
+  }>({ type: 'idle' });
 
   // ✅ Working TSX ref - holds current code with visual edits (no re-renders!)
   const workingTsxRef = useRef(initialTsxCode);
@@ -88,6 +92,14 @@ export function EmailEditorV3({
 
   // ✅ Message metadata ref - tracks changes and intent per message
   const messageMetadataRef = useRef<Map<string, { changes?: CodeChange[]; intent?: 'question' | 'command' }>>(new Map());
+
+  // ✅ Sync function ref - for updating iframe selection without useEffect
+  const syncSelectionRef = useRef<((id: string | null) => void) | null>(null);
+  
+  // Stable callback for iframe ready
+  const handleIframeReady = useCallback((syncFn: (id: string | null) => void) => {
+    syncSelectionRef.current = syncFn;
+  }, []);
 
   // State for manual streaming (hybrid approach)
   const [messages, setMessages] = useState<Array<{ id: string; role: 'user' | 'assistant'; content: string; createdAt?: Date }>>(initialChatMessages as any);
@@ -154,44 +166,55 @@ export function EmailEditorV3({
     }
   }, [selectedComponentId]);
 
-  // ✅ Clear floating prompt when switching components
+  // ✅ Clear floating prompt and toolbar status when switching components
   useEffect(() => {
     if (selectedComponentId) {
       setFloatingPrompt('');
+      setToolbarStatus({ type: 'idle' });
     }
   }, [selectedComponentId]);
 
-  // Handle chat submission with streaming
-  // Can accept optional customPrompt to bypass main input state (for floating toolbar)
-  const handleChatSubmit = useCallback(async (customPrompt?: string) => {
+  // Handle chat submission
+  // source: 'chat' for main input, 'toolbar' for floating toolbar (forces command mode)
+  const handleChatSubmit = useCallback(async (customPrompt?: string, source: 'chat' | 'toolbar' = 'chat') => {
     const promptToUse = customPrompt || input;
     if (!promptToUse.trim() || isGenerating) return;
 
-    console.log(`[EDITOR] Submitting: "${promptToUse}"`);
+    const isToolbar = source === 'toolbar';
+    console.log(`[EDITOR] Submitting: "${promptToUse}" (source: ${source})`);
 
-    // Add user message
-    const userMsg = {
-      id: Date.now().toString(),
-      role: 'user' as const,
-      content: promptToUse,
-      createdAt: new Date(),
-    };
-    setMessages(prev => [...prev, userMsg]);
+    // For toolbar: show loading state
+    if (isToolbar) {
+      setToolbarStatus({ type: 'loading' });
+    }
+
+    // Add user message (skip for toolbar to keep chat clean)
+    if (!isToolbar) {
+      const userMsg = {
+        id: Date.now().toString(),
+        role: 'user' as const,
+        content: promptToUse,
+        createdAt: new Date(),
+      };
+      setMessages(prev => [...prev, userMsg]);
+    }
 
     // Clear input
     if (!customPrompt) {
       setInput('');
     }
 
-    // Create placeholder for assistant
+    // Create placeholder for assistant (skip for toolbar)
     const assistantId = (Date.now() + 1).toString();
-    const assistantMsg = {
-      id: assistantId,
-      role: 'assistant' as const,
-      content: '',
-      createdAt: new Date(),
-    };
-    setMessages(prev => [...prev, assistantMsg]);
+    if (!isToolbar) {
+      const assistantMsg = {
+        id: assistantId,
+        role: 'assistant' as const,
+        content: '',
+        createdAt: new Date(),
+      };
+      setMessages(prev => [...prev, assistantMsg]);
+    }
 
     setIsGenerating(true);
 
@@ -207,7 +230,8 @@ export function EmailEditorV3({
           selectedComponentType: selectedComponentId && componentMap[selectedComponentId]
             ? componentMap[selectedComponentId].type
             : null,
-          brandSettings, // Include brand identity
+          brandSettings,
+          source, // Pass source to API for intent forcing
         }),
       });
 
@@ -215,12 +239,37 @@ export function EmailEditorV3({
         throw new Error(`HTTP ${response.status}`);
       }
 
-      // Simple JSON response
+      // Parse response
       const data = await response.json();
-      console.log(`[EDITOR] Intent: ${data.intent}`);
+      console.log(`[EDITOR] Intent: ${data.intent}, Success: ${data.success}`);
 
-      // Apply code changes if command
-      if (data.intent === 'command' && data.tsxCode) {
+      // Handle toolbar response
+      if (isToolbar) {
+        if (data.success) {
+          // Apply code changes
+          if (data.tsxCode) {
+            setDraftTsxCode(data.tsxCode);
+            workingTsxRef.current = data.tsxCode;
+            setRenderVersion(v => v + 1);
+          }
+          setToolbarStatus({ type: 'success' });
+          // Auto-clear success after 2s
+          setTimeout(() => setToolbarStatus({ type: 'idle' }), 2000);
+          console.log(`[EDITOR] Toolbar command success - ${data.changes?.length || 0} changes`);
+        } else {
+          // Show error inline
+          setToolbarStatus({ 
+            type: 'error', 
+            message: data.message || "Couldn't make that change" 
+          });
+          console.log(`[EDITOR] Toolbar command failed: ${data.message}`);
+        }
+        return; // Don't update chat for toolbar commands
+      }
+
+      // Handle chat response (non-toolbar)
+      // Apply code changes if command succeeded
+      if (data.intent === 'command' && data.success && data.tsxCode) {
         setDraftTsxCode(data.tsxCode);
         workingTsxRef.current = data.tsxCode;
         setRenderVersion(v => v + 1);
@@ -243,18 +292,26 @@ export function EmailEditorV3({
         )
       );
     } catch (error) {
-      console.error('[EDITOR] Stream error:', error);
-      setMessages(prev =>
-        prev.map(m =>
-          m.id === assistantId
-            ? { ...m, content: 'Sorry, something went wrong. Please try again.' }
-            : m
-        )
-      );
+      console.error('[EDITOR] Error:', error);
+      
+      if (isToolbar) {
+        setToolbarStatus({ 
+          type: 'error', 
+          message: 'Something went wrong. Try again.' 
+        });
+      } else {
+        setMessages(prev =>
+          prev.map(m =>
+            m.id === assistantId
+              ? { ...m, content: 'Sorry, something went wrong. Please try again.' }
+              : m
+          )
+        );
+      }
     } finally {
       setIsGenerating(false);
     }
-  }, [input, isGenerating, campaignId, selectedComponentId, componentMap, workingTsxRef]);
+  }, [input, isGenerating, campaignId, selectedComponentId, componentMap, workingTsxRef, brandSettings]);
 
   // Handle mode toggle
   const handleModeToggle = useCallback(() => {
@@ -378,15 +435,6 @@ export function EmailEditorV3({
     
     // Commit working ref to draft state
     const updatedCode = workingTsxRef.current;
-    
-    // 🔍 DEBUG: Log what's being saved
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('[SAVE] TSX code being saved (first 500 chars):');
-    console.log(updatedCode.substring(0, 500));
-    console.log('[SAVE] TSX code being saved (last 500 chars):');
-    console.log(updatedCode.substring(Math.max(0, updatedCode.length - 500)));
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    
     setDraftTsxCode(updatedCode);
     
     // Force re-render to show final result
@@ -658,9 +706,21 @@ export function EmailEditorV3({
                         componentMap={componentMap}
                         onDirectUpdate={sendDirectUpdate}
                         onSelectParent={() => {
-                          // TODO: Implement parent selection logic
-                          // Would need to track parent-child relationships in componentMap
-                          console.log('[EDITOR] Select parent - needs hierarchy tracking in tsx-parser');
+                          if (!selectedComponentId) return;
+                          
+                          // Re-parse to get fresh component positions (handles stale map after edits)
+                          const { componentMap: freshMap } = parseAndInjectIds(workingTsxRef.current);
+                          
+                          // Find immediate parent using character containment
+                          const parentId = findParentComponent(selectedComponentId, freshMap);
+                          
+                          if (parentId) {
+                            console.log('[EDITOR] Selecting parent:', parentId);
+                            setSelectedComponentId(parentId);
+                            syncSelectionRef.current?.(parentId); // Direct sync to iframe
+                          } else {
+                            console.log('[EDITOR] Already at root component - no parent');
+                          }
                         }}
                       />
                     </div>
@@ -702,6 +762,8 @@ export function EmailEditorV3({
                   isEnteringVisualMode={isEnteringVisualMode}
                   isExitingVisualMode={isExitingVisualMode}
                   iframeKey={iframeKey}
+                  onIframeReady={handleIframeReady}
+                  isToolbarLoading={toolbarStatus.type === 'loading'}
                 />
               </div>
             }
@@ -715,7 +777,7 @@ export function EmailEditorV3({
             style={{
               top: `${componentPosition.top}px`,
               left: `${componentPosition.left}px`,
-              width: '280px',
+              width: '300px',
               zIndex: Z_INDEX.VISUAL_EDITOR_TOOLBAR,
             }}
             onMouseDown={(e) => e.preventDefault()} // ✅ Prevent blur on toolbar clicks
@@ -726,15 +788,28 @@ export function EmailEditorV3({
                 ref={floatingToolbarInputRef}
                 type="text"
                 value={floatingPrompt}
-                onChange={(e) => setFloatingPrompt(e.target.value)}
-                placeholder="Ask Jolti..."
+                onChange={(e) => {
+                  setFloatingPrompt(e.target.value);
+                  // Clear error when user starts typing
+                  if (toolbarStatus.type === 'error') {
+                    setToolbarStatus({ type: 'idle' });
+                  }
+                }}
+                placeholder={toolbarStatus.type === 'loading' ? 'Working...' : 'Tell Jolti what to change...'}
                 autoFocus
-                className="flex-1 px-2.5 py-1.5 text-sm bg-background text-foreground placeholder-muted-foreground border border-border rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                disabled={toolbarStatus.type === 'loading'}
+                className={`flex-1 px-2.5 py-1.5 text-sm bg-background text-foreground placeholder-muted-foreground border rounded-lg outline-none transition-colors ${
+                  toolbarStatus.type === 'error' 
+                    ? 'border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500' 
+                    : toolbarStatus.type === 'success'
+                    ? 'border-primary'
+                    : 'border-border focus:border-primary focus:ring-1 focus:ring-primary'
+                }`}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && floatingPrompt.trim()) {
+                  if (e.key === 'Enter' && floatingPrompt.trim() && toolbarStatus.type !== 'loading') {
                     e.preventDefault();
                     e.stopPropagation();
-                    handleChatSubmit(floatingPrompt); // ✅ Pass directly, don't touch main prompt!
+                    handleChatSubmit(floatingPrompt, 'toolbar'); // ✅ Pass 'toolbar' source
                     setFloatingPrompt('');
                     // Re-focus after submit
                     setTimeout(() => floatingToolbarInputRef.current?.focus(), 0);
@@ -743,26 +818,44 @@ export function EmailEditorV3({
                     setSelectedComponentId(null);
                     setComponentPosition(null);
                     setFloatingPrompt('');
+                    setToolbarStatus({ type: 'idle' });
                   }
                 }}
               />
               
-              {/* Submit Button */}
+              {/* Submit Button - Shows loading/success states */}
               <button
-                className="w-8 h-8 rounded-lg bg-primary hover:bg-primary/90 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!floatingPrompt.trim() || isGenerating}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                  toolbarStatus.type === 'success' 
+                    ? 'bg-primary' 
+                    : toolbarStatus.type === 'loading'
+                    ? 'bg-primary/70'
+                    : 'bg-primary hover:bg-primary/90'
+                }`}
+                disabled={!floatingPrompt.trim() || toolbarStatus.type === 'loading'}
                 onClick={() => {
                   if (floatingPrompt.trim()) {
-                    handleChatSubmit(floatingPrompt); // ✅ Pass directly, don't touch main prompt!
+                    handleChatSubmit(floatingPrompt, 'toolbar'); // ✅ Pass 'toolbar' source
                     setFloatingPrompt('');
                     // Re-focus after submit
                     setTimeout(() => floatingToolbarInputRef.current?.focus(), 0);
                   }
                 }}
               >
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                </svg>
+                {toolbarStatus.type === 'loading' ? (
+                  <svg className="w-4 h-4 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : toolbarStatus.type === 'success' ? (
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                  </svg>
+                )}
               </button>
               
               {/* Close Button */}
@@ -772,6 +865,7 @@ export function EmailEditorV3({
                   setSelectedComponentId(null);
                   setComponentPosition(null);
                   setFloatingPrompt('');
+                  setToolbarStatus({ type: 'idle' });
                 }}
               >
                 <svg className="w-4 h-4 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -779,6 +873,13 @@ export function EmailEditorV3({
                 </svg>
               </button>
             </div>
+            
+            {/* Inline Error Feedback */}
+            {toolbarStatus.type === 'error' && toolbarStatus.message && (
+              <div className="mt-1.5 px-1 text-xs text-red-500 leading-tight">
+                {toolbarStatus.message}
+              </div>
+            )}
           </div>,
           document.body
         )}

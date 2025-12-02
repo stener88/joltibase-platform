@@ -20,6 +20,8 @@ interface LivePreviewProps {
   isEnteringVisualMode?: boolean;
   isExitingVisualMode?: boolean;
   iframeKey?: number;
+  onIframeReady?: (syncFn: (id: string | null) => void) => void;
+  isToolbarLoading?: boolean; // When true, hide big overlay (toolbar has its own inline loading)
 }
 
 export interface DirectUpdate {
@@ -80,6 +82,9 @@ function extractTextFromHtml(html: string, componentId: string): string {
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    // Decode numeric HTML entities (hex &#xNNN; and decimal &#NNN;)
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)))
     .replace(/\s+/g, ' ') // Normalize whitespace
     .trim();
   
@@ -100,8 +105,22 @@ export function LivePreview({
   isEnteringVisualMode = false,
   isExitingVisualMode = false,
   iframeKey = 0,
+  onIframeReady,
+  isToolbarLoading = false,
 }: LivePreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Expose sync function when iframe loads
+  const handleIframeLoad = useCallback(() => {
+    if (!onIframeReady) return;
+    
+    onIframeReady((componentId) => {
+      iframeRef.current?.contentWindow?.postMessage({
+        type: 'update-selection',
+        componentId
+      }, '*');
+    });
+  }, [onIframeReady]);
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const [componentMap, setComponentMap] = useState<ComponentMap>({});
   const [isRendering, setIsRendering] = useState(false);
@@ -304,6 +323,13 @@ export function LivePreview({
             selectedComponentId = null;
           }
         }
+        
+        // Listen for selection updates from parent (e.g., "Select Parent" button)
+        window.addEventListener('message', (e) => {
+          if (e.data.type === 'update-selection') {
+            updateSelectedClass(e.data.componentId);
+          }
+        });
         
         // Handle clicks
         document.addEventListener('click', (e) => {
@@ -864,7 +890,8 @@ export function LivePreview({
   return (
     <div className="relative h-full w-full bg-background rounded-xl overflow-hidden">
       {/* Loading Overlay (AI generation, rendering, saving, or visual mode transitions) */}
-      {(isGenerating || isRendering || isSaving || isEnteringVisualMode || isExitingVisualMode) && (
+      {/* Hide when toolbar is loading - it has its own inline indicator */}
+      {((isGenerating && !isToolbarLoading) || isRendering || isSaving || isEnteringVisualMode || isExitingVisualMode) && (
         <div 
           className="absolute inset-0 bg-black/50 flex items-center justify-center"
           style={{ zIndex: Z_INDEX.VISUAL_EDITOR_LOADING }}
@@ -898,6 +925,7 @@ export function LivePreview({
         sandbox="allow-scripts allow-same-origin"
         tabIndex={-1}
         title="Email Preview"
+        onLoad={handleIframeLoad}
       />
 
     </div>

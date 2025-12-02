@@ -285,7 +285,7 @@ export function PromptInput({
                     transition-all duration-200
                     disabled:opacity-40 disabled:cursor-not-allowed
                     border border-border
-                    ${brandSettings && brandSettings.enabled !== false ? 'bg-muted text-foreground border-foreground' : 'bg-transparent text-muted-foreground hover:bg-muted hover:border-foreground'}
+                    ${showBrandSettings ? 'bg-primary text-white border-primary' : 'bg-transparent text-muted-foreground hover:bg-muted hover:border-foreground'}
                   `}
                 >
                   <Settings2 className="w-4 h-4" />

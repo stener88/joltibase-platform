@@ -1,12 +1,15 @@
 /**
- * Email Image Service
+ * Email Image Service (V2)
  * 
- * Fetches contextual images from Unsplash for email generation
- * Runs in parallel with design system selection to avoid latency
+ * AI-powered image keyword extraction with intelligent fallback.
+ * Fetches max 5 high-quality images from Unsplash.
+ * 
+ * Priority: AI Keywords → Design System → Topic Extraction → Category
  */
 
 import { fetchUnsplashImage, type ImageResult } from '@/lib/unsplash/client';
 import type { DesignSystem } from '@/emails/lib/design-system-selector';
+import { extractKeywordsWithTimeout, type ImageKeywords } from './ai-image-keywords';
 
 export interface EmailImage {
   url: string;
@@ -21,12 +24,18 @@ export interface EmailImage {
   downloadLocation?: string;
 }
 
+/**
+ * Simplified ImageContext - Max 5 images
+ * Most emails only use 2-3, but newsletters may use up to 5
+ */
 export interface ImageContext {
-  hero: EmailImage | null;
+  hero: EmailImage | null;       // Main visual (always)
+  feature1: EmailImage | null;   // Primary supporting (usually)
+  feature2: EmailImage | null;   // Secondary supporting (sometimes)
+  feature3: EmailImage | null;   // Tertiary supporting (newsletters)
+  accent: EmailImage | null;     // Abstract/background (rarely)
+  // Legacy fields for backwards compatibility with generator.ts
   logo: EmailImage | null;
-  feature1: EmailImage | null;
-  feature2: EmailImage | null;
-  feature3: EmailImage | null;
   product1: EmailImage | null;
   product2: EmailImage | null;
   destination1: EmailImage | null;
@@ -36,166 +45,128 @@ export interface ImageContext {
 
 /**
  * Determine how many images to fetch based on email type
+ * Simplified: 3 (simple), 4 (medium), 5 (complex)
  */
 function getImageCountForPrompt(prompt: string): number {
   const lower = prompt.toLowerCase();
   
-  // Complex emails (10 images) - travel, events, multi-product
-  if (
-    lower.includes('travel') || 
-    lower.includes('destination') ||
-    lower.includes('event') ||
-    lower.includes('conference') ||
-    lower.includes('webinar') ||
-    lower.includes('loyalty') ||
-    lower.includes('multi-product') ||
-    lower.includes('showcase') ||
-    lower.includes('multi-destination')
-  ) {
-    return 10;
-  }
-  
-  // Medium emails (6 images) - newsletters, promotions, updates
+  // Complex emails (5 images) - newsletters, travel, multi-content
   if (
     lower.includes('newsletter') ||
-    lower.includes('product update') ||
+    lower.includes('travel') || 
+    lower.includes('destination') ||
+    lower.includes('multi-product') ||
+    lower.includes('showcase') ||
+    lower.includes('digest')
+  ) {
+    return 5;
+  }
+  
+  // Medium emails (4 images) - announcements, promotions
+  if (
     lower.includes('announcement') ||
     lower.includes('promotional') ||
     lower.includes('campaign') ||
-    lower.includes('digest') ||
-    lower.includes('survey') ||
-    lower.includes('feedback')
+    lower.includes('event') ||
+    lower.includes('conference')
   ) {
-    return 6;
+    return 4;
   }
   
-  // Simple emails (3 images) - welcome, password reset, receipt, policy
+  // Simple emails (3 images) - welcome, updates, transactional
   return 3;
 }
 
 /**
- * Fetch images for email generation based on prompt and design system
- * Adaptively fetches 3, 6, or 10 images based on email complexity
+ * Main function: Fetch images with AI-powered keyword extraction
+ * Uses 400ms timeout for AI, falls back gracefully
  */
 export async function fetchImagesForPrompt(
   prompt: string,
   designSystem?: DesignSystem
 ): Promise<ImageContext> {
   const imageCount = getImageCountForPrompt(prompt);
-  console.log(`🖼️ [IMAGE-SERVICE] Fetching ${imageCount} images for: "${prompt}"`);
-  if (designSystem) {
-    console.log(`🎨 [IMAGE-SERVICE] Using design system: ${designSystem.name}`);
+  console.log(`🖼️ [IMAGE-SERVICE] Fetching ${imageCount} images for: "${prompt.substring(0, 80)}..."`);
+  
+  if (!designSystem) {
+    console.warn('[IMAGE-SERVICE] No design system provided, using fallback');
+    return getFallbackImages();
   }
   
   try {
-    // Extract simple, focused keywords (1-2 words max)
-    const keywords = extractImageKeywords(prompt, designSystem);
+    // Try AI keyword extraction with 400ms timeout
+    console.log(`🤖 [IMAGE-SERVICE] Extracting keywords with AI...`);
+    const aiKeywords = await extractKeywordsWithTimeout(prompt, designSystem, 400);
     
-    console.log(`🎯 [IMAGE-SERVICE] Keywords: hero="${keywords.hero}", feature="${keywords.feature}", product="${keywords.product}"`);
+    // Build final keywords with fallback chain
+    const keywords = aiKeywords 
+      ? aiKeywords 
+      : getDesignSystemKeywords(designSystem) 
+        || extractTopicsFromPrompt(prompt) 
+        || getCategoryFallback(prompt);
     
-    // Always fetch hero and logo (base 2 images)
-    const baseImages = [
+    const source = aiKeywords ? 'AI' : 'fallback';
+    console.log(`🎯 [IMAGE-SERVICE] Keywords (${source}): hero="${keywords.hero}", feature="${keywords.feature}", accent="${keywords.accent}"`);
+    
+    // Fetch images in parallel
+    const imagePromises = [
+      // Always fetch hero
       fetchUnsplashImage({ 
         query: keywords.hero, 
         orientation: 'landscape', 
         width: 600, 
         height: 400
       }),
+      // Always fetch feature1
       fetchUnsplashImage({ 
-        query: 'minimal logo modern abstract', 
-        orientation: 'squarish', 
-        width: 150, 
-        height: 150 
+        query: keywords.feature, 
+        orientation: 'landscape', 
+        width: 400, 
+        height: 300
       }),
+      // Fetch feature2 for medium+ emails
+      imageCount >= 4 ? fetchUnsplashImage({ 
+        query: keywords.accent, 
+        orientation: 'landscape', 
+        width: 400, 
+        height: 300
+      }) : Promise.resolve(null),
+      // Fetch feature3 for complex emails
+      imageCount >= 5 ? fetchUnsplashImage({ 
+        query: keywords.hero, // Different image, same keyword
+        orientation: 'landscape', 
+        width: 400, 
+        height: 300
+      }) : Promise.resolve(null),
+      // Fetch accent for complex emails
+      imageCount >= 5 ? fetchUnsplashImage({ 
+        query: keywords.accent, 
+        orientation: 'squarish', 
+        width: 300, 
+        height: 300
+      }) : Promise.resolve(null),
     ];
     
-    // Conditionally add more images based on complexity
-    const additionalImages = [];
+    const results = await Promise.all(imagePromises);
     
-    // Simple (3 images): hero, logo, feature1
-    if (imageCount >= 3) {
-      additionalImages.push(
-        fetchUnsplashImage({ 
-          query: keywords.feature || keywords.hero, 
-          orientation: 'landscape', 
-          width: 400, 
-          height: 300
-        })
-      );
-    }
-    
-    // Medium (6 images): + feature2, feature3, product1
-    if (imageCount >= 6) {
-      additionalImages.push(
-        fetchUnsplashImage({ 
-          query: keywords.secondary || keywords.feature || keywords.hero, 
-          orientation: 'landscape', 
-          width: 400, 
-          height: 300
-        }),
-        fetchUnsplashImage({ 
-          query: keywords.tertiary || keywords.feature || keywords.hero, 
-          orientation: 'landscape', 
-          width: 400, 
-          height: 300
-        }),
-        fetchUnsplashImage({ 
-          query: keywords.product || keywords.hero, 
-          orientation: 'portrait', 
-          width: 300, 
-          height: 400
-        })
-      );
-    }
-    
-    // Complex (10 images): + product2, destination1, destination2, icon
-    if (imageCount >= 10) {
-      additionalImages.push(
-        fetchUnsplashImage({ 
-          query: keywords.product || keywords.hero, 
-          orientation: 'portrait', 
-          width: 300, 
-          height: 400
-        }),
-        fetchUnsplashImage({ 
-          query: keywords.destination || keywords.hero, 
-          orientation: 'landscape', 
-          width: 300, 
-          height: 250
-        }),
-        fetchUnsplashImage({ 
-          query: keywords.destination || keywords.hero, 
-          orientation: 'landscape', 
-          width: 300, 
-          height: 250
-        }),
-        fetchUnsplashImage({ 
-          query: 'minimal icon badge modern', 
-          orientation: 'squarish', 
-          width: 100, 
-          height: 100 
-        })
-      );
-    }
-    
-    // Fetch all images in parallel
-    const allResults = await Promise.all([...baseImages, ...additionalImages]);
-    
-    // Map results to ImageContext (nulls for unfetched images)
+    // Map results to ImageContext
     const context: ImageContext = {
-      hero: allResults[0] ? mapToEmailImage(allResults[0], 600, 400) : null,
-      logo: allResults[1] ? mapToEmailImage(allResults[1], 150, 150) : null,
-      feature1: allResults[2] ? mapToEmailImage(allResults[2], 400, 300) : null,
-      feature2: allResults[3] ? mapToEmailImage(allResults[3], 400, 300) : null,
-      feature3: allResults[4] ? mapToEmailImage(allResults[4], 400, 300) : null,
-      product1: allResults[5] ? mapToEmailImage(allResults[5], 300, 400) : null,
-      product2: allResults[6] ? mapToEmailImage(allResults[6], 300, 400) : null,
-      destination1: allResults[7] ? mapToEmailImage(allResults[7], 300, 250) : null,
-      destination2: allResults[8] ? mapToEmailImage(allResults[8], 300, 250) : null,
-      icon: allResults[9] ? mapToEmailImage(allResults[9], 100, 100) : null,
+      hero: results[0] ? mapToEmailImage(results[0], 600, 400) : null,
+      feature1: results[1] ? mapToEmailImage(results[1], 400, 300) : null,
+      feature2: results[2] ? mapToEmailImage(results[2], 400, 300) : null,
+      feature3: results[3] ? mapToEmailImage(results[3], 400, 300) : null,
+      accent: results[4] ? mapToEmailImage(results[4], 300, 300) : null,
+      // Legacy fields - map from new structure for backwards compatibility
+      logo: null, // Logo should come from brand settings, not Unsplash
+      product1: results[2] ? mapToEmailImage(results[2], 300, 400) : null,
+      product2: results[3] ? mapToEmailImage(results[3], 300, 400) : null,
+      destination1: results[2] ? mapToEmailImage(results[2], 300, 250) : null,
+      destination2: results[3] ? mapToEmailImage(results[3], 300, 250) : null,
+      icon: results[4] ? mapToEmailImage(results[4], 100, 100) : null,
     };
     
-    const fetchedCount = Object.values(context).filter(Boolean).length;
+    const fetchedCount = [context.hero, context.feature1, context.feature2, context.feature3, context.accent]
+      .filter(Boolean).length;
     console.log(`✅ [IMAGE-SERVICE] Fetched ${fetchedCount}/${imageCount} images`);
     
     return context;
@@ -207,110 +178,81 @@ export async function fetchImagesForPrompt(
 }
 
 /**
- * Extract the core product/subject noun from prompt
- * Returns SINGLE most relevant word for focused Unsplash search
+ * Get keywords from design system (fallback #1)
  */
-function extractCoreNoun(prompt: string): string {
+function getDesignSystemKeywords(designSystem: DesignSystem): ImageKeywords | null {
+  if (!designSystem.imageKeywords) return null;
+  
+  const ds = designSystem.imageKeywords;
+  console.log(`🎨 [IMAGE-SERVICE] Using ${designSystem.name} design system keywords`);
+  
+  // Pick first keyword from each array (consistent, not random)
+  // Then take only first 2 words for better Unsplash results
+  return {
+    hero: truncateToWords(ds.hero?.[0] || 'business', 2),
+    feature: truncateToWords(ds.feature?.[0] || ds.hero?.[0] || 'professional', 2),
+    accent: truncateToWords(ds.background?.[0] || 'minimal', 2),
+  };
+}
+
+/**
+ * Extract topic keywords from prompt (fallback #2)
+ */
+function extractTopicsFromPrompt(prompt: string): ImageKeywords | null {
   const lower = prompt.toLowerCase();
   
-  // Common product nouns - expand as needed
-  const knownProducts = [
-    'headset', 'headphones', 'earbuds', 'speaker', 'audio',
-    'phone', 'smartphone', 'iphone', 'android', 'mobile',
-    'laptop', 'computer', 'macbook', 'pc', 'tablet',
-    'watch', 'smartwatch', 'timepiece',
-    'car', 'vehicle', 'bike', 'bicycle', 'scooter',
-    'shoes', 'sneakers', 'boots', 'footwear',
-    'bag', 'backpack', 'purse', 'luggage',
-    'bottle', 'cup', 'mug', 'glass',
-    'shirt', 'clothing', 'dress', 'jacket',
-    'furniture', 'chair', 'desk', 'table', 'sofa',
-    'book', 'magazine', 'newspaper', 'publication',
-    'camera', 'lens', 'photography',
-    'glasses', 'sunglasses', 'eyewear',
-    'keyboard', 'mouse', 'monitor', 'screen',
-    'software', 'app', 'platform', 'tool', 'service',
+  // Topic keywords that photograph well
+  const topicKeywords = [
+    'sustainability', 'technology', 'innovation', 'teamwork', 'office',
+    'nature', 'travel', 'food', 'fitness', 'wellness', 'fashion',
+    'education', 'healthcare', 'finance', 'retail', 'manufacturing',
   ];
   
-  // Check if any known product is mentioned
-  for (const product of knownProducts) {
-    if (lower.includes(product)) {
-      return product;
-    }
-  }
+  const found = topicKeywords.filter(topic => lower.includes(topic));
   
-  // Fallback: extract first meaningful noun after removing filler words
-  const cleaned = lower
-    .replace(/\b(can|you|please|help|create|make|build|design|write|generate|email|newsletter|campaign|we|are|our|is|the|a|an|for|about|to|launching|launch|announce|announcement|introducing|introduce|new|premium|modern|beautiful|professional|exclusive|limited|best|great|amazing|quarterly|annual|monthly|weekly|daily)\b/gi, '')
-    .trim();
+  if (found.length === 0) return null;
   
-  const words = cleaned.split(/\s+/).filter(w => w.length > 2);
+  console.log(`📝 [IMAGE-SERVICE] Extracted topics: ${found.join(', ')}`);
   
-  return words.length > 0 ? words[0] : 'modern';
+  return {
+    hero: found[0],
+    feature: found[1] || found[0],
+    accent: found[2] || 'abstract',
+  };
 }
 
 /**
- * Get category-based fallback if no specific product found
+ * Category-based fallback (fallback #3)
  */
-function getCategoryKeyword(prompt: string): string {
+function getCategoryFallback(prompt: string): ImageKeywords {
   const lower = prompt.toLowerCase();
   
-  if (lower.includes('travel') || lower.includes('vacation') || lower.includes('destination')) return 'travel';
-  if (lower.includes('food') || lower.includes('restaurant') || lower.includes('dining')) return 'food';
-  if (lower.includes('fitness') || lower.includes('gym') || lower.includes('workout')) return 'fitness';
-  if (lower.includes('business') || lower.includes('office') || lower.includes('corporate')) return 'office';
-  if (lower.includes('tech') || lower.includes('software') || lower.includes('digital')) return 'technology';
-  if (lower.includes('fashion') || lower.includes('style') || lower.includes('clothing')) return 'fashion';
-  if (lower.includes('event') || lower.includes('conference') || lower.includes('summit')) return 'conference';
-  if (lower.includes('education') || lower.includes('learning') || lower.includes('course')) return 'education';
-  if (lower.includes('health') || lower.includes('medical') || lower.includes('wellness')) return 'healthcare';
+  let category = 'business';
   
-  return 'business';
+  if (lower.includes('travel') || lower.includes('vacation')) category = 'travel';
+  else if (lower.includes('food') || lower.includes('restaurant')) category = 'food';
+  else if (lower.includes('fitness') || lower.includes('gym')) category = 'fitness';
+  else if (lower.includes('tech') || lower.includes('software')) category = 'technology';
+  else if (lower.includes('fashion') || lower.includes('style')) category = 'fashion';
+  else if (lower.includes('event') || lower.includes('conference')) category = 'conference';
+  else if (lower.includes('education') || lower.includes('learning')) category = 'education';
+  else if (lower.includes('health') || lower.includes('medical')) category = 'healthcare';
+  
+  console.log(`📂 [IMAGE-SERVICE] Using category fallback: ${category}`);
+  
+  return {
+    hero: category,
+    feature: category,
+    accent: 'abstract',
+  };
 }
 
 /**
- * Extract simple, focused keywords for Unsplash search
- * Uses core noun extraction for maximum relevance
+ * Truncate string to max N words (for better Unsplash results)
  */
-function extractImageKeywords(
-  prompt: string,
-  designSystem?: DesignSystem
-): {
-  hero: string;
-  feature?: string;
-  secondary?: string;
-  tertiary?: string;
-  product?: string;
-  destination?: string;
-} {
-  // Extract the core subject/product from prompt
-  const coreNoun = extractCoreNoun(prompt);
-  const category = getCategoryKeyword(prompt);
-  
-  // SIMPLE APPROACH: Use core noun + category fallback
-  // Let Unsplash relevance + color filter handle aesthetics
-  
-  // If we found a specific product, use it
-  if (coreNoun !== 'modern') {
-    return {
-      hero: coreNoun,                      // "headset"
-      feature: coreNoun,                   // "headset" (Unsplash will pick different image)
-      secondary: `${coreNoun} detail`,     // "headset detail"
-      tertiary: coreNoun,                  // "headset"
-      product: `${coreNoun} product`,      // "headset product"
-      destination: category,               // Category fallback (e.g., "technology")
-    };
-  }
-  
-  // No specific product found - use category
-  return {
-    hero: category,                        // e.g., "conference"
-    feature: category,                     // e.g., "conference"
-    secondary: `${category} professional`, // e.g., "conference professional"
-    tertiary: category,                    // e.g., "conference"
-    product: `${category} modern`,         // e.g., "conference modern"
-    destination: category,                 // e.g., "conference"
-  };
+function truncateToWords(str: string, maxWords: number): string {
+  const words = str.trim().split(/\s+/);
+  return words.slice(0, maxWords).join(' ');
 }
 
 /**
@@ -328,11 +270,11 @@ function mapToEmailImage(result: ImageResult, width: number, height: number): Em
 }
 
 /**
- * Fallback images when Unsplash API fails
+ * Fallback images when everything else fails
  * Uses high-quality, pre-selected Unsplash images
  */
 function getFallbackImages(): ImageContext {
-  console.log('📦 [IMAGE-SERVICE] Using fallback images');
+  console.log('📦 [IMAGE-SERVICE] Using static fallback images');
   
   return {
     hero: {
@@ -340,12 +282,6 @@ function getFallbackImages(): ImageContext {
       alt: 'Professional workspace with laptop',
       width: 600,
       height: 400,
-    },
-    logo: {
-      url: 'https://images.unsplash.com/photo-1614680376739-414d95ff43df?w=150&h=150&fit=crop',
-      alt: 'Company logo',
-      width: 150,
-      height: 150,
     },
     feature1: {
       url: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=400&h=300&fit=crop',
@@ -364,6 +300,19 @@ function getFallbackImages(): ImageContext {
       alt: 'Modern office space',
       width: 400,
       height: 300,
+    },
+    accent: {
+      url: 'https://images.unsplash.com/photo-1557683316-973673baf926?w=300&h=300&fit=crop',
+      alt: 'Abstract gradient',
+      width: 300,
+      height: 300,
+    },
+    // Legacy fields for backwards compatibility
+    logo: {
+      url: 'https://images.unsplash.com/photo-1614680376739-414d95ff43df?w=150&h=150&fit=crop',
+      alt: 'Company logo',
+      width: 150,
+      height: 150,
     },
     product1: {
       url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=400&fit=crop',
@@ -397,4 +346,3 @@ function getFallbackImages(): ImageContext {
     },
   };
 }
-

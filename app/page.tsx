@@ -8,7 +8,7 @@ import { AuthModal } from '@/components/auth/AuthModal';
 import { GradientBackground } from '@/components/campaigns/GradientBackground';
 import { PromptInput } from '@/components/campaigns/PromptInput';
 import { GenerationProgress } from '@/components/campaigns/GenerationProgress';
-import { EmailSkeleton } from '@/components/campaigns/EmailSkeleton';
+import { GenerationCarousel } from '@/components/onboarding/GenerationCarousel';
 import { SplitScreenLayout } from '@/components/campaigns/SplitScreenLayout';
 import type { User } from '@supabase/supabase-js';
 
@@ -160,7 +160,7 @@ export default function HomePage() {
         <GradientBackground />
         <SplitScreenLayout
           leftPanel={<GenerationProgress prompt={prompt} />}
-          rightPanel={<EmailSkeleton />}
+          rightPanel={<GenerationCarousel />}
         />
       </div>
     );

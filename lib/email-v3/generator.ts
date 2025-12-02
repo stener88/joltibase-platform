@@ -1,9 +1,4 @@
-/**
- * V3 Email Generator - Standard React Email Components
- * 
- * Uses existing RAG system to generate React Email components
- * Generates complete components with Html/Head/Body/Container structure
- */
+
 
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText } from 'ai';
@@ -39,33 +34,49 @@ const SYSTEM_INSTRUCTION = `You are an expert React Email developer creating pro
 
 # CRITICAL RULES
 
-1. **COMPLETE REACT EMAIL STRUCTURE**
+1. **IMPORTS - CRITICAL (CHECK BEFORE WRITING CODE)**
+   ⚠️ BEFORE you write ANY code, identify ALL components you will use and import them.
+   
+   \`\`\`tsx
+   // ALWAYS start with this import - include ALL components you'll use:
+   import { 
+     Html, Head, Body, Container, Preview,
+     Section, Heading, Text, Button, Link,
+     Column, Row, Img, Hr 
+   } from '@react-email/components';
+   \`\`\`
+   
+   - NEVER use a component without importing it first
+   - FORBIDDEN: <Preview> without Preview in import
+   - FORBIDDEN: <Link> without Link in import
+   - Check your code - every <ComponentName> must be in the import statement
+
+2. **COMPLETE REACT EMAIL STRUCTURE**
    - Root element MUST be <Html>
    - Include <Head /> for metadata and title
    - Use <Body> for the email body
    - Use <Container> for max-width (600px standard)
-   - Import ALL components from '@react-email/components'
 
-2. **AVAILABLE COMPONENTS**
+3. **AVAILABLE COMPONENTS (import ALL you use)**
    - Html, Head, Body, Container, Preview
    - Section, Heading, Text, Button, Link
    - Column, Row, Img, Hr
    - ALL imported from '@react-email/components'
 
-3. **STYLING - INLINE STYLES ONLY (CRITICAL)**
+4. **STYLING - INLINE STYLES ONLY (CRITICAL)**
    - **ALWAYS use inline styles via style prop**
    - **NEVER use className** - email clients strip className
    - All styles must be inline style objects
    - Example: style={{ padding: '24px', backgroundColor: '#ffffff' }}
 
-4. **TYPESCRIPT & CONTENT - CRITICAL**
+5. **TYPESCRIPT & CONTENT - CRITICAL**
    - No props needed (or empty props interface)
    - **STATIC CONTENT ONLY**: Write ALL text directly in JSX
    - **NEVER use**: {variable}, {prop.text}, .map(), .forEach()
    - **INSTEAD**: Write all content as literal strings
    - Export as default function
 
-5. **IMAGES - PREVENT STRETCHING (CRITICAL)**
+6. **IMAGES - PREVENT STRETCHING (CRITICAL)**
    - Use <Img> component from '@react-email/components'
    - Real image URLs will be provided in the user prompt
    - ALWAYS include alt attributes (descriptive, 10-15 words)
@@ -80,30 +91,53 @@ const SYSTEM_INSTRUCTION = `You are an expert React Email developer creating pro
      * Correct: <Img src="..." width={600} height={400} style={{ width: '100%', height: 'auto' }} />
      * Wrong: <Img src="..." width={600} height={400} style={{ width: '100%', height: '400px' }} />
 
-6. **HORIZONTAL RULES (Hr)**
+7. **HORIZONTAL RULES (Hr)**
    - Use <Hr> for visual dividers
    - ALWAYS constrain width with margin: <Hr style={{ margin: '24px 0' }} />
    - For full-width within container: <Hr style={{ margin: '32px 0', borderColor: '#e5e7eb' }} />
    - NEVER use absolute positioning or width: '100vw'
    - Example: <Hr style={{ margin: '24px 0', borderColor: '#d1d5db', borderWidth: '1px' }} />
 
-7. **EMAIL BEST PRACTICES**
+8. **BUTTONS/CTAs - CRITICAL SIZE REQUIREMENTS**
+   ⚠️ All buttons MUST have minimum 44px touch target height for accessibility.
+   
+   **REQUIRED button style:**
+   \`\`\`tsx
+   <Button 
+     href="#" 
+     style={{ 
+       padding: '16px 32px',  // MINIMUM: 14px vertical, 24px horizontal
+       fontSize: '16px',      // MINIMUM: 16px
+       borderRadius: '8px',
+       backgroundColor: '#primaryColor',
+       color: '#ffffff',
+       textDecoration: 'none',
+       display: 'inline-block',
+       textAlign: 'center',
+     }}
+   >
+     Button Text
+   </Button>
+   \`\`\`
+   
+   - FORBIDDEN: padding: '8px 16px' (too small - fails accessibility)
+   - FORBIDDEN: padding: '10px 20px' (too small)
+   - MINIMUM: padding: '14px 28px' (achieves 44px+ height)
+   - RECOMMENDED: padding: '16px 32px' (optimal)
+
+9. **EMAIL BEST PRACTICES**
    - Max content width: 600px via Container
    - Include <Preview> text for email clients
    - Follow the design system specifications exactly
    - All images must have descriptive alt text
-  - Minimum font size: 14px for all text (16px for body text)
-   - **Buttons/CTAs**: Use sufficient padding (14px+ vertical) to ensure touch targets are 44px+ tall
-   - **CTA Count**: Limit to 1-3 primary CTAs maximum (avoid decision paralysis)
-     * Single-purpose emails: 1 CTA
-     * Newsletters/digests: 2-3 CTAs max
-     * E-commerce: 2-3 product CTAs max
+   - Minimum font size: 14px for all text (16px for body text)
+   - For product grids: OK to have many CTAs if user requests multiple products
 
-8. **COMPLETE CODE ONLY**
-   - NO placeholders, NO "...", NO incomplete sections
-   - NO {{variables}}, NO template syntax
-   - EVERY section fully implemented with real text
-   - NO TODO or FIXME comments
+10. **COMPLETE CODE ONLY**
+    - NO placeholders, NO "...", NO incomplete sections
+    - NO {{variables}}, NO template syntax
+    - EVERY section fully implemented with real text
+    - NO TODO or FIXME comments
 
 Generate COMPLETE, production-ready React Email components using INLINE STYLES ONLY.`;
 
@@ -394,11 +428,10 @@ function buildUserPrompt(
     userPrompt += `Previous attempts failed validation. CRITICAL FIXES NEEDED:\n\n`;
     userPrompt += `**MOST COMMON ERRORS TO FIX:**\n`;
     userPrompt += `1. ❌ Using className → ✅ Use inline styles only: style={{ padding: '24px' }}\n`;
-    userPrompt += `2. ❌ Missing imports → ✅ Import ALL components you use from '@react-email/components'\n`;
+    userPrompt += `2. ❌ Missing imports → ✅ Import ALL components you use: import { Html, Head, Body, Container, Preview, Section, Heading, Text, Button, Link, Column, Row, Img, Hr } from '@react-email/components'\n`;
     userPrompt += `3. ❌ {{placeholder}} syntax → ✅ Write actual static text\n`;
     userPrompt += `4. ❌ Missing alt text on images → ✅ Every <Img> needs descriptive alt="..."\n`;
-    userPrompt += `5. ❌ Too many CTAs → ✅ Maximum 3 CTAs per email (1-2 for most emails)\n`;
-    userPrompt += `6. ❌ Small buttons → ✅ Use padding: '14px 28px' minimum for 44px+ touch target\n\n`;
+    userPrompt += `5. ❌ Small buttons → ✅ REQUIRED: padding: '16px 32px' minimum for 44px+ touch target. NEVER use padding smaller than '14px 28px'\n\n`;
     userPrompt += `**CRITICAL - INLINE STYLES ONLY:**\n`;
     userPrompt += `Every HTML attribute like padding, color, fontSize, etc. MUST be in a style prop object.\n`;
     userPrompt += `Example: <Section style={{ padding: '48px 24px', backgroundColor: '#ffffff' }}>\n`;

@@ -90,7 +90,7 @@ export async function POST(request: Request) {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const { campaignId, currentTsxCode, userMessage, selectedComponentId, selectedComponentType, brandSettings } = 
+    const { campaignId, currentTsxCode, userMessage, selectedComponentId, selectedComponentType, brandSettings, source } = 
       await request.json();
 
     if (!campaignId || !currentTsxCode || !userMessage) {
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
       console.log(`🎨 [REFINE-SDK] Using brand: ${brandSettings.companyName}`);
     }
 
-    console.log(`🔄 [REFINE-SDK] User message: "${userMessage}"`);
+    console.log(`🔄 [REFINE-SDK] User message: "${userMessage}" (source: ${source || 'chat'})`);
     if (selectedComponentId) {
       console.log(`🎯 [REFINE-SDK] Target component: ${selectedComponentType} (${selectedComponentId})`);
     }
@@ -116,11 +116,26 @@ export async function POST(request: Request) {
       componentMap = undefined;
     }
 
-    // Detect intent
-    const intent = detectIntent(userMessage);
-    console.log(`[REFINE-SDK] Intent: ${intent}`);
+    // Detect intent using existing classifier
+    const detectedIntent = detectIntent(userMessage);
+    
+    // For toolbar: force command mode, but catch obvious questions and fail gracefully
+    if (source === 'toolbar' && detectedIntent === 'question') {
+      console.log(`[REFINE-SDK] Toolbar received question - failing gracefully`);
+      return Response.json({
+        success: false,
+        intent: 'command',
+        tsxCode: currentTsxCode,
+        changes: [],
+        message: "The toolbar is for making changes. Try 'make it blue' or 'change the text to...'",
+      });
+    }
+    
+    // Toolbar forces command, chat uses detected intent
+    const intent = source === 'toolbar' ? 'command' : detectedIntent;
+    console.log(`[REFINE-SDK] Intent: ${intent}${source === 'toolbar' ? ' (forced by toolbar)' : ''}`);
 
-    // CONSULTATION MODE - Answer questions
+    // CONSULTATION MODE - Answer questions (only for chat, toolbar forces command)
     if (intent === 'question') {
       const result = await generateText({
         model: google('gemini-2.0-flash-exp'),
@@ -130,6 +145,7 @@ export async function POST(request: Request) {
       });
 
       return Response.json({
+        success: true,
         intent: 'question',
         message: result.text,
         tsxCode: currentTsxCode, // No changes
@@ -324,8 +340,36 @@ export async function POST(request: Request) {
       console.log(`💰 [REFINE-SDK] Tokens: ${totalTokens} | Cost: ~$${cost.toFixed(6)}`);
     }
 
-    // Return simple JSON response
+    // Handle graceful failures for toolbar commands
+    if (source === 'toolbar') {
+      // No changes detected - couldn't understand or execute the command
+      if (processResult.changes.length === 0) {
+        console.log(`[REFINE-SDK] Toolbar command failed - no changes detected`);
+        return Response.json({
+          success: false,
+          intent: 'command',
+          tsxCode: currentTsxCode, // Return original code
+          changes: [],
+          message: "I couldn't make that change. Try something like 'make it blue' or 'change text to...'",
+        });
+      }
+      
+      // Validation failed - code is broken
+      if (!processResult.valid) {
+        console.log(`[REFINE-SDK] Toolbar command failed - validation errors`);
+        return Response.json({
+          success: false,
+          intent: 'command',
+          tsxCode: currentTsxCode, // Return original code
+          changes: [],
+          message: "Something went wrong with that change. Try rephrasing your request.",
+        });
+      }
+    }
+
+    // Return successful response
     return Response.json({
+      success: true,
       intent: 'command',
       tsxCode: finalCode,
       changes: processResult.changes,
@@ -339,10 +383,14 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('[REFINE-SDK] Error:', error);
-    return new Response(
-      JSON.stringify({ error: error.message || 'Failed to refine email' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    
+    // Graceful error response (still 200 so UI can handle it cleanly)
+    return Response.json({
+      success: false,
+      intent: 'command',
+      message: "Something went wrong. Try rephrasing your request.",
+      error: error.message || 'Failed to refine email',
+    });
   }
 }
 
