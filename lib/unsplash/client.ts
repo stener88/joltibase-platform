@@ -72,9 +72,8 @@ export async function fetchUnsplashImage(
   const cacheKey = `${query}-${orientation}`;
   if (imageCache.has(cacheKey)) {
     const cachedResults = imageCache.get(cacheKey)!;
-    const randomIndex = Math.floor(Math.random() * cachedResults.length);
-    const photo = cachedResults[randomIndex];
-    console.log(`[Unsplash] 💾 Using cached result for: "${query}" (#${randomIndex + 1} of ${cachedResults.length})`);
+    const photo = cachedResults[0]; // Always pick best (most relevant) from cache
+    console.log(`[Unsplash] 💾 Using cached top result for: "${query}" (1 of ${cachedResults.length})`);
     
     // Build image URL with dimensions (same as below)
     let imageUrl = photo.urls.regular;
@@ -145,11 +144,10 @@ export async function fetchUnsplashImage(
       console.log(`[Unsplash] 💾 Cached ${responseData.results.length} results for: "${query}"`);
     }
     
-    // Pick random from top 5 for variety while maintaining relevance
-    const randomIndex = Math.floor(Math.random() * responseData.results.length);
-    const photo = responseData.results[randomIndex] as UnsplashPhoto;
+    // Always pick #1 most relevant result (sorted by relevance)
+    const photo = responseData.results[0] as UnsplashPhoto;
     
-    console.log(`[Unsplash] ✅ Selected #${randomIndex + 1} of ${responseData.results.length} relevant results`);
+    console.log(`[Unsplash] ✅ Using top result of ${responseData.results.length}`);
     
     // Validate response structure
     if (!photo || !photo.urls || !photo.urls.regular) {

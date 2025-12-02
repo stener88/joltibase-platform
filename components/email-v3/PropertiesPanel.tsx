@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ImagePicker } from './ImagePicker';
@@ -243,9 +243,16 @@ export function PropertiesPanel({
   const [imageHeight, setImageHeight] = useState('');
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
 
-  // Sync local state with component properties
+  // Sync local state with component properties ONLY when switching components
+  // Don't reset on every componentProperties change (that would wipe user edits!)
+  const prevComponentIdRef = useRef<string | null>(null);
+  
   useEffect(() => {
-    if (componentProperties) {
+    // Only reset if we switched to a different component (not same component with updated map)
+    if (componentProperties && selectedComponentId !== prevComponentIdRef.current) {
+      console.log('[PROPERTIES-PANEL] Component changed, resetting state:', selectedComponentId);
+      prevComponentIdRef.current = selectedComponentId;
+      
       setText(componentProperties.text || '');
       setTextColor(componentProperties.textColor || '');
       setFontSize(componentProperties.fontSize || '');
@@ -271,7 +278,7 @@ export function PropertiesPanel({
       setImageWidth(componentProperties.width || '');
       setImageHeight(componentProperties.height || '');
     }
-  }, [componentProperties]);
+  }, [selectedComponentId, componentProperties]); // ✅ Reset only when switching components
 
   // Handle instant updates
   const handleTextChange = (newText: string) => {
@@ -286,7 +293,7 @@ export function PropertiesPanel({
       setTextColor(newColor);
       setTextColorInherit(false);
       if (selectedComponentId) {
-        onDirectUpdate(selectedComponentId, 'textColor', newColor);
+        onDirectUpdate(selectedComponentId, 'color', newColor); // ✅ FIX: Use 'color' (valid CSS) not 'textColor'
       }
     } else {
       setBackgroundColor(newColor);

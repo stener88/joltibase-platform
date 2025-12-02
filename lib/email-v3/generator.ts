@@ -65,20 +65,29 @@ const SYSTEM_INSTRUCTION = `You are an expert React Email developer creating pro
    - **INSTEAD**: Write all content as literal strings
    - Export as default function
 
-5. **IMAGES**
+5. **IMAGES - PREVENT STRETCHING (CRITICAL)**
    - Use <Img> component from '@react-email/components'
    - Real image URLs will be provided in the user prompt
    - ALWAYS include alt attributes (descriptive, 10-15 words)
    - Use the exact URLs provided (professional Unsplash images)
    - DO NOT use placeholder URLs
-   - **CRITICAL - Prevent Stretching**:
-     * Set width and height as hints: width={600} height={400}
-     * Use responsive styles: style={{ width: '100%', height: 'auto' }}
+   - **EVERY <Img> MUST HAVE RESPONSIVE STYLES**:
+     * REQUIRED: style={{ width: '100%', height: 'auto' }}
+     * Set width and height as hints only: width={600} height={400}
+     * These hints are for email clients, but style prop controls actual rendering
      * For hero/banner images: Add objectFit: 'cover' if needed
-     * NEVER use fixed height in styles - always use 'auto' to maintain aspect ratio
-     * Example: <Img src="..." width={600} height={400} style={{ width: '100%', height: 'auto' }} />
+     * FORBIDDEN: Fixed height in styles (height: '400px') - this causes stretching
+     * Correct: <Img src="..." width={600} height={400} style={{ width: '100%', height: 'auto' }} />
+     * Wrong: <Img src="..." width={600} height={400} style={{ width: '100%', height: '400px' }} />
 
-6. **EMAIL BEST PRACTICES**
+6. **HORIZONTAL RULES (Hr)**
+   - Use <Hr> for visual dividers
+   - ALWAYS constrain width with margin: <Hr style={{ margin: '24px 0' }} />
+   - For full-width within container: <Hr style={{ margin: '32px 0', borderColor: '#e5e7eb' }} />
+   - NEVER use absolute positioning or width: '100vw'
+   - Example: <Hr style={{ margin: '24px 0', borderColor: '#d1d5db', borderWidth: '1px' }} />
+
+7. **EMAIL BEST PRACTICES**
    - Max content width: 600px via Container
    - Include <Preview> text for email clients
    - Follow the design system specifications exactly
@@ -90,7 +99,7 @@ const SYSTEM_INSTRUCTION = `You are an expert React Email developer creating pro
      * Newsletters/digests: 2-3 CTAs max
      * E-commerce: 2-3 product CTAs max
 
-7. **COMPLETE CODE ONLY**
+8. **COMPLETE CODE ONLY**
    - NO placeholders, NO "...", NO incomplete sections
    - NO {{variables}}, NO template syntax
    - EVERY section fully implemented with real text
@@ -339,11 +348,14 @@ function buildUserPrompt(
   
   userPrompt += `**CRITICAL - Image Usage Rules**:\n`;
   userPrompt += `✅ Use these EXACT URLs in <Img> components\n`;
-  userPrompt += `✅ Include width and height attributes\n`;
+  userPrompt += `✅ ALWAYS add responsive styles: style={{ width: '100%', height: 'auto' }}\n`;
+  userPrompt += `✅ Include width and height as hints only: width={600} height={400}\n`;
   userPrompt += `✅ Include descriptive alt text\n`;
+  userPrompt += `✅ Example: <Img src="..." width={600} height={400} style={{ width: '100%', height: 'auto' }} alt="..." />\n`;
   userPrompt += `❌ DO NOT use baseUrl or process.env.VERCEL_URL\n`;
   userPrompt += `❌ DO NOT use /static/ paths or placeholders\n`;
-  userPrompt += `❌ DO NOT use placeholder.com or via.placeholder.com\n\n`;
+  userPrompt += `❌ DO NOT use placeholder.com or via.placeholder.com\n`;
+  userPrompt += `❌ DO NOT use fixed height in styles - ALWAYS use height: 'auto'\n\n`;
   
   // Add CRITICAL content rules
   userPrompt += `# 🚨 CRITICAL REQUIREMENTS 🚨\n\n`;

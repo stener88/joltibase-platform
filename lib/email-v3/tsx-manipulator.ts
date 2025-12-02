@@ -26,11 +26,28 @@ export function updateComponentText(
   const componentCode = tsxCode.substring(location.startChar, location.endChar);
   const after = tsxCode.substring(location.endChar);
   
+  // 🔍 DEBUG: Log component code before update
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('[TSX-MANIPULATOR] Updating text for:', componentId);
+  console.log('[TSX-MANIPULATOR] New text:', JSON.stringify(newText));
+  console.log('[TSX-MANIPULATOR] Component code BEFORE:');
+  console.log(componentCode);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  
   // Replace text content between > and <
   const updatedComponent = componentCode.replace(
     />([\s\S]*?)</,
-    `>${newText}<`
+    (match, capturedText) => {
+      console.log('[TSX-MANIPULATOR] Regex matched:', JSON.stringify(match));
+      console.log('[TSX-MANIPULATOR] Captured text:', JSON.stringify(capturedText));
+      return `>${newText}<`;
+    }
   );
+  
+  // 🔍 DEBUG: Log component code after update
+  console.log('[TSX-MANIPULATOR] Component code AFTER:');
+  console.log(updatedComponent);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   
   console.log(`[TSX-MANIPULATOR] Updated text for ${componentId}`);
   
@@ -55,12 +72,24 @@ export function updateInlineStyle(
   const componentCode = tsxCode.substring(location.startChar, location.endChar);
   const after = tsxCode.substring(location.endChar);
   
+  // 🔍 DEBUG: Log component code before update
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('[TSX-MANIPULATOR] Updating style for:', componentId);
+  console.log('[TSX-MANIPULATOR] Style property:', styleProp);
+  console.log('[TSX-MANIPULATOR] New value:', JSON.stringify(value));
+  console.log('[TSX-MANIPULATOR] Component code BEFORE:');
+  console.log(componentCode);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  
   // Check if style attribute exists
   const styleMatch = componentCode.match(/style=\{\{([^}]+)\}\}/);
   
   let updatedComponent: string;
   
   if (styleMatch) {
+    console.log('[TSX-MANIPULATOR] Found existing style attribute');
+    console.log('[TSX-MANIPULATOR] Existing styles:', styleMatch[1]);
+    
     // Update existing inline style
     const existingStyles = styleMatch[1];
     
@@ -68,26 +97,31 @@ export function updateInlineStyle(
     const propRegex = new RegExp(`${styleProp}:\\s*['"][^'"]*['"]`);
     
     if (propRegex.test(existingStyles)) {
+      console.log('[TSX-MANIPULATOR] Property exists, updating...');
       // Update existing property
       const updatedStyles = existingStyles.replace(
         propRegex,
         `${styleProp}: '${value}'`
       );
+      console.log('[TSX-MANIPULATOR] Updated styles:', updatedStyles);
       updatedComponent = componentCode.replace(
         /style=\{\{([^}]+)\}\}/,
         `style={{${updatedStyles}}}`
       );
     } else {
+      console.log('[TSX-MANIPULATOR] Property does not exist, adding...');
       // Add new property to existing styles
       const updatedStyles = existingStyles.trim().endsWith(',')
         ? `${existingStyles} ${styleProp}: '${value}'`
         : `${existingStyles}, ${styleProp}: '${value}'`;
+      console.log('[TSX-MANIPULATOR] Updated styles:', updatedStyles);
       updatedComponent = componentCode.replace(
         /style=\{\{([^}]+)\}\}/,
         `style={{${updatedStyles}}}`
       );
     }
   } else {
+    console.log('[TSX-MANIPULATOR] No style attribute found, creating new one');
     // No inline styles - add new style attribute
     // This will override any Tailwind classes for this property
     const tagMatch = componentCode.match(/<(\w+)([^>]*?)(\/?>)/);
@@ -99,6 +133,11 @@ export function updateInlineStyle(
       updatedComponent = componentCode;
     }
   }
+  
+  // 🔍 DEBUG: Log component code after update
+  console.log('[TSX-MANIPULATOR] Component code AFTER:');
+  console.log(updatedComponent);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   
   console.log(`[TSX-MANIPULATOR] Updated ${styleProp} for ${componentId} to ${value} (inline style)`);
   

@@ -378,6 +378,15 @@ export function EmailEditorV3({
     
     // Commit working ref to draft state
     const updatedCode = workingTsxRef.current;
+    
+    // 🔍 DEBUG: Log what's being saved
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('[SAVE] TSX code being saved (first 500 chars):');
+    console.log(updatedCode.substring(0, 500));
+    console.log('[SAVE] TSX code being saved (last 500 chars):');
+    console.log(updatedCode.substring(Math.max(0, updatedCode.length - 500)));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    
     setDraftTsxCode(updatedCode);
     
     // Force re-render to show final result

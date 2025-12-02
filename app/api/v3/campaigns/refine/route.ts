@@ -58,11 +58,25 @@ const EXECUTION_PROMPT = `You are an expert React Email developer modifying emai
    - ❌ space-x-*, space-y-*, gap-*, divide-*
    - ❌ hover:, focus:, active:, group-, dark:
 
-4. **IMAGES**
+4. **IMAGES - PREVENT STRETCHING (CRITICAL)**
    - When adding new images, use descriptive alt text and a placeholder URL like "https://placeholder.com/image"
    - The system will automatically fetch real images based on your alt text
    - If an image URL is explicitly provided in the prompt, use that exact URL
    - For existing images, keep the current src attribute unless asked to change it
+   - **EVERY <Img> MUST HAVE RESPONSIVE STYLES**:
+     * REQUIRED: style={{ width: '100%', height: 'auto' }}
+     * Set width and height as hints only: width={600} height={400}
+     * These hints are for email clients, but style prop controls actual rendering
+     * For hero/banner images: Add objectFit: 'cover' if needed
+     * FORBIDDEN: Fixed height in styles (height: '400px') - this causes stretching
+     * Correct: <Img src="..." width={600} height={400} style={{ width: '100%', height: 'auto' }} />
+     * Wrong: <Img src="..." width={600} height={400} style={{ width: '100%', height: '400px' }} />
+
+5. **HORIZONTAL RULES (Hr)**
+   - Use <Hr> for visual dividers
+   - ALWAYS constrain with margin: <Hr style={{ margin: '24px 0' }} />
+   - Never use absolute positioning or viewport widths
+   - Example: <Hr style={{ margin: '32px 0', borderColor: '#e5e7eb', borderWidth: '1px' }} />
 
 # OUTPUT FORMAT
 Return ONLY the complete modified TSX code. No explanations, no markdown, just code.`;
@@ -224,36 +238,45 @@ export async function POST(request: Request) {
     const codeMatch = text.match(/```(?:tsx|typescript)?\n([\s\S]*?)\n```/);
     let finalCode = codeMatch ? codeMatch[1].trim() : text.trim();
 
-    // Smart image fetching: Replace placeholder/broken image URLs with real ones
+    // Smart image fetching: Replace NEW/unknown image URLs with real ones
     const imgMatches = finalCode.matchAll(/<Img[^>]*?src=["']([^"']+)["'][^>]*?alt=["']([^"']+)["'][^>]*?>/g);
     const imagesToFetch: Array<{ url: string; alt: string }> = [];
     
+    // Get existing image URLs from current code
+    const existingImgMatches = currentTsxCode.matchAll(/<Img[^>]*?src=["']([^"']+)["']/g);
+    const existingUrls = new Set(Array.from(existingImgMatches, (m: RegExpMatchArray) => m[1]));
+    
     for (const match of imgMatches) {
       const [fullMatch, srcUrl, altText] = match;
-      // Check if URL looks like a placeholder or broken link
-      const isPlaceholder = srcUrl.includes('placeholder') || 
-                           srcUrl.includes('example.com') ||
-                           srcUrl.includes('...') ||
-                           !srcUrl.startsWith('http');
+      
+      // Check if this is a NEW image URL (not in original code)
+      const isNewUrl = !existingUrls.has(srcUrl);
       
       // Don't replace brand logo (if brand is active and logo exists)
       const isBrandLogo = brandSettings?.enabled !== false && 
                           brandSettings?.logoUrl && 
                           srcUrl === brandSettings.logoUrl;
       
-      if (isPlaceholder && altText && !isBrandLogo) {
+      // Replace if it's a new URL and not the brand logo
+      if (isNewUrl && altText && !isBrandLogo) {
         imagesToFetch.push({ url: srcUrl, alt: altText });
       }
     }
 
-    // Fetch real images for placeholders
+    // Fetch real images for placeholders (PARALLEL)
     if (imagesToFetch.length > 0) {
-      console.log(`🖼️ [REFINE-SDK] Fetching ${imagesToFetch.length} real images...`);
+      console.log(`🖼️ [REFINE-SDK] Fetching ${imagesToFetch.length} real images in parallel...`);
       
-      for (const { url: placeholderUrl, alt } of imagesToFetch) {
+      const imagePromises = imagesToFetch.map(async ({ url: placeholderUrl, alt }) => {
         try {
-          // Extract keyword from alt text
-          const keyword = alt.split(' ').slice(0, 3).join(' '); // First 3 words
+          // Better keyword extraction - remove filler words
+          const keyword = alt
+            .toLowerCase()
+            .replace(/\b(image|picture|photo|of|a|an|the|our|this|that)\b/gi, '')
+            .trim()
+            .split(/\s+/)
+            .slice(0, 4)  // Take up to 4 meaningful words
+            .join(' ') || alt;
           
           const imageResult = await resolveImage(keyword, {
             orientation: 'landscape',
@@ -261,13 +284,22 @@ export async function POST(request: Request) {
             height: 400,
           });
           
-          // Replace placeholder URL with real URL
-          finalCode = finalCode.replace(placeholderUrl, imageResult.url);
-          console.log(`✅ [REFINE-SDK] Replaced "${keyword}" image: ${imageResult.url.substring(0, 60)}...`);
+          console.log(`✅ [REFINE-SDK] Resolved "${keyword}" → ${imageResult.url.substring(0, 60)}...`);
+          return { placeholderUrl, realUrl: imageResult.url };
         } catch (error) {
-          console.error(`❌ [REFINE-SDK] Failed to fetch image for "${alt}":`, error);
+          console.error(`❌ [REFINE-SDK] Failed to fetch image for "${alt}"`);
+          return null;
         }
-      }
+      });
+      
+      const results = await Promise.all(imagePromises);
+      
+      // Replace all URLs in finalCode
+      results.forEach(result => {
+        if (result) {
+          finalCode = finalCode.replace(result.placeholderUrl, result.realUrl);
+        }
+      });
     }
 
     // Validate and generate diff

@@ -447,10 +447,18 @@ export function LivePreview({
       // Enhance componentMap with computed styles and text content from rendered HTML
       const enhancedComponentMap: ComponentMap = {};
       Object.keys(data.componentMap || {}).forEach(componentId => {
+        const extractedText = extractTextFromHtml(data.html, componentId);
+        const componentType = data.componentMap[componentId].type;
+        
+        // 🔍 DEBUG: Log extracted text for text components
+        if (['Text', 'Heading', 'Button', 'Link'].includes(componentType)) {
+          console.log(`[LIVE-PREVIEW] ${componentId} (${componentType}) textContent:`, JSON.stringify(extractedText));
+        }
+        
         enhancedComponentMap[componentId] = {
           ...data.componentMap[componentId],
           computedStyles: extractStylesFromHtml(data.html, componentId),
-          textContent: extractTextFromHtml(data.html, componentId),
+          textContent: extractedText,
         };
       });
       
