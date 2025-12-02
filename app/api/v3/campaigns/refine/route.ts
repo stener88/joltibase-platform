@@ -1,9 +1,24 @@
+/**
+ * Email Refinement API
+ * 
+ * This is the SINGLE SOURCE OF TRUTH for email refinement.
+ * All AI-powered modifications to emails go through this endpoint.
+ * 
+ * Supports two modes:
+ * - CONSULTATION: Answers questions about the email (no code changes)
+ * - EXECUTION: Modifies TSX code based on user commands
+ * 
+ * Input sources:
+ * - 'chat': Main chat interface (questions allowed)
+ * - 'toolbar': Floating toolbar (commands only, questions fail gracefully)
+ */
+
 import { generateText } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createClient } from '@/lib/supabase/server';
 import { detectIntent } from '@/lib/email-v3/intent-detector';
 import { resolveImage, extractImageKeyword } from '@/lib/email-v3/image-resolver';
-import { processCodeChanges } from '@/lib/email-v3/refiner-streaming';
+import { processCodeChanges } from '@/lib/email-v3/code-processor';
 import { parseAndInjectIds } from '@/lib/email-v3/tsx-parser';
 import { getDesignSystemById } from '@/emails/lib/design-system-selector';
 import type { BrandIdentity } from '@/lib/types/brand';
