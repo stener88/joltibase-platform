@@ -22,10 +22,10 @@ export const NewsletterDesignSystem = {
    * Used to fetch contextually appropriate, aesthetically consistent images
    */
   imageKeywords: {
-    hero: ['reading coffee workspace cozy', 'newsletter content creative', 'blog writing desk'],
-    feature: ['article content creation', 'creative workspace laptop', 'reading learning books'],
-    product: ['content writing creative', 'journalism writing', 'newsletter reading'],
-    background: ['creative minimal pattern', 'content abstract', 'reading light'],
+    hero: ['reading', 'newsletter', 'blog'],
+    feature: ['article', 'creative', 'laptop'],
+    product: ['writing', 'journalism', 'content'],
+    background: ['minimal', 'abstract', 'light'],
   },
   
   system: `

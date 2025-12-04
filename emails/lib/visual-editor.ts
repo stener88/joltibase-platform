@@ -12,6 +12,7 @@ import {
   cleanGeneratedCode,
   detectPlaceholders,
 } from './validator';
+import { AI_MODEL } from '@/lib/ai/config';
 import fs from 'fs';
 import path from 'path';
 
@@ -755,7 +756,7 @@ async function generateWithRetry(
         ],
         {
           provider,
-          model: provider === 'gemini' ? 'gemini-2.0-flash-exp' : 'gpt-4o',
+          model: provider === 'gemini' ? AI_MODEL : 'gpt-4o',
           temperature: 0.3,
           maxTokens: 8000, // Increased for full component regeneration
         }

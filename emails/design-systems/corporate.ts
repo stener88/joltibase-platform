@@ -41,10 +41,10 @@ export const CorporateDesignSystem = {
    * Used to fetch contextually appropriate, aesthetically consistent images
    */
   imageKeywords: {
-    hero: ['business professional office meeting', 'corporate team collaboration', 'professional handshake business'],
-    feature: ['business office workspace', 'professional team meeting', 'corporate office modern'],
-    product: ['business professional service', 'corporate presentation', 'professional workspace technology'],
-    background: ['business abstract blue', 'corporate professional pattern', 'minimal professional'],
+    hero: ['business', 'corporate', 'professional'],
+    feature: ['office', 'team', 'meeting'],
+    product: ['service', 'presentation', 'workspace'],
+    background: ['abstract', 'pattern', 'minimal'],
   },
   
   // ============================================================================

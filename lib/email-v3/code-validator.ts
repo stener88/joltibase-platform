@@ -183,3 +183,63 @@ export function quickSyntaxCheck(code: string): boolean {
   return !hasUnbalancedBraces && !hasUnbalancedParens && !hasUnbalancedBrackets;
 }
 
+/**
+ * Check for mismatched quotes in JSX attributes
+ * Catches: align="left' or align='left"
+ */
+export function checkMismatchedQuotes(code: string): string[] {
+  const errors: string[] = [];
+  
+  // Match JSX attributes with mismatched quotes
+  // Pattern: word="...content...' or word='...content..."
+  const mismatchedDoubleToSingle = code.match(/\w+="[^"]*'/g);
+  const mismatchedSingleToDouble = code.match(/\w+='[^']*"/g);
+  
+  if (mismatchedDoubleToSingle) {
+    mismatchedDoubleToSingle.forEach(match => {
+      errors.push(`Mismatched quotes in attribute: ${match.substring(0, 30)}...`);
+    });
+  }
+  
+  if (mismatchedSingleToDouble) {
+    mismatchedSingleToDouble.forEach(match => {
+      errors.push(`Mismatched quotes in attribute: ${match.substring(0, 30)}...`);
+    });
+  }
+  
+  return errors;
+}
+
+/**
+ * Validate JSX syntax using esbuild (catches all syntax errors)
+ * Returns null if valid, error message if invalid
+ */
+export async function validateTsxSyntax(code: string): Promise<string | null> {
+  try {
+    // Dynamic import esbuild
+    const { transformSync } = await import('esbuild');
+    
+    // Try to transform the code
+    transformSync(code, {
+      loader: 'tsx',
+      format: 'esm',
+      target: 'node20',
+      jsx: 'automatic',
+      jsxImportSource: 'react',
+    });
+    
+    return null; // Valid!
+  } catch (error: any) {
+    // Extract the error message
+    const message = error.message || 'Unknown syntax error';
+    
+    // Try to extract line number from esbuild error
+    const lineMatch = message.match(/<stdin>:(\d+):(\d+)/);
+    if (lineMatch) {
+      return `Syntax error at line ${lineMatch[1]}, column ${lineMatch[2]}: ${message.split('\n')[0]}`;
+    }
+    
+    return message;
+  }
+}
+

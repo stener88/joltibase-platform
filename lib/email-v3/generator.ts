@@ -6,12 +6,13 @@ import { detectDesignSystem, type DesignSystem } from '@/emails/lib/design-syste
 import { extractCodeFromMarkdown, cleanGeneratedCode } from '@/emails/lib/validator';
 import { validateEmail, generateFixPrompt, getValidationSummary, type ValidationIssue } from '@/emails/lib/email-validator';
 import { fetchImagesForPrompt, type ImageContext } from './image-service';
+import { checkMismatchedQuotes, validateTsxSyntax } from './code-validator';
+import { AI_MODEL, MAX_GENERATION_ATTEMPTS, GENERATION_TEMPERATURE } from '@/lib/ai/config';
 import type { BrandIdentity } from '@/lib/types/brand';
 import fs from 'fs';
 import path from 'path';
 
 const GENERATED_DIR = path.join(process.cwd(), 'emails/generated');
-const MAX_GENERATION_ATTEMPTS = 3;
 
 // Initialize Google AI
 const google = createGoogleGenerativeAI({
@@ -169,10 +170,10 @@ export async function generateEmail(prompt: string, brand?: BrandIdentity | null
       
       // Generate with Gemini
       const result = await generateText({
-        model: google('gemini-2.0-flash-exp'),
+        model: google(AI_MODEL),
         system: SYSTEM_INSTRUCTION,
         prompt: userPrompt,
-        temperature: 0.7,
+        temperature: GENERATION_TEMPERATURE,
       });
       
       // Log token usage and cost (Gemini 2.0 Flash pricing)
@@ -193,7 +194,25 @@ export async function generateEmail(prompt: string, brand?: BrandIdentity | null
       const extractedCode = extractCodeFromMarkdown(result.text);
       const code = cleanGeneratedCode(extractedCode);
       
-      // NEW: Multi-layer validation (context-aware based on design system)
+      // NEW: Pre-render syntax validation (catches broken JSX before render fails)
+      const quoteErrors = checkMismatchedQuotes(code);
+      if (quoteErrors.length > 0) {
+        console.log(`⚠️ [V3-GENERATOR] Found mismatched quotes, retrying...`);
+        quoteErrors.forEach(err => console.log(`  ❌ ${err}`));
+        previousIssues = quoteErrors.map(msg => ({ severity: 'error' as const, type: 'syntax' as const, message: msg }));
+        continue;
+      }
+      
+      // Validate TSX syntax using esbuild (catches all syntax errors before render)
+      const syntaxError = await validateTsxSyntax(code);
+      if (syntaxError) {
+        console.log(`⚠️ [V3-GENERATOR] TSX syntax error, retrying...`);
+        console.log(`  ❌ ${syntaxError}`);
+        previousIssues = [{ severity: 'error' as const, type: 'syntax' as const, message: syntaxError }];
+        continue;
+      }
+      
+      // Multi-layer validation (context-aware based on design system)
       const validation = validateEmail(code, designSystem.id);
       const summary = getValidationSummary(validation);
       console.log(`📋 [V3-GENERATOR] Validation: ${summary}`);

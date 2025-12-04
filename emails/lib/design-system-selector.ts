@@ -12,6 +12,7 @@ import { SaaSDesignSystem } from '../design-systems/saas';
 import { EventDesignSystem } from '../design-systems/event';
 import { ModernStartupDesignSystem } from '../design-systems/startup';
 import { MinimalElegantDesignSystem } from '../design-systems/minimal';
+import { TravelBookingDesignSystem } from '../design-systems/travel';
 
 export interface DesignSystem {
   id: string;
@@ -34,7 +35,8 @@ export interface DesignSystem {
  * Priority order: systems earlier in array are checked first
  */
 const ALL_SYSTEMS: DesignSystem[] = [
-  EcommerceDesignSystem,          // Check e-commerce first (very specific keywords)
+  TravelBookingDesignSystem,      // Travel/booking/destinations (highly specific)
+  EcommerceDesignSystem,          // E-commerce/retail (very specific keywords)
   EventDesignSystem,              // Events/conferences/webinars
   ModernStartupDesignSystem,      // Startup launches/beta/waitlist
   SaaSDesignSystem,               // SaaS/product features/onboarding

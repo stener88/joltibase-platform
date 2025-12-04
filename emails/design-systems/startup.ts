@@ -47,10 +47,10 @@ export const ModernStartupDesignSystem = {
    * Used to fetch contextually appropriate, aesthetically consistent images
    */
   imageKeywords: {
-    hero: ['startup team energetic vibrant', 'technology innovation colorful', 'young entrepreneurs modern'],
-    feature: ['tech startup workspace colorful', 'innovation technology vibrant', 'startup team celebration'],
-    product: ['modern technology interface vibrant', 'startup innovation colorful', 'tech product gradient'],
-    background: ['vibrant gradient technology', 'startup energy colorful', 'innovation abstract gradient'],
+    hero: ['startup', 'technology', 'innovation'],
+    feature: ['workspace', 'team', 'entrepreneurs'],
+    product: ['interface', 'modern', 'colorful'],
+    background: ['gradient', 'vibrant', 'abstract'],
   },
   
   // ============================================================================

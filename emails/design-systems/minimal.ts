@@ -55,10 +55,10 @@ export const MinimalElegantDesignSystem = {
    * Used to fetch contextually appropriate, aesthetically consistent images
    */
   imageKeywords: {
-    hero: ['luxury minimal elegant black white', 'sophisticated design clean', 'premium fashion minimal'],
-    feature: ['elegant minimal design', 'luxury product white background', 'sophisticated architecture clean'],
-    product: ['luxury product elegant white', 'premium minimal black white', 'sophisticated product photography'],
-    background: ['minimal elegant abstract', 'luxury pattern subtle', 'sophisticated monochrome'],
+    hero: ['luxury', 'sophisticated', 'premium'],
+    feature: ['elegant', 'minimal', 'architecture'],
+    product: ['product', 'fashion', 'design'],
+    background: ['abstract', 'pattern', 'monochrome'],
   },
   
   // ============================================================================

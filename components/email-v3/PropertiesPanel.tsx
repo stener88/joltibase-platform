@@ -112,7 +112,6 @@ export function PropertiesPanel({
     // Determine component capabilities based on type
     const componentType = componentInfo.type;
     const isTextComponent = ['Text', 'Heading', 'Button', 'Link'].includes(componentType);
-    const isLayoutComponent = ['Section', 'Container', 'Column', 'Row'].includes(componentType);
     const isImageComponent = componentType === 'Img';
     
     // Get text content from rendered HTML (reliable!)

@@ -47,10 +47,10 @@ export const EcommerceDesignSystem = {
    * Used to fetch contextually appropriate, aesthetically consistent images
    */
   imageKeywords: {
-    hero: ['shopping bags colorful retail', 'ecommerce lifestyle shopping', 'retail store display colorful'],
-    feature: ['product showcase display', 'shopping online ecommerce', 'retail product photography'],
-    product: ['product photography white background', 'ecommerce product display', 'product showcase isolated'],
-    background: ['shopping celebration colorful', 'retail pattern vibrant', 'sale celebration'],
+    hero: ['shopping', 'ecommerce', 'retail'],
+    feature: ['product', 'showcase', 'photography'],
+    product: ['display', 'lifestyle', 'fashion'],
+    background: ['celebration', 'pattern', 'vibrant'],
   },
   
   // ============================================================================

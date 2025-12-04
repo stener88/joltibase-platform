@@ -9,6 +9,7 @@ import { generateObject } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
 import type { DesignSystem } from '@/emails/lib/design-system-selector';
+import { AI_MODEL_FAST, KEYWORDS_TEMPERATURE, AI_KEYWORDS_TIMEOUT_MS } from '@/lib/ai/config';
 
 const google = createGoogleGenerativeAI({
   apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
@@ -49,7 +50,7 @@ export async function extractKeywordsWithAI(
 ): Promise<ImageKeywords | null> {
   try {
     const result = await generateObject({
-      model: google('gemini-2.0-flash-exp'),
+      model: google(AI_MODEL_FAST),
       schema: KeywordsSchema,
       prompt: `Extract 3 Unsplash search keywords for this email.
 
@@ -70,7 +71,7 @@ Return exactly 3 keywords:
 - hero: Main visual (1-2 words)
 - feature: Supporting visual (1-2 words)  
 - accent: Background/detail (1-2 words)`,
-      temperature: 0.3, // Low temp for consistency
+      temperature: KEYWORDS_TEMPERATURE,
     });
     
     // Enforce word limit (AI sometimes ignores instructions)
@@ -97,9 +98,17 @@ Return exactly 3 keywords:
 export async function extractKeywordsWithTimeout(
   prompt: string,
   designSystem: DesignSystem,
-  timeoutMs: number = 400
+  timeoutMs: number = AI_KEYWORDS_TIMEOUT_MS
 ): Promise<ImageKeywords | null> {
-  const aiPromise = extractKeywordsWithAI(prompt, designSystem);
+  const startTime = Date.now();
+  
+  const aiPromise = extractKeywordsWithAI(prompt, designSystem)
+    .then(result => {
+      const duration = Date.now() - startTime;
+      console.log(`⚡ [AI-KEYWORDS] Completed in ${duration}ms`);
+      return result;
+    });
+    
   const timeoutPromise = new Promise<null>(resolve => 
     setTimeout(() => {
       console.log(`⏱️ [AI-KEYWORDS] Timeout after ${timeoutMs}ms, using fallback`);

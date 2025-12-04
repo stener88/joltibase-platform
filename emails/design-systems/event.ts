@@ -51,10 +51,10 @@ export const EventDesignSystem = {
    * Used to fetch contextually appropriate, aesthetically consistent images
    */
   imageKeywords: {
-    hero: ['conference audience speaker stage', 'event venue crowd excited', 'networking business event'],
-    feature: ['conference speaker presentation', 'event networking professionals', 'business seminar audience'],
-    product: ['conference venue modern', 'event stage lighting', 'business networking crowd'],
-    background: ['conference abstract red', 'event celebration pattern', 'professional gathering'],
+    hero: ['conference', 'event', 'networking'],
+    feature: ['speaker', 'presentation', 'seminar'],
+    product: ['venue', 'stage', 'audience'],
+    background: ['abstract', 'celebration', 'gathering'],
   },
   
   // ============================================================================

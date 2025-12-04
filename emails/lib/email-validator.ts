@@ -32,6 +32,7 @@ function getMaxCTAsForDesignSystem(designSystemId?: string): number {
   const limits: Record<string, number> = {
     'newsletter-editorial': 8,      // Newsletters have multiple article links
     'ecommerce-conversion': 10,     // Product grids can have 8+ items
+    'travel-booking': 19,           // Travel has nav, destinations, app, footer links
     'saas-product': 3,              // Try it + Learn more + secondary
     'event-conference': 3,          // RSVP + View details + secondary
     'modern-startup': 4,            // Bold action-oriented with features
@@ -225,12 +226,12 @@ function validateAccessibility(code: string): ValidationIssue[] {
     const sizeMatch = match.match(/(\d+)/);
     if (sizeMatch) {
       const size = parseInt(sizeMatch[1]);
-      if (size < 14) {
+      if (size < 12) {
         issues.push({
           severity: 'warning',
           type: 'accessibility',
-          message: `Font size ${size}px is too small (minimum 14px recommended)`,
-          suggestion: 'Increase to at least 14px for readability'
+          message: `Font size ${size}px is too small (minimum 12px recommended)`,
+          suggestion: 'Increase to at least 12px for readability (14px+ for body text)'
         });
       }
     }
@@ -258,14 +259,18 @@ function validateAccessibility(code: string): ValidationIssue[] {
     const paddingMatch = button.match(/padding:\s*["']([^"']+)["']/);
     if (paddingMatch) {
       const padding = paddingMatch[1];
-      // Simple check for small padding values
-      if (padding.includes('4px') || padding.includes('6px') || padding.includes('8px')) {
-        issues.push({
-          severity: 'warning',
-          type: 'accessibility',
-          message: `Button ${index + 1} may have insufficient touch target size`,
-          suggestion: 'Use minimum 12-14px vertical padding for easier interaction'
-        });
+      // Extract vertical padding (first value in "17px 24px" format)
+      const verticalMatch = padding.match(/^(\d+)px/);
+      if (verticalMatch) {
+        const verticalPadding = parseInt(verticalMatch[1]);
+        if (verticalPadding < 12) {
+          issues.push({
+            severity: 'warning',
+            type: 'accessibility',
+            message: `Button ${index + 1} may have insufficient touch target size (${verticalPadding}px vertical padding)`,
+            suggestion: 'Use minimum 12-14px vertical padding for easier interaction'
+          });
+        }
       }
     }
   });

@@ -79,7 +79,7 @@ function getImageCountForPrompt(prompt: string): number {
 
 /**
  * Main function: Fetch images with AI-powered keyword extraction
- * Uses 400ms timeout for AI, falls back gracefully
+ * Uses 1000ms timeout for AI, falls back gracefully
  */
 export async function fetchImagesForPrompt(
   prompt: string,
@@ -94,9 +94,9 @@ export async function fetchImagesForPrompt(
   }
   
   try {
-    // Try AI keyword extraction with 400ms timeout
+    // Try AI keyword extraction with 2500ms timeout
     console.log(`🤖 [IMAGE-SERVICE] Extracting keywords with AI...`);
-    const aiKeywords = await extractKeywordsWithTimeout(prompt, designSystem, 400);
+    const aiKeywords = await extractKeywordsWithTimeout(prompt, designSystem, 2500);
     
     // Build final keywords with fallback chain
     const keywords = aiKeywords 

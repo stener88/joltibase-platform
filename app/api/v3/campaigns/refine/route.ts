@@ -21,6 +21,7 @@ import { resolveImage, extractImageKeyword } from '@/lib/email-v3/image-resolver
 import { processCodeChanges } from '@/lib/email-v3/code-processor';
 import { parseAndInjectIds } from '@/lib/email-v3/tsx-parser';
 import { getDesignSystemById } from '@/emails/lib/design-system-selector';
+import { AI_MODEL, GENERATION_TEMPERATURE, CONSULTATION_TEMPERATURE } from '@/lib/ai/config';
 import type { BrandIdentity } from '@/lib/types/brand';
 
 const google = createGoogleGenerativeAI({
@@ -153,10 +154,10 @@ export async function POST(request: Request) {
     // CONSULTATION MODE - Answer questions (only for chat, toolbar forces command)
     if (intent === 'question') {
       const result = await generateText({
-        model: google('gemini-2.0-flash-exp'),
+        model: google(AI_MODEL),
         system: CONSULTATION_PROMPT,
         prompt: `# THE EMAIL CODE\n\n\`\`\`tsx\n${currentTsxCode}\n\`\`\`\n\n# USER'S QUESTION\n\n"${userMessage}"\n\nProvide 2-3 specific, actionable suggestions.`,
-        temperature: 0.8,
+        temperature: CONSULTATION_TEMPERATURE,
       });
 
       return Response.json({
@@ -258,10 +259,10 @@ export async function POST(request: Request) {
 
     // Generate code (simple, no streaming)
     const aiResult = await generateText({
-      model: google('gemini-2.0-flash-exp'),
+      model: google(AI_MODEL),
       system: EXECUTION_PROMPT,
       prompt: executionPrompt,
-      temperature: 0.7,
+      temperature: GENERATION_TEMPERATURE,
     });
 
     // Extract code from AI response

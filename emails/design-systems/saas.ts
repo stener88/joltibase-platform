@@ -50,10 +50,10 @@ export const SaaSDesignSystem = {
    * Used to fetch contextually appropriate, aesthetically consistent images
    */
   imageKeywords: {
-    hero: ['software dashboard analytics clean', 'saas product interface modern', 'technology workspace laptop'],
-    feature: ['product interface ui clean', 'dashboard analytics modern', 'software development coding'],
-    product: ['saas product screenshot', 'software interface ui', 'dashboard technology'],
-    background: ['technology abstract blue', 'software pattern modern', 'tech minimal gradient'],
+    hero: ['software', 'dashboard', 'analytics'],
+    feature: ['interface', 'technology', 'laptop'],
+    product: ['saas', 'coding', 'development'],
+    background: ['abstract', 'pattern', 'gradient'],
   },
   
   // ============================================================================
