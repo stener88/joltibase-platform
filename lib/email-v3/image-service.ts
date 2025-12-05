@@ -53,7 +53,13 @@ const DESIGN_SYSTEM_IMAGE_COUNTS: Record<string, number> = {
   'product-promotion': 5,       // Hero + product + flatlay + lifestyle + accent
   'ecommerce-discount': 4,      // Hero + product + lifestyle + accent
   'retail-welcome': 4,          // Hero + secondary + store + accent
+  'event-announcement': 4,      // Hero + multiple event visuals
   'event-conference': 4,        // Hero + speaker + venue + accent
+  'winback-reactivation': 4,    // Hero + product/app + background + people
+  'fashion-campaign': 5,        // Multiple hero/editorial sections
+  'saas-engagement': 4,         // Hero + feature/product + background + people
+  'destination-content': 5,     // Hero + activities + tips + planning visuals
+  'saas-onboarding-welcome': 3, // Mostly text/logo, minimal imagery
   'modern-startup': 4,          // Hero + product shots + team
   'saas-product': 4,            // Hero + dashboard + features
   'minimal-elegant': 3,         // Hero + feature (less is more)
@@ -128,9 +134,9 @@ export async function fetchImagesForPrompt(
   }
   
   try {
-    // Try AI keyword extraction with 2500ms timeout
+    // Try AI keyword extraction with configured timeout
     console.log(`🤖 [IMAGE-SERVICE] Extracting keywords with AI...`);
-    const aiKeywords = await extractKeywordsWithTimeout(prompt, designSystem, 2500);
+    const aiKeywords = await extractKeywordsWithTimeout(prompt, designSystem);
     
     // Build final keywords with fallback chain
     const keywords = aiKeywords 

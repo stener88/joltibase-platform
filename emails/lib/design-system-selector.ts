@@ -11,7 +11,13 @@ import { EcommerceDiscountDesignSystem } from '../design-systems/ecommerce-disco
 import { RetailWelcomeDesignSystem } from '../design-systems/retail-welcome';
 import { ProductPromotionDesignSystem } from '../design-systems/product-promotion';
 import { SaaSDesignSystem } from '../design-systems/saas';
+import { EventAnnouncementDesignSystem } from '../design-systems/event-announcement';
+import { WinBackReactivationDesignSystem } from '../design-systems/winback-reactivation';
+import { FashionCampaignDesignSystem } from '../design-systems/fashion-campaign';
+import { SaasEngagementDesignSystem } from '../design-systems/saas-engagement';
 import { EventDesignSystem } from '../design-systems/event';
+import { DestinationContentDesignSystem } from '../design-systems/destination-content';
+import { SaasOnboardingWelcomeDesignSystem } from '../design-systems/saas-onboarding-welcome';
 import { ModernStartupDesignSystem } from '../design-systems/startup';
 import { MinimalElegantDesignSystem } from '../design-systems/minimal';
 import { TravelBookingDesignSystem } from '../design-systems/travel';
@@ -41,6 +47,12 @@ const ALL_SYSTEMS: DesignSystem[] = [
   RetailWelcomeDesignSystem,      // Welcome/thank you emails (specific triggers)
   EcommerceDiscountDesignSystem,  // Discount/promo/sale/ecommerce campaigns
   TravelBookingDesignSystem,      // Travel/booking/destinations (highly specific)
+  EventAnnouncementDesignSystem,  // Multi-event announcements/calendars
+  WinBackReactivationDesignSystem, // Win-back/reactivation offers
+  FashionCampaignDesignSystem,    // High-fashion/editorial campaigns
+  SaasEngagementDesignSystem,     // SaaS next-action engagement
+  DestinationContentDesignSystem, // Destination guides and travel inspiration
+  SaasOnboardingWelcomeDesignSystem, // SaaS onboarding welcome
   EventDesignSystem,              // Events/conferences/webinars
   ModernStartupDesignSystem,      // Startup launches/beta/waitlist
   SaaSDesignSystem,               // SaaS/product features/onboarding

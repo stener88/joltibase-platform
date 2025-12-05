@@ -110,11 +110,20 @@ export default function HomePage() {
 
       if (!response.ok) {
         let errorMessage = 'Failed to generate campaign';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch (parseError) {
+        if (response.status === 401) {
+          setShowAuthModal(true);
+          errorMessage = 'Authentication required. Please sign in again.';
+        } else if (response.status === 429) {
+          errorMessage = 'Rate limited. Please try again in a moment.';
+        } else if (response.status >= 500) {
           errorMessage = `Server error (${response.status}): ${response.statusText || 'Failed to generate campaign'}`;
+        } else {
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch (parseError) {
+            errorMessage = `Server error (${response.status}): ${response.statusText || 'Failed to generate campaign'}`;
+          }
         }
         throw new Error(errorMessage);
       }

@@ -5,6 +5,7 @@ import { extractCodeFromMarkdown, cleanGeneratedCode } from '@/emails/lib/valida
 import { validateEmail, generateFixPrompt, getValidationSummary, type ValidationIssue } from '@/emails/lib/email-validator';
 import { fetchImagesForPrompt, type ImageContext } from './image-service';
 import { checkMismatchedQuotes, validateTsxSyntax } from './code-validator';
+import { ensureAltText } from './alt-text-fixer';
 import { AI_MODEL, MAX_GENERATION_ATTEMPTS, GENERATION_TEMPERATURE } from '@/lib/ai/config';
 import type { BrandIdentity } from '@/lib/types/brand';
 import fs from 'fs';
@@ -137,7 +138,10 @@ export async function generateEmail(prompt: string, brand?: BrandIdentity | null
       
       // Extract and clean code
       const extractedCode = extractCodeFromMarkdown(result.text);
-      const code = cleanGeneratedCode(extractedCode);
+      let code = cleanGeneratedCode(extractedCode);
+      
+      // Auto-fix missing alt text (prevents accessibility errors and retries)
+      code = ensureAltText(code);
       
       // Pre-render syntax validation (catches broken JSX before render fails)
       const quoteErrors = checkMismatchedQuotes(code);

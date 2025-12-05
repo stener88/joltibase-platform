@@ -13,7 +13,7 @@
  * Primary AI model for all generation tasks
  * 
  * Options:
- * - 'gemini-3-pro-preview' → Latest preview, best quality
+ * - 'gemini-3-pro-preview' → Latest preview, best quality ← CURRENT
  * - 'gemini-2.5-pro'   → Stable, high quality (~5-15s)
  * - 'gemini-2.5-flash' → Balanced speed/quality (~2-5s)
  */
