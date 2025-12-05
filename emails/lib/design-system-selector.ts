@@ -7,7 +7,9 @@
 
 import { CorporateDesignSystem } from '../design-systems/corporate';
 import { NewsletterDesignSystem } from '../design-systems/newsletter';
-import { EcommerceDesignSystem } from '../design-systems/ecommerce';
+import { EcommerceDiscountDesignSystem } from '../design-systems/ecommerce-discount';
+import { RetailWelcomeDesignSystem } from '../design-systems/retail-welcome';
+import { ProductPromotionDesignSystem } from '../design-systems/product-promotion';
 import { SaaSDesignSystem } from '../design-systems/saas';
 import { EventDesignSystem } from '../design-systems/event';
 import { ModernStartupDesignSystem } from '../design-systems/startup';
@@ -35,8 +37,10 @@ export interface DesignSystem {
  * Priority order: systems earlier in array are checked first
  */
 const ALL_SYSTEMS: DesignSystem[] = [
+  ProductPromotionDesignSystem,   // Product launches, collections, fashion (specific triggers)
+  RetailWelcomeDesignSystem,      // Welcome/thank you emails (specific triggers)
+  EcommerceDiscountDesignSystem,  // Discount/promo/sale/ecommerce campaigns
   TravelBookingDesignSystem,      // Travel/booking/destinations (highly specific)
-  EcommerceDesignSystem,          // E-commerce/retail (very specific keywords)
   EventDesignSystem,              // Events/conferences/webinars
   ModernStartupDesignSystem,      // Startup launches/beta/waitlist
   SaaSDesignSystem,               // SaaS/product features/onboarding

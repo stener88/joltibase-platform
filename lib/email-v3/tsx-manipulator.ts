@@ -55,6 +55,18 @@ export function updateComponentText(
 }
 
 /**
+ * Escape a value for safe insertion in single-quoted JSX style prop
+ * Handles special characters that could break the JSX syntax
+ */
+function escapeStyleValue(value: string): string {
+  // Escape single quotes by using backslash escape
+  // Also escape backslashes first to avoid double-escaping
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'");
+}
+
+/**
  * Update inline style property or add to existing inline styles
  * Works with both Tailwind (className) and inline styles (style={{}})
  */
@@ -72,17 +84,21 @@ export function updateInlineStyle(
   const componentCode = tsxCode.substring(location.startChar, location.endChar);
   const after = tsxCode.substring(location.endChar);
   
+  // Escape the value for safe JSX insertion
+  const safeValue = escapeStyleValue(value);
+  
   // 🔍 DEBUG: Log component code before update
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('[TSX-MANIPULATOR] Updating style for:', componentId);
   console.log('[TSX-MANIPULATOR] Style property:', styleProp);
   console.log('[TSX-MANIPULATOR] New value:', JSON.stringify(value));
+  console.log('[TSX-MANIPULATOR] Safe value:', JSON.stringify(safeValue));
   console.log('[TSX-MANIPULATOR] Component code BEFORE:');
   console.log(componentCode);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   
-  // Check if style attribute exists
-  const styleMatch = componentCode.match(/style=\{\{([^}]+)\}\}/);
+  // Check if style attribute exists (handles multiline styles)
+  const styleMatch = componentCode.match(/style=\{\{([\s\S]*?)\}\}/);
   
   let updatedComponent: string;
   
@@ -94,29 +110,38 @@ export function updateInlineStyle(
     const existingStyles = styleMatch[1];
     
     // Check if property already exists
-    const propRegex = new RegExp(`${styleProp}:\\s*['"][^'"]*['"]`);
+    // Match: propertyName: 'value' OR propertyName: "value" (handles both quote types)
+    // Uses non-greedy match and looks for comma or end of object
+    const singleQuotePattern = new RegExp(`${styleProp}:\\s*'[^']*'`);
+    const doubleQuotePattern = new RegExp(`${styleProp}:\\s*"[^"]*"`);
     
-    if (propRegex.test(existingStyles)) {
+    const hasSingleQuote = singleQuotePattern.test(existingStyles);
+    const hasDoubleQuote = doubleQuotePattern.test(existingStyles);
+    
+    if (hasSingleQuote || hasDoubleQuote) {
       console.log('[TSX-MANIPULATOR] Property exists, updating...');
-      // Update existing property
-      const updatedStyles = existingStyles.replace(
-        propRegex,
-        `${styleProp}: '${value}'`
-      );
+      // Update existing property (try both quote patterns)
+      let updatedStyles = existingStyles;
+      if (hasSingleQuote) {
+        updatedStyles = updatedStyles.replace(singleQuotePattern, `${styleProp}: '${safeValue}'`);
+      }
+      if (hasDoubleQuote) {
+        updatedStyles = updatedStyles.replace(doubleQuotePattern, `${styleProp}: '${safeValue}'`);
+      }
       console.log('[TSX-MANIPULATOR] Updated styles:', updatedStyles);
       updatedComponent = componentCode.replace(
-        /style=\{\{([^}]+)\}\}/,
+        /style=\{\{([\s\S]*?)\}\}/,
         `style={{${updatedStyles}}}`
       );
     } else {
       console.log('[TSX-MANIPULATOR] Property does not exist, adding...');
       // Add new property to existing styles
-      const updatedStyles = existingStyles.trim().endsWith(',')
-        ? `${existingStyles} ${styleProp}: '${value}'`
-        : `${existingStyles}, ${styleProp}: '${value}'`;
+      const trimmedStyles = existingStyles.trim();
+      const separator = trimmedStyles.endsWith(',') ? ' ' : ', ';
+      const updatedStyles = `${existingStyles}${separator}${styleProp}: '${safeValue}'`;
       console.log('[TSX-MANIPULATOR] Updated styles:', updatedStyles);
       updatedComponent = componentCode.replace(
-        /style=\{\{([^}]+)\}\}/,
+        /style=\{\{([\s\S]*?)\}\}/,
         `style={{${updatedStyles}}}`
       );
     }
@@ -127,7 +152,7 @@ export function updateInlineStyle(
     const tagMatch = componentCode.match(/<(\w+)([^>]*?)(\/?>)/);
     if (tagMatch) {
       const [fullTag, tagName, attributes, closingBracket] = tagMatch;
-      const newTag = `<${tagName}${attributes} style={{ ${styleProp}: '${value}' }}${closingBracket}`;
+      const newTag = `<${tagName}${attributes} style={{ ${styleProp}: '${safeValue}' }}${closingBracket}`;
       updatedComponent = componentCode.replace(fullTag, newTag);
     } else {
       updatedComponent = componentCode;
@@ -139,7 +164,7 @@ export function updateInlineStyle(
   console.log(updatedComponent);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   
-  console.log(`[TSX-MANIPULATOR] Updated ${styleProp} for ${componentId} to ${value} (inline style)`);
+  console.log(`[TSX-MANIPULATOR] Updated ${styleProp} for ${componentId} to ${safeValue} (inline style)`);
   
   return before + updatedComponent + after;
 }

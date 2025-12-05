@@ -52,27 +52,31 @@ const EXECUTION_PROMPT = `You are an expert React Email developer modifying emai
    - Keep overall layout unless explicitly asked to change it
    - Maintain existing content unless told to modify/remove it
    - Keep imports from '@react-email/components'
+   - **KEEP the <Tailwind> wrapper** - it converts className to inline styles
 
 2. **STATIC CONTENT ONLY**
    - ❌ NEVER use: {variables}, {props.text}, .map(), .forEach()
    - ✅ Write all text directly in JSX
    - ✅ If asked for "3 buttons", write 3 separate <Button> components
 
-3. **STYLING - MIXED APPROACH**
+3. **STYLING - TAILWIND CLASSES PREFERRED**
    
-   **TAILWIND (className) - SAFE for:**
-   - Colors: bg-blue-500, text-gray-600
-   - Typography: text-sm, text-lg, font-bold, text-center
-   - Basic spacing: p-4, px-6, py-3, m-0, mt-4
+   **TAILWIND (className) - USE FOR:**
+   - Colors: bg-blue-500, text-gray-600, bg-white
+   - Typography: text-sm, text-lg, text-xl, font-bold, text-center
+   - Spacing: p-4, px-6, py-3, m-0, mt-4, mb-6
+   - Borders: rounded-lg, border, border-gray-200
+   - Layout: mx-auto, max-w-[600px]
 
-   **INLINE STYLES (style prop) - REQUIRED for:**
-   - Layout gaps: style={{display: 'flex', gap: '12px'}}
-   - Spacing between siblings: style={{marginBottom: '16px'}}
-   - Complex positioning
+   **INLINE STYLES (style prop) - ONLY FOR:**
+   - Custom brand colors: style={{ backgroundColor: '#your-color' }}
+   - Layout gaps: style={{ display: 'flex', gap: '12px' }}
+   - Unique/non-standard values
 
    **FORBIDDEN CLASSES**:
    - ❌ space-x-*, space-y-*, gap-*, divide-*
    - ❌ hover:, focus:, active:, group-, dark:
+   - ❌ sm:*, md:*, lg:*, xl:* (responsive breakpoints - can't be inlined)
 
 4. **IMAGES - PREVENT STRETCHING (CRITICAL)**
    - When adding new images, use descriptive alt text and a placeholder URL like "https://placeholder.com/image"

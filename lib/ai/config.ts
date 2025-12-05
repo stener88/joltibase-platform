@@ -13,11 +13,11 @@
  * Primary AI model for all generation tasks
  * 
  * Options:
- * - 'gemini-2.5-pro'   → Best quality, slower (~5-15s)
+ * - 'gemini-3-pro-preview' → Latest preview, best quality
+ * - 'gemini-2.5-pro'   → Stable, high quality (~5-15s)
  * - 'gemini-2.5-flash' → Balanced speed/quality (~2-5s)
- * - 'gemini-2.0-flash-exp' → Legacy, fast
  */
-export const AI_MODEL = 'gemini-2.5-pro';
+export const AI_MODEL = 'gemini-3-pro-preview';
 
 /**
  * Model for quick tasks (keywords, simple edits)
@@ -33,7 +33,7 @@ export const AI_MODEL_FAST = 'gemini-2.5-flash';
  * Timeout for AI keyword extraction (ms)
  * If exceeded, falls back to design system keywords
  */
-export const AI_KEYWORDS_TIMEOUT_MS = 2500;
+export const AI_KEYWORDS_TIMEOUT_MS = 5000;
 
 /**
  * Maximum generation attempts before failing

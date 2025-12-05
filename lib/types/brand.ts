@@ -13,6 +13,9 @@ export interface BrandIdentity {
   secondaryColor?: string;
   logoUrl?: string;
   
+  // Typography
+  fontFamily?: string; // Custom web font (e.g., "Inter", "Poppins", "Outfit")
+  
   // Voice & Tone
   tone?: 'professional' | 'friendly' | 'casual' | 'luxurious' | 'playful';
   formality?: 'formal' | 'conversational' | 'casual';
@@ -34,6 +37,7 @@ export interface BrandKitDbRow {
   primary_color: string;
   secondary_color: string | null;
   logo_url: string | null;
+  font_family: string | null;
   tone: BrandIdentity['tone'] | null;
   formality: BrandIdentity['formality'] | null;
   personality: string | null;
@@ -54,6 +58,7 @@ export function fromDbRow(row: BrandKitDbRow): BrandIdentity {
     primaryColor: row.primary_color,
     secondaryColor: row.secondary_color || undefined,
     logoUrl: row.logo_url || undefined,
+    fontFamily: row.font_family || undefined,
     tone: row.tone || undefined,
     formality: row.formality || undefined,
     personality: row.personality || undefined,
@@ -74,6 +79,7 @@ export function toDbPayload(brand: BrandIdentity, userId: string) {
     primary_color: brand.primaryColor,
     secondary_color: brand.secondaryColor || null,
     logo_url: brand.logoUrl || null,
+    font_family: brand.fontFamily || null,
     tone: brand.tone || null,
     formality: brand.formality || null,
     personality: brand.personality || null,

@@ -44,10 +44,33 @@ export interface ImageContext {
 }
 
 /**
- * Determine how many images to fetch based on email type
- * Simplified: 3 (simple), 4 (medium), 5 (complex)
+ * Image count per design system
+ * Ensures each design system gets the right number of images for rich emails
  */
-function getImageCountForPrompt(prompt: string): number {
+const DESIGN_SYSTEM_IMAGE_COUNTS: Record<string, number> = {
+  'travel-booking': 5,           // Hero + destinations + activities
+  'newsletter-editorial': 5,    // Hero + multiple articles
+  'product-promotion': 5,       // Hero + product + flatlay + lifestyle + accent
+  'ecommerce-discount': 4,      // Hero + product + lifestyle + accent
+  'retail-welcome': 4,          // Hero + secondary + store + accent
+  'event-conference': 4,        // Hero + speaker + venue + accent
+  'modern-startup': 4,          // Hero + product shots + team
+  'saas-product': 4,            // Hero + dashboard + features
+  'minimal-elegant': 3,         // Hero + feature (less is more)
+  'corporate-professional': 3,  // Hero + feature + accent
+};
+
+/**
+ * Determine how many images to fetch based on design system and prompt
+ */
+function getImageCountForPrompt(prompt: string, designSystem?: DesignSystem): number {
+  // If we have a design system, use its configured count
+  if (designSystem?.id && DESIGN_SYSTEM_IMAGE_COUNTS[designSystem.id]) {
+    const count = DESIGN_SYSTEM_IMAGE_COUNTS[designSystem.id];
+    console.log(`🎯 [IMAGE-SERVICE] Using ${count} images for ${designSystem.name}`);
+    return count;
+  }
+  
   const lower = prompt.toLowerCase();
   
   // Complex emails (5 images) - newsletters, travel, multi-content
@@ -57,35 +80,46 @@ function getImageCountForPrompt(prompt: string): number {
     lower.includes('destination') ||
     lower.includes('multi-product') ||
     lower.includes('showcase') ||
-    lower.includes('digest')
+    lower.includes('digest') ||
+    lower.includes('roundup') ||
+    lower.includes('weekly')
   ) {
     return 5;
   }
   
-  // Medium emails (4 images) - announcements, promotions
+  // Rich emails (4 images) - promotions, campaigns, events
   if (
     lower.includes('announcement') ||
     lower.includes('promotional') ||
+    lower.includes('promotion') ||
     lower.includes('campaign') ||
     lower.includes('event') ||
-    lower.includes('conference')
+    lower.includes('conference') ||
+    lower.includes('discount') ||
+    lower.includes('sale') ||
+    lower.includes('offer') ||
+    lower.includes('promo') ||
+    lower.includes('black friday') ||
+    lower.includes('cyber monday') ||
+    lower.includes('welcome') ||
+    lower.includes('onboarding')
   ) {
     return 4;
   }
   
-  // Simple emails (3 images) - welcome, updates, transactional
+  // Standard emails (3 images) - updates, transactional
   return 3;
 }
 
 /**
  * Main function: Fetch images with AI-powered keyword extraction
- * Uses 1000ms timeout for AI, falls back gracefully
+ * Uses 2500ms timeout for AI, falls back gracefully
  */
 export async function fetchImagesForPrompt(
   prompt: string,
   designSystem?: DesignSystem
 ): Promise<ImageContext> {
-  const imageCount = getImageCountForPrompt(prompt);
+  const imageCount = getImageCountForPrompt(prompt, designSystem);
   console.log(`🖼️ [IMAGE-SERVICE] Fetching ${imageCount} images for: "${prompt.substring(0, 80)}..."`);
   
   if (!designSystem) {
@@ -108,39 +142,42 @@ export async function fetchImagesForPrompt(
     const source = aiKeywords ? 'AI' : 'fallback';
     console.log(`🎯 [IMAGE-SERVICE] Keywords (${source}): hero="${keywords.hero}", feature="${keywords.feature}", accent="${keywords.accent}"`);
     
-    // Fetch images in parallel
+    // Fetch images in parallel based on image count
+    // 3 images: hero + feature + accent
+    // 4 images: hero + feature + secondary + accent  
+    // 5 images: hero + feature + secondary + tertiary + accent
     const imagePromises = [
-      // Always fetch hero
+      // 1. Hero - Always fetch
       fetchUnsplashImage({ 
         query: keywords.hero, 
         orientation: 'landscape', 
         width: 600, 
         height: 400
       }),
-      // Always fetch feature1
+      // 2. Feature1 - Always fetch
       fetchUnsplashImage({ 
         query: keywords.feature, 
         orientation: 'landscape', 
         width: 400, 
         height: 300
       }),
-      // Fetch feature2 for medium+ emails
+      // 3. Feature2/Accent - Fetch for 3+ images
+      imageCount >= 3 ? fetchUnsplashImage({ 
+        query: keywords.accent, 
+        orientation: 'landscape', 
+        width: 400, 
+        height: 300
+      }) : Promise.resolve(null),
+      // 4. Feature3 - Fetch for 4+ images (different query for variety)
       imageCount >= 4 ? fetchUnsplashImage({ 
-        query: keywords.accent, 
+        query: `${keywords.feature} lifestyle`, 
         orientation: 'landscape', 
         width: 400, 
         height: 300
       }) : Promise.resolve(null),
-      // Fetch feature3 for complex emails
+      // 5. Accent/Icon - Fetch for 5 images
       imageCount >= 5 ? fetchUnsplashImage({ 
-        query: keywords.hero, // Different image, same keyword
-        orientation: 'landscape', 
-        width: 400, 
-        height: 300
-      }) : Promise.resolve(null),
-      // Fetch accent for complex emails
-      imageCount >= 5 ? fetchUnsplashImage({ 
-        query: keywords.accent, 
+        query: `${keywords.accent} abstract`, 
         orientation: 'squarish', 
         width: 300, 
         height: 300
@@ -165,9 +202,17 @@ export async function fetchImagesForPrompt(
       icon: results[4] ? mapToEmailImage(results[4], 100, 100) : null,
     };
     
-    const fetchedCount = [context.hero, context.feature1, context.feature2, context.feature3, context.accent]
-      .filter(Boolean).length;
-    console.log(`✅ [IMAGE-SERVICE] Fetched ${fetchedCount}/${imageCount} images`);
+    // Count based on what we actually requested
+    const requestedCount = imageCount;
+    const fetchedCount = [
+      context.hero, 
+      context.feature1, 
+      imageCount >= 3 ? context.feature2 : null,
+      imageCount >= 4 ? context.feature3 : null,
+      imageCount >= 5 ? context.accent : null,
+    ].filter(Boolean).length;
+    
+    console.log(`✅ [IMAGE-SERVICE] Fetched ${fetchedCount}/${requestedCount} images`);
     
     return context;
     

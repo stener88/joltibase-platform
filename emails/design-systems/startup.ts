@@ -492,15 +492,21 @@ What it means (vision)
 
 ### CRITICAL RULES
 
-1. **NEVER use className** - All styling MUST be inline via style prop
-2. **NO Tailwind utility classes** - Use inline styles only
-3. **Email-safe properties only** - Avoid flexbox, grid, CSS variables
+1. **USE Tailwind className** - Wrap entire email in \`<Tailwind>\` component
+2. **Tailwind for basics** - Colors, typography, spacing: \`className="p-6 bg-white text-gray-900"\`
+3. **Inline styles for custom** - Brand colors, gaps: \`style={{ backgroundColor: '#your-color' }}\`
 4. **Table-based layouts** - Use Section, Row, Column for structure
+5. **FORBIDDEN classes** - space-x-*, space-y-*, gap-*, hover:, focus:, dark:
 
 ### Required Imports
 
 \`\`\`tsx
 import {
+  Html,
+  Head,
+  Body,
+  Container,
+  Tailwind,
   Section,
   Img,
   Heading,
@@ -508,6 +514,20 @@ import {
   Button,
   Link
 } from '@react-email/components';
+\`\`\`
+
+### Structure
+\`\`\`tsx
+<Html>
+  <Tailwind>
+    <Head />
+    <Body className="bg-gray-50">
+      <Container className="mx-auto max-w-[600px]">
+        {/* Content */}
+      </Container>
+    </Body>
+  </Tailwind>
+</Html>
 \`\`\`
 
 ### Complete Template

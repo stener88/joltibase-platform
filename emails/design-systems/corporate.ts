@@ -442,20 +442,35 @@ Bad alt text examples:
 
 ### Technical Requirements
 
-**CRITICAL - Use INLINE STYLES ONLY**:
+**USE TAILWIND with \`<Tailwind>\` wrapper** (converts className to inline styles):
 \`\`\`tsx
-// ✅ CORRECT
-<div style={{ padding: '24px', backgroundColor: '#ffffff' }}>
+// ✅ CORRECT - Tailwind classes inside <Tailwind> wrapper
+<Html>
+  <Tailwind>
+    <Body className="bg-gray-50 font-sans">
+      <Container className="mx-auto max-w-[600px] p-6">
 
-// ❌ WRONG - Email clients strip className
-<div className="header">
+// ✅ ALSO CORRECT - Inline for custom brand colors
+<Section style={{ backgroundColor: '#1a365d' }}>
+
+// ❌ FORBIDDEN - These classes don't work in email
+<div className="space-y-4 hover:bg-blue-500">
 \`\`\`
 
-**Max Width**:
+**Required Structure**:
 \`\`\`tsx
-<Container style={{ maxWidth: '600px', margin: '0 auto' }}>
+import { Html, Tailwind, Head, Body, Container, ... } from '@react-email/components';
+
+<Html>
+  <Tailwind>
+    <Head />
+    <Body className="bg-gray-50">
+      <Container className="mx-auto max-w-[600px]">
   {/* Content */}
 </Container>
+    </Body>
+  </Tailwind>
+</Html>
 \`\`\`
 
 ---

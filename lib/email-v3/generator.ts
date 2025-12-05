@@ -43,32 +43,82 @@ const SYSTEM_INSTRUCTION = `You are an expert React Email developer creating pro
    import { 
      Html, Head, Body, Container, Preview,
      Section, Heading, Text, Button, Link,
-     Column, Row, Img, Hr 
+     Column, Row, Img, Hr, Tailwind, Font
    } from '@react-email/components';
    \`\`\`
    
    - NEVER use a component without importing it first
    - FORBIDDEN: <Preview> without Preview in import
    - FORBIDDEN: <Link> without Link in import
+   - **REQUIRED**: Tailwind component for className support
+   - **OPTIONAL**: Font component for custom web fonts (Inter, Poppins, etc.)
    - Check your code - every <ComponentName> must be in the import statement
 
 2. **COMPLETE REACT EMAIL STRUCTURE**
    - Root element MUST be <Html>
    - Include <Head /> for metadata and title
-   - Use <Body> for the email body
+   - **REQUIRED**: <Tailwind> wrapper inside <Html> for className support
+   - Use <Body> inside <Tailwind>
    - Use <Container> for max-width (600px standard)
+   
+   \`\`\`tsx
+   <Html>
+     <Tailwind>
+       <Head />
+       <Body className="bg-gray-50 font-sans">
+         <Container className="mx-auto max-w-[600px]">
+           {/* Content here */}
+         </Container>
+       </Body>
+     </Tailwind>
+   </Html>
+   \`\`\`
 
 3. **AVAILABLE COMPONENTS (import ALL you use)**
-   - Html, Head, Body, Container, Preview
+   - Html, Head, Body, Container, Preview, Tailwind, Font
    - Section, Heading, Text, Button, Link
    - Column, Row, Img, Hr
    - ALL imported from '@react-email/components'
 
-4. **STYLING - INLINE STYLES ONLY (CRITICAL)**
-   - **ALWAYS use inline styles via style prop**
-   - **NEVER use className** - email clients strip className
-   - All styles must be inline style objects
-   - Example: style={{ padding: '24px', backgroundColor: '#ffffff' }}
+   **Font Component (for web fonts)**:
+   \`\`\`tsx
+   // Add inside <Head> when using custom web fonts:
+   <Font
+     fontFamily="Inter"
+     fallbackFontFamily={["Helvetica Neue", "Helvetica", "Arial", "sans-serif"]}
+     webFont={{
+       url: 'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff2',
+       format: 'woff2',
+     }}
+     fontWeight={400}
+     fontStyle="normal"
+   />
+   \`\`\`
+   - Use Font when brand specifies a custom font (Inter, Poppins, Outfit, etc.)
+   - Then apply: \`style={{ fontFamily: 'Inter, Helvetica Neue, sans-serif' }}\` on <Body>
+   - System fonts (Georgia, system-ui) don't need <Font> component
+
+4. **STYLING - TAILWIND CLASSES PREFERRED**
+   - **USE Tailwind className** for colors, typography, spacing, layout
+   - **REQUIRES <Tailwind> wrapper** (converts classes to inline styles for email clients)
+   
+   **TAILWIND (className) - USE FOR:**
+   - Colors: bg-blue-500, text-gray-600, bg-white
+   - Typography: text-sm, text-lg, text-xl, font-bold, text-center
+   - Spacing: p-4, px-6, py-3, m-0, mt-4, mb-6
+   - Borders: rounded-lg, border, border-gray-200
+   - Layout: mx-auto, max-w-[600px]
+   
+   **INLINE STYLES (style prop) - ONLY FOR:**
+   - Custom colors not in Tailwind: style={{ backgroundColor: '#your-brand-color' }}
+   - Layout gaps: style={{ display: 'flex', gap: '12px' }}
+   - Complex/unique values
+   
+   **FORBIDDEN CLASSES (don't work in email):**
+   - ❌ space-x-*, space-y-*, gap-*, divide-*
+   - ❌ hover:, focus:, active:, group-, dark:
+   - ❌ sm:*, md:*, lg:*, xl:* (responsive breakpoints - can't be inlined)
+   - ❌ grid-cols-* (use Row/Column instead)
 
 5. **TYPESCRIPT & CONTENT - CRITICAL**
    - No props needed (or empty props interface)
@@ -135,12 +185,12 @@ const SYSTEM_INSTRUCTION = `You are an expert React Email developer creating pro
    - For product grids: OK to have many CTAs if user requests multiple products
 
 10. **COMPLETE CODE ONLY**
-    - NO placeholders, NO "...", NO incomplete sections
-    - NO {{variables}}, NO template syntax
-    - EVERY section fully implemented with real text
-    - NO TODO or FIXME comments
+   - NO placeholders, NO "...", NO incomplete sections
+   - NO {{variables}}, NO template syntax
+   - EVERY section fully implemented with real text
+   - NO TODO or FIXME comments
 
-Generate COMPLETE, production-ready React Email components using INLINE STYLES ONLY.`;
+Generate COMPLETE, production-ready React Email components with Tailwind styling inside a <Tailwind> wrapper.`;
 
 /**
  * Generate a complete React Email component with retry logic
@@ -302,6 +352,28 @@ function buildUserPrompt(
     if (brand.personality) {
       userPrompt += `- **Voice**: ${brand.personality}\n`;
     }
+    
+    // Add custom font instructions if brand has a font
+    if (brand.fontFamily) {
+      userPrompt += `- **Font**: ${brand.fontFamily}\n`;
+      userPrompt += `\n**FONT SETUP (REQUIRED FOR THIS BRAND)**:\n`;
+      userPrompt += `1. Import Font: \`import { ..., Font } from '@react-email/components';\`\n`;
+      userPrompt += `2. Add in <Head>:\n`;
+      userPrompt += `\`\`\`tsx
+<Font
+  fontFamily="${brand.fontFamily}"
+  fallbackFontFamily={["Helvetica Neue", "Helvetica", "Arial", "sans-serif"]}
+  webFont={{
+    url: 'https://fonts.gstatic.com/s/${brand.fontFamily.toLowerCase()}/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff2',
+    format: 'woff2',
+  }}
+  fontWeight={400}
+  fontStyle="normal"
+/>
+\`\`\`\n`;
+      userPrompt += `3. Apply on <Body>: \`style={{ fontFamily: '${brand.fontFamily}, Helvetica Neue, sans-serif' }}\`\n\n`;
+    }
+    
     userPrompt += `\n**CRITICAL**: Replace ALL button/CTA colors with the brand primary color (${brand.primaryColor}). Replace ALL company names with "${brand.companyName}". Use the brand logo if provided.\n\n`;
     userPrompt += `---\n\n`;
   }
@@ -414,15 +486,17 @@ function buildUserPrompt(
   userPrompt += `# 🚨 CRITICAL REQUIREMENTS 🚨\n\n`;
   userPrompt += `**FOLLOW THE DESIGN SYSTEM ABOVE EXACTLY**\n\n`;
   userPrompt += `FORBIDDEN (will cause errors):\n`;
-  userPrompt += `❌ className attributes - email clients strip them! Use inline styles ONLY\n`;
   userPrompt += `❌ {variableName} or {{variable}} syntax in JSX\n`;
   userPrompt += `❌ {item.field} or {data.property}\n`;
   userPrompt += `❌ .map() loops or array iterations\n`;
   userPrompt += `❌ Props interface with content fields\n`;
-  userPrompt += `❌ Placeholder text like "Lorem ipsum" or "Your Company"\n\n`;
+  userPrompt += `❌ Placeholder text like "Lorem ipsum" or "Your Company"\n`;
+  userPrompt += `❌ Tailwind classes: space-x-*, space-y-*, gap-*, hover:, focus:, dark:, sm:*, md:*, lg:*, xl:*\n\n`;
   userPrompt += `REQUIRED:\n`;
-  userPrompt += `✅ INLINE STYLES ONLY: style={{ padding: '24px', color: '#1a1a1a' }}\n`;
-  userPrompt += `✅ Write full text directly: <Text style={{...}}>Complete sentence here.</Text>\n`;
+  userPrompt += `✅ WRAP entire email in <Tailwind> component inside <Html>\n`;
+  userPrompt += `✅ USE Tailwind classes: className="p-6 bg-white text-gray-900"\n`;
+  userPrompt += `✅ Use inline style ONLY for custom brand colors or gaps\n`;
+  userPrompt += `✅ Write full text directly: <Text className="text-base">Complete sentence here.</Text>\n`;
   userPrompt += `✅ Follow design system colors, typography, spacing EXACTLY\n`;
   userPrompt += `✅ Every image must have descriptive alt text (10-15 words)\n`;
   userPrompt += `✅ Make content relevant to the topic\n\n`;
@@ -433,10 +507,9 @@ function buildUserPrompt(
   userPrompt += `"${prompt}"\n\n`;
   userPrompt += `Requirements:\n`;
   userPrompt += `- Follow the ${designSystem.name} design system above\n`;
-  userPrompt += `- Use INLINE STYLES ONLY (no className)\n`;
-  userPrompt += `- Root element: <Html>\n`;
-  userPrompt += `- Include <Head />, <Body>, <Container style={{ maxWidth: '600px' }}>\n`;
-  userPrompt += `- Include <Preview> text\n`;
+  userPrompt += `- USE Tailwind classes inside <Tailwind> wrapper\n`;
+  userPrompt += `- Structure: <Html><Tailwind><Head /><Body><Container>...</Container></Body></Tailwind></Html>\n`;
+  userPrompt += `- Include <Preview> text after <Head />\n`;
   userPrompt += `- Write ALL content as static text (no variables)\n`;
   userPrompt += `- NO props interface needed\n`;
   userPrompt += `- Complete code with NO placeholders\n`;
@@ -446,15 +519,15 @@ function buildUserPrompt(
     userPrompt += `# IMPORTANT - RETRY ATTEMPT ${attempt}\n\n`;
     userPrompt += `Previous attempts failed validation. CRITICAL FIXES NEEDED:\n\n`;
     userPrompt += `**MOST COMMON ERRORS TO FIX:**\n`;
-    userPrompt += `1. ❌ Using className → ✅ Use inline styles only: style={{ padding: '24px' }}\n`;
-    userPrompt += `2. ❌ Missing imports → ✅ Import ALL components you use: import { Html, Head, Body, Container, Preview, Section, Heading, Text, Button, Link, Column, Row, Img, Hr } from '@react-email/components'\n`;
+    userPrompt += `1. ❌ Missing <Tailwind> wrapper → ✅ Wrap entire content: <Html><Tailwind>...</Tailwind></Html>\n`;
+    userPrompt += `2. ❌ Missing imports → ✅ Import ALL components INCLUDING Tailwind: import { Html, Head, Body, Container, Preview, Section, Heading, Text, Button, Link, Column, Row, Img, Hr, Tailwind } from '@react-email/components'\n`;
     userPrompt += `3. ❌ {{placeholder}} syntax → ✅ Write actual static text\n`;
     userPrompt += `4. ❌ Missing alt text on images → ✅ Every <Img> needs descriptive alt="..."\n`;
-    userPrompt += `5. ❌ Small buttons → ✅ REQUIRED: padding: '16px 32px' minimum for 44px+ touch target. NEVER use padding smaller than '14px 28px'\n\n`;
-    userPrompt += `**CRITICAL - INLINE STYLES ONLY:**\n`;
-    userPrompt += `Every HTML attribute like padding, color, fontSize, etc. MUST be in a style prop object.\n`;
-    userPrompt += `Example: <Section style={{ padding: '48px 24px', backgroundColor: '#ffffff' }}>\n`;
-    userPrompt += `NEVER: <Section className="p-12 bg-white">\n\n`;
+    userPrompt += `5. ❌ Small buttons → ✅ REQUIRED: className="py-4 px-8" or padding: '16px 32px' minimum for 44px+ touch target\n\n`;
+    userPrompt += `**CRITICAL - USE TAILWIND CLASSES:**\n`;
+    userPrompt += `Use className for colors, typography, spacing. Only use style prop for custom brand colors or gaps.\n`;
+    userPrompt += `Example: <Section className="py-12 px-6 bg-white">\n`;
+    userPrompt += `For custom colors: <Section className="py-12 px-6" style={{ backgroundColor: '#your-brand-color' }}>\n\n`;
     
     // Add structured validation feedback
     if (previousIssues.length > 0) {

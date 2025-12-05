@@ -15,7 +15,9 @@ import {
   MoveHorizontal,
   ArrowUp,
   ChevronRight,
+  Type,
 } from 'lucide-react';
+import { ALL_FONTS, type FontDefinition } from '@/lib/email-v3/fonts';
 
 interface PropertiesPanelProps {
   workingTsxRef: React.MutableRefObject<string>; // Ref to working TSX
@@ -32,6 +34,7 @@ interface ComponentProperties {
   textColor?: string;
   fontSize?: string;
   fontWeight?: string;
+  fontFamily?: string;
   lineHeight?: string;
   textAlign?: string;
   textDecoration?: string;
@@ -177,6 +180,7 @@ export function PropertiesPanel({
       textColor: isTextComponent ? rgbToHex(textColor) : undefined,
       fontSize: isTextComponent ? getStyleValue('font-size') : undefined,
       fontWeight: isTextComponent ? getStyleValue('font-weight') : undefined,
+      fontFamily: isTextComponent ? getStyleValue('font-family', 'inherit') : undefined,
       lineHeight: isTextComponent ? getStyleValue('line-height') : undefined,
       textAlign: isTextComponent ? getStyleValue('text-align') : undefined,
       textDecoration: isTextComponent ? getStyleValue('text-decoration') : undefined,
@@ -219,6 +223,7 @@ export function PropertiesPanel({
   const [textColorInherit, setTextColorInherit] = useState(true);
   const [fontSize, setFontSize] = useState('');
   const [fontWeight, setFontWeight] = useState('');
+  const [fontFamily, setFontFamily] = useState('inherit');
   const [lineHeight, setLineHeight] = useState('');
   const [textAlign, setTextAlign] = useState('');
   const [backgroundColor, setBackgroundColor] = useState('');
@@ -256,6 +261,7 @@ export function PropertiesPanel({
       setTextColor(componentProperties.textColor || '');
       setFontSize(componentProperties.fontSize || '');
       setFontWeight(componentProperties.fontWeight || '');
+      setFontFamily(componentProperties.fontFamily || 'inherit');
       setLineHeight(componentProperties.lineHeight || '');
       setTextAlign(componentProperties.textAlign || '');
       setBackgroundColor(componentProperties.backgroundColor || '');
@@ -314,6 +320,10 @@ export function PropertiesPanel({
       case 'fontWeight':
         setFontWeight(value);
         onDirectUpdate(selectedComponentId, 'fontWeight', value);
+        break;
+      case 'fontFamily':
+        setFontFamily(value);
+        onDirectUpdate(selectedComponentId, 'fontFamily', value);
         break;
       case 'lineHeight':
         setLineHeight(value);
@@ -496,6 +506,30 @@ export function PropertiesPanel({
         {componentProperties.canEditTypography && (
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-foreground">Typography</h3>
+            
+            {/* Font Family */}
+            <div className="space-y-2">
+              <label className="block text-xs text-muted-foreground">Font</label>
+              <div className="flex flex-wrap gap-1.5">
+                {ALL_FONTS.slice(0, 6).map((font: FontDefinition) => (
+                  <button
+                    key={font.value}
+                    onClick={() => handleTypographyChange('fontFamily', font.value)}
+                    className={`px-2.5 py-1.5 text-xs rounded border transition-colors ${
+                      fontFamily === font.value || (fontFamily === 'inherit' && font.value === 'inherit')
+                        ? 'bg-primary text-primary-foreground border-primary' 
+                        : 'bg-card border-border hover:border-foreground text-foreground'
+                    }`}
+                    style={{ fontFamily: font.value !== 'inherit' ? font.value : undefined }}
+                    title={font.webFont ? `${font.label} (Web Font)` : font.label}
+                  >
+                    {font.label}
+                    {font.webFont && <span className="ml-1 opacity-60">✦</span>}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground">✦ = Web font (better support in modern clients)</p>
+            </div>
             
             {/* Font Size */}
             <div className="flex flex-wrap gap-1.5">

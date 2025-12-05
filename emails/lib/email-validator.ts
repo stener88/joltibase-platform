@@ -24,23 +24,27 @@ export interface ValidationResult {
 
 /**
  * Get maximum CTAs allowed for a specific design system
- * Different email types have different CTA norms
+ * Generous limits to allow rich, feature-complete emails
  */
 function getMaxCTAsForDesignSystem(designSystemId?: string): number {
-  if (!designSystemId) return 3; // Default fallback
+  if (!designSystemId) return 20; // Default - generous allowance
   
+  // All design systems get generous CTA limits for rich emails
+  // CTAs include: buttons, links, nav items, footer links, social icons
   const limits: Record<string, number> = {
-    'newsletter-editorial': 8,      // Newsletters have multiple article links
-    'ecommerce-conversion': 10,     // Product grids can have 8+ items
-    'travel-booking': 19,           // Travel has nav, destinations, app, footer links
-    'saas-product': 3,              // Try it + Learn more + secondary
-    'event-conference': 3,          // RSVP + View details + secondary
-    'modern-startup': 4,            // Bold action-oriented with features
-    'corporate-professional': 3,    // Conservative but allows sections
-    'minimal-elegant': 2,           // Minimal, focused (primary + secondary)
+    'newsletter-editorial': 25,     // Multiple articles, nav, social, footer
+    'product-promotion': 30,        // Shop women/men, tiered offers, nav, app, social, footer
+    'ecommerce-discount': 15,       // Hero CTA + products + social + footer
+    'retail-welcome': 20,           // Explore + survey + account + store + footer
+    'travel-booking': 30,           // Nav, destinations, activities, app, footer
+    'saas-product': 15,             // Features, pricing tiers, social, footer
+    'event-conference': 15,         // Speakers, schedule, register, social, footer
+    'modern-startup': 15,           // Features, pricing, social, footer
+    'corporate-professional': 15,   // Sections, nav, social, footer
+    'minimal-elegant': 10,          // Still minimal but allows footer + social
   };
   
-  return limits[designSystemId] || 3;
+  return limits[designSystemId] || 20;
 }
 
 /**
@@ -142,14 +146,17 @@ function validateEmailStructure(code: string): ValidationIssue[] {
   // Note: V3 patterns are fragments, so skip this for now
   // This will be important for final rendered emails
   
-  // Check for className usage (emails require inline styles)
+  // Check for className usage WITHOUT Tailwind wrapper
+  // Tailwind classes are OK if wrapped in <Tailwind> component (converts to inline styles)
   const classNameMatches = code.match(/className=["'][^"']+["']/g);
-  if (classNameMatches && classNameMatches.length > 0) {
+  const hasTailwindWrapper = code.includes('<Tailwind') || code.includes('Tailwind>');
+  
+  if (classNameMatches && classNameMatches.length > 0 && !hasTailwindWrapper) {
     issues.push({
       severity: 'error',
       type: 'structure',
-      message: `Found ${classNameMatches.length} className usage(s) - email clients require inline styles`,
-      suggestion: 'Replace all className props with inline style objects'
+      message: `Found ${classNameMatches.length} className usage(s) without <Tailwind> wrapper`,
+      suggestion: 'Wrap your email content in <Tailwind> component to convert className to inline styles'
     });
   }
   
@@ -264,12 +271,12 @@ function validateAccessibility(code: string): ValidationIssue[] {
       if (verticalMatch) {
         const verticalPadding = parseInt(verticalMatch[1]);
         if (verticalPadding < 12) {
-          issues.push({
-            severity: 'warning',
-            type: 'accessibility',
+        issues.push({
+          severity: 'warning',
+          type: 'accessibility',
             message: `Button ${index + 1} may have insufficient touch target size (${verticalPadding}px vertical padding)`,
-            suggestion: 'Use minimum 12-14px vertical padding for easier interaction'
-          });
+          suggestion: 'Use minimum 12-14px vertical padding for easier interaction'
+        });
         }
       }
     }
@@ -425,8 +432,9 @@ export function generateFixPrompt(issues: ValidationIssue[]): string {
   prompt += `
 ### CRITICAL RULES TO FOLLOW:
 - ALL <Img> tags MUST have descriptive alt text (10-15 words)
-- Use ONLY inline styles (no className, no external CSS)
-- Import ALL components used from @react-email/components
+- Use Tailwind className inside <Tailwind> wrapper (converts to inline styles)
+- Inline style prop for custom brand colors or gaps
+- Import ALL components used from @react-email/components (including Tailwind)
 - Replace ANY placeholder text with actual content
 - Minimum font size: 14px for all text
 - Use semantic components: <Heading>, <Text>, <Section>
