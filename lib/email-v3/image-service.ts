@@ -157,23 +157,23 @@ export async function fetchImagesForPrompt(
       // 2. Feature1 - Always fetch
       fetchUnsplashImage({ 
         query: keywords.feature, 
-        orientation: 'landscape', 
-        width: 400, 
-        height: 300
+          orientation: 'landscape', 
+          width: 400, 
+          height: 300
       }),
       // 3. Feature2/Accent - Fetch for 3+ images
       imageCount >= 3 ? fetchUnsplashImage({ 
         query: keywords.accent, 
-        orientation: 'landscape', 
-        width: 400, 
-        height: 300
+          orientation: 'landscape', 
+          width: 400, 
+          height: 300
       }) : Promise.resolve(null),
       // 4. Feature3 - Fetch for 4+ images (different query for variety)
       imageCount >= 4 ? fetchUnsplashImage({ 
         query: `${keywords.feature} lifestyle`, 
-        orientation: 'landscape', 
-        width: 400, 
-        height: 300
+          orientation: 'landscape', 
+          width: 400, 
+          height: 300
       }) : Promise.resolve(null),
       // 5. Accent/Icon - Fetch for 5 images
       imageCount >= 5 ? fetchUnsplashImage({ 
@@ -259,7 +259,7 @@ function extractTopicsFromPrompt(prompt: string): ImageKeywords | null {
   
   console.log(`📝 [IMAGE-SERVICE] Extracted topics: ${found.join(', ')}`);
   
-  return {
+    return {
     hero: found[0],
     feature: found[1] || found[0],
     accent: found[2] || 'abstract',

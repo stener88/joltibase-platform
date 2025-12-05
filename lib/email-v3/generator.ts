@@ -1,5 +1,3 @@
-
-
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText } from 'ai';
 import { detectDesignSystem, type DesignSystem } from '@/emails/lib/design-system-selector';
@@ -30,172 +28,61 @@ export interface GeneratedEmail {
 
 /**
  * System instruction for React Email component generation with Design Systems
+ * Optimized for single-pass generation
  */
-const SYSTEM_INSTRUCTION = `You are an expert React Email developer creating production-ready email templates following comprehensive design systems.
+const SYSTEM_INSTRUCTION = `You are an expert React Email developer. Generate production-ready email components.
 
-# CRITICAL RULES
+# STRUCTURE
 
-1. **IMPORTS - CRITICAL (CHECK BEFORE WRITING CODE)**
-   ⚠️ BEFORE you write ANY code, identify ALL components you will use and import them.
-   
-   \`\`\`tsx
-   // ALWAYS start with this import - include ALL components you'll use:
-   import { 
-     Html, Head, Body, Container, Preview,
-     Section, Heading, Text, Button, Link,
-     Column, Row, Img, Hr, Tailwind, Font
-   } from '@react-email/components';
-   \`\`\`
-   
-   - NEVER use a component without importing it first
-   - FORBIDDEN: <Preview> without Preview in import
-   - FORBIDDEN: <Link> without Link in import
-   - **REQUIRED**: Tailwind component for className support
-   - **OPTIONAL**: Font component for custom web fonts (Inter, Poppins, etc.)
-   - Check your code - every <ComponentName> must be in the import statement
+\`\`\`tsx
+import { Html, Head, Body, Container, Tailwind, Section, Text, Button, Link, Img, Row, Column, Hr, Preview, Font } from '@react-email/components';
 
-2. **COMPLETE REACT EMAIL STRUCTURE**
-   - Root element MUST be <Html>
-   - Include <Head /> for metadata and title
-   - **REQUIRED**: <Tailwind> wrapper inside <Html> for className support
-   - Use <Body> inside <Tailwind>
-   - Use <Container> for max-width (600px standard)
-   
-   \`\`\`tsx
-   <Html>
-     <Tailwind>
-       <Head />
-       <Body className="bg-gray-50 font-sans">
-         <Container className="mx-auto max-w-[600px]">
-           {/* Content here */}
-         </Container>
-       </Body>
-     </Tailwind>
-   </Html>
-   \`\`\`
+export default function Email() {
+  return (
+    <Html>
+      <Tailwind>
+        <Head><Preview>Preview text here</Preview></Head>
+        <Body className="bg-white font-sans">
+          <Container className="mx-auto max-w-[600px] p-6">
+            {/* Content */}
+          </Container>
+        </Body>
+      </Tailwind>
+    </Html>
+  );
+}
+\`\`\`
 
-3. **AVAILABLE COMPONENTS (import ALL you use)**
-   - Html, Head, Body, Container, Preview, Tailwind, Font
-   - Section, Heading, Text, Button, Link
-   - Column, Row, Img, Hr
-   - ALL imported from '@react-email/components'
+# STYLING
 
-   **Font Component (for web fonts)**:
-   \`\`\`tsx
-   // Add inside <Head> when using custom web fonts:
-   <Font
-     fontFamily="Inter"
-     fallbackFontFamily={["Helvetica Neue", "Helvetica", "Arial", "sans-serif"]}
-     webFont={{
-       url: 'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff2',
-       format: 'woff2',
-     }}
-     fontWeight={400}
-     fontStyle="normal"
-   />
-   \`\`\`
-   - Use Font when brand specifies a custom font (Inter, Poppins, Outfit, etc.)
-   - Then apply: \`style={{ fontFamily: 'Inter, Helvetica Neue, sans-serif' }}\` on <Body>
-   - System fonts (Georgia, system-ui) don't need <Font> component
+- Use Tailwind className for standard styling (bg-*, text-*, p-*, m-*, rounded-*, font-*)
+- Use inline style={{ }} for brand colors and custom values
+- FORBIDDEN classes: space-x-*, space-y-*, gap-*, hover:*, focus:*, sm:*, md:*, lg:*, xl:*, dark:*
 
-4. **STYLING - TAILWIND CLASSES PREFERRED**
-   - **USE Tailwind className** for colors, typography, spacing, layout
-   - **REQUIRES <Tailwind> wrapper** (converts classes to inline styles for email clients)
-   
-   **TAILWIND (className) - USE FOR:**
-   - Colors: bg-blue-500, text-gray-600, bg-white
-   - Typography: text-sm, text-lg, text-xl, font-bold, text-center
-   - Spacing: p-4, px-6, py-3, m-0, mt-4, mb-6
-   - Borders: rounded-lg, border, border-gray-200
-   - Layout: mx-auto, max-w-[600px]
-   
-   **INLINE STYLES (style prop) - ONLY FOR:**
-   - Custom colors not in Tailwind: style={{ backgroundColor: '#your-brand-color' }}
-   - Layout gaps: style={{ display: 'flex', gap: '12px' }}
-   - Complex/unique values
-   
-   **FORBIDDEN CLASSES (don't work in email):**
-   - ❌ space-x-*, space-y-*, gap-*, divide-*
-   - ❌ hover:, focus:, active:, group-, dark:
-   - ❌ sm:*, md:*, lg:*, xl:* (responsive breakpoints - can't be inlined)
-   - ❌ grid-cols-* (use Row/Column instead)
+# IMAGES
 
-5. **TYPESCRIPT & CONTENT - CRITICAL**
-   - No props needed (or empty props interface)
-   - **STATIC CONTENT ONLY**: Write ALL text directly in JSX
-   - **NEVER use**: {variable}, {prop.text}, .map(), .forEach()
-   - **INSTEAD**: Write all content as literal strings
-   - Export as default function
+- Use provided Unsplash URLs exactly
+- REQUIRED: style={{ width: '100%', height: 'auto' }} on all <Img>
+- Include descriptive alt text
 
-6. **IMAGES - PREVENT STRETCHING (CRITICAL)**
-   - Use <Img> component from '@react-email/components'
-   - Real image URLs will be provided in the user prompt
-   - ALWAYS include alt attributes (descriptive, 10-15 words)
-   - Use the exact URLs provided (professional Unsplash images)
-   - DO NOT use placeholder URLs
-   - **EVERY <Img> MUST HAVE RESPONSIVE STYLES**:
-     * REQUIRED: style={{ width: '100%', height: 'auto' }}
-     * Set width and height as hints only: width={600} height={400}
-     * These hints are for email clients, but style prop controls actual rendering
-     * For hero/banner images: Add objectFit: 'cover' if needed
-     * FORBIDDEN: Fixed height in styles (height: '400px') - this causes stretching
-     * Correct: <Img src="..." width={600} height={400} style={{ width: '100%', height: 'auto' }} />
-     * Wrong: <Img src="..." width={600} height={400} style={{ width: '100%', height: '400px' }} />
+# BUTTONS
 
-7. **HORIZONTAL RULES (Hr)**
-   - Use <Hr> for visual dividers
-   - ALWAYS constrain width with margin: <Hr style={{ margin: '24px 0' }} />
-   - For full-width within container: <Hr style={{ margin: '32px 0', borderColor: '#e5e7eb' }} />
-   - NEVER use absolute positioning or width: '100vw'
-   - Example: <Hr style={{ margin: '24px 0', borderColor: '#d1d5db', borderWidth: '1px' }} />
+- Minimum padding: '14px 28px' (44px touch target)
+- Include: backgroundColor, color, borderRadius, textDecoration: 'none'
 
-8. **BUTTONS/CTAs - CRITICAL SIZE REQUIREMENTS**
-   ⚠️ All buttons MUST have minimum 44px touch target height for accessibility.
-   
-   **REQUIRED button style:**
-   \`\`\`tsx
-   <Button 
-     href="#" 
-     style={{ 
-       padding: '16px 32px',  // MINIMUM: 14px vertical, 24px horizontal
-       fontSize: '16px',      // MINIMUM: 16px
-       borderRadius: '8px',
-       backgroundColor: '#primaryColor',
-       color: '#ffffff',
-       textDecoration: 'none',
-       display: 'inline-block',
-       textAlign: 'center',
-     }}
-   >
-     Button Text
-   </Button>
-   \`\`\`
-   
-   - FORBIDDEN: padding: '8px 16px' (too small - fails accessibility)
-   - FORBIDDEN: padding: '10px 20px' (too small)
-   - MINIMUM: padding: '14px 28px' (achieves 44px+ height)
-   - RECOMMENDED: padding: '16px 32px' (optimal)
+# CONTENT
 
-9. **EMAIL BEST PRACTICES**
-   - Max content width: 600px via Container
-   - Include <Preview> text for email clients
-   - Follow the design system specifications exactly
-   - All images must have descriptive alt text
-   - Minimum font size: 14px for all text (16px for body text)
-   - For product grids: OK to have many CTAs if user requests multiple products
+- Static text only - NO {variables}, .map(), or template syntax
+- Write complete, real content directly in JSX
+- Export as default function, no props interface needed
 
-10. **COMPLETE CODE ONLY**
-   - NO placeholders, NO "...", NO incomplete sections
-   - NO {{variables}}, NO template syntax
-   - EVERY section fully implemented with real text
-   - NO TODO or FIXME comments
-
-Generate COMPLETE, production-ready React Email components with Tailwind styling inside a <Tailwind> wrapper.`;
+Generate complete, production-ready code following the design system provided.`;
 
 /**
- * Generate a complete React Email component with retry logic
+ * Generate a complete React Email component (single-pass)
  */
 export async function generateEmail(prompt: string, brand?: BrandIdentity | null): Promise<GeneratedEmail> {
+  const totalStart = Date.now();
   console.log(`🚀 [V3-GENERATOR] Generating email for: "${prompt}"`);
   if (brand) {
     console.log(`🎨 [V3-GENERATOR] Using brand: ${brand.companyName} (${brand.primaryColor})`);
@@ -205,7 +92,9 @@ export async function generateEmail(prompt: string, brand?: BrandIdentity | null
   const designSystem = detectDesignSystem(prompt);
   
   // Fetch images with design system aesthetic (runs independently)
+  const imageStart = Date.now();
   const images = await fetchImagesForPrompt(prompt, designSystem);
+  console.log(`⏱️ [GENERATOR] Image fetch: ${((Date.now() - imageStart) / 1000).toFixed(1)}s`);
   
   let lastError: Error | null = null;
   let previousIssues: ValidationIssue[] = [];
@@ -218,13 +107,19 @@ export async function generateEmail(prompt: string, brand?: BrandIdentity | null
       // Build user prompt with design system, images, brand identity, and previous validation issues
       const userPrompt = buildUserPrompt(prompt, designSystem, attempt, images, previousIssues, brand);
       
-      // Generate with Gemini
+      // Generate with Gemini (TIMED)
+      const llmStart = Date.now();
+      console.log(`⏱️ [GENERATOR] Starting LLM call (model: ${AI_MODEL})...`);
+      
       const result = await generateText({
         model: google(AI_MODEL),
         system: SYSTEM_INSTRUCTION,
         prompt: userPrompt,
         temperature: GENERATION_TEMPERATURE,
       });
+      
+      const llmDuration = Date.now() - llmStart;
+      console.log(`⏱️ [GENERATOR] LLM call completed in ${(llmDuration / 1000).toFixed(1)}s`);
       
       // Log token usage and cost (Gemini 2.0 Flash pricing)
       if (result.usage) {
@@ -244,7 +139,7 @@ export async function generateEmail(prompt: string, brand?: BrandIdentity | null
       const extractedCode = extractCodeFromMarkdown(result.text);
       const code = cleanGeneratedCode(extractedCode);
       
-      // NEW: Pre-render syntax validation (catches broken JSX before render fails)
+      // Pre-render syntax validation (catches broken JSX before render fails)
       const quoteErrors = checkMismatchedQuotes(code);
       if (quoteErrors.length > 0) {
         console.log(`⚠️ [V3-GENERATOR] Found mismatched quotes, retrying...`);
@@ -279,6 +174,10 @@ export async function generateEmail(prompt: string, brand?: BrandIdentity | null
       if (validation.isValid || attempt === MAX_GENERATION_ATTEMPTS) {
         // Save to filesystem
         const filename = await saveComponent(code);
+        
+        const totalDuration = Date.now() - totalStart;
+        console.log(`\n━━━ GENERATION COMPLETE ━━━`);
+        console.log(`⏱️ [TOTAL] ${(totalDuration / 1000).toFixed(1)}s`);
         
         if (validation.isValid) {
           console.log(`✅ [V3-GENERATOR] Successfully generated: ${filename}`);
@@ -334,7 +233,7 @@ function buildUserPrompt(
 ): string {
   let userPrompt = '';
   
-  // Add brand identity context FIRST (highest priority) - only if enabled
+  // Add brand identity context - only if enabled
   if (brand && brand.enabled !== false) {
     userPrompt += `# BRAND IDENTITY\n\n`;
     userPrompt += `Apply this brand identity to the email:\n`;

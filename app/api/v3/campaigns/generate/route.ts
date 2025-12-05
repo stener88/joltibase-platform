@@ -49,11 +49,15 @@ export async function POST(request: NextRequest) {
       console.log(`[GENERATE-V3] No brand settings found`);
     }
     
-    // Generate wrapper-free component with RAG and brand
+    // Generate wrapper-free component with RAG and brand (TIMED)
+    const genStart = Date.now();
     const generated = await generateEmail(prompt, brand);
+    console.log(`⏱️ [GENERATE-V3] Total generation: ${((Date.now() - genStart) / 1000).toFixed(1)}s`);
     
-    // Render to HTML (applies wrappers at render time)
+    // Render to HTML (applies wrappers at render time) (TIMED)
+    const renderStart = Date.now();
     const renderResult = await renderEmail(generated.filename);
+    console.log(`⏱️ [GENERATE-V3] Render: ${((Date.now() - renderStart) / 1000).toFixed(1)}s`);
     
     if (renderResult.error) {
       throw new Error(`Render failed: ${renderResult.error}`);
@@ -65,7 +69,8 @@ export async function POST(request: NextRequest) {
     // Determine status based on validation
     const status = !generated.isValid ? 'needs_review' : 'ready';
     
-    // Save to database with validation metadata
+    // Save to database with validation metadata (TIMED)
+    const dbStart = Date.now();
     const { data: campaign, error: dbError } = await supabase
       .from('campaigns_v3')
       .insert({
@@ -83,6 +88,8 @@ export async function POST(request: NextRequest) {
       })
       .select()
       .single();
+    
+    console.log(`⏱️ [GENERATE-V3] DB insert: ${((Date.now() - dbStart) / 1000).toFixed(1)}s`);
     
     if (dbError) throw dbError;
     
