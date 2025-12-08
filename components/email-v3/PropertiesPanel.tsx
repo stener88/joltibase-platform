@@ -32,6 +32,8 @@ const FONT_SIZE_MAP = [
   { tailwind: 'text-5xl', px: '48px', label: '5XL' },
   { tailwind: 'text-6xl', px: '60px', label: '6XL' },
   { tailwind: 'text-7xl', px: '72px', label: '7XL' },
+  { tailwind: 'text-8xl', px: '96px', label: '8XL' },
+  { tailwind: 'text-9xl', px: '128px', label: '9XL' },
 ] as const;
 
 // Helper: Convert any fontSize value to display value
@@ -651,6 +653,33 @@ export function PropertiesPanel({
                 </div>
               </div>
             </div>
+
+            {/* Row 3: Line Height */}
+            <div className="space-y-2">
+              <label className="block text-xs text-muted-foreground">Line height</label>
+              <div className="flex gap-1.5">
+                {[
+                  { value: '1', label: 'None' },
+                  { value: '1.25', label: 'Tight' },
+                  { value: '1.5', label: 'Normal' },
+                  { value: '1.75', label: 'Relaxed' },
+                  { value: '2', label: 'Loose' },
+                ].map(lh => (
+                  <button
+                    key={lh.value}
+                    onClick={() => handleTypographyChange('lineHeight', lh.value)}
+                    className={`flex-1 px-2 py-2 rounded border transition-colors text-xs ${
+                      lineHeight === lh.value 
+                        ? 'bg-primary text-primary-foreground border-primary' 
+                        : 'bg-card border-border hover:border-foreground text-foreground'
+                    }`}
+                    title={`Line height: ${lh.value}`}
+                  >
+                    {lh.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -1018,7 +1047,14 @@ export function PropertiesPanel({
                   {['solid', 'dashed', 'dotted'].map(style => (
                     <button
                       key={style}
-                      onClick={() => handleBorderChange('borderStyle', style)}
+                      onClick={() => {
+                        // Toggle: if clicking the same style, reset to 'none'
+                        if (borderStyle === style) {
+                          handleBorderChange('borderStyle', 'none');
+                        } else {
+                          handleBorderChange('borderStyle', style);
+                        }
+                      }}
                       className={`flex-1 px-2 py-1.5 text-xs rounded border transition-colors ${
                         borderStyle === style 
                           ? 'bg-primary text-primary-foreground border-primary' 
