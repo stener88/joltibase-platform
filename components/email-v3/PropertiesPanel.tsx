@@ -19,6 +19,34 @@ import {
 } from 'lucide-react';
 import { ALL_FONTS, type FontDefinition } from '@/lib/email-v3/fonts';
 
+// Font size mapping: Tailwind class ↔ Pixel value
+const FONT_SIZE_MAP = [
+  { tailwind: 'text-xs', px: '12px', label: 'XS' },
+  { tailwind: 'text-sm', px: '14px', label: 'Small' },
+  { tailwind: 'text-base', px: '16px', label: 'Body' },
+  { tailwind: 'text-lg', px: '18px', label: 'Large' },
+  { tailwind: 'text-xl', px: '20px', label: 'XL' },
+  { tailwind: 'text-2xl', px: '24px', label: '2XL' },
+  { tailwind: 'text-3xl', px: '30px', label: '3XL' },
+  { tailwind: 'text-4xl', px: '36px', label: '4XL' },
+  { tailwind: 'text-5xl', px: '48px', label: '5XL' },
+  { tailwind: 'text-6xl', px: '60px', label: '6XL' },
+  { tailwind: 'text-7xl', px: '72px', label: '7XL' },
+] as const;
+
+// Helper: Convert any fontSize value to display value
+function normalizeFontSize(value: string): string {
+  // If it's a Tailwind class, convert to px
+  const mapped = FONT_SIZE_MAP.find(m => value.includes(m.tailwind));
+  if (mapped) return mapped.px;
+  
+  // If it's already px, return as-is
+  if (value.includes('px')) return value;
+  
+  // Default fallback
+  return '16px';
+}
+
 interface PropertiesPanelProps {
   workingTsxRef: React.MutableRefObject<string>; // Ref to working TSX
   selectedComponentId: string | null;
@@ -246,6 +274,9 @@ export function PropertiesPanel({
   const [imageWidth, setImageWidth] = useState('');
   const [imageHeight, setImageHeight] = useState('');
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
+  const [marginExpanded, setMarginExpanded] = useState(false);
+  const [paddingExpanded, setPaddingExpanded] = useState(false);
+  const dragStateRef = useRef<{ property: string; startValue: number; startX: number } | null>(null);
 
   // Sync local state with component properties ONLY when switching components
   // Don't reset on every componentProperties change (that would wipe user edits!)
@@ -445,6 +476,33 @@ export function PropertiesPanel({
     }
   };
 
+  // Drag-to-adjust handler for spacing
+  const handleDragStart = (e: React.MouseEvent, property: string, currentValue: string) => {
+    e.preventDefault();
+    const startValue = parseInt(currentValue) || 0;
+    const startX = e.clientX;
+    
+    dragStateRef.current = { property, startValue, startX };
+    
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!dragStateRef.current) return;
+      
+      const deltaX = moveEvent.clientX - dragStateRef.current.startX;
+      const newValue = Math.max(0, dragStateRef.current.startValue + Math.round(deltaX / 2)); // Divide by 2 for smoother control
+      
+      handleSpacingChange(newValue.toString(), dragStateRef.current.property);
+    };
+    
+    const handleMouseUp = () => {
+      dragStateRef.current = null;
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
   if (!selectedComponentId || !componentProperties) {
     return (
       <div className="h-full flex items-center justify-center p-6 text-center bg-background">
@@ -507,92 +565,91 @@ export function PropertiesPanel({
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-foreground">Typography</h3>
             
-            {/* Font Family */}
-            <div className="space-y-2">
-              <label className="block text-xs text-muted-foreground">Font</label>
-              <div className="flex flex-wrap gap-1.5">
-                {ALL_FONTS.slice(0, 6).map((font: FontDefinition) => (
-                  <button
-                    key={font.value}
-                    onClick={() => handleTypographyChange('fontFamily', font.value)}
-                    className={`px-2.5 py-1.5 text-xs rounded border transition-colors ${
-                      fontFamily === font.value || (fontFamily === 'inherit' && font.value === 'inherit')
-                        ? 'bg-primary text-primary-foreground border-primary' 
-                        : 'bg-card border-border hover:border-foreground text-foreground'
-                    }`}
-                    style={{ fontFamily: font.value !== 'inherit' ? font.value : undefined }}
-                    title={font.webFont ? `${font.label} (Web Font)` : font.label}
-                  >
-                    {font.label}
-                    {font.webFont && <span className="ml-1 opacity-60">✦</span>}
-                  </button>
-                ))}
+            {/* Row 1: Font Size + Font Style */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Font Size */}
+              <div className="space-y-2">
+                <label className="block text-xs text-muted-foreground">Font size</label>
+                <select
+                  value={normalizeFontSize(fontSize)}
+                  onChange={(e) => handleTypographyChange('fontSize', e.target.value)}
+                  className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+                >
+                  {FONT_SIZE_MAP.map(size => (
+                    <option key={size.px} value={size.px}>
+                      {size.label} ({size.px})
+                    </option>
+                  ))}
+                </select>
               </div>
-              <p className="text-[10px] text-muted-foreground">✦ = Web font (better support in modern clients)</p>
-            </div>
-            
-            {/* Font Size */}
-            <div className="flex flex-wrap gap-1.5">
-              {['12px', '14px', '16px', '18px', '24px', '32px'].map(size => (
-                <button
-                  key={size}
-                  onClick={() => handleTypographyChange('fontSize', size)}
-                  className={`px-2.5 py-1 text-xs rounded border transition-colors ${
-                    fontSize === size 
-                      ? 'bg-primary text-primary-foreground border-primary' 
-                      : 'bg-card border-border hover:border-foreground text-foreground'
-                  }`}
+
+              {/* Font Style */}
+              <div className="space-y-2">
+                <label className="block text-xs text-muted-foreground">
+                  Font style <span className="text-[10px]">✦ = Web font</span>
+                </label>
+                <select
+                  value={fontFamily}
+                  onChange={(e) => handleTypographyChange('fontFamily', e.target.value)}
+                  className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+                  style={{ fontFamily: fontFamily !== 'inherit' ? fontFamily : undefined }}
                 >
-                  {size}
-                </button>
-              ))}
+                  {ALL_FONTS.map((font: FontDefinition) => (
+                    <option key={font.value} value={font.value}>
+                      {font.label} {font.webFont ? '✦' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {/* Font Weight */}
-            <div className="flex gap-1.5">
-              {[
-                { value: '400', label: 'Normal' },
-                { value: '600', label: 'Semi' },
-                { value: '700', label: 'Bold' },
-              ].map(weight => (
-                <button
-                  key={weight.value}
-                  onClick={() => handleTypographyChange('fontWeight', weight.value)}
-                  className={`flex-1 px-2.5 py-1 text-xs rounded border transition-colors ${
-                    fontWeight === weight.value 
-                      ? 'bg-primary text-primary-foreground border-primary' 
-                      : 'bg-card border-border hover:border-foreground text-foreground'
-                  }`}
+            {/* Row 2: Font Weight + Alignment */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Font Weight */}
+              <div className="space-y-2">
+                <label className="block text-xs text-muted-foreground">Font weight</label>
+                <select
+                  value={fontWeight || '400'}
+                  onChange={(e) => handleTypographyChange('fontWeight', e.target.value)}
+                  className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
                 >
-                  {weight.label}
-                </button>
-              ))}
-            </div>
+                  <option value="300">Light</option>
+                  <option value="400">Normal</option>
+                  <option value="500">Medium</option>
+                  <option value="600">Semi-bold</option>
+                  <option value="700">Bold</option>
+                  <option value="800">Extra-bold</option>
+                </select>
+              </div>
 
-            {/* Text Align */}
-            <div className="flex gap-1.5">
-              {[
-                { value: 'left', icon: AlignLeft },
-                { value: 'center', icon: AlignCenter },
-                { value: 'right', icon: AlignRight },
-                { value: 'justify', icon: AlignJustify },
-              ].map(align => {
-                const Icon = align.icon;
-                return (
-                  <button
-                    key={align.value}
-                    onClick={() => handleTypographyChange('textAlign', align.value)}
-                    className={`flex-1 px-2.5 py-2 rounded border transition-colors flex items-center justify-center ${
-                      textAlign === align.value 
-                        ? 'bg-primary text-primary-foreground border-primary' 
-                        : 'bg-card border-border hover:border-foreground text-foreground'
-                    }`}
-                    title={align.value}
-                  >
-                    <Icon className="w-4 h-4" />
-                  </button>
-                );
-              })}
+              {/* Alignment */}
+              <div className="space-y-2">
+                <label className="block text-xs text-muted-foreground">Alignment</label>
+                <div className="flex gap-1.5">
+                  {[
+                    { value: 'left', icon: AlignLeft },
+                    { value: 'center', icon: AlignCenter },
+                    { value: 'right', icon: AlignRight },
+                    { value: 'justify', icon: AlignJustify },
+                  ].map(align => {
+                    const Icon = align.icon;
+                    return (
+                      <button
+                        key={align.value}
+                        onClick={() => handleTypographyChange('textAlign', align.value)}
+                        className={`flex-1 px-2.5 py-2 rounded border transition-colors flex items-center justify-center ${
+                          textAlign === align.value 
+                            ? 'bg-primary text-primary-foreground border-primary' 
+                            : 'bg-card border-border hover:border-foreground text-foreground'
+                        }`}
+                        title={align.value}
+                      >
+                        <Icon className="w-4 h-4" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -602,87 +659,78 @@ export function PropertiesPanel({
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-foreground">Colors</h3>
             
-            {/* Text Color */}
-            {componentProperties.canEditTypography && (
+            {/* Text Color + Background Color - Side by Side */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Text Color */}
+              {componentProperties.canEditTypography && (
+                <div className="space-y-2">
+                  <label className="block text-xs text-muted-foreground">Text color</label>
+                  {textColorInherit ? (
+                    <button
+                      onClick={() => setTextColorInherit(false)}
+                      className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card text-foreground hover:bg-muted transition-colors text-left"
+                    >
+                      <span className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 border border-border" />
+                        <span className="text-xs">Inherit</span>
+                      </span>
+                    </button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        type="color"
+                        value={textColor || '#000000'}
+                        onChange={(e) => handleColorChange(e.target.value, 'text')}
+                        className="w-10 h-10 p-1 cursor-pointer"
+                      />
+                      <Input
+                        type="text"
+                        value={textColor}
+                        onChange={(e) => handleColorChange(e.target.value, 'text')}
+                        className="flex-1 font-mono text-xs"
+                        placeholder="#000000"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Background Color */}
               <div className="space-y-2">
-                <label className="block text-xs text-muted-foreground">Text color</label>
-                {textColorInherit ? (
+                <label className="block text-xs text-muted-foreground">Background color</label>
+                {backgroundColorInherit ? (
                   <button
-                    onClick={() => setTextColorInherit(false)}
+                    onClick={() => setBackgroundColorInherit(false)}
                     className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card text-foreground hover:bg-muted transition-colors text-left"
                   >
                     <span className="flex items-center gap-2">
                       <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 border border-border" />
-                      Inherit
+                      <span className="text-xs">Inherit</span>
                     </span>
                   </button>
                 ) : (
                   <div className="flex gap-2">
                     <Input
                       type="color"
-                      value={textColor || '#000000'}
-                      onChange={(e) => handleColorChange(e.target.value, 'text')}
-                      className="w-14 h-10 p-1 cursor-pointer"
+                      value={backgroundColor === 'transparent' ? '#ffffff' : backgroundColor}
+                      onChange={(e) => handleColorChange(e.target.value, 'background')}
+                      className="w-10 h-10 p-1 cursor-pointer"
                     />
                     <Input
                       type="text"
-                      value={textColor}
-                      onChange={(e) => handleColorChange(e.target.value, 'text')}
-                      className="flex-1 font-mono text-sm"
-                      placeholder="#000000"
+                      value={backgroundColor}
+                      onChange={(e) => handleColorChange(e.target.value, 'background')}
+                      className="flex-1 font-mono text-xs"
+                      placeholder="transparent"
                     />
-                    <button
-                      onClick={() => setTextColorInherit(true)}
-                      className="px-2 text-xs text-muted-foreground hover:text-foreground"
-                    >
-                      Reset
-                    </button>
                   </div>
                 )}
               </div>
-            )}
-
-            {/* Background Color */}
-            <div className="space-y-2">
-              <label className="block text-xs text-muted-foreground">Background color</label>
-              {backgroundColorInherit ? (
-                <button
-                  onClick={() => setBackgroundColorInherit(false)}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card text-foreground hover:bg-muted transition-colors text-left"
-                >
-                  <span className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 border border-border" />
-                    Inherit
-                  </span>
-                </button>
-              ) : (
-                <div className="flex gap-2">
-                  <Input
-                    type="color"
-                    value={backgroundColor === 'transparent' ? '#ffffff' : backgroundColor}
-                    onChange={(e) => handleColorChange(e.target.value, 'background')}
-                    className="w-14 h-10 p-1 cursor-pointer"
-                  />
-                  <Input
-                    type="text"
-                    value={backgroundColor}
-                    onChange={(e) => handleColorChange(e.target.value, 'background')}
-                    className="flex-1 font-mono text-sm"
-                    placeholder="transparent"
-                  />
-                  <button
-                    onClick={() => setBackgroundColorInherit(true)}
-                    className="px-2 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    Reset
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         )}
 
-        {/* SPACING */}
+        {/* SPACING - Compact with drag-to-adjust and expand */}
         {componentProperties.canEditSpacing && (
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-foreground">Spacing</h3>
@@ -690,52 +738,250 @@ export function PropertiesPanel({
             {/* Margin */}
             <div className="space-y-2">
               <label className="block text-xs text-muted-foreground">Margin</label>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { key: 'marginTop', value: marginTop, icon: <MoveHorizontal className="w-3.5 h-3.5 rotate-90" /> },
-                  { key: 'marginRight', value: marginRight, icon: <MoveHorizontal className="w-3.5 h-3.5" /> },
-                  { key: 'marginBottom', value: marginBottom, icon: <MoveHorizontal className="w-3.5 h-3.5 rotate-90" /> },
-                  { key: 'marginLeft', value: marginLeft, icon: <MoveHorizontal className="w-3.5 h-3.5" /> },
-                ].map(item => (
-                  <div key={item.key} className="flex items-center gap-1.5 bg-card border border-border rounded-lg px-2 py-1.5">
-                    <span className="text-muted-foreground">{item.icon}</span>
-                    <Input
-                      type="number"
-                      value={item.value}
-                      onChange={(e) => handleSpacingChange(e.target.value, item.key)}
-                      className="flex-1 text-sm border-0 p-0 h-6 bg-transparent"
-                      min="0"
-                      placeholder="0"
-                    />
-                    <span className="text-xs text-muted-foreground">px</span>
+              <div className="flex gap-2">
+                {/* Left (Horizontal) */}
+                <div className="flex-1 flex items-center gap-1.5 bg-card border border-border rounded-lg px-2 py-1.5">
+                  <span 
+                    className="text-muted-foreground hover:text-foreground cursor-ew-resize transition-colors"
+                    onMouseDown={(e) => handleDragStart(e, 'marginLeft', marginLeft)}
+                    title="Drag to adjust"
+                  >
+                    <MoveHorizontal className="w-3.5 h-3.5" />
+                  </span>
+                  <Input
+                    type="number"
+                    value={marginLeft}
+                    onChange={(e) => handleSpacingChange(e.target.value, 'marginLeft')}
+                    className="flex-1 text-sm border-0 p-0 h-6 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    min="0"
+                    placeholder="0"
+                  />
+                  <span className="text-xs text-muted-foreground">px</span>
+                </div>
+                
+                {/* Top (Vertical) */}
+                <div className="flex-1 flex items-center gap-1.5 bg-card border border-border rounded-lg px-2 py-1.5">
+                  <span 
+                    className="text-muted-foreground hover:text-foreground cursor-ew-resize transition-colors"
+                    onMouseDown={(e) => handleDragStart(e, 'marginTop', marginTop)}
+                    title="Drag to adjust"
+                  >
+                    <MoveHorizontal className="w-3.5 h-3.5 rotate-90" />
+                  </span>
+                  <Input
+                    type="number"
+                    value={marginTop}
+                    onChange={(e) => handleSpacingChange(e.target.value, 'marginTop')}
+                    className="flex-1 text-sm border-0 p-0 h-6 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    min="0"
+                    placeholder="0"
+                  />
+                  <span className="text-xs text-muted-foreground">px</span>
+                </div>
+                
+                {/* Expand button with rotation animation */}
+                <button
+                  onClick={() => setMarginExpanded(!marginExpanded)}
+                  className={`px-2.5 py-1.5 rounded-lg border transition-all duration-200 ${
+                    marginExpanded 
+                      ? 'bg-primary text-primary-foreground border-primary' 
+                      : 'bg-card border-border hover:border-foreground text-foreground'
+                  }`}
+                  title="Individual sides"
+                >
+                  <svg 
+                    className={`w-4 h-4 transition-transform duration-200 ${marginExpanded ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <rect x="3" y="3" width="7" height="7" strokeWidth="2" />
+                    <rect x="14" y="3" width="7" height="7" strokeWidth="2" />
+                    <rect x="3" y="14" width="7" height="7" strokeWidth="2" />
+                    <rect x="14" y="14" width="7" height="7" strokeWidth="2" />
+                  </svg>
+                </button>
+              </div>
+              
+              {/* Expanded view with slide animation */}
+              <div 
+                className={`grid transition-all duration-200 ease-in-out ${
+                  marginExpanded 
+                    ? 'grid-rows-[1fr] opacity-100' 
+                    : 'grid-rows-[0fr] opacity-0'
+                }`}
+              >
+                <div className="overflow-hidden">
+                  <div className="flex gap-2 pt-2">
+                    {/* Right */}
+                    <div className="flex-1 flex items-center gap-1.5 bg-card border border-border rounded-lg px-2 py-1.5">
+                      <span 
+                        className="text-muted-foreground hover:text-foreground cursor-ew-resize transition-colors"
+                        onMouseDown={(e) => handleDragStart(e, 'marginRight', marginRight)}
+                        title="Drag to adjust"
+                      >
+                        <MoveHorizontal className="w-3.5 h-3.5" />
+                      </span>
+                      <Input
+                        type="number"
+                        value={marginRight}
+                        onChange={(e) => handleSpacingChange(e.target.value, 'marginRight')}
+                        className="flex-1 text-sm border-0 p-0 h-6 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        min="0"
+                        placeholder="0"
+                      />
+                      <span className="text-xs text-muted-foreground">px</span>
+                    </div>
+                    
+                    {/* Bottom */}
+                    <div className="flex-1 flex items-center gap-1.5 bg-card border border-border rounded-lg px-2 py-1.5">
+                      <span 
+                        className="text-muted-foreground hover:text-foreground cursor-ew-resize transition-colors"
+                        onMouseDown={(e) => handleDragStart(e, 'marginBottom', marginBottom)}
+                        title="Drag to adjust"
+                      >
+                        <MoveHorizontal className="w-3.5 h-3.5 rotate-90" />
+                      </span>
+                      <Input
+                        type="number"
+                        value={marginBottom}
+                        onChange={(e) => handleSpacingChange(e.target.value, 'marginBottom')}
+                        className="flex-1 text-sm border-0 p-0 h-6 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        min="0"
+                        placeholder="0"
+                      />
+                      <span className="text-xs text-muted-foreground">px</span>
+                    </div>
+                    
+                    {/* Spacer */}
+                    <div className="w-[42px]" />
                   </div>
-                ))}
+                </div>
               </div>
             </div>
 
             {/* Padding */}
             <div className="space-y-2">
               <label className="block text-xs text-muted-foreground">Padding</label>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { key: 'paddingTop', value: paddingTop, icon: <MoveVertical className="w-3.5 h-3.5" /> },
-                  { key: 'paddingRight', value: paddingRight, icon: <MoveHorizontal className="w-3.5 h-3.5" /> },
-                  { key: 'paddingBottom', value: paddingBottom, icon: <MoveVertical className="w-3.5 h-3.5" /> },
-                  { key: 'paddingLeft', value: paddingLeft, icon: <MoveHorizontal className="w-3.5 h-3.5" /> },
-                ].map(item => (
-                  <div key={item.key} className="flex items-center gap-1.5 bg-card border border-border rounded-lg px-2 py-1.5">
-                    <span className="text-muted-foreground">{item.icon}</span>
-                    <Input
-                      type="number"
-                      value={item.value}
-                      onChange={(e) => handleSpacingChange(e.target.value, item.key)}
-                      className="flex-1 text-sm border-0 p-0 h-6 bg-transparent"
-                      min="0"
-                      placeholder="0"
-                    />
-                    <span className="text-xs text-muted-foreground">px</span>
+              <div className="flex gap-2">
+                {/* Left */}
+                <div className="flex-1 flex items-center gap-1.5 bg-card border border-border rounded-lg px-2 py-1.5">
+                  <span 
+                    className="text-muted-foreground hover:text-foreground cursor-ew-resize transition-colors"
+                    onMouseDown={(e) => handleDragStart(e, 'paddingLeft', paddingLeft)}
+                    title="Drag to adjust"
+                  >
+                    <MoveHorizontal className="w-3.5 h-3.5" />
+                  </span>
+                  <Input
+                    type="number"
+                    value={paddingLeft}
+                    onChange={(e) => handleSpacingChange(e.target.value, 'paddingLeft')}
+                    className="flex-1 text-sm border-0 p-0 h-6 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    min="0"
+                    placeholder="0"
+                  />
+                  <span className="text-xs text-muted-foreground">px</span>
+                </div>
+                
+                {/* Top */}
+                <div className="flex-1 flex items-center gap-1.5 bg-card border border-border rounded-lg px-2 py-1.5">
+                  <span 
+                    className="text-muted-foreground hover:text-foreground cursor-ew-resize transition-colors"
+                    onMouseDown={(e) => handleDragStart(e, 'paddingTop', paddingTop)}
+                    title="Drag to adjust"
+                  >
+                    <MoveVertical className="w-3.5 h-3.5" />
+                  </span>
+                  <Input
+                    type="number"
+                    value={paddingTop}
+                    onChange={(e) => handleSpacingChange(e.target.value, 'paddingTop')}
+                    className="flex-1 text-sm border-0 p-0 h-6 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    min="0"
+                    placeholder="0"
+                  />
+                  <span className="text-xs text-muted-foreground">px</span>
+                </div>
+                
+                {/* Expand button */}
+                <button
+                  onClick={() => setPaddingExpanded(!paddingExpanded)}
+                  className={`px-2.5 py-1.5 rounded-lg border transition-all duration-200 ${
+                    paddingExpanded 
+                      ? 'bg-primary text-primary-foreground border-primary' 
+                      : 'bg-card border-border hover:border-foreground text-foreground'
+                  }`}
+                  title="Individual sides"
+                >
+                  <svg 
+                    className={`w-4 h-4 transition-transform duration-200 ${paddingExpanded ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <rect x="3" y="3" width="7" height="7" strokeWidth="2" />
+                    <rect x="14" y="3" width="7" height="7" strokeWidth="2" />
+                    <rect x="3" y="14" width="7" height="7" strokeWidth="2" />
+                    <rect x="14" y="14" width="7" height="7" strokeWidth="2" />
+                  </svg>
+                </button>
+              </div>
+              
+              {/* Expanded view */}
+              <div 
+                className={`grid transition-all duration-200 ease-in-out ${
+                  paddingExpanded 
+                    ? 'grid-rows-[1fr] opacity-100' 
+                    : 'grid-rows-[0fr] opacity-0'
+                }`}
+              >
+                <div className="overflow-hidden">
+                  <div className="flex gap-2 pt-2">
+                    {/* Right */}
+                    <div className="flex-1 flex items-center gap-1.5 bg-card border border-border rounded-lg px-2 py-1.5">
+                      <span 
+                        className="text-muted-foreground hover:text-foreground cursor-ew-resize transition-colors"
+                        onMouseDown={(e) => handleDragStart(e, 'paddingRight', paddingRight)}
+                        title="Drag to adjust"
+                      >
+                        <MoveHorizontal className="w-3.5 h-3.5" />
+                      </span>
+                      <Input
+                        type="number"
+                        value={paddingRight}
+                        onChange={(e) => handleSpacingChange(e.target.value, 'paddingRight')}
+                        className="flex-1 text-sm border-0 p-0 h-6 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        min="0"
+                        placeholder="0"
+                      />
+                      <span className="text-xs text-muted-foreground">px</span>
+                    </div>
+                    
+                    {/* Bottom */}
+                    <div className="flex-1 flex items-center gap-1.5 bg-card border border-border rounded-lg px-2 py-1.5">
+                      <span 
+                        className="text-muted-foreground hover:text-foreground cursor-ew-resize transition-colors"
+                        onMouseDown={(e) => handleDragStart(e, 'paddingBottom', paddingBottom)}
+                        title="Drag to adjust"
+                      >
+                        <MoveVertical className="w-3.5 h-3.5" />
+                      </span>
+                      <Input
+                        type="number"
+                        value={paddingBottom}
+                        onChange={(e) => handleSpacingChange(e.target.value, 'paddingBottom')}
+                        className="flex-1 text-sm border-0 p-0 h-6 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        min="0"
+                        placeholder="0"
+                      />
+                      <span className="text-xs text-muted-foreground">px</span>
+                    </div>
+                    
+                    {/* Spacer */}
+                    <div className="w-[42px]" />
                   </div>
-                ))}
+                </div>
               </div>
             </div>
           </div>
@@ -746,7 +992,47 @@ export function PropertiesPanel({
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-foreground">Border</h3>
             
-            {/* Border Radius */}
+            {/* Row 1: Border Width + Border Style */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Border Width */}
+              <div className="space-y-2">
+                <label className="block text-xs text-muted-foreground">Border width</label>
+                <div className="flex items-center gap-1.5 bg-card border border-border rounded-lg px-2 py-1.5">
+                  <Input
+                    type="number"
+                    value={parseInt(borderWidth || '0')}
+                    onChange={(e) => handleBorderChange('borderWidth', e.target.value + 'px')}
+                    className="flex-1 text-sm border-0 p-0 h-6 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    min="0"
+                    max="10"
+                    placeholder="0"
+                  />
+                  <span className="text-xs text-muted-foreground">px</span>
+                </div>
+              </div>
+
+              {/* Border Style */}
+              <div className="space-y-2">
+                <label className="block text-xs text-muted-foreground">Border style</label>
+                <div className="flex gap-1">
+                  {['solid', 'dashed', 'dotted'].map(style => (
+                    <button
+                      key={style}
+                      onClick={() => handleBorderChange('borderStyle', style)}
+                      className={`flex-1 px-2 py-1.5 text-xs rounded border transition-colors ${
+                        borderStyle === style 
+                          ? 'bg-primary text-primary-foreground border-primary' 
+                          : 'bg-card border-border hover:border-foreground text-foreground'
+                      }`}
+                    >
+                      {style}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Row 2: Border Radius - Keep as single row (common presets) */}
             <div className="space-y-2">
               <label className="block text-xs text-muted-foreground">Border radius</label>
               <div className="flex flex-wrap gap-1.5">
@@ -761,42 +1047,6 @@ export function PropertiesPanel({
                     }`}
                   >
                     {radius}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Border Width */}
-            <div className="space-y-2">
-              <label className="block text-xs text-muted-foreground">Border width</label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  value={parseInt(borderWidth || '0')}
-                  onChange={(e) => handleBorderChange('borderWidth', e.target.value + 'px')}
-                  className="flex-1 text-sm"
-                  min="0"
-                  max="10"
-                />
-                <span className="text-xs text-muted-foreground">px</span>
-              </div>
-            </div>
-
-            {/* Border Style */}
-            <div className="space-y-2">
-              <label className="block text-xs text-muted-foreground">Border style</label>
-              <div className="flex gap-1.5">
-                {['solid', 'dashed', 'dotted'].map(style => (
-                  <button
-                    key={style}
-                    onClick={() => handleBorderChange('borderStyle', style)}
-                    className={`flex-1 px-2.5 py-1.5 text-xs rounded border transition-colors ${
-                      borderStyle === style 
-                        ? 'bg-primary text-primary-foreground border-primary' 
-                        : 'bg-card border-border hover:border-foreground text-foreground'
-                    }`}
-                  >
-                    {style}
                   </button>
                 ))}
               </div>

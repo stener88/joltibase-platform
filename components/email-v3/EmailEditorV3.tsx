@@ -418,7 +418,12 @@ export function EmailEditorV3({
       updatedTsx = updateImageSrc(currentTsx, freshMap, componentId, undefined, undefined, undefined, numValue);
       
     } else {
-      updatedTsx = updateInlineStyle(currentTsx, freshMap, componentId, property, value);
+      // Handle spacing properties - add 'px' unit
+      const spacingProps = ['marginTop', 'marginBottom', 'marginLeft', 'marginRight', 
+                            'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'];
+      
+      const valueWithUnit = spacingProps.includes(property) ? `${value}px` : value;
+      updatedTsx = updateInlineStyle(currentTsx, freshMap, componentId, property, valueWithUnit);
     }
     
     // Update working ref (silent, no re-render)
