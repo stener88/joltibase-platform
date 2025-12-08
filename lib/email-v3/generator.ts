@@ -366,23 +366,15 @@ function buildUserPrompt(
     userPrompt += `- Use in: Second destination, location showcase\n\n`;
   }
   
-  if (images.icon) {
-    userPrompt += `**10. Icon/Badge**:\n`;
-    userPrompt += `- URL: ${images.icon.url}\n`;
-    userPrompt += `- Dimensions: ${images.icon.width}x${images.icon.height}\n`;
-    userPrompt += `- Alt: "${images.icon.alt}"\n`;
-    userPrompt += `- Use in: Small icons, badges, decorative elements\n\n`;
-  }
   
   userPrompt += `**CRITICAL - Image Usage Rules**:\n`;
-  userPrompt += `✅ Use these EXACT URLs in <Img> components\n`;
+  userPrompt += `✅ Use Unsplash URLs for CONTENT IMAGES (hero images, feature images, tip images, destination photos)\n`;
   userPrompt += `✅ ALWAYS add responsive styles: style={{ width: '100%', height: 'auto' }}\n`;
   userPrompt += `✅ Include width and height as hints only: width={600} height={400}\n`;
   userPrompt += `✅ Include descriptive alt text\n`;
   userPrompt += `✅ Example: <Img src="..." width={600} height={400} style={{ width: '100%', height: 'auto' }} alt="..." />\n`;
   userPrompt += `❌ DO NOT use baseUrl or process.env.VERCEL_URL\n`;
   userPrompt += `❌ DO NOT use /static/ paths or placeholders\n`;
-  userPrompt += `❌ DO NOT use placeholder.com or via.placeholder.com\n`;
   userPrompt += `❌ DO NOT use fixed height in styles - ALWAYS use height: 'auto'\n\n`;
   
   // Add CRITICAL content rules

@@ -15,36 +15,11 @@
 
 import type { DesignSystem } from '../lib/design-system-selector';
 
-// Simple icon placeholders for email compatibility (short URLs for AI)
-const ICONS = {
-  // Travel icons - Blue
-  flights: 'https://via.placeholder.com/24x20/0062e3/ffffff?text=F',
-  hotel: 'https://via.placeholder.com/24x20/0062e3/ffffff?text=H',
-  car: 'https://via.placeholder.com/24x20/0062e3/ffffff?text=C',
-  
-  // Activity icons - Blue  
-  mountain: 'https://via.placeholder.com/19x19/0062e3/ffffff?text=M',
-  island: 'https://via.placeholder.com/19x19/0062e3/ffffff?text=I',
-  dining: 'https://via.placeholder.com/19x19/0062e3/ffffff?text=D',
-  
-  // Arrow - Gray
-  arrow: 'https://via.placeholder.com/6x10/666666/ffffff?text=>',
-  
-  // Footer icons - White
-  flightsWhite: 'https://via.placeholder.com/24x16/ffffff/05203C?text=F',
-  hotelWhite: 'https://via.placeholder.com/24x16/ffffff/05203C?text=H',
-  carWhite: 'https://via.placeholder.com/24x16/ffffff/05203C?text=C',
-  
-  // Logos
-  logo: 'https://via.placeholder.com/170x44/0062e3/ffffff?text=Logo',
-  logoWhite: 'https://via.placeholder.com/142x25/ffffff/05203C?text=Logo',
-};
-
 export const DestinationContentDesignSystem: DesignSystem = {
   id: 'destination-content',
   name: 'Destination Content & Guides',
   description:
-    "Editorial travel content email with large blue headline, icon-based activity list, two-column tips layout, and three-card planning section. Features rounded imagery and dark navy footer. Perfect for destination highlights and travel inspiration.",
+    "Editorial travel content email with large blue headline, activity list, two-column tips layout, and three-card planning section. Features rounded imagery and dark navy footer. Perfect for destination highlights and travel inspiration.",
 
   // KEYWORD TRIGGERS
   triggers: [
@@ -122,13 +97,6 @@ export const DestinationContentEmail = () => {
             {/* Top Navigation */}
             <Section className="px-6 pb-8 pt-4">
               <Row className="table-cell w-[33%]">
-                <Column>
-                  <Img
-                    src="${ICONS.flights}"
-                    className="h-[20px] w-[24px]"
-                    alt="Flights icon"
-                  />
-                </Column>
                 <Column align="left">
                   <Link className="text-[#05203c] no-underline" href="https://example.com/flights">
                     Flights
@@ -136,13 +104,6 @@ export const DestinationContentEmail = () => {
                 </Column>
               </Row>
               <Row className="table-cell w-[33%]">
-                <Column>
-                  <Img
-                    src="${ICONS.hotel}"
-                    className="h-[20px] w-[24px]"
-                    alt="Hotels icon"
-                  />
-                </Column>
                 <Column align="left">
                   <Link className="text-[#05203c] no-underline" href="https://example.com/hotels">
                     Hotels
@@ -150,13 +111,6 @@ export const DestinationContentEmail = () => {
                 </Column>
               </Row>
               <Row className="table-cell w-[33%]">
-                <Column>
-                  <Img
-                    src="${ICONS.car}"
-                    className="h-[20px] w-[24px]"
-                    alt="Car rental icon"
-                  />
-                </Column>
                 <Column align="left">
                   <Link className="text-[#05203c] no-underline" href="https://example.com/cars">
                     Rent a car
@@ -168,11 +122,9 @@ export const DestinationContentEmail = () => {
             {/* Logo */}
             <Section className="mt-2 px-6">
               <Row>
-                <Img
-                  src="${ICONS.logo}"
-                  className="h-[44px] w-[170px] object-cover"
-                  alt="Company Logo"
-                />
+                <Text className="text-2xl font-bold text-[#0062e3]">
+                  Company Logo
+                </Text>
               </Row>
             </Section>
 
@@ -210,18 +162,9 @@ export const DestinationContentEmail = () => {
                   </Text>
                 </Row>
 
-                {/* Activity 1 - Icon + Title + Description */}
+                {/* Activity 1 - Title + Description */}
                 <Row className="mt-8">
-                  <Column className="align-baseline">
-                    <Img
-                      src="${ICONS.mountain}"
-                      width="19"
-                      height="19"
-                      className="mt-1 pr-2"
-                      alt="Mountain icon"
-                    />
-                  </Column>
-                  <Column className="w-[95%]">
+                  <Column>
                     <Text className="m-0 text-xl font-bold text-gray-900">
                       Samaria Gorge Tour
                     </Text>
@@ -236,16 +179,7 @@ export const DestinationContentEmail = () => {
 
                 {/* Activity 2 */}
                 <Row className="mt-6">
-                  <Column className="align-baseline">
-                    <Img
-                      src="${ICONS.island}"
-                      width="19"
-                      height="19"
-                      className="mt-1 pr-2"
-                      alt="Island icon"
-                    />
-                  </Column>
-                  <Column className="w-[95%]">
+                  <Column>
                     <Text className="m-0 text-xl font-bold text-gray-900">
                       Visit the abandoned island of Spinalonga
                     </Text>
@@ -260,16 +194,7 @@ export const DestinationContentEmail = () => {
 
                 {/* Activity 3 */}
                 <Row className="mt-6">
-                  <Column className="align-baseline">
-                    <Img
-                      src="${ICONS.dining}"
-                      width="19"
-                      height="19"
-                      className="mt-1 pr-2"
-                      alt="Cooking icon"
-                    />
-                  </Column>
-                  <Column className="w-[95%]">
+                  <Column>
                     <Text className="m-0 text-xl font-bold text-[#161616]">
                       Learn to cook Cretan style
                     </Text>
@@ -388,84 +313,42 @@ export const DestinationContentEmail = () => {
                 <Row>
                   <Column className="w-[33%] pr-2">
                     <Section className="rounded-xl border border-solid border-[#dddddd] p-4">
-                      <Row>
-                        <Img
-                          src="${ICONS.flights}"
-                          className="h-[40px] w-[40px]"
-                          alt="Flights icon"
-                        />
-                      </Row>
                       <Row className="mt-7">
                         <Column>
                           <Link
                             href="https://example.com/flights"
                             className="m-0 text-base font-bold leading-5 text-[#161616]"
                           >
-                            Flights
+                            Flights →
                           </Link>
-                        </Column>
-                        <Column align="right">
-                          <Img
-                            src="${ICONS.arrow}"
-                            className="h-[10px] w-[6px]"
-                            alt="Arrow"
-                          />
                         </Column>
                       </Row>
                     </Section>
                   </Column>
                   <Column className="w-[33%] px-2">
                     <Section className="rounded-xl border border-solid border-[#dddddd] p-4">
-                      <Row>
-                        <Img
-                          src="${ICONS.hotel}"
-                          className="h-[40px] w-[40px]"
-                          alt="Hotels icon"
-                        />
-                      </Row>
                       <Row className="mt-7">
                         <Column>
                           <Link
                             href="https://example.com/hotels"
                             className="m-0 text-base font-bold leading-5 text-[#161616]"
                           >
-                            Hotels
+                            Hotels →
                           </Link>
-                        </Column>
-                        <Column align="right">
-                          <Img
-                            src="${ICONS.arrow}"
-                            className="h-[10px] w-[6px]"
-                            alt="Arrow"
-                          />
                         </Column>
                       </Row>
                     </Section>
                   </Column>
                   <Column className="w-[33%] pl-2">
                     <Section className="rounded-xl border border-solid border-[#dddddd] p-4">
-                      <Row>
-                        <Img
-                          src="${ICONS.car}"
-                          className="h-[40px] w-[40px]"
-                          alt="Car rental icon"
-                        />
-                      </Row>
                       <Row className="mt-7">
                         <Column>
                           <Link
                             href="https://example.com/cars"
                             className="m-0 text-base font-bold leading-5 text-[#161616]"
                           >
-                            Rent a car
+                            Rent a car →
                           </Link>
-                        </Column>
-                        <Column align="right">
-                          <Img
-                            src="${ICONS.arrow}"
-                            className="h-[10px] w-[6px]"
-                            alt="Arrow"
-                          />
                         </Column>
                       </Row>
                     </Section>
@@ -479,13 +362,6 @@ export const DestinationContentEmail = () => {
               {/* Footer Navigation */}
               <Section className="pt-4">
                 <Row className="table-cell w-[33%]">
-                  <Column>
-                    <Img
-                      src="${ICONS.flightsWhite}"
-                      className="h-[16px] w-[24px]"
-                      alt="Flights icon"
-                    />
-                  </Column>
                   <Column align="left">
                     <Link className="text-white no-underline" href="https://example.com/flights">
                       Flights
@@ -493,13 +369,6 @@ export const DestinationContentEmail = () => {
                   </Column>
                 </Row>
                 <Row className="table-cell w-[33%]">
-                  <Column>
-                    <Img
-                      src="${ICONS.hotelWhite}"
-                      className="h-[16px] w-[24px]"
-                      alt="Hotels icon"
-                    />
-                  </Column>
                   <Column align="left">
                     <Link className="text-white no-underline" href="https://example.com/hotels">
                       Hotels
@@ -507,13 +376,6 @@ export const DestinationContentEmail = () => {
                   </Column>
                 </Row>
                 <Row className="table-cell w-[33%]">
-                  <Column>
-                    <Img
-                      src="${ICONS.carWhite}"
-                      className="h-[16px] w-[24px]"
-                      alt="Car rental icon"
-                    />
-                  </Column>
                   <Column align="left">
                     <Link className="text-white no-underline" href="https://example.com/cars">
                       Rent a car
@@ -560,11 +422,9 @@ export const DestinationContentEmail = () => {
                 {/* Footer Logo */}
                 <Row className="mt-8">
                   <Column align="right">
-                    <Img
-                      src="${ICONS.logoWhite}"
-                      className="h-[25px] w-[142px]"
-                      alt="Company Logo"
-                    />
+                    <Text className="text-lg font-bold text-white">
+                      Company Logo
+                    </Text>
                   </Column>
                 </Row>
               </Section>
@@ -599,7 +459,7 @@ You are generating content for a destination highlight email using a proven Skys
 ## LAYOUT STRUCTURE
 
 ┌─────────────────────────────────────────────┐ Light gray page
-│ ✈ Flights | 🏨 Hotels | 🚗 Rent a car      │ ← Icon nav
+│ Flights | Hotels | Rent a car               │ ← Text nav
 │                                             │
 │ [LOGO]                                      │
 │                                             │
@@ -610,10 +470,10 @@ You are generating content for a destination highlight email using a proven Skys
 │ ├─────────────────────────────────────────┤ │
 │ │ Introduction paragraphs...              │ │
 │ │                                           │ │
-│ │ ⛰ Activity Title                        │ │ Icon list
+│ │ Activity Title                           │ │ Activity list
 │ │   Description...                         │ │
 │ │                                           │ │
-│ │ 🏝 Activity Title                        │ │
+│ │ Activity Title                           │ │
 │ │   Description...                         │ │
 │ │                                           │ │
 │ │ [ Find flights ]                         │ │
@@ -633,12 +493,11 @@ You are generating content for a destination highlight email using a proven Skys
 │                                             │
 │ Plan your trip (30px)                      │
 │ ┌─────┐ ┌─────┐ ┌─────┐                  │ Three-card
-│ │ ✈   │ │ 🏨  │ │ 🚗  │                  │ layout
-│ │Flig→│ │Hot→ │ │Car→ │                  │
+│ │Flig→│ │Hot→ │ │Car→ │                  │ layout
 │ └─────┘ └─────┘ └─────┘                  │
 │                                             │
 │ ╔═══════════════════════════════════════╗ │ Dark footer
-│ ║ ✈ Flights | 🏨 Hotels | 🚗 Cars      ║ │
+│ ║ Flights | Hotels | Cars                ║ │
 │ ║ Airport notice...                      ║ │
 │ ║ Legal text...                          ║ │
 │ ║ Links | Links | Links                  ║ │
@@ -648,18 +507,16 @@ You are generating content for a destination highlight email using a proven Skys
 
 ## DISTINCTIVE FEATURES
 
-### Icon + Text Navigation (Header & Footer)
-**Structure**: Icon | Text | Icon | Text | Icon | Text
+### Text Navigation (Header & Footer)
+**Structure**: Text | Text | Text
 **Layout**: Inline horizontal using table-cell, equal width columns (33% each)
 
 **Header version**:
-- Icon: 24x20px, color accent
 - Text: Link, dark navy (#05203C), no underline
 - Background: White
 - Spacing: Compact
 
 **Footer version**:
-- Icon: 24x16px, white
 - Text: Link, white, no underline
 - Background: Dark navy (#05203C)
 - Spacing: Compact
@@ -698,12 +555,11 @@ This is the signature element of the template - massive, bold, blue.
 
 This creates a unified card with image on top, content below.
 
-### Icon-Based Activity List
-**Structure**: Icon (left) + Title + Description (right)
+### Activity List
+**Structure**: Title + Description
 
 **Layout**:
-- Icon: 19x19px, positioned at baseline, pr-2
-- Content column: w-[95%]
+- Content column: Full width
 - Spacing between items: mt-6 (24px)
 
 **Title**:
@@ -715,8 +571,6 @@ This creates a unified card with image on top, content below.
 - Font: 16px (text-base), line-height 20px
 - Color: Medium gray (#545860)
 - Length: 2-3 sentences
-
-**Icon selection**: Match activity type (mountain, island, food, etc.)
 
 ### Two-Column Tips Layout
 **Structure**: 50/50 split with padding
@@ -745,12 +599,10 @@ This creates a unified card with image on top, content below.
 - Background: White
 
 **Card content**:
-1. Icon: 40x40px (top)
-2. Title + Arrow: Text-base, bold (bottom, mt-7)
-   - Title on left
-   - Small arrow icon (6x10px) on right
+1. Title + Arrow: Text-base, bold (mt-7)
+   - Title with arrow (→) on right
 
-**Cards**: Flights, Hotels, Rent a car (with respective icons)
+**Cards**: Flights, Hotels, Rent a car
 
 ### Dark Footer Section
 **Background**: Dark navy (#05203C)
@@ -758,7 +610,7 @@ This creates a unified card with image on top, content below.
 **Text color**: White
 
 **Contains**:
-1. Navigation (icon + text)
+1. Navigation (text links)
 2. Airport personalization notice
 3. Company legal information
 4. Footer links (pipe-separated)
@@ -859,7 +711,6 @@ Key patterns:
 - \`table-cell\` = inline horizontal layout
 - \`w-[33%]\`, \`w-[50%]\`, \`w-[95%]\` = specific widths
 - \`pr-2\`, \`pl-2\`, \`px-2\` = padding right/left/horizontal (8px)
-- \`align-baseline\` = vertical alignment for icons
 
 ### Spacing
 - \`mt-2\`, \`mt-6\`, \`mt-7\`, \`mt-8\`, \`mt-14\` = margin top (8px, 24px, 28px, 32px, 56px)
@@ -926,10 +777,8 @@ These are the core travel booking categories.
 
 ❌ **Don't use small headline** - 64px blue headline is signature
 ❌ **Don't separate image from card** - They should be visually connected
-❌ **Don't skip activity icons** - Icons add visual interest and category identification
 ❌ **Don't forget two-column tips** - Layout variety is important
 ❌ **Don't use light footer** - Dark navy footer is signature
-❌ **Don't skip icon navigation** - Appears in both header and footer
 ❌ **Don't forget rounded corners** - Consistent rounded-xl, rounded-lg
 ❌ **Don't use multiple CTAs** - One primary CTA in main card
 
@@ -961,7 +810,7 @@ These are the core travel booking categories.
 
 ---
 
-**Follow the example email structure exactly, including the 64px blue headline, icon-based activity list, two-column tips layout with full-width third tip, three-card planning section, and dark navy footer with icon navigation.**`,
+**Follow the example email structure exactly, including the 64px blue headline, activity list, two-column tips layout with full-width third tip, three-card planning section, and dark navy footer with text navigation.**`,
 };
 
 export default DestinationContentDesignSystem;

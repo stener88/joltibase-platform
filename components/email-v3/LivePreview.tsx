@@ -209,6 +209,9 @@ export function LivePreview({
               case 'fontWeight':
                 element.style.fontWeight = value;
                 break;
+              case 'fontFamily':
+                element.style.fontFamily = value;
+                break;
               case 'lineHeight':
                 element.style.lineHeight = value;
                 break;

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate:icons": "tsx scripts/generate-email-icons.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.38",
