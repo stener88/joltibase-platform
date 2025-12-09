@@ -171,6 +171,37 @@ export function LivePreview({
           display: block;
         }
         ` : ''}
+        
+        /* HR (Horizontal Rule) Fixes - Prevent overflow & improve clickability */
+        hr[data-component-id], hr {
+          max-width: 100% !important;
+          width: 100% !important;
+          box-sizing: border-box !important;
+          margin-left: auto !important;
+          margin-right: auto !important;
+        }
+        
+        /* Make HR elements easier to click - larger hit zone */
+        ${currentMode === 'visual' ? `
+        hr[data-component-id] {
+          position: relative;
+          cursor: pointer !important;
+          min-height: 20px !important;
+          display: flex;
+          align-items: center;
+        }
+        
+        /* Larger click target without changing visual appearance */
+        hr[data-component-id]::after {
+          content: '';
+          position: absolute;
+          top: -12px;
+          bottom: -12px;
+          left: 0;
+          right: 0;
+          cursor: pointer;
+        }
+        ` : ''}
       </style>
       <script>
         console.log('[IFRAME] Interactive script loaded');

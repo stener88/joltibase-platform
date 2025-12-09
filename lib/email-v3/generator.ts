@@ -66,6 +66,15 @@ export default function Email() {
 - REQUIRED: style={{ width: '100%', height: 'auto' }} on all <Img>
 - Include descriptive alt text
 
+# HORIZONTAL RULES (Hr)
+
+- REQUIRED: style={{ width: '100%', maxWidth: '100%', margin: '24px 0' }}
+- NEVER use viewport widths (100vw) or fixed widths wider than container
+- ALWAYS constrain width to 100% of parent
+- For centered decorative dividers: style={{ maxWidth: '80px', margin: '32px auto', borderWidth: '2px' }}
+- Example: <Hr style={{ width: '100%', margin: '32px 0', borderColor: '#e5e7eb' }} />
+- Example (decorative): <Hr style={{ maxWidth: '80px', margin: '32px auto', borderWidth: '4px', borderColor: '#000' }} />
+
 # BUTTONS
 
 - Minimum padding: '14px 28px' (44px touch target)
