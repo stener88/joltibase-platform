@@ -3,12 +3,13 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import type { EditMode } from './EmailEditorV3';
 import type { ComponentMap } from '@/lib/email-v3/tsx-parser';
+import { parseAndInjectIds } from '@/lib/email-v3/tsx-parser';
 import { Z_INDEX } from '@/lib/ui-constants';
 import { calculateSmartToolbarPosition, type ElementRect } from '@/lib/email-v3/smart-positioning';
 
 interface LivePreviewProps {
-  workingTsxRef: React.MutableRefObject<string>; // Ref to working TSX (no re-renders on edit!)
-  renderVersion: number; // Version counter to trigger re-renders
+  tsxCode: string; // ✅ NEW: Direct prop instead of ref
+  tsxCodeSource: 'initial' | 'visual' | 'ai'; // ✅ NEW: Track the source of TSX updates
   mode: EditMode;
   selectedComponentId: string | null;
   hoveredComponentId: string | null;
@@ -19,7 +20,6 @@ interface LivePreviewProps {
   isSaving?: boolean;
   isEnteringVisualMode?: boolean;
   isExitingVisualMode?: boolean;
-  iframeKey?: number;
   onIframeReady?: (syncFn: (id: string | null) => void) => void;
   isToolbarLoading?: boolean; // When true, hide big overlay (toolbar has its own inline loading)
 }
@@ -92,8 +92,8 @@ function extractTextFromHtml(html: string, componentId: string): string {
 }
 
 export function LivePreview({
-  workingTsxRef,
-  renderVersion,
+  tsxCode,
+  tsxCodeSource,
   mode,
   selectedComponentId,
   hoveredComponentId,
@@ -104,10 +104,10 @@ export function LivePreview({
   isSaving = false,
   isEnteringVisualMode = false,
   isExitingVisualMode = false,
-  iframeKey = 0,
   onIframeReady,
   isToolbarLoading = false,
 }: LivePreviewProps) {
+  // Local iframe ref (not passed from parent)
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Expose sync function when iframe loads
@@ -535,18 +535,53 @@ export function LivePreview({
     }
   }, [onComponentMapUpdate]);
 
-  // Render on version change (triggered by AI updates or visual edit saves)
-  // ✅ CRITICAL: Only re-renders on renderVersion changes, NOT on every edit!
+  // ========================================
+  // ✅ NEW: Render when tsxCode changes (React handles this automatically!)
+  // ========================================
   useEffect(() => {
-    const currentTsx = workingTsxRef.current;
-    if (!currentTsx) {
-      console.warn('[LIVE-PREVIEW] No TSX code in ref');
+    if (!tsxCode) {
+      console.warn('[LIVE-PREVIEW] No TSX code provided');
       return;
     }
 
-    console.log('[LIVE-PREVIEW] Render triggered by version change:', renderVersion, '| TSX length:', currentTsx.length);
-    renderPreview(currentTsx, mode);
-  }, [renderVersion, mode, renderPreview, workingTsxRef]); // Only re-render on version/mode changes!
+    // ✅ OPTION 4: Check source to decide rendering strategy
+    if (tsxCodeSource === 'visual') {
+      console.log('[LIVE-PREVIEW] Visual edit detected - parsing componentMap locally (no API call)');
+      
+      // Parse TSX locally to update componentMap without re-rendering
+      try {
+        const parsed = parseAndInjectIds(tsxCode);
+        
+        // Enhance componentMap with text content from current iframe HTML
+        const enhancedComponentMap: ComponentMap = {};
+        Object.keys(parsed.componentMap).forEach(componentId => {
+          const extractedText = previewHtml ? extractTextFromHtml(previewHtml, componentId) : '';
+          const componentType = parsed.componentMap[componentId].type;
+          
+          enhancedComponentMap[componentId] = {
+            ...parsed.componentMap[componentId],
+            computedStyles: previewHtml ? extractStylesFromHtml(previewHtml, componentId) : {},
+            textContent: extractedText,
+          };
+        });
+        
+        // Update componentMap (this syncs PropertiesPanel)
+        onComponentMapUpdate(enhancedComponentMap);
+        
+        console.log('[LIVE-PREVIEW] ComponentMap updated locally:', Object.keys(enhancedComponentMap).length, 'components');
+      } catch (error) {
+        console.error('[LIVE-PREVIEW] Failed to parse TSX locally:', error);
+      }
+      
+      // Skip API call and full re-render for visual edits
+      return;
+    }
+    
+    // For 'ai' or 'initial' sources, do full render with API call
+    console.log('[LIVE-PREVIEW] Rendering due to tsxCode change | Source:', tsxCodeSource, '| TSX length:', tsxCode.length);
+    renderPreview(tsxCode, mode);
+  }, [tsxCode, tsxCodeSource, mode, renderPreview, onComponentMapUpdate]); 
+  // ✅ Note: previewHtml is read but NOT a dependency - we don't want to re-run when it changes
 
   // Send direct update to iframe (instant, no re-render)
   const sendDirectUpdate = useCallback((update: DirectUpdate) => {
@@ -953,7 +988,6 @@ export function LivePreview({
       {/* Email Preview */}
       <iframe
         ref={iframeRef}
-        key={`email-preview-${iframeKey}`}
         srcDoc={previewHtml || placeholderHtml}
         className="w-full h-full border-0 rounded-xl"
         sandbox="allow-scripts allow-same-origin"

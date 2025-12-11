@@ -21,6 +21,9 @@ import { SaasOnboardingWelcomeDesignSystem } from '../design-systems/saas-onboar
 import { ModernStartupDesignSystem } from '../design-systems/startup';
 import { MinimalElegantDesignSystem } from '../design-systems/minimal';
 import { TravelBookingDesignSystem } from '../design-systems/travel';
+import SaaSProductUpdateDesignSystem from '../design-systems/saas-product-update';
+import ChangelogFeatureUpdateDesignSystem from '../design-systems/changelog-feature-update';
+import ProductHuntLaunchDesignSystem from '../design-systems/product-hunt-launch';
 
 export interface DesignSystem {
   id: string;
@@ -35,7 +38,7 @@ export interface DesignSystem {
     people?: string[];
   };
   system: string;
-  exampleEmail: string;
+  exampleEmail?: string; // Optional - some design systems use inline examples instead
 }
 
 /**
@@ -43,6 +46,7 @@ export interface DesignSystem {
  * Priority order: systems earlier in array are checked first
  */
 const ALL_SYSTEMS: DesignSystem[] = [
+  ProductHuntLaunchDesignSystem, // Product Hunt launches (very specific triggers)
   ProductPromotionDesignSystem,   // Product launches, collections, fashion (specific triggers)
   RetailWelcomeDesignSystem,      // Welcome/thank you emails (specific triggers)
   EcommerceDiscountDesignSystem,  // Discount/promo/sale/ecommerce campaigns
@@ -50,6 +54,8 @@ const ALL_SYSTEMS: DesignSystem[] = [
   EventAnnouncementDesignSystem,  // Multi-event announcements/calendars
   WinBackReactivationDesignSystem, // Win-back/reactivation offers
   FashionCampaignDesignSystem,    // High-fashion/editorial campaigns
+  ChangelogFeatureUpdateDesignSystem, // Changelog/release notes/feature updates
+  SaaSProductUpdateDesignSystem,  // SaaS product updates/integrations/features
   SaasEngagementDesignSystem,     // SaaS next-action engagement
   DestinationContentDesignSystem, // Destination guides and travel inspiration
   SaasOnboardingWelcomeDesignSystem, // SaaS onboarding welcome

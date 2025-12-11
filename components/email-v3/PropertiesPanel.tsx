@@ -50,7 +50,7 @@ function normalizeFontSize(value: string): string {
 }
 
 interface PropertiesPanelProps {
-  workingTsxRef: React.MutableRefObject<string>; // Ref to working TSX
+  tsxCode: string; // NEW: Direct prop instead of ref
   selectedComponentId: string | null;
   componentMap: ComponentMap;
   onDirectUpdate: (componentId: string, property: string, value: string) => void;
@@ -101,7 +101,7 @@ interface ComponentProperties {
 }
 
 export function PropertiesPanel({
-  workingTsxRef,
+  tsxCode,
   selectedComponentId,
   componentMap,
   onDirectUpdate,
@@ -111,6 +111,12 @@ export function PropertiesPanel({
   const componentProperties = useMemo<ComponentProperties | null>(() => {
     if (!selectedComponentId) {
       console.log('[PROPERTIES-PANEL] No component selected');
+      return null;
+    }
+
+    // ✅ Guard: Check if tsxCode is available
+    if (!tsxCode) {
+      console.log('[PROPERTIES-PANEL] TSX code not available yet');
       return null;
     }
 
@@ -152,7 +158,7 @@ export function PropertiesPanel({
     
     // Check if text content is dynamic (contains JSX expressions)
     // We check the TSX code for this since rendered HTML won't show the expressions
-    const componentCode = workingTsxRef.current.substring(componentInfo.startChar, componentInfo.endChar);
+    const componentCode = tsxCode.substring(componentInfo.startChar, componentInfo.endChar);
     const isDynamicText = componentCode.includes('{') && componentCode.includes('}') && !componentCode.includes('style={');
     
     const hrefMatch = componentCode.match(/href=["']([^"']+)["']/);
@@ -245,7 +251,7 @@ export function PropertiesPanel({
       canEditLink: isLinkComponent && !isDynamicText,
       canEditImage: isImageComponent, // Can change image
     };
-  }, [selectedComponentId, componentMap, workingTsxRef]);
+  }, [selectedComponentId, componentMap, tsxCode]);
 
   // Local state for editing
   const [text, setText] = useState('');
@@ -520,7 +526,7 @@ export function PropertiesPanel({
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Compact Header with breadcrumb & Select Parent */}
+      {/* Compact Header with breadcrumb & Controls */}
       <div className="px-3 py-2.5 border-b border-border">
         <div className="flex items-center justify-between mb-1.5">
           <div className="flex items-center gap-1 text-xs text-muted-foreground overflow-hidden">
@@ -528,21 +534,24 @@ export function PropertiesPanel({
             <ChevronRight className="w-3 h-3" />
             <span className="text-foreground font-medium truncate">{componentProperties.type}</span>
           </div>
-          <button
-            onClick={() => {
-              if (onSelectParent) {
-                onSelectParent();
-              } else {
-                console.log('[PROPERTIES] Select parent - no callback provided');
-              }
-            }}
-            disabled={!onSelectParent}
-            className="flex items-center gap-1 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Select parent element"
-          >
-            <ArrowUp className="w-3 h-3" />
-            <span>Select parent</span>
-          </button>
+          <div className="flex items-center gap-1">
+            {/* Select Parent button */}
+            <button
+              onClick={() => {
+                if (onSelectParent) {
+                  onSelectParent();
+                } else {
+                  console.log('[PROPERTIES] Select parent - no callback provided');
+                }
+              }}
+              disabled={!onSelectParent}
+              className="flex items-center gap-1 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Select parent element"
+            >
+              <ArrowUp className="w-3 h-3" />
+              <span>Select parent</span>
+            </button>
+          </div>
         </div>
       </div>
 

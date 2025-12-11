@@ -58,7 +58,28 @@ export default function Email() {
 
 - Use Tailwind className for standard styling (bg-*, text-*, p-*, m-*, rounded-*, font-*)
 - Use inline style={{ }} for brand colors and custom values
-- FORBIDDEN classes: space-x-*, space-y-*, gap-*, hover:*, focus:*, sm:*, md:*, lg:*, xl:*, dark:*
+
+## ⚠️ CRITICAL - FORBIDDEN CLASSES (WILL BREAK RENDERING)
+
+NEVER use these classes - they cause rendering failures in emails:
+
+❌ FORBIDDEN:
+  - hover:* (hover:underline, hover:bg-blue-600, hover:text-red-500)
+  - focus:* (focus:ring, focus:outline, focus:border-blue-500)
+  - active:* (active:bg-gray-100)
+  - Responsive: sm:*, md:*, lg:*, xl:*, 2xl:* (sm:text-lg, md:w-full)
+  - Dark mode: dark:* (dark:bg-gray-900)
+  - Spacing utilities: space-x-*, space-y-*, gap-*
+
+✅ CORRECT EXAMPLES:
+  className="underline text-blue-600 text-lg font-bold"
+  className="bg-white p-6 rounded-lg"
+
+❌ WRONG (BREAKS RENDERING):
+  className="hover:underline sm:text-lg md:text-xl dark:bg-gray-900"
+
+Email clients do NOT support pseudo-classes or responsive classes.
+Use ONLY static Tailwind classes that can be converted to inline styles.
 
 # IMAGES
 
@@ -85,6 +106,37 @@ export default function Email() {
 - Static text only - NO {variables}, .map(), or template syntax
 - Write complete, real content directly in JSX
 - Export as default function, no props interface needed
+
+# SOCIAL MEDIA ICONS
+
+When including social media icons in emails:
+
+✅ CORRECT - Use Simple Icons CDN URLs (24px size):
+  <Img src="https://cdn.simpleicons.org/x/1DA1F2" width="24" height="24" alt="Twitter" style={{ width: '24px', height: '24px' }} />
+  <Img src="https://cdn.simpleicons.org/linkedin/0A66C2" width="24" height="24" alt="LinkedIn" style={{ width: '24px', height: '24px' }} />
+  <Img src="https://cdn.simpleicons.org/facebook/1877F2" width="24" height="24" alt="Facebook" style={{ width: '24px', height: '24px' }} />
+
+AVAILABLE SOCIAL ICONS (with brand colors):
+- Twitter/X: https://cdn.simpleicons.org/x/1DA1F2
+- LinkedIn: https://cdn.simpleicons.org/linkedin/0A66C2
+- Facebook: https://cdn.simpleicons.org/facebook/1877F2
+- Instagram: https://cdn.simpleicons.org/instagram/E4405F
+- YouTube: https://cdn.simpleicons.org/youtube/FF0000
+- GitHub: https://cdn.simpleicons.org/github/181717
+- Discord: https://cdn.simpleicons.org/discord/5865F2
+- TikTok: https://cdn.simpleicons.org/tiktok/000000
+
+REQUIREMENTS:
+- MUST specify both width/height attributes AND inline style
+- Standard size: 24px × 24px (optimal for email footers)
+- Always include descriptive alt text
+- Wrap in <Link> for clickability
+- Spacing: px-2 between icons (8px)
+
+❌ NEVER use these placeholder URLs:
+  - https://react.email/static/brand-*.png (doesn't work)
+  - https://via.placeholder.com/* (not for production)
+  - https://example.com/* (placeholder)
 
 Generate complete, production-ready code following the design system provided.`;
 

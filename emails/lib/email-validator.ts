@@ -167,14 +167,45 @@ function validateEmailStructure(code: string): ValidationIssue[] {
   }
   
   // Check for external CSS (not allowed in emails)
-  if (code.includes('<style>') || code.includes('<link') || code.includes('.css')) {
+  // Use precise regex to avoid false positives in comments/strings
+  const styleTagPattern = /<style[\s>]/; // Opening <style> tag
+  const linkCssPattern = /<link\s+[^>]*href=[^>]*\.css/i; // <link href="...css">
+  
+  if (styleTagPattern.test(code) || linkCssPattern.test(code)) {
     issues.push({
       severity: 'error',
       type: 'structure',
       message: 'External stylesheets or <style> tags detected',
-      suggestion: 'Use inline styles only for email compatibility'
+      suggestion: 'Use inline styles only for email compatibility. Remove <style> tags and use style={{}} props instead.'
     });
   }
+  
+  // Check for forbidden pseudo-classes and responsive classes that break email rendering
+  const forbiddenClassPatterns = [
+    { pattern: /className=["'][^"']*hover:/g, name: 'hover:' },
+    { pattern: /className=["'][^"']*focus:/g, name: 'focus:' },
+    { pattern: /className=["'][^"']*active:/g, name: 'active:' },
+    { pattern: /className=["'][^"']*sm:/g, name: 'sm:' },
+    { pattern: /className=["'][^"']*md:/g, name: 'md:' },
+    { pattern: /className=["'][^"']*lg:/g, name: 'lg:' },
+    { pattern: /className=["'][^"']*xl:/g, name: 'xl:' },
+    { pattern: /className=["'][^"']*2xl:/g, name: '2xl:' },
+    { pattern: /className=["'][^"']*dark:/g, name: 'dark:' },
+    { pattern: /className=["'][^"']*space-[xy]-/g, name: 'space-x/y-' },
+    { pattern: /className=["'][^"']*gap-/g, name: 'gap-' },
+  ];
+  
+  forbiddenClassPatterns.forEach(({ pattern, name }) => {
+    const matches = code.match(pattern);
+    if (matches && matches.length > 0) {
+      issues.push({
+        severity: 'error',
+        type: 'structure',
+        message: `Found ${matches.length} usage(s) of forbidden "${name}" class - this BREAKS email rendering`,
+        suggestion: `Remove all ${name} classes. Use static Tailwind classes only (e.g., "underline" not "hover:underline"). Pseudo-classes and responsive classes don't work in emails.`
+      });
+    }
+  });
   
   // Check for width constraints (important for email rendering)
   const hasMaxWidth = code.includes('maxWidth') || code.includes('max-width');

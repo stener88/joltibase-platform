@@ -21,29 +21,32 @@ export const EventDesignSystem = {
    * Detection triggers - keywords that indicate this design system should be used
    */
   triggers: [
-    // Event types
-    'event', 'conference', 'summit', 'webinar', 'workshop', 'meetup',
+    // Event types (specific, not single word "event")
+    'conference', 'summit', 'webinar', 'workshop', 'meetup',
     'seminar', 'symposium', 'forum', 'convention', 'expo', 'festival',
+    'tech conference', 'business conference', 'annual conference',
     
-    // Event actions
-    'register', 'RSVP', 'tickets', 'attend', 'join us', 'save the date',
-    'registration', 'attendance', 'participant', 'attendee',
+    // Event actions (with context)
+    'register for conference', 'RSVP to event', 'buy tickets', 'get tickets',
+    'attend conference', 'join conference', 'save the date for conference',
+    'event registration', 'conference attendance', 'event participant', 'conference attendee',
     
-    // Event timing
-    'upcoming', 'happening soon', 'this week', 'next month',
-    'live event', 'virtual event', 'hybrid event', 'in-person',
+    // Event timing (with context)
+    'upcoming conference', 'conference happening', 'conference this week',
+    'live event', 'virtual conference', 'hybrid conference', 'in-person conference',
     
     // Event specifics
-    'speaker', 'session', 'agenda', 'schedule', 'keynote', 'talk',
-    'panel', 'presentation', 'networking', 'venue', 'location',
+    'keynote speaker', 'conference speaker', 'event speaker',
+    'conference session', 'conference agenda', 'event schedule', 'keynote address',
+    'panel discussion', 'conference presentation', 'networking event', 'event venue',
     
     // Ticket types
-    'early bird', 'ticket price', 'admission', 'free event', 'VIP pass',
-    'general admission', 'student ticket', 'group discount',
+    'early bird ticket', 'ticket price', 'conference admission', 'free conference',
+    'VIP pass', 'VIP ticket', 'general admission', 'student ticket', 'group ticket',
     
     // Event formats
-    'online event', 'zoom', 'livestream', 'broadcast', 'virtual conference',
-    'in-person event', 'hybrid format'
+    'online conference', 'zoom conference', 'livestream event', 'broadcast event',
+    'virtual conference', 'in-person conference', 'hybrid conference'
   ],
   
   /**
