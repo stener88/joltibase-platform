@@ -4,7 +4,7 @@ import { detectDesignSystem, type DesignSystem } from '@/emails/lib/design-syste
 import { extractCodeFromMarkdown, cleanGeneratedCode } from '@/emails/lib/validator';
 import { validateEmail, generateFixPrompt, getValidationSummary, type ValidationIssue } from '@/emails/lib/email-validator';
 import { fetchImagesForPrompt, type ImageContext } from './image-service';
-import { checkMismatchedQuotes, validateTsxSyntax } from './code-validator';
+import { validateTsxSyntax } from './code-validator';
 import { ensureAltText } from './alt-text-fixer';
 import { AI_MODEL, MAX_GENERATION_ATTEMPTS, GENERATION_TEMPERATURE } from '@/lib/ai/config';
 import type { BrandIdentity } from '@/lib/types/brand';
@@ -211,15 +211,15 @@ export async function generateEmail(prompt: string, brand?: BrandIdentity | null
       const llmDuration = Date.now() - llmStart;
       console.log(`⏱️ [GENERATOR] LLM call completed in ${(llmDuration / 1000).toFixed(1)}s`);
       
-      // Log token usage and cost (Gemini 2.0 Flash pricing)
+      // Log token usage and cost (Gemini 2.5 Flash Lite pricing)
       if (result.usage) {
         const usage = result.usage as any;
         const inputTokens = usage.inputTokens || 0;
         const outputTokens = usage.outputTokens || 0;
         const totalTokens = usage.totalTokens || 0;
         
-        const inputCost = (inputTokens / 1000) * 0.00001875;
-        const outputCost = (outputTokens / 1000) * 0.000075;
+        const inputCost = (inputTokens / 1_000_000) * 0.10;
+        const outputCost = (outputTokens / 1_000_000) * 0.40;
         const totalCost = inputCost + outputCost;
         
         console.log(`💰 [GENERATOR] Tokens: ${totalTokens} (in: ${inputTokens}, out: ${outputTokens}) | Cost: $${totalCost.toFixed(6)}`);
@@ -231,20 +231,11 @@ export async function generateEmail(prompt: string, brand?: BrandIdentity | null
       
       // Auto-fix missing alt text (prevents accessibility errors and retries)
       code = ensureAltText(code);
-      
-      // Pre-render syntax validation (catches broken JSX before render fails)
-      const quoteErrors = checkMismatchedQuotes(code);
-      if (quoteErrors.length > 0) {
-        console.log(`⚠️ [V3-GENERATOR] Found mismatched quotes, retrying...`);
-        quoteErrors.forEach(err => console.log(`  ❌ ${err}`));
-        previousIssues = quoteErrors.map(msg => ({ severity: 'error' as const, type: 'syntax' as const, message: msg }));
-        continue;
-      }
-      
-      // Validate TSX syntax using esbuild (catches all syntax errors before render)
+
+      // Pre-render syntax validation with esbuild (catches real JSX errors, not apostrophes)
       const syntaxError = await validateTsxSyntax(code);
       if (syntaxError) {
-        console.log(`⚠️ [V3-GENERATOR] TSX syntax error, retrying...`);
+        console.log(`⚠️ [V3-GENERATOR] Syntax validation failed, retrying...`);
         console.log(`  ❌ ${syntaxError}`);
         previousIssues = [{ severity: 'error' as const, type: 'syntax' as const, message: syntaxError }];
         continue;

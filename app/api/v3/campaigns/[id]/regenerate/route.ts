@@ -74,7 +74,7 @@ export async function POST(
         component_filename: generated.filename,
         component_code: generated.code,
         html_content: renderResult.html,
-        patterns_used: generated.patternsUsed,
+        design_system_used: generated.designSystemUsed,
         generation_prompt: fullPrompt,
         version: existingCampaign.version + 1,
         previous_version_id: existingCampaign.id,
@@ -96,7 +96,7 @@ export async function POST(
         subject_line: campaign.subject_line,
         html: renderResult.html,
         filename: generated.filename,
-        patternsUsed: generated.patternsUsed,
+        designSystemUsed: generated.designSystemUsed,
         version: campaign.version,
       },
     });

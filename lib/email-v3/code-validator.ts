@@ -183,32 +183,6 @@ export function quickSyntaxCheck(code: string): boolean {
   return !hasUnbalancedBraces && !hasUnbalancedParens && !hasUnbalancedBrackets;
 }
 
-/**
- * Check for mismatched quotes in JSX attributes
- * Catches: align="left' or align='left"
- */
-export function checkMismatchedQuotes(code: string): string[] {
-  const errors: string[] = [];
-  
-  // Match JSX attributes with mismatched quotes
-  // Pattern: word="...content...' or word='...content..."
-  const mismatchedDoubleToSingle = code.match(/\w+="[^"]*'/g);
-  const mismatchedSingleToDouble = code.match(/\w+='[^']*"/g);
-  
-  if (mismatchedDoubleToSingle) {
-    mismatchedDoubleToSingle.forEach(match => {
-      errors.push(`Mismatched quotes in attribute: ${match.substring(0, 30)}...`);
-    });
-  }
-  
-  if (mismatchedSingleToDouble) {
-    mismatchedSingleToDouble.forEach(match => {
-      errors.push(`Mismatched quotes in attribute: ${match.substring(0, 30)}...`);
-    });
-  }
-  
-  return errors;
-}
 
 /**
  * Validate JSX syntax using esbuild (catches all syntax errors)

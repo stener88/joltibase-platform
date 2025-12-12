@@ -354,8 +354,8 @@ export async function POST(request: Request) {
       const estimatedInputTokens = Math.floor(totalTokens * 0.6);
       const estimatedOutputTokens = totalTokens - estimatedInputTokens;
       
-      const cost = (estimatedInputTokens / 1000) * 0.00001875 + 
-                   (estimatedOutputTokens / 1000) * 0.000075;
+      const cost = (estimatedInputTokens / 1_000_000) * 0.30 + 
+                   (estimatedOutputTokens / 1_000_000) * 2.50;
       
       console.log(`💰 [REFINE-SDK] Tokens: ${totalTokens} | Cost: ~$${cost.toFixed(6)}`);
     }

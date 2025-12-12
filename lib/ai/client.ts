@@ -198,10 +198,10 @@ function calculateCost(
   usage: { promptTokens: number; completionTokens: number }
 ): number {
   if (provider === 'gemini') {
-    // Gemini 2.5 Flash pricing: $0.10/$0.40 per 1M tokens (input/output)
+    // Gemini 2.5 Flash pricing: $0.30/$2.50 per 1M tokens (input/output)
     if (model.includes('2.5-flash')) {
-      const inputCost = (usage.promptTokens / 1_000_000) * 0.10;
-      const outputCost = (usage.completionTokens / 1_000_000) * 0.40;
+      const inputCost = (usage.promptTokens / 1_000_000) * 0.30;
+      const outputCost = (usage.completionTokens / 1_000_000) * 2.50;
       return inputCost + outputCost;
     }
     // Gemini 2.0 Flash: Free tier

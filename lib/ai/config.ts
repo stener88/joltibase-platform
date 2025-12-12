@@ -17,7 +17,7 @@
  * - 'gemini-2.5-pro'   → Stable, high quality (~5-15s)
  * - 'gemini-2.5-flash' → Balanced speed/quality (~2-5s)
  */
-export const AI_MODEL = 'gemini-3-pro-preview';
+export const AI_MODEL = 'gemini-2.5-flash';
 
 /**
  * Model for quick tasks (keywords, simple edits)

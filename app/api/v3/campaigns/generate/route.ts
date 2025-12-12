@@ -13,7 +13,7 @@ import { fromDbRow, type BrandIdentity, type BrandKitDbRow } from '@/lib/types/b
 import { z } from 'zod';
 
 const GenerateRequestSchema = z.object({
-  prompt: z.string().min(10).max(500),
+  prompt: z.string().min(10).max(1000),
   name: z.string().optional(),
 });
 
