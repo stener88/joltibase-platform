@@ -536,21 +536,21 @@ export function PropertiesPanel({
           </div>
           <div className="flex items-center gap-1">
             {/* Select Parent button */}
-            <button
-              onClick={() => {
-                if (onSelectParent) {
-                  onSelectParent();
-                } else {
-                  console.log('[PROPERTIES] Select parent - no callback provided');
-                }
-              }}
-              disabled={!onSelectParent}
-              className="flex items-center gap-1 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Select parent element"
-            >
-              <ArrowUp className="w-3 h-3" />
-              <span>Select parent</span>
-            </button>
+          <button
+            onClick={() => {
+              if (onSelectParent) {
+                onSelectParent();
+              } else {
+                console.log('[PROPERTIES] Select parent - no callback provided');
+              }
+            }}
+            disabled={!onSelectParent}
+            className="flex items-center gap-1 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Select parent element"
+          >
+            <ArrowUp className="w-3 h-3" />
+            <span>Select parent</span>
+          </button>
           </div>
         </div>
       </div>
@@ -579,7 +579,7 @@ export function PropertiesPanel({
             {/* Row 1: Font Size + Font Style */}
             <div className="grid grid-cols-2 gap-3">
               {/* Font Size */}
-              <div className="space-y-2">
+            <div className="space-y-2">
                 <label className="block text-xs text-muted-foreground">Font size</label>
                 <select
                   value={normalizeFontSize(fontSize)}
@@ -590,10 +590,10 @@ export function PropertiesPanel({
                     <option key={size.px} value={size.px}>
                       {size.label} ({size.px})
                     </option>
-                  ))}
+                ))}
                 </select>
-              </div>
-
+            </div>
+            
               {/* Font Style */}
               <div className="space-y-2">
                 <label className="block text-xs text-muted-foreground">
@@ -609,14 +609,14 @@ export function PropertiesPanel({
                     <option key={font.value} value={font.value}>
                       {font.label} {font.webFont ? '✦' : ''}
                     </option>
-                  ))}
+              ))}
                 </select>
               </div>
             </div>
 
             {/* Row 2: Font Weight + Alignment */}
             <div className="grid grid-cols-2 gap-3">
-              {/* Font Weight */}
+            {/* Font Weight */}
               <div className="space-y-2">
                 <label className="block text-xs text-muted-foreground">Font weight</label>
                 <select
@@ -631,34 +631,34 @@ export function PropertiesPanel({
                   <option value="700">Bold</option>
                   <option value="800">Extra-bold</option>
                 </select>
-              </div>
+            </div>
 
               {/* Alignment */}
               <div className="space-y-2">
                 <label className="block text-xs text-muted-foreground">Alignment</label>
-                <div className="flex gap-1.5">
-                  {[
-                    { value: 'left', icon: AlignLeft },
-                    { value: 'center', icon: AlignCenter },
-                    { value: 'right', icon: AlignRight },
-                    { value: 'justify', icon: AlignJustify },
-                  ].map(align => {
-                    const Icon = align.icon;
-                    return (
-                      <button
-                        key={align.value}
-                        onClick={() => handleTypographyChange('textAlign', align.value)}
-                        className={`flex-1 px-2.5 py-2 rounded border transition-colors flex items-center justify-center ${
-                          textAlign === align.value 
-                            ? 'bg-primary text-primary-foreground border-primary' 
-                            : 'bg-card border-border hover:border-foreground text-foreground'
-                        }`}
-                        title={align.value}
-                      >
-                        <Icon className="w-4 h-4" />
-                      </button>
-                    );
-                  })}
+            <div className="flex gap-1.5">
+              {[
+                { value: 'left', icon: AlignLeft },
+                { value: 'center', icon: AlignCenter },
+                { value: 'right', icon: AlignRight },
+                { value: 'justify', icon: AlignJustify },
+              ].map(align => {
+                const Icon = align.icon;
+                return (
+                  <button
+                    key={align.value}
+                    onClick={() => handleTypographyChange('textAlign', align.value)}
+                    className={`flex-1 px-2.5 py-2 rounded border transition-colors flex items-center justify-center ${
+                      textAlign === align.value 
+                        ? 'bg-primary text-primary-foreground border-primary' 
+                        : 'bg-card border-border hover:border-foreground text-foreground'
+                    }`}
+                    title={align.value}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </button>
+                );
+              })}
                 </div>
               </div>
             </div>
@@ -699,70 +699,70 @@ export function PropertiesPanel({
             
             {/* Text Color + Background Color - Side by Side */}
             <div className="grid grid-cols-2 gap-3">
-              {/* Text Color */}
-              {componentProperties.canEditTypography && (
-                <div className="space-y-2">
-                  <label className="block text-xs text-muted-foreground">Text color</label>
-                  {textColorInherit ? (
-                    <button
-                      onClick={() => setTextColorInherit(false)}
-                      className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card text-foreground hover:bg-muted transition-colors text-left"
-                    >
-                      <span className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 border border-border" />
-                        <span className="text-xs">Inherit</span>
-                      </span>
-                    </button>
-                  ) : (
-                    <div className="flex gap-2">
-                      <Input
-                        type="color"
-                        value={textColor || '#000000'}
-                        onChange={(e) => handleColorChange(e.target.value, 'text')}
-                        className="w-10 h-10 p-1 cursor-pointer"
-                      />
-                      <Input
-                        type="text"
-                        value={textColor}
-                        onChange={(e) => handleColorChange(e.target.value, 'text')}
-                        className="flex-1 font-mono text-xs"
-                        placeholder="#000000"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Background Color */}
+            {/* Text Color */}
+            {componentProperties.canEditTypography && (
               <div className="space-y-2">
-                <label className="block text-xs text-muted-foreground">Background color</label>
-                {backgroundColorInherit ? (
+                <label className="block text-xs text-muted-foreground">Text color</label>
+                {textColorInherit ? (
                   <button
-                    onClick={() => setBackgroundColorInherit(false)}
+                    onClick={() => setTextColorInherit(false)}
                     className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card text-foreground hover:bg-muted transition-colors text-left"
                   >
                     <span className="flex items-center gap-2">
                       <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 border border-border" />
-                      <span className="text-xs">Inherit</span>
+                        <span className="text-xs">Inherit</span>
                     </span>
                   </button>
                 ) : (
                   <div className="flex gap-2">
                     <Input
                       type="color"
-                      value={backgroundColor === 'transparent' ? '#ffffff' : backgroundColor}
-                      onChange={(e) => handleColorChange(e.target.value, 'background')}
-                      className="w-10 h-10 p-1 cursor-pointer"
+                      value={textColor || '#000000'}
+                      onChange={(e) => handleColorChange(e.target.value, 'text')}
+                        className="w-10 h-10 p-1 cursor-pointer"
                     />
                     <Input
                       type="text"
-                      value={backgroundColor}
-                      onChange={(e) => handleColorChange(e.target.value, 'background')}
-                      className="flex-1 font-mono text-xs"
-                      placeholder="transparent"
+                      value={textColor}
+                      onChange={(e) => handleColorChange(e.target.value, 'text')}
+                        className="flex-1 font-mono text-xs"
+                      placeholder="#000000"
                     />
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Background Color */}
+            <div className="space-y-2">
+              <label className="block text-xs text-muted-foreground">Background color</label>
+              {backgroundColorInherit ? (
+                <button
+                  onClick={() => setBackgroundColorInherit(false)}
+                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card text-foreground hover:bg-muted transition-colors text-left"
+                >
+                  <span className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 border border-border" />
+                      <span className="text-xs">Inherit</span>
+                  </span>
+                </button>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    type="color"
+                    value={backgroundColor === 'transparent' ? '#ffffff' : backgroundColor}
+                    onChange={(e) => handleColorChange(e.target.value, 'background')}
+                      className="w-10 h-10 p-1 cursor-pointer"
+                  />
+                  <Input
+                    type="text"
+                    value={backgroundColor}
+                    onChange={(e) => handleColorChange(e.target.value, 'background')}
+                      className="flex-1 font-mono text-xs"
+                    placeholder="transparent"
+                  />
+                </div>
+              )}
               </div>
             </div>
           </div>
@@ -786,16 +786,16 @@ export function PropertiesPanel({
                   >
                     <MoveHorizontal className="w-3.5 h-3.5" />
                   </span>
-                  <Input
-                    type="number"
+                    <Input
+                      type="number"
                     value={marginLeft}
                     onChange={(e) => handleSpacingChange(e.target.value, 'marginLeft')}
                     className="flex-1 text-sm border-0 p-0 h-6 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    min="0"
-                    placeholder="0"
-                  />
-                  <span className="text-xs text-muted-foreground">px</span>
-                </div>
+                      min="0"
+                      placeholder="0"
+                    />
+                    <span className="text-xs text-muted-foreground">px</span>
+                  </div>
                 
                 {/* Top (Vertical) */}
                 <div className="flex-1 flex items-center gap-1.5 bg-card border border-border rounded-lg px-2 py-1.5">
@@ -815,7 +815,7 @@ export function PropertiesPanel({
                     placeholder="0"
                   />
                   <span className="text-xs text-muted-foreground">px</span>
-                </div>
+              </div>
                 
                 {/* Expand button with rotation animation */}
                 <button
@@ -839,8 +839,8 @@ export function PropertiesPanel({
                     <rect x="14" y="14" width="7" height="7" strokeWidth="2" />
                   </svg>
                 </button>
-              </div>
-              
+            </div>
+
               {/* Expanded view with slide animation */}
               <div 
                 className={`grid transition-all duration-200 ease-in-out ${
@@ -860,16 +860,16 @@ export function PropertiesPanel({
                       >
                         <MoveHorizontal className="w-3.5 h-3.5" />
                       </span>
-                      <Input
-                        type="number"
+                    <Input
+                      type="number"
                         value={marginRight}
                         onChange={(e) => handleSpacingChange(e.target.value, 'marginRight')}
                         className="flex-1 text-sm border-0 p-0 h-6 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        min="0"
-                        placeholder="0"
-                      />
-                      <span className="text-xs text-muted-foreground">px</span>
-                    </div>
+                      min="0"
+                      placeholder="0"
+                    />
+                    <span className="text-xs text-muted-foreground">px</span>
+                  </div>
                     
                     {/* Bottom */}
                     <div className="flex-1 flex items-center gap-1.5 bg-card border border-border rounded-lg px-2 py-1.5">
@@ -889,15 +889,15 @@ export function PropertiesPanel({
                         placeholder="0"
                       />
                       <span className="text-xs text-muted-foreground">px</span>
-                    </div>
+              </div>
                     
                     {/* Spacer */}
                     <div className="w-[42px]" />
-                  </div>
-                </div>
+            </div>
+          </div>
               </div>
             </div>
-
+            
             {/* Padding */}
             <div className="space-y-2">
               <label className="block text-xs text-muted-foreground">Padding</label>
@@ -943,13 +943,13 @@ export function PropertiesPanel({
                 </div>
                 
                 {/* Expand button */}
-                <button
+                  <button
                   onClick={() => setPaddingExpanded(!paddingExpanded)}
                   className={`px-2.5 py-1.5 rounded-lg border transition-all duration-200 ${
                     paddingExpanded 
-                      ? 'bg-primary text-primary-foreground border-primary' 
-                      : 'bg-card border-border hover:border-foreground text-foreground'
-                  }`}
+                        ? 'bg-primary text-primary-foreground border-primary' 
+                        : 'bg-card border-border hover:border-foreground text-foreground'
+                    }`}
                   title="Individual sides"
                 >
                   <svg 
@@ -963,7 +963,7 @@ export function PropertiesPanel({
                     <rect x="3" y="14" width="7" height="7" strokeWidth="2" />
                     <rect x="14" y="14" width="7" height="7" strokeWidth="2" />
                   </svg>
-                </button>
+                  </button>
               </div>
               
               {/* Expanded view */}
@@ -994,8 +994,8 @@ export function PropertiesPanel({
                         placeholder="0"
                       />
                       <span className="text-xs text-muted-foreground">px</span>
-                    </div>
-                    
+            </div>
+
                     {/* Bottom */}
                     <div className="flex-1 flex items-center gap-1.5 bg-card border border-border rounded-lg px-2 py-1.5">
                       <span 
@@ -1032,30 +1032,30 @@ export function PropertiesPanel({
             
             {/* Row 1: Border Width + Border Style */}
             <div className="grid grid-cols-2 gap-3">
-              {/* Border Width */}
-              <div className="space-y-2">
-                <label className="block text-xs text-muted-foreground">Border width</label>
+            {/* Border Width */}
+            <div className="space-y-2">
+              <label className="block text-xs text-muted-foreground">Border width</label>
                 <div className="flex items-center gap-1.5 bg-card border border-border rounded-lg px-2 py-1.5">
-                  <Input
-                    type="number"
-                    value={parseInt(borderWidth || '0')}
-                    onChange={(e) => handleBorderChange('borderWidth', e.target.value + 'px')}
+                <Input
+                  type="number"
+                  value={parseInt(borderWidth || '0')}
+                  onChange={(e) => handleBorderChange('borderWidth', e.target.value + 'px')}
                     className="flex-1 text-sm border-0 p-0 h-6 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    min="0"
-                    max="10"
+                  min="0"
+                  max="10"
                     placeholder="0"
-                  />
-                  <span className="text-xs text-muted-foreground">px</span>
-                </div>
+                />
+                <span className="text-xs text-muted-foreground">px</span>
               </div>
+            </div>
 
-              {/* Border Style */}
-              <div className="space-y-2">
-                <label className="block text-xs text-muted-foreground">Border style</label>
+            {/* Border Style */}
+            <div className="space-y-2">
+              <label className="block text-xs text-muted-foreground">Border style</label>
                 <div className="flex gap-1">
-                  {['solid', 'dashed', 'dotted'].map(style => (
-                    <button
-                      key={style}
+                {['solid', 'dashed', 'dotted'].map(style => (
+                  <button
+                    key={style}
                       onClick={() => {
                         // Toggle: if clicking the same style, reset to 'none'
                         if (borderStyle === style) {
@@ -1065,12 +1065,12 @@ export function PropertiesPanel({
                         }
                       }}
                       className={`flex-1 px-2 py-1.5 text-xs rounded border transition-colors ${
-                        borderStyle === style 
-                          ? 'bg-primary text-primary-foreground border-primary' 
-                          : 'bg-card border-border hover:border-foreground text-foreground'
-                      }`}
-                    >
-                      {style}
+                      borderStyle === style 
+                        ? 'bg-primary text-primary-foreground border-primary' 
+                        : 'bg-card border-border hover:border-foreground text-foreground'
+                    }`}
+                  >
+                    {style}
                     </button>
                   ))}
                 </div>

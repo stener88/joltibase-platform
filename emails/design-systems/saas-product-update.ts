@@ -543,23 +543,23 @@ Footer Legal
           </Link>
         </Column>
         <Column className="px-2">
-          <Link href="[LINKEDIN_URL]">
-            <Img
-              src="https://cdn.simpleicons.org/linkedin/0A66C2"
-              width="24"
-              height="24"
-              alt="LinkedIn"
-              style={{ width: '24px', height: '24px' }}
-            />
-          </Link>
-        </Column>
-        <Column className="px-2">
           <Link href="[FACEBOOK_URL]">
             <Img
               src="https://cdn.simpleicons.org/facebook/1877F2"
               width="24"
               height="24"
               alt="Facebook"
+              style={{ width: '24px', height: '24px' }}
+            />
+          </Link>
+        </Column>
+        <Column className="px-2">
+          <Link href="[INSTAGRAM_URL]">
+            <Img
+              src="https://cdn.simpleicons.org/instagram/E4405F"
+              width="24"
+              height="24"
+              alt="Instagram"
               style={{ width: '24px', height: '24px' }}
             />
           </Link>
@@ -598,10 +598,12 @@ Footer Legal
 - **Size**: 24px × 24px (optimal for email footers - must be specified in BOTH width/height attributes AND inline style)
 - **CDN URLs** (production-ready, from Simple Icons CDN):
 \`\`\`
+Standard footer icons (most compatible):
 Twitter/X: https://cdn.simpleicons.org/x/1DA1F2
-LinkedIn: https://cdn.simpleicons.org/linkedin/0A66C2
 Facebook: https://cdn.simpleicons.org/facebook/1877F2
 Instagram: https://cdn.simpleicons.org/instagram/E4405F
+
+Additional platforms (use if relevant):
 YouTube: https://cdn.simpleicons.org/youtube/FF0000
 GitHub: https://cdn.simpleicons.org/github/181717
 Discord: https://cdn.simpleicons.org/discord/5865F2

@@ -498,47 +498,47 @@ export function EmailEditorV3({
       // Parse fresh componentMap from current TSX
       const parsed = parseAndInjectIds(currentTsx);
       const freshMap = parsed.componentMap;
-      
+    
       // Apply edit based on property type
-      if (property === 'text' || property === 'textContent') {
-        updatedTsx = updateComponentText(currentTsx, freshMap, componentId, value);
-        
-      } else if (property === 'imageSrc') {
-        // Parse JSON for atomic image update (url, alt, width, height)
-        try {
-          const { url, alt, width, height } = JSON.parse(value);
-          updatedTsx = updateImageSrc(currentTsx, freshMap, componentId, url, alt, width, height);
-        } catch (error) {
-          console.error('[EDITOR] Failed to parse image data:', error);
-          return;
-        }
-        
-      } else if (property === 'imageAlt') {
-        updatedTsx = updateImageSrc(currentTsx, freshMap, componentId, undefined, value);
-        
-      } else if (property === 'imageWidth') {
-        const numValue = parseInt(value, 10);
-        if (isNaN(numValue)) return;
-        updatedTsx = updateImageSrc(currentTsx, freshMap, componentId, undefined, undefined, numValue, undefined);
-        
-      } else if (property === 'imageHeight') {
-        const numValue = parseInt(value, 10);
-        if (isNaN(numValue)) return;
-        updatedTsx = updateImageSrc(currentTsx, freshMap, componentId, undefined, undefined, undefined, numValue);
-        
-      } else {
+    if (property === 'text' || property === 'textContent') {
+      updatedTsx = updateComponentText(currentTsx, freshMap, componentId, value);
+      
+    } else if (property === 'imageSrc') {
+      // Parse JSON for atomic image update (url, alt, width, height)
+      try {
+        const { url, alt, width, height } = JSON.parse(value);
+        updatedTsx = updateImageSrc(currentTsx, freshMap, componentId, url, alt, width, height);
+      } catch (error) {
+        console.error('[EDITOR] Failed to parse image data:', error);
+        return;
+      }
+      
+    } else if (property === 'imageAlt') {
+      updatedTsx = updateImageSrc(currentTsx, freshMap, componentId, undefined, value);
+      
+    } else if (property === 'imageWidth') {
+      const numValue = parseInt(value, 10);
+      if (isNaN(numValue)) return;
+      updatedTsx = updateImageSrc(currentTsx, freshMap, componentId, undefined, undefined, numValue, undefined);
+      
+    } else if (property === 'imageHeight') {
+      const numValue = parseInt(value, 10);
+      if (isNaN(numValue)) return;
+      updatedTsx = updateImageSrc(currentTsx, freshMap, componentId, undefined, undefined, undefined, numValue);
+      
+    } else {
         // Handle spacing properties - add 'px' unit
         const spacingProps = ['marginTop', 'marginBottom', 'marginLeft', 'marginRight', 
                               'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'];
         
         const valueWithUnit = spacingProps.includes(property) ? `${value}px` : value;
         updatedTsx = updateInlineStyle(currentTsx, freshMap, componentId, property, valueWithUnit);
-      }
-      
+    }
+    
       // 4. Debounced commit (captures HTML after 500ms)
       commitEditsRef.current(updatedTsx, `Updated ${property}`);
       
-      setHasVisualEdits(true);
+    setHasVisualEdits(true);
       
     } catch (error) {
       console.error('[EDITOR] Failed to apply edit:', error);

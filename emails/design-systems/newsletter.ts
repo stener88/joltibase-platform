@@ -233,31 +233,82 @@ export default function WeeklyNewsletter() {
             </Link>
           </Section>
 
-          {/* Footer */}
-          <Section style={{
-            padding: '32px 24px',
-            backgroundColor: '#f9fafb',
-            textAlign: 'center',
-            marginTop: '16px'
-          }}>
-            <Text style={{ fontSize: '14px', color: '#666', margin: '0 0 8px 0' }}>
-              © 2025 The Weekly Roundup
-            </Text>
-            <Text style={{ fontSize: '14px', color: '#888', margin: '0' }}>
-              <Link href="https://example.com/unsubscribe" style={{ color: '#3b82f6' }}>
-                Unsubscribe
-              </Link>
-              {' '}•{' '}
-              <Link href="https://example.com/preferences" style={{ color: '#3b82f6' }}>
-                Manage Preferences
-              </Link>
-            </Text>
-          </Section>
+      {/* Footer */}
+      <Section style={{
+        padding: '32px 24px',
+        backgroundColor: '#f9fafb',
+        textAlign: 'center',
+        marginTop: '16px'
+      }}>
+        <Text style={{ fontSize: '14px', color: '#666', margin: '0 0 8px 0' }}>
+          © 2025 The Weekly Roundup
+        </Text>
+        <Text style={{ fontSize: '14px', color: '#888', margin: '0' }}>
+          <Link href="https://example.com/unsubscribe" style={{ color: '#3b82f6' }}>
+            Unsubscribe
+          </Link>
+          {' '}•{' '}
+          <Link href="https://example.com/preferences" style={{ color: '#3b82f6' }}>
+            Manage Preferences
+          </Link>
+        </Text>
+      </Section>
 
-        </Container>
-      </Body>
-    </Html>
-  );
-}`
+    </Container>
+  </Body>
+</Html>
+);
+}`,
+
+  // Social media footer pattern (optional, use when user requests social footer)
+  socialFooterPattern: `
+{/* Optional: Social Media Footer - Use when user requests "social footer" or "connect with us" */}
+<Section style={{ padding: '24px', textAlign: 'center', backgroundColor: '#f9fafb' }}>
+  <Text style={{ fontSize: '16px', fontWeight: '600', color: '#374151', margin: '0 0 16px 0' }}>
+    Connect With Us
+  </Text>
+  <Row align="center" style={{ width: 'auto', margin: '0 auto' }}>
+    <Column style={{ paddingRight: '12px' }}>
+      <Link href="[TWITTER_URL]">
+        <Img 
+          src="https://cdn.simpleicons.org/x/1DA1F2" 
+          width="24" 
+          height="24" 
+          alt="Twitter" 
+          style={{ width: '24px', height: '24px' }} 
+        />
+      </Link>
+    </Column>
+    <Column style={{ paddingRight: '12px' }}>
+      <Link href="[FACEBOOK_URL]">
+        <Img 
+          src="https://cdn.simpleicons.org/facebook/1877F2" 
+          width="24" 
+          height="24" 
+          alt="Facebook" 
+          style={{ width: '24px', height: '24px' }} 
+        />
+      </Link>
+    </Column>
+    <Column>
+      <Link href="[INSTAGRAM_URL]">
+        <Img 
+          src="https://cdn.simpleicons.org/instagram/E4405F" 
+          width="24" 
+          height="24" 
+          alt="Instagram" 
+          style={{ width: '24px', height: '24px' }} 
+        />
+      </Link>
+    </Column>
+  </Row>
+</Section>
+
+**CRITICAL - Icon Requirements**:
+- Size: MUST be 24px × 24px (specify in BOTH width/height attributes AND inline style)
+- Never use 32px, 40px, or any other size
+- CDN URLs from Simple Icons (https://cdn.simpleicons.org/)
+- Standard platforms: Twitter/X, Facebook, Instagram (no LinkedIn)
+`
 };
 

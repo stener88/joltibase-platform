@@ -581,18 +581,6 @@ Footer Meta
           </Link>
         </Column>
         <Column className="inline-block">
-          <Link href="[LINKEDIN_SHARE_URL]">
-            <Img
-              src="https://cdn.simpleicons.org/linkedin/0A66C2"
-              width="24"
-              height="24"
-              alt="Share on LinkedIn"
-              className="rounded-full"
-              style={{ width: '24px', height: '24px' }}
-            />
-          </Link>
-        </Column>
-        <Column className="inline-block">
           <Link href="[FACEBOOK_SHARE_URL]">
             <Img
               src="https://cdn.simpleicons.org/facebook/1877F2"

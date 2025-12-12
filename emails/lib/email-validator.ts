@@ -125,19 +125,8 @@ function validateSyntax(code: string): ValidationIssue[] {
     }
   });
   
-  // Check for unclosed JSX tags (basic check)
-  const openTags = (code.match(/<[A-Z][a-zA-Z]*[\s>]/g) || []).length;
-  const closeTags = (code.match(/<\/[A-Z][a-zA-Z]*>/g) || []).length;
-  const selfClosing = (code.match(/\/>/g) || []).length;
-  
-  if (openTags !== closeTags + selfClosing) {
-    issues.push({
-      severity: 'error',
-      type: 'syntax',
-      message: 'Possible unclosed JSX tags detected',
-      suggestion: 'Ensure all JSX tags are properly closed'
-    });
-  }
+  // Regex tag counting removed - TypeScript and transpiler catch real syntax errors
+  // The heuristic check caused too many false positives (br tags, JSX expressions, fragments, etc.)
   
   return issues;
 }
@@ -476,6 +465,15 @@ export function generateFixPrompt(issues: ValidationIssue[]): string {
 - Minimum font size: 14px for all text
 - Use semantic components: <Heading>, <Text>, <Section>
 - Follow design system specifications for CTA count
+- Buttons must have padding: '14px 28px' minimum (44px touch target)
+- Use ONLY static Tailwind classes: bg-*, text-*, p-*, m-*, font-*, rounded-*, border-*
+- NEVER use: hover:, focus:, sm:, md:, lg:, xl:, 2xl:, dark:, gap-, space-x-, space-y-
+
+**INSTRUCTIONS FOR THIS RETRY:**
+1. Start from scratch - don't try to "patch" the broken code
+2. Follow the design system example EXACTLY
+3. Wrap entire email in <Tailwind> component
+4. Import Tailwind from @react-email/components
 `;
   
   return prompt;

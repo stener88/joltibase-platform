@@ -168,8 +168,9 @@ export function getWhiteIconUrl(platform: keyof typeof SOCIAL_ICONS): string {
 /**
  * List of most common platforms for email footers
  * In order of typical priority for B2B/SaaS companies
+ * Note: LinkedIn removed due to rendering issues in some email clients
  */
-export const COMMON_FOOTER_PLATFORMS = ['twitter', 'linkedin', 'facebook', 'instagram'] as const;
+export const COMMON_FOOTER_PLATFORMS = ['twitter', 'facebook', 'instagram'] as const;
 
 /**
  * Alternative set for consumer brands

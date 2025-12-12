@@ -107,24 +107,52 @@ Use ONLY static Tailwind classes that can be converted to inline styles.
 - Write complete, real content directly in JSX
 - Export as default function, no props interface needed
 
+# LOGOS (CRITICAL - PREVENTS STRETCHING)
+
+When using brand logos, ALWAYS maintain aspect ratio:
+
+✅ CORRECT (maintains aspect ratio):
+  <Img 
+    src="{logoUrl}" 
+    width="120" 
+    alt="Company Logo" 
+    style={{ display: 'block', maxWidth: '120px', height: 'auto' }} 
+  />
+
+❌ WRONG (will stretch/distort logo):
+  <Img src="{logoUrl}" width="120" height="40" ... />  // Fixed height stretches!
+
+REQUIREMENTS:
+- Set width as a number (e.g., width="120")
+- NEVER set height as a number - logos have different aspect ratios  
+- ALWAYS use height: 'auto' in inline style
+- Use maxWidth in style to constrain maximum size
+- Use display: 'block' for proper rendering
+- Logos will maintain their natural aspect ratio
+
 # SOCIAL MEDIA ICONS
 
 When including social media icons in emails:
 
 ✅ CORRECT - Use Simple Icons CDN URLs (24px size):
   <Img src="https://cdn.simpleicons.org/x/1DA1F2" width="24" height="24" alt="Twitter" style={{ width: '24px', height: '24px' }} />
-  <Img src="https://cdn.simpleicons.org/linkedin/0A66C2" width="24" height="24" alt="LinkedIn" style={{ width: '24px', height: '24px' }} />
   <Img src="https://cdn.simpleicons.org/facebook/1877F2" width="24" height="24" alt="Facebook" style={{ width: '24px', height: '24px' }} />
+  <Img src="https://cdn.simpleicons.org/instagram/E4405F" width="24" height="24" alt="Instagram" style={{ width: '24px', height: '24px' }} />
 
 AVAILABLE SOCIAL ICONS (with brand colors):
+
+Standard footer icons (most compatible):
 - Twitter/X: https://cdn.simpleicons.org/x/1DA1F2
-- LinkedIn: https://cdn.simpleicons.org/linkedin/0A66C2
 - Facebook: https://cdn.simpleicons.org/facebook/1877F2
 - Instagram: https://cdn.simpleicons.org/instagram/E4405F
+
+Additional platforms (use if relevant to the content):
 - YouTube: https://cdn.simpleicons.org/youtube/FF0000
 - GitHub: https://cdn.simpleicons.org/github/181717
 - Discord: https://cdn.simpleicons.org/discord/5865F2
 - TikTok: https://cdn.simpleicons.org/tiktok/000000
+
+⚠️ Note: LinkedIn icon has rendering issues in some email clients - avoid using it
 
 REQUIREMENTS:
 - MUST specify both width/height attributes AND inline style
@@ -308,7 +336,9 @@ function buildUserPrompt(
       userPrompt += `- **Secondary Color**: ${brand.secondaryColor} (use for text, borders)\n`;
     }
     if (brand.logoUrl) {
-      userPrompt += `- **Logo URL**: ${brand.logoUrl} (use in email header)\n`;
+      userPrompt += `- **Logo URL**: ${brand.logoUrl}\n`;
+      userPrompt += `  **CRITICAL**: NEVER set fixed height on logos - use height: 'auto' to maintain aspect ratio\n`;
+      userPrompt += `  Example: <Img src="${brand.logoUrl}" width="120" alt="${brand.companyName}" style={{ display: 'block', maxWidth: '120px', height: 'auto' }} />\n`;
     }
     if (brand.tone && brand.formality) {
       userPrompt += `- **Tone**: ${brand.tone}, ${brand.formality}\n`;
