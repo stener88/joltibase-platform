@@ -109,6 +109,10 @@ export function LivePreview({
   isToolbarLoading = false,
   previewMode = 'desktop',
 }: LivePreviewProps) {
+  console.log('🟢 PREVIEW: Received tsxCode length:', tsxCode?.length);
+  console.log('🟢 PREVIEW: First 100 chars:', tsxCode?.substring(0, 100));
+  console.log('🟢 PREVIEW: Source:', tsxCodeSource);
+  
   // Local iframe ref (not passed from parent)
   const iframeRef = useRef<HTMLIFrameElement>(null);
 

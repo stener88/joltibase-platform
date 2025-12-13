@@ -70,6 +70,9 @@ export function EmailEditorV3({
 }: EmailEditorV3Props) {
   const router = useRouter();
 
+  console.log('🟡 EDITOR: Received initialTsxCode length:', initialTsxCode?.length);
+  console.log('🟡 EDITOR: First 100 chars of initialTsxCode:', initialTsxCode?.substring(0, 100));
+
   // Initialize chat history with original prompt if available
   const initialChatMessages = generationPrompt ? [
     {
@@ -114,6 +117,9 @@ export function EmailEditorV3({
   // ========================================
   const [tsxCode, setTsxCode] = useState(initialTsxCode);
   const [tsxCodeSource, setTsxCodeSource] = useState<'initial' | 'visual' | 'ai'>('initial');
+  
+  console.log('🟡 EDITOR: Initial useState - tsxCode length:', tsxCode?.length);
+  console.log('🟡 EDITOR: Are initialTsxCode and tsxCode equal?', initialTsxCode === tsxCode);
   
   // Optimistic updates (for instant feedback before commit)
   const [optimisticEdits, setOptimisticEdits] = useState<OptimisticEdit[]>([]);
@@ -551,10 +557,15 @@ export function EmailEditorV3({
   // Save visual edits and exit (commit to DB)
   const handleSaveVisualEdits = useCallback(async () => {
     console.log('[EDITOR] Saving visual edits and exiting visual mode');
+    console.log('🔴 SAVE: Current tsxCode length:', tsxCode.length);
+    console.log('🔴 SAVE: First 200 chars:', tsxCode.substring(0, 200));
     setIsExitingVisualMode(true);
     
     // Use current tsxCode (already committed via debounce)
     const updatedCode = tsxCode;
+    console.log('🔴 SAVE: updatedCode length:', updatedCode.length);
+    console.log('🔴 SAVE: updatedCode === tsxCode?', updatedCode === tsxCode);
+    
     // Exit visual mode and clear state
     setShowExitConfirm(false);
     setMode('chat');
@@ -570,6 +581,8 @@ export function EmailEditorV3({
     // Persist to database
     setIsSaving(true);
     try {
+      console.log('🔴 SAVE: About to render TSX, length:', updatedCode.length);
+      
       // Render TSX to HTML
       const renderResponse = await fetch('/api/v3/campaigns/render', {
         method: 'POST',
@@ -585,6 +598,8 @@ export function EmailEditorV3({
       const renderData = await renderResponse.json();
 
       // Update campaign in database
+      console.log('🔴 SAVE: About to PATCH database, code length:', updatedCode.length);
+      
       const updateResponse = await fetch(`/api/v3/campaigns/${campaignId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -598,6 +613,8 @@ export function EmailEditorV3({
         const errorText = await updateResponse.text();
         throw new Error(`Update failed: ${errorText}`);
       }
+      
+      console.log('🔴 SAVE: PATCH successful!');
 
       // Update saved state to reflect successful save
       setSavedTsxCode(updatedCode);
@@ -612,7 +629,7 @@ export function EmailEditorV3({
     } finally {
       setIsSaving(false);
     }
-  }, [campaignId]);
+  }, [campaignId, tsxCode, router]);
 
   // Discard visual edits and exit (reset to entry state)
   const handleDiscardVisualEdits = useCallback(() => {

@@ -73,7 +73,7 @@ export function ChatHistory({ messages, messageMetadata, isGenerating = false }:
                 </p>
                 <p className={`text-xs mt-1 ${
                   message.role === 'user' ? 'text-muted-foreground' : 'text-muted-foreground'
-                }`}>
+                }`} suppressHydrationWarning>
                   {new Date(message.createdAt || Date.now()).toLocaleTimeString([], { 
                     hour: '2-digit', 
                     minute: '2-digit' 

@@ -3,6 +3,10 @@ import { redirect } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { CampaignSendClient } from './CampaignSendClient';
 
+// 🔥 CRITICAL: Disable Next.js caching for dynamic campaign data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface SendPageProps {
   params: Promise<{
     id: string;
