@@ -103,30 +103,56 @@ export function CampaignSendClient({ campaign, lists, sender: initialSender }: C
       return;
     }
 
+    if (!sender?.id) {
+      toast.error('No sender address configured');
+      return;
+    }
+
     setIsSending(true);
     try {
-      // Update campaign with final details
+      // Update campaign with final details first
       const supabase = createClient();
       const { error: updateError } = await supabase
         .from('campaigns_v3')
         .update({
           subject_line: subjectLine,
           preview_text: previewText,
-          status: 'ready',
         })
         .eq('id', campaign.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Failed to update campaign:', updateError);
+        throw new Error('Failed to update campaign details');
+      }
 
-      // TODO: Send campaign to selected lists
-      // This will be implemented with background job queue
+      // Send campaign via API
+      const response = await fetch(`/api/v3/campaigns/${campaign.id}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          senderName,
+          senderAddressId: sender.id,
+          listIds: selectedLists,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to send campaign');
+      }
+
+      // Success!
+      toast.success(`🎉 Campaign sent to ${result.data.recipientCount} contacts!`);
       
-      toast.success(`Campaign ready to send to ${totalContacts} contacts!`);
-      router.push(`/dashboard/campaigns/${campaign.id}/preview`);
+      // Show success message for a moment, then redirect
+      setTimeout(() => {
+        router.push(`/dashboard/campaigns/${campaign.id}/preview`);
+      }, 1500);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to send campaign:', error);
-      toast.error('Failed to send campaign');
+      toast.error(error.message || 'Failed to send campaign');
     } finally {
       setIsSending(false);
     }

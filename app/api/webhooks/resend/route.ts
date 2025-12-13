@@ -118,26 +118,8 @@ export async function POST(request: Request) {
       throw updateError;
     }
 
-    // Update campaign stats
-    const { data: campaignEmails } = await supabase
-      .from('emails')
-      .select('status')
-      .eq('campaign_id', email.campaign_id);
-
-    if (campaignEmails) {
-      const stats = {
-        sent: campaignEmails.filter(e => ['sent', 'delivered', 'opened', 'clicked'].includes(e.status)).length,
-        delivered: campaignEmails.filter(e => ['delivered', 'opened', 'clicked'].includes(e.status)).length,
-        opened: campaignEmails.filter(e => ['opened', 'clicked'].includes(e.status)).length,
-        clicked: campaignEmails.filter(e => e.status === 'clicked').length,
-        bounced: campaignEmails.filter(e => e.status === 'bounced').length,
-      };
-
-      await supabase
-        .from('campaigns')
-        .update({ stats })
-        .eq('id', email.campaign_id);
-    }
+    // Update campaign stats using the database function
+    await supabase.rpc('update_campaign_stats', { campaign_uuid: email.campaign_id });
 
     console.log('✅ [WEBHOOK] Processed event:', eventType, 'for email:', email.id);
 
