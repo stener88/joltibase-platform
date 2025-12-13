@@ -22,6 +22,7 @@ interface LivePreviewProps {
   isExitingVisualMode?: boolean;
   onIframeReady?: (syncFn: (id: string | null) => void) => void;
   isToolbarLoading?: boolean; // When true, hide big overlay (toolbar has its own inline loading)
+  previewMode?: 'desktop' | 'mobile'; // Preview width mode
 }
 
 export interface DirectUpdate {
@@ -106,6 +107,7 @@ export function LivePreview({
   isExitingVisualMode = false,
   onIframeReady,
   isToolbarLoading = false,
+  previewMode = 'desktop',
 }: LivePreviewProps) {
   // Local iframe ref (not passed from parent)
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -957,7 +959,7 @@ export function LivePreview({
   }, [handleMessage]);
 
   return (
-    <div className="relative h-full w-full bg-background rounded-xl overflow-hidden">
+    <div className="relative h-full w-full bg-background rounded-xl overflow-hidden flex items-center justify-center">
       {/* Loading Overlay (AI generation, rendering, saving, or visual mode transitions) */}
       {/* Hide when toolbar is loading - it has its own inline indicator */}
       {((isGenerating && !isToolbarLoading) || isRendering || isSaving || isEnteringVisualMode || isExitingVisualMode) && (
@@ -985,16 +987,24 @@ export function LivePreview({
         </div>
       )}
 
-      {/* Email Preview */}
-      <iframe
-        ref={iframeRef}
-        srcDoc={previewHtml || placeholderHtml}
-        className="w-full h-full border-0 rounded-xl"
-        sandbox="allow-scripts allow-same-origin"
-        tabIndex={-1}
-        title="Email Preview"
-        onLoad={handleIframeLoad}
-      />
+      {/* Email Preview Container - responsive width based on preview mode */}
+      <div 
+        className="h-full transition-all duration-300 ease-in-out"
+        style={{ 
+          width: previewMode === 'mobile' ? '375px' : '100%',
+          maxWidth: previewMode === 'mobile' ? '375px' : 'none'
+        }}
+      >
+        <iframe
+          ref={iframeRef}
+          srcDoc={previewHtml || placeholderHtml}
+          className="w-full h-full border-0 rounded-xl"
+          sandbox="allow-scripts allow-same-origin"
+          tabIndex={-1}
+          title="Email Preview"
+          onLoad={handleIframeLoad}
+        />
+      </div>
 
     </div>
   );

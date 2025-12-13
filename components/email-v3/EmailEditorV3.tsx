@@ -9,7 +9,7 @@ import { LivePreview } from './LivePreview';
 import { PropertiesPanel } from './PropertiesPanel';
 import { ChatHistory } from './ChatHistory';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Save, X, Sparkles } from 'lucide-react';
+import { Save, X, Sparkles, Monitor, Smartphone, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { updateComponentText, updateInlineStyle, updateImageSrc } from '@/lib/email-v3/tsx-manipulator';
 import { parseAndInjectIds, findParentComponent, type ComponentMap } from '@/lib/email-v3/tsx-parser';
@@ -105,6 +105,9 @@ export function EmailEditorV3({
     type: 'idle' | 'loading' | 'error' | 'success';
     message?: string;
   }>({ type: 'idle' });
+  
+  // Preview mode state: 'desktop' or 'mobile'
+  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
 
   // ========================================
   // ✅ ARCHITECTURE: Single tsxCode state (no undo/redo)
@@ -599,6 +602,9 @@ export function EmailEditorV3({
       // Update saved state to reflect successful save
       setSavedTsxCode(updatedCode);
       
+      // Invalidate Next.js cache to ensure send page loads fresh data
+      router.refresh();
+      
       console.log('✅ Visual edits saved to database');
     } catch (error: any) {
       console.error('Failed to save visual edits:', error);
@@ -655,6 +661,9 @@ export function EmailEditorV3({
       // Update saved state to reflect successful save
       setSavedTsxCode(tsxCode);
       
+      // Invalidate Next.js cache for fresh data on navigation
+      router.refresh();
+      
       console.log('✅ Campaign saved successfully');
     } catch (error: any) {
       console.error('Failed to save:', error);
@@ -673,9 +682,68 @@ export function EmailEditorV3({
     }
   }, [savedTsxCode]);
 
-  // Editor controls for header (empty - save/discard only via visual mode exit)
+  // Handle Next button click
+  const handleNextClick = useCallback(() => {
+    // If in visual mode with unsaved changes, show save prompt
+    if (mode === 'visual' && hasVisualEdits) {
+      setShowExitConfirm(true);
+      return;
+    }
+    
+    // If in visual mode but changes are saved, exit visual mode first
+    if (mode === 'visual') {
+      setMode('chat');
+      setSelectedComponentId(null);
+    }
+    
+    // Navigate to send page
+    router.push(`/dashboard/campaigns/${campaignId}/send`);
+  }, [mode, hasVisualEdits, campaignId, router]);
+
+  // Editor controls for header
   const editorControls = {
-    editorActions: null,
+    editorActions: (
+      <div className="flex items-center gap-3">
+        {/* Preview Mode Toggle */}
+        <div className="flex items-center bg-muted rounded-md p-0.5 gap-0.5">
+          <button
+            onClick={() => setPreviewMode('desktop')}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-medium transition-colors ${
+              previewMode === 'desktop'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            title="Desktop Preview"
+          >
+            <Monitor className="w-3.5 h-3.5" />
+            <span>Desktop</span>
+          </button>
+          <button
+            onClick={() => setPreviewMode('mobile')}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-medium transition-colors ${
+              previewMode === 'mobile'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            title="Mobile Preview"
+          >
+            <Smartphone className="w-3.5 h-3.5" />
+            <span>Mobile</span>
+          </button>
+        </div>
+
+        {/* Next Button - disabled in visual edit mode */}
+        <Button
+          onClick={handleNextClick}
+          disabled={mode === 'visual'}
+          className="flex items-center gap-1.5 h-8 px-3 text-xs font-semibold"
+          title={mode === 'visual' ? 'Exit visual mode before continuing' : undefined}
+        >
+          Next
+          <ChevronRight className="w-3.5 h-3.5" />
+        </Button>
+      </div>
+    ),
   };
 
   return (
@@ -856,6 +924,7 @@ export function EmailEditorV3({
                   isExitingVisualMode={isExitingVisualMode}
                   onIframeReady={handleIframeReady}
                   isToolbarLoading={toolbarStatus.type === 'loading'}
+                  previewMode={previewMode}
                 />
               </div>
             }

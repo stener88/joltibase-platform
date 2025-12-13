@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { sendEmail, replaceMergeTags, htmlToPlainText } from './sender';
+import { getDefaultSender } from './sender-address';
 
 interface QueueEmailParams {
   campaignId: string;
@@ -52,6 +53,17 @@ export async function processCampaignQueue(campaignId: string) {
 
     if (campaignError) throw campaignError;
 
+    // Get user's sender address
+    const sender = await getDefaultSender(campaign.user_id);
+    if (!sender) {
+      console.error(`❌ [QUEUE] No sender address found for user ${campaign.user_id}`);
+      throw new Error('No sender address configured');
+    }
+
+    // Get user's email for reply-to
+    const { data: { user } } = await supabase.auth.admin.getUserById(campaign.user_id);
+    const replyToEmail = user?.email || sender.email;
+
     // Get all queued emails for this campaign
     const { data: queuedEmails, error: emailsError } = await supabase
       .from('emails')
@@ -92,14 +104,14 @@ export async function processCampaignQueue(campaignId: string) {
         : htmlToPlainText(htmlContent);
       const subject = replaceMergeTags(campaign.subject_line || '', contact);
 
-      // Send email via Resend
+      // Send email via Resend using sender address
       const result = await sendEmail({
-        from: `${campaign.from_name} <${campaign.from_email}>`,
+        from: `${sender.name} <${sender.email}>`,
         to: contact.email,
         subject,
         html: htmlContent,
         text: plainText,
-        replyTo: campaign.reply_to_email || campaign.from_email,
+        replyTo: replyToEmail,
       });
 
       if (result.success) {

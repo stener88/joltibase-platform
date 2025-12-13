@@ -86,16 +86,10 @@ export function DashboardHeader({ campaignEditor }: DashboardHeaderProps) {
         <nav className="flex items-center gap-2 text-sm min-w-0">
           {breadcrumbs.map((crumb, index) => {
             const isLast = index === breadcrumbs.length - 1;
-            const isUUID = crumb.label === 'Details';
-            
-            // Skip UUID - we'll show it after "Edit"
-            if (isUUID && campaignEditor) {
-              return null;
-            }
             
             return (
               <div key={crumb.href} className="flex items-center gap-2">
-                {isLast || isUUID ? (
+                {isLast ? (
                   <span className="font-medium text-foreground">{crumb.label}</span>
                 ) : (
                   <>

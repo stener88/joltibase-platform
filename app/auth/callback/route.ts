@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { ensureDefaultSender } from '@/lib/email-sending/sender-address'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
@@ -19,6 +20,24 @@ export async function GET(request: Request) {
       }
 
       console.log('✅ Auth successful, user:', data.user?.email)
+      
+      // Create default sender address for new users
+      try {
+        if (data.user) {
+          const fullName = data.user.user_metadata?.full_name || 
+                          data.user.user_metadata?.name ||
+                          null;
+          
+          await ensureDefaultSender(
+            data.user.id,
+            data.user.email!,
+            fullName
+          );
+        }
+      } catch (senderError) {
+        // Log but don't block auth flow
+        console.error('⚠️ [SENDER] Failed to create default sender:', senderError);
+      }
       
       // Check if this is a popup window (OAuth flow)
       // If so, return HTML that closes the popup instead of redirecting

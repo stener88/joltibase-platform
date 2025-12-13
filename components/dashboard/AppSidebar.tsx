@@ -49,7 +49,7 @@ export function AppSidebar() {
   } : null;
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+    <Sidebar collapsible="icon" className="">
       {/* Logo Header */}
       <SidebarHeader className="h-12 border-b border-sidebar-border shrink-0">
         <SidebarMenu>
