@@ -127,14 +127,173 @@ export async function POST(request: Request) {
       console.log(`🎯 [REFINE-SDK] Target component: ${selectedComponentType} (${selectedComponentId})`);
     }
 
-    // Parse componentMap
-    let componentMap;
+    // ✅ Parse componentMap ONCE at the start (used by all tiers)
+    type ComponentMap = Record<string, { startChar: number; endChar: number; type: string }>;
+    let componentMap: ComponentMap | undefined;
     try {
       const parsed = parseAndInjectIds(currentTsxCode);
       componentMap = parsed.componentMap;
+      console.log(`📍 [REFINE-SDK] Parsed ${Object.keys(componentMap).length} components`);
     } catch (error) {
+      console.error('[REFINE-SDK] Failed to parse componentMap:', error);
       componentMap = undefined;
     }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // TIER 1: DETERMINISTIC EDITS (instant, no AI, free)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    // DELETE - Remove component instantly (no AI needed)
+    if (selectedComponentId && componentMap && /^(delete|remove)\s+(this|the|it)/i.test(userMessage)) {
+      const component = componentMap[selectedComponentId];
+      if (component) {
+        console.log(`⚡ [REFINE-SDK] DETERMINISTIC DELETE - No AI needed`);
+        const before = currentTsxCode.substring(0, component.startChar);
+        const after = currentTsxCode.substring(component.endChar);
+        const newCode = before + after;
+        
+        return Response.json({
+          success: true,
+          intent: 'command',
+          tsxCode: newCode,
+          changes: [{
+            type: 'delete',
+            componentType: selectedComponentType || 'Component',
+            description: `Deleted ${selectedComponentType || 'component'}`,
+          }],
+          message: `Deleted the ${selectedComponentType || 'component'}.`,
+        });
+      }
+    }
+
+    // DUPLICATE - Copy component instantly (no AI needed)
+    if (selectedComponentId && componentMap && /^duplicate\s+(this|the|it)/i.test(userMessage)) {
+      const component = componentMap[selectedComponentId];
+      if (component) {
+        console.log(`⚡ [REFINE-SDK] DETERMINISTIC DUPLICATE - No AI needed`);
+        const componentCode = currentTsxCode.substring(component.startChar, component.endChar);
+        const before = currentTsxCode.substring(0, component.endChar);
+        const after = currentTsxCode.substring(component.endChar);
+        const newCode = before + '\n' + componentCode + after;
+        
+        return Response.json({
+          success: true,
+          intent: 'command',
+          tsxCode: newCode,
+          changes: [{
+            type: 'duplicate',
+            componentType: selectedComponentType || 'Component',
+            description: `Duplicated ${selectedComponentType || 'component'}`,
+          }],
+          message: `Duplicated the ${selectedComponentType || 'component'}.`,
+        });
+      }
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // TIER 2: COMPONENT-SCOPED AI (fast, cheap)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    // Check if it's COMPLEX first (needs full context)
+    const isComplexEdit = 
+      /add|insert|create|new|another|below|above|before|after/i.test(userMessage) ||
+      /section|layout|structure|grid|multi|several|multiple/i.test(userMessage) ||
+      /move.*to|rearrange|reorder|swap|switch/i.test(userMessage);
+
+    // Default to component-scoped if component selected and NOT complex
+    const isSimpleEdit = selectedComponentId && componentMap && !isComplexEdit;
+
+    if (isSimpleEdit && componentMap) {
+      const component = componentMap[selectedComponentId];
+      if (component) {
+        console.log(`⚡ [REFINE-SDK] COMPONENT-SCOPED EDIT - Sending only ${selectedComponentType}`);
+        
+        try {
+          const componentCode = currentTsxCode.substring(component.startChar, component.endChar);
+          
+          const scopedPrompt = `Edit this ${selectedComponentType} component:
+
+\`\`\`tsx
+${componentCode}
+\`\`\`
+
+User request: "${userMessage}"
+
+${brandSettings ? `Brand color: ${brandSettings.primaryColor}\n` : ''}
+Return ONLY the modified component code (same structure, just the changes requested).`;
+
+          const aiResult = await generateText({
+            model: google(AI_MODEL),
+            system: EXECUTION_PROMPT,
+            prompt: scopedPrompt,
+            temperature: GENERATION_TEMPERATURE,
+          });
+
+          const { text, usage } = aiResult;
+          const codeMatch = text.match(/```(?:tsx|typescript)?\n([\s\S]*?)\n```/);
+          let newComponentCode = codeMatch ? codeMatch[1].trim() : text.trim();
+          
+          // Replace component in full TSX
+          const before = currentTsxCode.substring(0, component.startChar);
+          const after = currentTsxCode.substring(component.endChar);
+          let finalCode = before + newComponentCode + after;
+          
+          // ✅ Handle missing imports
+          const usedComponents = newComponentCode.match(/<([A-Z][a-zA-Z]*)/g)
+            ?.map(m => m.substring(1)) || [];
+          const imports = finalCode.match(/import\s*{([^}]+)}\s*from\s*['"]@react-email\/components['"]/)?.[1] || '';
+          const importedComponents = imports.split(',').map(c => c.trim());
+          const missingImports = usedComponents.filter(c => !importedComponents.includes(c));
+          
+          if (missingImports.length > 0) {
+            console.log(`📦 [REFINE-SDK] Adding missing imports: ${missingImports.join(', ')}`);
+            finalCode = finalCode.replace(
+              /import\s*{([^}]+)}\s*from\s*['"]@react-email\/components['"]/,
+              `import { $1, ${missingImports.join(', ')} } from '@react-email/components'`
+            );
+          }
+          
+          console.log(`💰 [REFINE-SDK] Component-scoped: ${usage?.totalTokens || 'unknown'} tokens (saved ~${3750 - (usage?.totalTokens || 0)} tokens vs full context)`);
+          
+          // Validate result
+          const processResult = processCodeChanges({
+            oldCode: currentTsxCode,
+            newCode: finalCode,
+            userMessage,
+          });
+          
+          // ✅ Check if it worked - fallback if not
+          if (processResult.valid && processResult.changes.length > 0) {
+            console.log(`✅ [REFINE-SDK] Component-scoped edit succeeded`);
+            return Response.json({
+              success: true,
+              intent: 'command',
+              tsxCode: finalCode,
+              changes: processResult.changes,
+              validation: {
+                valid: processResult.valid,
+                errors: processResult.errors,
+                warnings: processResult.warnings,
+              },
+              message: processResult.conversationalResponse,
+            });
+          }
+          
+          // ⚠️ Component-scoped failed - fall through to full context
+          console.log(`⚠️ [REFINE-SDK] Component-scoped edit failed validation or no changes detected - trying full context fallback`);
+          
+        } catch (error) {
+          console.error(`❌ [REFINE-SDK] Component-scoped error:`, error);
+          // Fall through to full context
+        }
+      }
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // TIER 3: FULL CONTEXT (slow, fallback for complex/failed edits)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    console.log(`🔄 [REFINE-SDK] FULL CONTEXT EDIT - Sending entire email`);
 
     // Detect intent using existing classifier
     const detectedIntent = detectIntent(userMessage);
