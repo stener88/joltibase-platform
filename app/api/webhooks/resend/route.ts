@@ -7,6 +7,18 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
+    // Verify webhook signature (optional but recommended)
+    // Resend uses Svix for webhook signatures
+    const signature = request.headers.get('svix-signature');
+    const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
+
+    // If webhook secret is configured, verify signature
+    if (webhookSecret && signature) {
+      // For production: implement full Svix signature verification
+      // For now, we'll log it
+      console.log('🔐 [WEBHOOK] Signature present:', signature ? 'yes' : 'no');
+    }
+
     const payload = await request.json();
     
     console.log('📥 [WEBHOOK] Received Resend event:', payload.type);

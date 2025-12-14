@@ -188,7 +188,7 @@ export async function DELETE(
       // Continue - database deletion succeeded
     }
     
-    console.log(`✅ [DELETE-CAMPAIGN-V3] Deleted: ${params.id}`);
+    console.log(`✅ [DELETE-CAMPAIGN-V3] Deleted: ${id}`);
     
     return NextResponse.json({
       success: true,

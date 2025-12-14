@@ -379,3 +379,4 @@ export function CampaignSendClient({ campaign, lists, sender: initialSender }: C
     </div>
   );
 }
+

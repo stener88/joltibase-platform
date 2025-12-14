@@ -249,3 +249,4 @@ Before moving to Step 3:
 ---
 
 Ready to implement **Step 3: Actual Email Sending** when you are! 🚀
+

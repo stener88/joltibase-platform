@@ -14,3 +14,4 @@ BEGIN
   WHERE id = list_uuid;
 END;
 $$ LANGUAGE plpgsql;
+

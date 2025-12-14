@@ -76,3 +76,4 @@ export default async function CampaignSendPage({ params }: SendPageProps) {
     </DashboardLayout>
   );
 }
+

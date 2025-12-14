@@ -112,3 +112,4 @@ Later, users can add custom domains for better deliverability:
 **Reply-to not working?**
 - Check user email exists in `auth.users`
 - Verify `replyTo` field in `sendEmail()` call
+

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { sendEmail, replaceMergeTags, htmlToPlainText } from '@/lib/email-sending/sender';
 
 // ============================================
-// POST /api/v3/campaigns/[id]/process-queue
+// POST /api/v3/campaigns/[id]/processQueue
 // Process queued emails for a V3 campaign
 // ============================================
 
@@ -46,9 +46,8 @@ export async function POST(
       );
     }
 
-    // Get user's email for reply-to
-    const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(campaign.user_id);
-    const replyToEmail = user?.email || sender.email;
+    // Use sender's email for reply-to
+    const replyToEmail = sender.email;
 
     // Get all queued emails for this campaign (batch of 100 to avoid timeouts)
     const { data: queuedEmails, error: emailsError } = await supabase
@@ -114,12 +113,11 @@ export async function POST(
         const subject = replaceMergeTags(campaign.subject_line || '', contact);
 
         // Add unsubscribe link to content
-        // TODO: Implement proper unsubscribe link
         const unsubscribeLink = `${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe/${contact.id}`;
         const htmlWithUnsubscribe = htmlContent.replace(
           '</body>',
           `<div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
-            <a href="${unsubscribeLink}" style="color: #666;">Unsubscribe</a>
+            <a href="${unsubscribeLink}" style="color: #666; text-decoration: underline;">Unsubscribe</a>
           </div></body>`
         );
 
@@ -213,6 +211,18 @@ export async function POST(
 
   } catch (error: any) {
     console.error('❌ [QUEUE-V3] Error processing queue:', error);
+    
+    // Reset campaign status on critical error
+    try {
+      const supabase = await createClient();
+      await supabase
+        .from('campaigns_v3')
+        .update({ status: 'ready' })
+        .eq('id', (await params).id);
+    } catch (resetError) {
+      console.error('❌ [QUEUE-V3] Failed to reset campaign status:', resetError);
+    }
+    
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
@@ -221,7 +231,7 @@ export async function POST(
 }
 
 // ============================================
-// GET /api/v3/campaigns/[id]/process-queue
+// GET /api/v3/campaigns/[id]/processQueue
 // Check queue status
 // ============================================
 

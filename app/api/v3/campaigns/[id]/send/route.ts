@@ -175,7 +175,7 @@ export async function POST(
     // For now, we'll call the processor directly
     // In production, this would be a background job/queue system
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/v3/campaigns/${campaignId}/process-queue`, {
+      await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/v3/campaigns/${campaignId}/processQueue`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -195,6 +195,18 @@ export async function POST(
 
   } catch (error: any) {
     console.error('❌ [SEND-V3] Error:', error);
+    
+    // Reset campaign status on error
+    try {
+      const supabase = await createClient();
+      await supabase
+        .from('campaigns_v3')
+        .update({ status: 'ready' })
+        .eq('id', (await params).id);
+    } catch (resetError) {
+      console.error('❌ [SEND-V3] Failed to reset campaign status:', resetError);
+    }
+    
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to send campaign' },
       { status: 500 }
