@@ -189,3 +189,4 @@ Your fix is working if:
 1. Regenerate your current campaign to fix icons
 2. Test with a new campaign to verify
 3. Deploy to production with correct `NEXT_PUBLIC_APP_URL`
+

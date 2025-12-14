@@ -38,3 +38,4 @@ WHERE routine_name = 'update_list_contact_count';
 -- Expected output:
 -- routine_name              | routine_type | data_type
 -- update_list_contact_count | FUNCTION     | void
+

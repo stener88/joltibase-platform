@@ -118,9 +118,14 @@ export async function renderEmail(
   } catch (error: any) {
     console.error('❌ [V3-RENDERER] Render error:', error);
     
+    // Enhanced error message for users
+    const userFriendlyError = error.message.includes('Unexpected closing')
+      ? 'Your last change caused a structure error. The component may have mismatched tags. Please try undoing the last change or regenerating the email.'
+      : error.message;
+    
     return {
       html: generateFallbackEmail(filename, error),
-      error: error.message,
+      error: userFriendlyError,
     };
   }
 }
@@ -205,11 +210,16 @@ export async function renderTsxWithIds(
   } catch (error: any) {
     console.error('❌ [V3-RENDERER] Render error:', error);
     
+    // Enhanced error message for users
+    const userFriendlyError = error.message.includes('Unexpected closing')
+      ? 'Your last change caused a structure error. The component may have mismatched tags. Please try undoing the last change or regenerating the email.'
+      : error.message;
+    
     return {
       html: generateFallbackEmail('TSX Code', error),
       componentMap: {},
       modifiedTsx: tsxCode,
-      error: error.message,
+      error: userFriendlyError,
     };
   }
 }

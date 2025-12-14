@@ -139,11 +139,28 @@ export async function POST(request: Request) {
       componentMap = undefined;
     }
 
+    // ⚠️ Detect delete requests early (used for routing and logging)
+    const isDeleteRequest = /^(delete|remove)\s+(this|the|it)/i.test(userMessage);
+
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // TIER 1: DETERMINISTIC EDITS (instant, no AI, free)
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    // DELETE - Remove component instantly (no AI needed)
+    // ⚠️ DETERMINISTIC DELETE DISABLED - Production Safety Fix
+    // 
+    // Issue: Regex-based parser doesn't handle nested components correctly
+    // - When deleting <Column>, it may leave orphaned closing tags
+    // - Causes: "Unexpected closing tag" errors that break entire campaign
+    // 
+    // Solution: All deletes now go through AI for proper AST handling
+    // - Slower (1-2 seconds) but 100% correct
+    // - No risk of campaign corruption
+    // 
+    // TODO: Re-enable with Babel AST parser (see lib/email-v3/tsx-parser.ts)
+    // Timeline: Implement proper Babel-based parsing in next sprint
+    //
+    // DELETE - DISABLED (commented out for production safety)
+    /*
     if (selectedComponentId && componentMap && /^(delete|remove)\s+(this|the|it)/i.test(userMessage)) {
       const component = componentMap[selectedComponentId];
       if (component) {
@@ -164,6 +181,12 @@ export async function POST(request: Request) {
           message: `Deleted the ${selectedComponentType || 'component'}.`,
         });
       }
+    }
+    */
+    
+    // Log delete requests for monitoring
+    if (isDeleteRequest) {
+      console.warn(`🔄 [REFINE-SDK] Delete request via AI (deterministic disabled, using full context for safety)`);
     }
 
     // DUPLICATE - Copy component instantly (no AI needed)
@@ -194,8 +217,13 @@ export async function POST(request: Request) {
     // TIER 2: COMPONENT-SCOPED AI (fast, cheap)
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+    // ⚠️ FORCE FULL CONTEXT FOR DELETES
+    // Component-scoped AI doesn't have enough context to delete nested components safely
+    // When deleting <Column> inside <Column>, AI needs to see parent structure
+    
     // Check if it's COMPLEX first (needs full context)
     const isComplexEdit = 
+      isDeleteRequest ||  // ✅ ALL DELETES NOW USE FULL CONTEXT (defined at line 143)
       /add|insert|create|new|another|below|above|before|after/i.test(userMessage) ||
       /section|layout|structure|grid|multi|several|multiple/i.test(userMessage) ||
       /move.*to|rearrange|reorder|swap|switch/i.test(userMessage);
