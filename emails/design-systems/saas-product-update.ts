@@ -534,7 +534,7 @@ Footer Legal
         <Column className="px-2">
           <Link href="[TWITTER_URL]">
             <Img
-              src="https://cdn.simpleicons.org/x/1DA1F2"
+              src="[APP_URL]/email-assets/icons/twitter.png"
               width="24"
               height="24"
               alt="Twitter"
@@ -545,7 +545,7 @@ Footer Legal
         <Column className="px-2">
           <Link href="[FACEBOOK_URL]">
             <Img
-              src="https://cdn.simpleicons.org/facebook/1877F2"
+              src="[APP_URL]/email-assets/icons/facebook.png"
               width="24"
               height="24"
               alt="Facebook"
@@ -556,7 +556,7 @@ Footer Legal
         <Column className="px-2">
           <Link href="[INSTAGRAM_URL]">
             <Img
-              src="https://cdn.simpleicons.org/instagram/E4405F"
+              src="[APP_URL]/email-assets/icons/instagram.png"
               width="24"
               height="24"
               alt="Instagram"
@@ -595,26 +595,30 @@ Footer Legal
 - Footer link URLs (3-5 resources)
 
 **Social Icon Details**:
-- **Size**: 24px × 24px (optimal for email footers - must be specified in BOTH width/height attributes AND inline style)
-- **CDN URLs** (production-ready, from Simple Icons CDN):
+- **Format**: PNG (48x48 actual, displayed at 24x24 for retina)
+- **Hosted**: Self-hosted on your domain for maximum compatibility
+- **URLs**: [APP_URL]/email-assets/icons/{platform}.png
 \`\`\`
 Standard footer icons (most compatible):
-Twitter/X: https://cdn.simpleicons.org/x/1DA1F2
-Facebook: https://cdn.simpleicons.org/facebook/1877F2
-Instagram: https://cdn.simpleicons.org/instagram/E4405F
+Twitter/X: [APP_URL]/email-assets/icons/twitter.png
+Facebook: [APP_URL]/email-assets/icons/facebook.png
+Instagram: [APP_URL]/email-assets/icons/instagram.png
+LinkedIn: [APP_URL]/email-assets/icons/linkedin.png
+TikTok: [APP_URL]/email-assets/icons/tiktok.png
 
-Additional platforms (use if relevant):
-YouTube: https://cdn.simpleicons.org/youtube/FF0000
-GitHub: https://cdn.simpleicons.org/github/181717
-Discord: https://cdn.simpleicons.org/discord/5865F2
-TikTok: https://cdn.simpleicons.org/tiktok/000000
+Additional platforms (add as needed):
+YouTube: [APP_URL]/email-assets/icons/youtube.png
+GitHub: [APP_URL]/email-assets/icons/github.png
+Discord: [APP_URL]/email-assets/icons/discord.png
 \`\`\`
 
-**Why Simple Icons CDN?**
-- ✅ Free, reliable (Cloudflare CDN)
-- ✅ Works in all email clients
-- ✅ 2000+ brand icons available
-- ✅ Color customizable via URL
+**IMPORTANT**: Use [APP_URL] placeholder - it will be replaced with actual domain at runtime
+
+**Why Self-Hosted PNG?**
+- ✅ Works in ALL email clients (Gmail, Outlook, Apple Mail)
+- ✅ Gmail trusts your domain (blocks external CDNs)
+- ✅ Full control and reliability
+- ✅ PNG format (SVG doesn't work in Outlook)
 - ✅ No API key required
 
 **NEVER use these broken placeholder URLs**:

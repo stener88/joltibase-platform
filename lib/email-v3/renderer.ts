@@ -90,17 +90,22 @@ export async function renderEmail(
         throw new Error('Rendered HTML too short (likely error in component)');
       }
       
-      console.log(`✅ [V3-RENDERER] Rendered successfully (${html.length} bytes)`);
+      // Replace [APP_URL] placeholder with actual base URL
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const finalHtml = html.replace(/\[APP_URL\]/g, baseUrl);
+      
+      console.log(`✅ [V3-RENDERER] Rendered successfully (${finalHtml.length} bytes)`);
       
       // Optionally render plain text
       let plainText: string | undefined;
       if (options.plainText) {
-        plainText = await render(React.createElement(Component, componentProps), { plainText: true });
+        const plainTextRaw = await render(React.createElement(Component, componentProps), { plainText: true });
+        plainText = plainTextRaw.replace(/\[APP_URL\]/g, baseUrl);
         console.log(`✅ [V3-RENDERER] Plain text rendered (${plainText.length} bytes)`);
       }
       
       return {
-        html,
+        html: finalHtml,
         plainText,
       };
     } catch (importError) {
@@ -179,10 +184,14 @@ export async function renderTsxWithIds(
         throw new Error('Rendered HTML too short (likely error in component)');
       }
       
-      console.log(`✅ [V3-RENDERER] Rendered successfully (${html.length} bytes)`);
+      // Replace [APP_URL] placeholder with actual base URL
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const finalHtml = html.replace(/\[APP_URL\]/g, baseUrl);
+      
+      console.log(`✅ [V3-RENDERER] Rendered successfully (${finalHtml.length} bytes)`);
       
       return {
-        html,
+        html: finalHtml,
         componentMap,
         modifiedTsx,
       };

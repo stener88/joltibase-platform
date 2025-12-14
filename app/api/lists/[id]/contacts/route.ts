@@ -79,7 +79,25 @@ export async function POST(
     }
 
     // Update list contact count
-    await supabase.rpc('update_list_contact_count', { list_uuid: listId });
+    const { error: rpcError } = await supabase.rpc('update_list_contact_count', { list_uuid: listId });
+    
+    if (rpcError) {
+      console.warn('⚠️ RPC update_list_contact_count failed, using fallback:', rpcError);
+      
+      // Fallback: Manually update contact_count if RPC fails
+      const { count } = await supabase
+        .from('contact_lists')
+        .select('*', { count: 'exact', head: true })
+        .eq('list_id', listId);
+      
+      await supabase
+        .from('lists')
+        .update({ 
+          contact_count: count || 0,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', listId);
+    }
 
     return NextResponse.json({
       success: true,
@@ -158,7 +176,25 @@ export async function DELETE(
     }
 
     // Update list contact count
-    await supabase.rpc('update_list_contact_count', { list_uuid: listId });
+    const { error: rpcError } = await supabase.rpc('update_list_contact_count', { list_uuid: listId });
+    
+    if (rpcError) {
+      console.warn('⚠️ RPC update_list_contact_count failed, using fallback:', rpcError);
+      
+      // Fallback: Manually update contact_count if RPC fails
+      const { count } = await supabase
+        .from('contact_lists')
+        .select('*', { count: 'exact', head: true })
+        .eq('list_id', listId);
+      
+      await supabase
+        .from('lists')
+        .update({ 
+          contact_count: count || 0,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', listId);
+    }
 
     return NextResponse.json({
       success: true,

@@ -1,17 +1,17 @@
 /**
  * Centralized Social Media Icons Configuration
  * 
- * Uses Simple Icons CDN for reliable, fast delivery
- * Default size: 24px × 24px (optimal for email footers)
+ * Uses self-hosted PNG icons for maximum email client compatibility
+ * Default size: 32x32 PNG (displayed at 24x24 for retina)
  * 
- * Why Simple Icons CDN?
- * - Free and reliable (Cloudflare CDN)
- * - 2000+ brand icons available
- * - Color customizable via URL parameter
- * - Works in all email clients
- * - No API key required
+ * Why PNG instead of SVG?
+ * - Works in ALL email clients (Gmail, Outlook, Apple Mail, Yahoo)
+ * - SVG has poor support (Outlook strips it entirely)
+ * - PNG is the industry standard for email icons
  * 
- * @see https://simpleicons.org
+ * Icons hosted at: /public/email-assets/icons/
+ * URLs: Use [APP_URL] placeholder in templates, gets replaced at runtime
+ * Example: [APP_URL]/email-assets/icons/twitter.png → http://localhost:3000/email-assets/icons/twitter.png
  */
 
 export interface SocialIcon {
@@ -22,155 +22,151 @@ export interface SocialIcon {
 }
 
 /**
- * Standard social media icons with brand colors
- * Format: https://cdn.simpleicons.org/{slug}/{color}
+ * Get base URL for email assets
+ * Uses NEXT_PUBLIC_APP_URL in production, localhost in development
+ */
+function getBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+}
+
+/**
+ * Standard social media icons - PNG hosted on your domain
+ * Icons are 48x48 PNG displayed at 24x24 for retina displays
  */
 export const SOCIAL_ICONS: Record<string, SocialIcon> = {
   twitter: {
     name: 'Twitter/X',
-    url: 'https://cdn.simpleicons.org/x/1DA1F2',
+    url: `${getBaseUrl()}/email-assets/icons/twitter.png`,
     color: '1DA1F2',
     alt: 'Twitter'
   },
   linkedin: {
     name: 'LinkedIn',
-    url: 'https://cdn.simpleicons.org/linkedin/0A66C2',
+    url: `${getBaseUrl()}/email-assets/icons/linkedin.png`,
     color: '0A66C2',
     alt: 'LinkedIn'
   },
   facebook: {
     name: 'Facebook',
-    url: 'https://cdn.simpleicons.org/facebook/1877F2',
+    url: `${getBaseUrl()}/email-assets/icons/facebook.png`,
     color: '1877F2',
     alt: 'Facebook'
   },
   instagram: {
     name: 'Instagram',
-    url: 'https://cdn.simpleicons.org/instagram/E4405F',
+    url: `${getBaseUrl()}/email-assets/icons/instagram.png`,
     color: 'E4405F',
     alt: 'Instagram'
   },
+  tiktok: {
+    name: 'TikTok',
+    url: `${getBaseUrl()}/email-assets/icons/tiktok.png`,
+    color: '000000',
+    alt: 'TikTok'
+  },
   youtube: {
     name: 'YouTube',
-    url: 'https://cdn.simpleicons.org/youtube/FF0000',
+    url: `${getBaseUrl()}/email-assets/icons/youtube.png`,
     color: 'FF0000',
     alt: 'YouTube'
   },
   github: {
     name: 'GitHub',
-    url: 'https://cdn.simpleicons.org/github/181717',
+    url: `${getBaseUrl()}/email-assets/icons/github.png`,
     color: '181717',
     alt: 'GitHub'
   },
-  tiktok: {
-    name: 'TikTok',
-    url: 'https://cdn.simpleicons.org/tiktok/000000',
-    color: '000000',
-    alt: 'TikTok'
-  },
   discord: {
     name: 'Discord',
-    url: 'https://cdn.simpleicons.org/discord/5865F2',
+    url: `${getBaseUrl()}/email-assets/icons/discord.png`,
     color: '5865F2',
     alt: 'Discord'
   },
   slack: {
     name: 'Slack',
-    url: 'https://cdn.simpleicons.org/slack/4A154B',
+    url: `${getBaseUrl()}/email-assets/icons/slack.png`,
     color: '4A154B',
     alt: 'Slack'
   },
   reddit: {
     name: 'Reddit',
-    url: 'https://cdn.simpleicons.org/reddit/FF4500',
+    url: `${getBaseUrl()}/email-assets/icons/reddit.png`,
     color: 'FF4500',
     alt: 'Reddit'
   },
   pinterest: {
     name: 'Pinterest',
-    url: 'https://cdn.simpleicons.org/pinterest/E60023',
+    url: `${getBaseUrl()}/email-assets/icons/pinterest.png`,
     color: 'E60023',
     alt: 'Pinterest'
   },
   whatsapp: {
     name: 'WhatsApp',
-    url: 'https://cdn.simpleicons.org/whatsapp/25D366',
+    url: `${getBaseUrl()}/email-assets/icons/whatsapp.png`,
     color: '25D366',
     alt: 'WhatsApp'
   },
   telegram: {
     name: 'Telegram',
-    url: 'https://cdn.simpleicons.org/telegram/26A5E4',
+    url: `${getBaseUrl()}/email-assets/icons/telegram.png`,
     color: '26A5E4',
     alt: 'Telegram'
   },
   medium: {
     name: 'Medium',
-    url: 'https://cdn.simpleicons.org/medium/000000',
+    url: `${getBaseUrl()}/email-assets/icons/medium.png`,
     color: '000000',
     alt: 'Medium'
   },
   substack: {
     name: 'Substack',
-    url: 'https://cdn.simpleicons.org/substack/FF6719',
+    url: `${getBaseUrl()}/email-assets/icons/substack.png`,
     color: 'FF6719',
     alt: 'Substack'
   }
 };
 
 /**
- * Get icon URL with custom color
+ * Get icon URL with optional custom path
  * @param platform - Social media platform key
- * @param color - Hex color (without #), defaults to platform's brand color
- * @returns Full CDN URL with color
+ * @param customPath - Optional custom path (for white/gray variants)
+ * @returns Full URL to icon PNG
  */
-export function getIconUrl(platform: keyof typeof SOCIAL_ICONS, color?: string): string {
+export function getIconUrl(platform: keyof typeof SOCIAL_ICONS, customPath?: string): string {
   const icon = SOCIAL_ICONS[platform];
   if (!icon) {
     throw new Error(`Unknown social platform: ${platform}`);
   }
-  const iconColor = color || icon.color;
-  // Platform slug might differ from key (e.g., 'twitter' -> 'x')
-  const slug = platform === 'twitter' ? 'x' : platform;
-  return `https://cdn.simpleicons.org/${slug}/${iconColor}`;
+  if (customPath) {
+    return `${getBaseUrl()}${customPath}`;
+  }
+  return icon.url;
 }
 
 /**
- * Get grayscale version of icon (useful for minimal footers)
+ * Get grayscale version of icon (if you create gray variants)
  * @param platform - Social media platform key
- * @returns CDN URL with gray color
+ * @returns URL with -gray suffix
  */
 export function getGrayscaleIconUrl(platform: keyof typeof SOCIAL_ICONS): string {
-  const slug = platform === 'twitter' ? 'x' : platform;
-  return `https://cdn.simpleicons.org/${slug}/666666`;
+  return `${getBaseUrl()}/email-assets/icons/${platform}-gray.png`;
 }
 
 /**
- * Get black version of icon (useful for high-contrast designs)
+ * Get white version of icon (for dark backgrounds)
  * @param platform - Social media platform key
- * @returns CDN URL with black color
- */
-export function getBlackIconUrl(platform: keyof typeof SOCIAL_ICONS): string {
-  const slug = platform === 'twitter' ? 'x' : platform;
-  return `https://cdn.simpleicons.org/${slug}/000000`;
-}
-
-/**
- * Get white version of icon (useful for dark backgrounds)
- * @param platform - Social media platform key
- * @returns CDN URL with white color
+ * @returns URL with -white suffix
  */
 export function getWhiteIconUrl(platform: keyof typeof SOCIAL_ICONS): string {
-  const slug = platform === 'twitter' ? 'x' : platform;
-  return `https://cdn.simpleicons.org/${slug}/FFFFFF`;
+  return `${getBaseUrl()}/email-assets/icons/${platform}-white.png`;
 }
 
 /**
  * List of most common platforms for email footers
- * In order of typical priority for B2B/SaaS companies
- * Note: LinkedIn removed due to rendering issues in some email clients
+ * In order of typical priority
+ * All icons are self-hosted PNG for maximum compatibility
  */
-export const COMMON_FOOTER_PLATFORMS = ['twitter', 'facebook', 'instagram'] as const;
+export const COMMON_FOOTER_PLATFORMS = ['twitter', 'facebook', 'instagram', 'linkedin'] as const;
 
 /**
  * Alternative set for consumer brands
@@ -184,24 +180,29 @@ export const DEVELOPER_FOOTER_PLATFORMS = ['github', 'twitter', 'discord', 'slac
 
 /**
  * Standard TSX pattern for a single social icon
- * Size: 24px × 24px (optimal for email footers)
- * Replace [PLATFORM_URL] and [ICON_URL] with actual values
+ * Size: 32x32 PNG displayed at 24x24 for retina
+ * Use [APP_URL] placeholder - it gets replaced at render time
  */
-export const SOCIAL_ICON_PATTERN = `<Column className="px-2">
+export const SOCIAL_ICON_PATTERN = (platform: keyof typeof SOCIAL_ICONS) => {
+  const icon = SOCIAL_ICONS[platform];
+  return `<Column className="px-2">
   <Link href="[PLATFORM_URL]">
     <Img
-      src="[ICON_URL]"
+      src="${icon.url}"
       width="24"
       height="24"
-      alt="[PLATFORM_NAME]"
+      alt="${icon.alt}"
       style={{ width: '24px', height: '24px' }}
     />
   </Link>
 </Column>`;
+};
 
 /**
- * Standard footer pattern with 4 most common platforms
- * Icons: 24px × 24px with 8px spacing between
+ * Standard footer pattern with most common platforms
+ * Icons: 32x32 PNG displayed at 24x24 with 8px spacing
+ * Uses self-hosted PNG icons for maximum compatibility
+ * [APP_URL] placeholder gets replaced with actual domain at render time
  */
 export const STANDARD_SOCIAL_FOOTER = `<Section className="mt-8">
   <Row>
@@ -213,7 +214,7 @@ export const STANDARD_SOCIAL_FOOTER = `<Section className="mt-8">
         <Column className="px-2">
           <Link href="[TWITTER_URL]">
             <Img
-              src="https://cdn.simpleicons.org/x/1DA1F2"
+              src="${getBaseUrl()}/email-assets/icons/twitter.png"
               width="24"
               height="24"
               alt="Twitter"
@@ -222,20 +223,9 @@ export const STANDARD_SOCIAL_FOOTER = `<Section className="mt-8">
           </Link>
         </Column>
         <Column className="px-2">
-          <Link href="[LINKEDIN_URL]">
-            <Img
-              src="https://cdn.simpleicons.org/linkedin/0A66C2"
-              width="24"
-              height="24"
-              alt="LinkedIn"
-              style={{ width: '24px', height: '24px' }}
-            />
-          </Link>
-        </Column>
-        <Column className="px-2">
           <Link href="[FACEBOOK_URL]">
             <Img
-              src="https://cdn.simpleicons.org/facebook/1877F2"
+              src="${getBaseUrl()}/email-assets/icons/facebook.png"
               width="24"
               height="24"
               alt="Facebook"
@@ -246,10 +236,21 @@ export const STANDARD_SOCIAL_FOOTER = `<Section className="mt-8">
         <Column className="px-2">
           <Link href="[INSTAGRAM_URL]">
             <Img
-              src="https://cdn.simpleicons.org/instagram/E4405F"
+              src="${getBaseUrl()}/email-assets/icons/instagram.png"
               width="24"
               height="24"
               alt="Instagram"
+              style={{ width: '24px', height: '24px' }}
+            />
+          </Link>
+        </Column>
+        <Column className="px-2">
+          <Link href="[LINKEDIN_URL]">
+            <Img
+              src="${getBaseUrl()}/email-assets/icons/linkedin.png"
+              width="24"
+              height="24"
+              alt="LinkedIn"
               style={{ width: '24px', height: '24px' }}
             />
           </Link>

@@ -134,32 +134,43 @@ REQUIREMENTS:
 
 When including social media icons in emails:
 
-✅ CORRECT - Use Simple Icons CDN URLs (24px size):
-  <Img src="https://cdn.simpleicons.org/x/1DA1F2" width="24" height="24" alt="Twitter" style={{ width: '24px', height: '24px' }} />
-  <Img src="https://cdn.simpleicons.org/facebook/1877F2" width="24" height="24" alt="Facebook" style={{ width: '24px', height: '24px' }} />
-  <Img src="https://cdn.simpleicons.org/instagram/E4405F" width="24" height="24" alt="Instagram" style={{ width: '24px', height: '24px' }} />
+✅ CORRECT - Use [APP_URL] placeholder (gets replaced at runtime):
+  <Img src="[APP_URL]/email-assets/icons/twitter.png" width="24" height="24" alt="Twitter" style={{ width: '24px', height: '24px' }} />
+  <Img src="[APP_URL]/email-assets/icons/facebook.png" width="24" height="24" alt="Facebook" style={{ width: '24px', height: '24px' }} />
+  <Img src="[APP_URL]/email-assets/icons/instagram.png" width="24" height="24" alt="Instagram" style={{ width: '24px', height: '24px' }} />
 
-AVAILABLE SOCIAL ICONS (with brand colors):
+AVAILABLE SOCIAL ICONS (PNG format for email compatibility):
 
-Standard footer icons (most compatible):
-- Twitter/X: https://cdn.simpleicons.org/x/1DA1F2
-- Facebook: https://cdn.simpleicons.org/facebook/1877F2
-- Instagram: https://cdn.simpleicons.org/instagram/E4405F
+Standard footer icons (use these):
+- Twitter/X: [APP_URL]/email-assets/icons/twitter.png
+- Facebook: [APP_URL]/email-assets/icons/facebook.png
+- Instagram: [APP_URL]/email-assets/icons/instagram.png
+- LinkedIn: [APP_URL]/email-assets/icons/linkedin.png
+- TikTok: [APP_URL]/email-assets/icons/tiktok.png
 
-Additional platforms (use if relevant to the content):
-- YouTube: https://cdn.simpleicons.org/youtube/FF0000
-- GitHub: https://cdn.simpleicons.org/github/181717
-- Discord: https://cdn.simpleicons.org/discord/5865F2
-- TikTok: https://cdn.simpleicons.org/tiktok/000000
+Additional platforms (if relevant to content):
+- YouTube: [APP_URL]/email-assets/icons/youtube.png
+- GitHub: [APP_URL]/email-assets/icons/github.png
+- Discord: [APP_URL]/email-assets/icons/discord.png
 
-⚠️ Note: LinkedIn icon has rendering issues in some email clients - avoid using it
+⚠️ CRITICAL: Always use [APP_URL] placeholder
+- [APP_URL] gets replaced with http://localhost:3000 in dev or production domain
+- NEVER use hardcoded domains like https://yourdomain.com or http://localhost:3000
+- The [APP_URL] placeholder ensures icons work in all environments
+
+⚠️ CRITICAL: Use PNG format, NOT SVG
+- SVG has poor email client support (Outlook strips it entirely)
+- PNG works in all email clients (Gmail, Outlook, Apple Mail, Yahoo)
+- Icons are 32x32 PNG displayed at 24x24 for retina displays
 
 REQUIREMENTS:
 - MUST specify both width/height attributes AND inline style
-- Standard size: 24px × 24px (optimal for email footers)
+- Display size: 24px × 24px (optimal for email footers)
 - Always include descriptive alt text
 - Wrap in <Link> for clickability
 - Spacing: px-2 between icons (8px)
+- ALWAYS use [APP_URL] placeholder (never hardcoded domains)
+
 
 ❌ NEVER use these placeholder URLs:
   - https://react.email/static/brand-*.png (doesn't work)

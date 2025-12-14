@@ -1,10 +1,12 @@
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { NextResponse } from 'next/server';
 import { sendEmail, replaceMergeTags, htmlToPlainText } from '@/lib/email-sending/sender';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 // ============================================
 // POST /api/v3/campaigns/[id]/processQueue
 // Process queued emails for a V3 campaign
+// Uses service role client to bypass RLS (system operation)
 // ============================================
 
 export async function POST(
@@ -12,21 +14,35 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
     const campaignId = (await params).id;
 
     console.log(`🔄 [QUEUE-V3] Processing queue for campaign ${campaignId}`);
 
-    // Get campaign details
+    // 🔒 SECURITY: Rate limiting (prevent abuse)
+    const rateLimit = checkRateLimit(campaignId, 10); // Max 10 calls per hour
+    if (!rateLimit.allowed) {
+      console.warn(`⚠️ [QUEUE-V3] Rate limit exceeded for campaign ${campaignId}`);
+      return NextResponse.json(
+        { success: false, error: 'Rate limit exceeded. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
+    // 🔥 Use service role client - bypasses RLS for system operations
+    const supabase = createServiceClient();
+
+    // 🔒 SECURITY: Validate campaign exists and has correct status
     const { data: campaign, error: campaignError } = await supabase
       .from('campaigns_v3')
       .select('*')
       .eq('id', campaignId)
+      .eq('status', 'sending') // Only process campaigns in 'sending' status
       .single();
 
     if (campaignError || !campaign) {
+      console.error(`❌ [QUEUE-V3] Invalid campaign or status:`, campaignError);
       return NextResponse.json(
-        { success: false, error: 'Campaign not found' },
+        { success: false, error: 'Campaign not found or not in sending status' },
         { status: 404 }
       );
     }
@@ -214,7 +230,7 @@ export async function POST(
     
     // Reset campaign status on critical error
     try {
-      const supabase = await createClient();
+      const supabase = createServiceClient();
       await supabase
         .from('campaigns_v3')
         .update({ status: 'ready' })
@@ -240,7 +256,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     const campaignId = (await params).id;
 
     const { count: queuedCount } = await supabase

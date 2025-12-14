@@ -271,7 +271,7 @@ export default function WeeklyNewsletter() {
     <Column style={{ paddingRight: '12px' }}>
       <Link href="[TWITTER_URL]">
         <Img 
-          src="https://cdn.simpleicons.org/x/1DA1F2" 
+          src="[APP_URL]/email-assets/icons/twitter.png" 
           width="24" 
           height="24" 
           alt="Twitter" 
@@ -282,7 +282,7 @@ export default function WeeklyNewsletter() {
     <Column style={{ paddingRight: '12px' }}>
       <Link href="[FACEBOOK_URL]">
         <Img 
-          src="https://cdn.simpleicons.org/facebook/1877F2" 
+          src="[APP_URL]/email-assets/icons/facebook.png" 
           width="24" 
           height="24" 
           alt="Facebook" 
@@ -293,7 +293,7 @@ export default function WeeklyNewsletter() {
     <Column>
       <Link href="[INSTAGRAM_URL]">
         <Img 
-          src="https://cdn.simpleicons.org/instagram/E4405F" 
+          src="[APP_URL]/email-assets/icons/instagram.png" 
           width="24" 
           height="24" 
           alt="Instagram" 
@@ -305,10 +305,11 @@ export default function WeeklyNewsletter() {
 </Section>
 
 **CRITICAL - Icon Requirements**:
-- Size: MUST be 24px × 24px (specify in BOTH width/height attributes AND inline style)
-- Never use 32px, 40px, or any other size
-- CDN URLs from Simple Icons (https://cdn.simpleicons.org/)
-- Standard platforms: Twitter/X, Facebook, Instagram (no LinkedIn)
+- Format: PNG (48x48 actual, displayed at 24x24 for retina)
+- Self-hosted: [APP_URL]/email-assets/icons/{platform}.png
+- Size: MUST be 24px × 24px display (specify in BOTH width/height attributes AND inline style)
+- Standard platforms: Twitter/X, Facebook, Instagram, LinkedIn, TikTok
+- IMPORTANT: Use [APP_URL] placeholder - it will be replaced with actual domain at runtime
 `
 };
 

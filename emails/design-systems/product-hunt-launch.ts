@@ -571,7 +571,7 @@ Footer Meta
         <Column className="inline-block">
           <Link href="[TWITTER_SHARE_URL]">
             <Img
-              src="https://cdn.simpleicons.org/x/000000"
+              src="[APP_URL]/email-assets/icons/twitter.png"
               width="24"
               height="24"
               alt="Share on Twitter"
@@ -583,7 +583,7 @@ Footer Meta
         <Column className="inline-block">
           <Link href="[FACEBOOK_SHARE_URL]">
             <Img
-              src="https://cdn.simpleicons.org/facebook/1877F2"
+              src="[APP_URL]/email-assets/icons/facebook.png"
               width="24"
               height="24"
               alt="Share on Facebook"

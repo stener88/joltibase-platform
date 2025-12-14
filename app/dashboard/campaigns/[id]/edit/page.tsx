@@ -13,15 +13,15 @@ interface EditPageProps {
 }
 
 export default async function CampaignEditPage({ params }: EditPageProps) {
-  const { id } = await params;
+        const { id } = await params;
   const supabase = await createClient();
 
   // Fetch campaign data (always fresh!)
   const { data: campaign, error } = await supabase
-    .from('campaigns_v3')
-    .select('*')
-    .eq('id', id)
-    .single();
+          .from('campaigns_v3')
+          .select('*')
+          .eq('id', id)
+          .single();
 
   if (error || !campaign) {
     console.error('[EDIT-PAGE] Database error:', error);

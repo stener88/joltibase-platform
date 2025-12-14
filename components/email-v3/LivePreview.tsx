@@ -999,15 +999,15 @@ export function LivePreview({
           maxWidth: previewMode === 'mobile' ? '375px' : 'none'
         }}
       >
-        <iframe
-          ref={iframeRef}
-          srcDoc={previewHtml || placeholderHtml}
-          className="w-full h-full border-0 rounded-xl"
-          sandbox="allow-scripts allow-same-origin"
-          tabIndex={-1}
-          title="Email Preview"
-          onLoad={handleIframeLoad}
-        />
+      <iframe
+        ref={iframeRef}
+        srcDoc={previewHtml || placeholderHtml}
+        className="w-full h-full border-0 rounded-xl"
+        sandbox="allow-scripts allow-same-origin"
+        tabIndex={-1}
+        title="Email Preview"
+        onLoad={handleIframeLoad}
+      />
       </div>
 
     </div>

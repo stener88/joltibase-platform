@@ -28,24 +28,13 @@ export default async function CampaignSendPage({ params }: SendPageProps) {
     redirect('/dashboard/campaigns');
   }
 
-  // Fetch contact lists with counts
+  // Fetch contact lists with counts (use existing contact_count field)
   const { data: lists } = await supabase
     .from('lists')
-    .select('id, name, description');
+    .select('id, name, description, contact_count')
+    .order('name');
 
-  const listsWithCounts = lists ? await Promise.all(
-    lists.map(async (list) => {
-      const { count } = await supabase
-        .from('contact_lists')
-        .select('*', { count: 'exact', head: true })
-        .eq('list_id', list.id);
-      
-      return {
-        ...list,
-        contact_count: count || 0,
-      };
-    })
-  ) : [];
+  const listsWithCounts = lists || [];
 
   // Fetch sender address directly from Supabase (no API call needed)
   let sender = null;
