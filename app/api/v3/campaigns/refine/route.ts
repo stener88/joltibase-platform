@@ -146,25 +146,19 @@ export async function POST(request: Request) {
     // TIER 1: DETERMINISTIC EDITS (instant, no AI, free)
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    // ⚠️ DETERMINISTIC DELETE DISABLED - Production Safety Fix
+    // ✅ DETERMINISTIC DELETE RE-ENABLED - Now uses Babel AST parser
     // 
-    // Issue: Regex-based parser doesn't handle nested components correctly
-    // - When deleting <Column>, it may leave orphaned closing tags
-    // - Causes: "Unexpected closing tag" errors that break entire campaign
+    // Fixed: Parser now uses @babel/parser for accurate component boundaries
+    // - Handles nested components of the same type correctly
+    // - No more orphaned closing tags
+    // - Instant deletes with zero AI cost
     // 
-    // Solution: All deletes now go through AI for proper AST handling
-    // - Slower (1-2 seconds) but 100% correct
-    // - No risk of campaign corruption
-    // 
-    // TODO: Re-enable with Babel AST parser (see lib/email-v3/tsx-parser.ts)
-    // Timeline: Implement proper Babel-based parsing in next sprint
+    // See: lib/email-v3/tsx-parser.ts for Babel AST implementation
     //
-    // DELETE - DISABLED (commented out for production safety)
-    /*
-    if (selectedComponentId && componentMap && /^(delete|remove)\s+(this|the|it)/i.test(userMessage)) {
+    if (selectedComponentId && componentMap && isDeleteRequest) {
       const component = componentMap[selectedComponentId];
       if (component) {
-        console.log(`⚡ [REFINE-SDK] DETERMINISTIC DELETE - No AI needed`);
+        console.log(`⚡ [REFINE-SDK] DETERMINISTIC DELETE - Using Babel AST boundaries`);
         const before = currentTsxCode.substring(0, component.startChar);
         const after = currentTsxCode.substring(component.endChar);
         const newCode = before + after;
@@ -182,34 +176,104 @@ export async function POST(request: Request) {
         });
       }
     }
-    */
-    
-    // Log delete requests for monitoring
-    if (isDeleteRequest) {
-      console.warn(`🔄 [REFINE-SDK] Delete request via AI (deterministic disabled, using full context for safety)`);
-    }
 
-    // DUPLICATE - Copy component instantly (no AI needed)
+    // DUPLICATE - Smart copy using Babel AST (instant, no AI needed)
+    // ✅ Now supports position: "duplicate this above/below"
     if (selectedComponentId && componentMap && /^duplicate\s+(this|the|it)/i.test(userMessage)) {
       const component = componentMap[selectedComponentId];
       if (component) {
-        console.log(`⚡ [REFINE-SDK] DETERMINISTIC DUPLICATE - No AI needed`);
-        const componentCode = currentTsxCode.substring(component.startChar, component.endChar);
-        const before = currentTsxCode.substring(0, component.endChar);
-        const after = currentTsxCode.substring(component.endChar);
-        const newCode = before + '\n' + componentCode + after;
+        console.log(`⚡ [REFINE-SDK] SMART DUPLICATE - Using Babel AST`);
         
-        return Response.json({
-          success: true,
-          intent: 'command',
-          tsxCode: newCode,
-          changes: [{
-            type: 'duplicate',
-            componentType: selectedComponentType || 'Component',
-            description: `Duplicated ${selectedComponentType || 'component'}`,
-          }],
-          message: `Duplicated the ${selectedComponentType || 'component'}.`,
-        });
+        try {
+          // Import Babel tools
+          const parser = await import('@babel/parser');
+          const traverse = (await import('@babel/traverse')).default;
+          const generate = (await import('@babel/generator')).default;
+          const t = await import('@babel/types');
+          
+          // Parse current TSX into AST
+          const ast = parser.parse(currentTsxCode, {
+            sourceType: 'module',
+            plugins: ['jsx', 'typescript'],
+          });
+          
+          let duplicated = false;
+          
+          // Find and duplicate the target component
+          traverse(ast, {
+            JSXElement(path: any) {
+              // Match by character position
+              if (path.node.start === component.startChar && !duplicated) {
+                duplicated = true;
+                
+                // Clone the entire node (deep copy)
+                const clonedNode = t.cloneNode(path.node, true, true);
+                
+                // Update all data-component-id attributes in the clone
+                traverse(clonedNode, {
+                  JSXAttribute(attrPath: any) {
+                    if (
+                      attrPath.node.name.type === 'JSXIdentifier' &&
+                      attrPath.node.name.name === 'data-component-id' &&
+                      attrPath.node.value?.type === 'StringLiteral'
+                    ) {
+                      // Generate new unique ID
+                      const oldId = attrPath.node.value.value;
+                      const newId = `cmp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                      attrPath.node.value.value = newId;
+                      console.log(`  📝 Updated ID: ${oldId} → ${newId}`);
+                    }
+                  }
+                }, path.scope, path);
+                
+                // Insert the cloned node right after the original
+                path.insertAfter(clonedNode);
+                
+                console.log(`  ✅ Duplicated ${selectedComponentType || 'component'} with updated IDs`);
+              }
+            }
+          });
+          
+          // Generate new code from modified AST
+          const output = generate(ast, {
+            retainLines: false,
+            compact: false,
+          });
+          
+          return Response.json({
+            success: true,
+            intent: 'command',
+            tsxCode: output.code,
+            changes: [{
+              type: 'duplicate',
+              componentType: selectedComponentType || 'Component',
+              description: `Duplicated ${selectedComponentType || 'component'} with unique IDs`,
+            }],
+            message: `Duplicated the ${selectedComponentType || 'component'}.`,
+          });
+          
+        } catch (error: any) {
+          console.error('❌ [REFINE-SDK] Smart duplicate failed:', error.message);
+          
+          // Fallback to simple string duplication
+          console.log('  ⚠️ Falling back to simple duplicate');
+          const componentCode = currentTsxCode.substring(component.startChar, component.endChar);
+          const before = currentTsxCode.substring(0, component.endChar);
+          const after = currentTsxCode.substring(component.endChar);
+          const newCode = before + '\n' + componentCode + after;
+          
+          return Response.json({
+            success: true,
+            intent: 'command',
+            tsxCode: newCode,
+            changes: [{
+              type: 'duplicate',
+              componentType: selectedComponentType || 'Component',
+              description: `Duplicated ${selectedComponentType || 'component'}`,
+            }],
+            message: `Duplicated the ${selectedComponentType || 'component'}.`,
+          });
+        }
       }
     }
 
@@ -217,19 +281,15 @@ export async function POST(request: Request) {
     // TIER 2: COMPONENT-SCOPED AI (fast, cheap)
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    // ⚠️ FORCE FULL CONTEXT FOR DELETES
-    // Component-scoped AI doesn't have enough context to delete nested components safely
-    // When deleting <Column> inside <Column>, AI needs to see parent structure
-    
-    // Check if it's COMPLEX first (needs full context)
+    // Check if it's COMPLEX (needs full context)
     const isComplexEdit = 
-      isDeleteRequest ||  // ✅ ALL DELETES NOW USE FULL CONTEXT (defined at line 143)
       /add|insert|create|new|another|below|above|before|after/i.test(userMessage) ||
       /section|layout|structure|grid|multi|several|multiple/i.test(userMessage) ||
       /move.*to|rearrange|reorder|swap|switch/i.test(userMessage);
 
     // Default to component-scoped if component selected and NOT complex
-    const isSimpleEdit = selectedComponentId && componentMap && !isComplexEdit;
+    // ✅ Deletes now use deterministic logic (no AI needed), so can skip component-scoped
+    const isSimpleEdit = selectedComponentId && componentMap && !isComplexEdit && !isDeleteRequest;
 
     if (isSimpleEdit && componentMap) {
       const component = componentMap[selectedComponentId];
@@ -281,7 +341,20 @@ Return ONLY the modified component code (same structure, just the changes reques
             );
           }
           
-          console.log(`💰 [REFINE-SDK] Component-scoped: ${usage?.totalTokens || 'unknown'} tokens (saved ~${3750 - (usage?.totalTokens || 0)} tokens vs full context)`);
+          // Log component-scoped cost with actual token counts (Gemini 2.5 Flash pricing: $0.30/$2.50 per 1M tokens)
+          if (usage) {
+            const inputTokens = usage.inputTokens || 0;
+            const outputTokens = usage.outputTokens || 0;
+            const totalTokens = usage.totalTokens || (inputTokens + outputTokens);
+            
+            const inputCost = (inputTokens / 1_000_000) * 0.30;
+            const outputCost = (outputTokens / 1_000_000) * 2.50;
+            const cost = inputCost + outputCost;
+            
+            console.log(`💰 [REFINE-SDK] Component-scoped: ${totalTokens} tokens (in: ${inputTokens}, out: ${outputTokens}) | Cost: $${cost.toFixed(6)}`);
+          } else {
+            console.log(`💰 [REFINE-SDK] Component-scoped: unknown tokens`);
+          }
           
           // Validate result
           const processResult = processCodeChanges({
@@ -350,6 +423,19 @@ Return ONLY the modified component code (same structure, just the changes reques
         prompt: `# THE EMAIL CODE\n\n\`\`\`tsx\n${currentTsxCode}\n\`\`\`\n\n# USER'S QUESTION\n\n"${userMessage}"\n\nProvide 2-3 specific, actionable suggestions.`,
         temperature: CONSULTATION_TEMPERATURE,
       });
+
+      // Log consultation cost (Gemini 2.5 Flash pricing: $0.30/$2.50 per 1M tokens)
+      if (result.usage) {
+        const inputTokens = result.usage.inputTokens || 0;
+        const outputTokens = result.usage.outputTokens || 0;
+        const totalTokens = result.usage.totalTokens || (inputTokens + outputTokens);
+        
+        const inputCost = (inputTokens / 1_000_000) * 0.30;
+        const outputCost = (outputTokens / 1_000_000) * 2.50;
+        const cost = inputCost + outputCost;
+        
+        console.log(`💰 [REFINE-SDK] Consultation: ${totalTokens} tokens (in: ${inputTokens}, out: ${outputTokens}) | Cost: $${cost.toFixed(6)}`);
+      }
 
       return Response.json({
         success: true,
@@ -535,16 +621,17 @@ Return ONLY the modified component code (same structure, just the changes reques
     console.log(`[REFINE-SDK] Validation: ${processResult.valid ? '✅ Valid' : '❌ Invalid'}`);
     console.log(`[REFINE-SDK] Changes: ${processResult.changes.length}`);
 
-    // Log telemetry
-    if (usage && usage.totalTokens) {
-      const totalTokens = usage.totalTokens;
-      const estimatedInputTokens = Math.floor(totalTokens * 0.6);
-      const estimatedOutputTokens = totalTokens - estimatedInputTokens;
+    // Log telemetry with actual token counts (Gemini 2.5 Flash pricing: $0.30/$2.50 per 1M tokens)
+    if (usage) {
+      const inputTokens = usage.inputTokens || 0;
+      const outputTokens = usage.outputTokens || 0;
+      const totalTokens = usage.totalTokens || (inputTokens + outputTokens);
       
-      const cost = (estimatedInputTokens / 1_000_000) * 0.30 + 
-                   (estimatedOutputTokens / 1_000_000) * 2.50;
+      const inputCost = (inputTokens / 1_000_000) * 0.30;
+      const outputCost = (outputTokens / 1_000_000) * 2.50;
+      const cost = inputCost + outputCost;
       
-      console.log(`💰 [REFINE-SDK] Tokens: ${totalTokens} | Cost: ~$${cost.toFixed(6)}`);
+      console.log(`💰 [REFINE-SDK] Tokens: ${totalTokens} (in: ${inputTokens}, out: ${outputTokens}) | Cost: $${cost.toFixed(6)}`);
     }
 
     // Handle graceful failures for toolbar commands

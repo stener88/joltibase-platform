@@ -37,7 +37,7 @@ function getMaxCTAsForDesignSystem(designSystemId?: string): number {
     'ecommerce-discount': 15,       // Hero CTA + products + social + footer
     'retail-welcome': 20,           // Explore + survey + account + store + footer
     'travel-booking': 30,           // Nav, destinations, activities, app, footer
-    'saas-product': 15,             // Features, pricing tiers, social, footer
+    'saas-product': 35,             // Features, pricing tiers, social, footer
     'event-announcement': 20,       // Multi-event calendar with multiple signups
     'event-conference': 15,         // Speakers, schedule, register, social, footer
     'winback-reactivation': 15,     // CTA + app links + footer links

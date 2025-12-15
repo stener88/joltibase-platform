@@ -222,15 +222,14 @@ export async function generateEmail(prompt: string, brand?: BrandIdentity | null
       const llmDuration = Date.now() - llmStart;
       console.log(`⏱️ [GENERATOR] LLM call completed in ${(llmDuration / 1000).toFixed(1)}s`);
       
-      // Log token usage and cost (Gemini 2.5 Flash Lite pricing)
+      // Log token usage and cost (Gemini 2.5 Flash pricing: $0.30/$2.50 per 1M tokens)
       if (result.usage) {
-        const usage = result.usage as any;
-        const inputTokens = usage.inputTokens || 0;
-        const outputTokens = usage.outputTokens || 0;
-        const totalTokens = usage.totalTokens || 0;
+        const inputTokens = result.usage.inputTokens || 0;
+        const outputTokens = result.usage.outputTokens || 0;
+        const totalTokens = result.usage.totalTokens || (inputTokens + outputTokens);
         
-        const inputCost = (inputTokens / 1_000_000) * 0.10;
-        const outputCost = (outputTokens / 1_000_000) * 0.40;
+        const inputCost = (inputTokens / 1_000_000) * 0.30;
+        const outputCost = (outputTokens / 1_000_000) * 2.50;
         const totalCost = inputCost + outputCost;
         
         console.log(`💰 [GENERATOR] Tokens: ${totalTokens} (in: ${inputTokens}, out: ${outputTokens}) | Cost: $${totalCost.toFixed(6)}`);

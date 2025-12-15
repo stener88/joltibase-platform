@@ -13,9 +13,10 @@
  * Primary AI model for all generation tasks
  * 
  * Options:
- * - 'gemini-3-pro-preview' → Latest preview, best quality ← CURRENT
+ * - 'gemini-3-pro-preview' → Latest preview, best quality 
  * - 'gemini-2.5-pro'   → Stable, high quality (~5-15s)
- * - 'gemini-2.5-flash' → Balanced speed/quality (~2-5s)
+ * - 'gemini-2.5-flash' → Balanced speed/quality (~2-5s) - CURRENT
+ * - 'gemini-2.5-flash-lite' → Fastest, most cost-effective (~1-3s)
  */
 export const AI_MODEL = 'gemini-2.5-flash';
 
@@ -23,7 +24,7 @@ export const AI_MODEL = 'gemini-2.5-flash';
  * Model for quick tasks (keywords, simple edits)
  * Can use a faster model for latency-sensitive operations
  */
-export const AI_MODEL_FAST = 'gemini-2.5-flash';
+export const AI_MODEL_FAST = 'gemini-2.5-flash-lite';
 
 // =============================================================================
 // TIMEOUTS & LIMITS
