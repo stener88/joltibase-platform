@@ -56,7 +56,7 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
     e.preventDefault();
     e.stopPropagation();
     
-    if (!newName.trim()) {
+    if (!newName || !newName.trim()) {
       toast.error('Campaign name cannot be empty');
       return;
     }
@@ -103,7 +103,7 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
     }
   };
 
-  const canDelete = campaign.status !== 'sending';
+  const canDelete = true; // Allow delete for all statuses
 
   return (
     <>
@@ -116,7 +116,7 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
               {campaign.name}
             </h3>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              {(campaign.ai_generated || campaign.generation_prompt) && (
+              {campaign.generation_prompt && (
                 <span className="inline-flex items-center gap-1 text-xs bg-muted text-foreground px-2 py-0.5 rounded-full border border-border">
                   ✨ AI Generated
                 </span>
@@ -266,7 +266,7 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
                   <input
                     id="campaign-name"
                     type="text"
-                    value={newName}
+                    value={newName || ''}
                     onChange={(e) => setNewName(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Escape') {
@@ -298,7 +298,7 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
                 <button
                   type="submit"
                   className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={isRenaming || !newName.trim()}
+                  disabled={isRenaming || !newName || !newName.trim()}
                 >
                   {isRenaming ? 'Saving...' : 'Save'}
                 </button>

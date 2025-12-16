@@ -16,6 +16,10 @@ import { parseAndInjectIds, findParentComponent, type ComponentMap } from '@/lib
 import { Z_INDEX } from '@/lib/ui-constants';
 import type { CodeChange } from '@/lib/email-v3/diff-generator';
 import type { BrandIdentity } from '@/lib/types/brand';
+import { useBrandSettings } from './hooks/useBrandSettings';
+import { useChatRefinement } from './hooks/useChatRefinement';
+import { useVisualEdits } from './hooks/useVisualEdits';
+import { useModeToggle } from './hooks/useModeToggle';
 
 interface EmailEditorV3Props {
   campaignId: string;
@@ -89,20 +93,33 @@ export function EmailEditorV3({
 
   // State management
   const [savedTsxCode, setSavedTsxCode] = useState(initialTsxCode);
-  const [mode, setMode] = useState<EditMode>('chat');
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
   const [hoveredComponentId, setHoveredComponentId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [componentPosition, setComponentPosition] = useState<{ top: number; left: number } | null>(null);
   const [componentMap, setComponentMap] = useState<any>({});
   const [hasVisualEdits, setHasVisualEdits] = useState(false);
-  const [showExitConfirm, setShowExitConfirm] = useState(false);
-  const [visualModeEntryCode, setVisualModeEntryCode] = useState<string>('');
-  const [isEnteringVisualMode, setIsEnteringVisualMode] = useState(false);
-  const [isExitingVisualMode, setIsExitingVisualMode] = useState(false);
+  
+  // Mode management hook
+  const {
+    mode,
+    setMode,
+    showExitConfirm,
+    isEnteringVisualMode,
+    isExitingVisualMode,
+    toggleMode,
+    confirmExit,
+    cancelExit,
+  } = useModeToggle({
+    onModeChange: (newMode) => {
+      if (newMode === 'chat') {
+        setSelectedComponentId(null);
+        setHasVisualEdits(false);
+      }
+    },
+  });
   const [floatingPrompt, setFloatingPrompt] = useState('');
   const [isMounted, setIsMounted] = useState(false);
-  const [brandSettings, setBrandSettings] = useState<BrandIdentity | null>(null);
   const [hasShownBrandPrompt, setHasShownBrandPrompt] = useState(false);
   const [toolbarStatus, setToolbarStatus] = useState<{
     type: 'idle' | 'loading' | 'error' | 'success';
@@ -121,97 +138,22 @@ export function EmailEditorV3({
   console.log('🟡 EDITOR: Initial useState - tsxCode length:', tsxCode?.length);
   console.log('🟡 EDITOR: Are initialTsxCode and tsxCode equal?', initialTsxCode === tsxCode);
   
-  // Optimistic updates (for instant feedback before commit)
-  const [optimisticEdits, setOptimisticEdits] = useState<OptimisticEdit[]>([]);
-
-  // Display TSX = committed tsxCode + optimistic edits
-  const displayTsx = useMemo(() => {
-    if (optimisticEdits.length === 0) {
-      return tsxCode;
-    }
-    
-    console.log('[EDITOR] Applying', optimisticEdits.length, 'optimistic edits');
-    
-    // Apply optimistic edits on top of committed TSX
-    let result = tsxCode;
-    for (const edit of optimisticEdits) {
-      try {
-        const parsed = parseAndInjectIds(result);
-        
-        if (edit.property === 'text' || edit.property === 'textContent') {
-          result = updateComponentText(result, parsed.componentMap, edit.componentId, edit.value);
-        } else if (edit.property === 'imageSrc') {
-          const { url, alt, width, height } = JSON.parse(edit.value);
-          result = updateImageSrc(result, parsed.componentMap, edit.componentId, url, alt, width, height);
-        } else if (edit.property === 'imageAlt') {
-          result = updateImageSrc(result, parsed.componentMap, edit.componentId, undefined, edit.value);
-        } else if (edit.property === 'imageWidth') {
-          const numValue = parseInt(edit.value, 10);
-          if (!isNaN(numValue)) {
-            result = updateImageSrc(result, parsed.componentMap, edit.componentId, undefined, undefined, numValue, undefined);
-          }
-        } else if (edit.property === 'imageHeight') {
-          const numValue = parseInt(edit.value, 10);
-          if (!isNaN(numValue)) {
-            result = updateImageSrc(result, parsed.componentMap, edit.componentId, undefined, undefined, undefined, numValue);
-          }
-        } else {
-          // Handle spacing and other style properties
-          const spacingProps = ['marginTop', 'marginBottom', 'marginLeft', 'marginRight', 
-                                'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'];
-          const valueWithUnit = spacingProps.includes(edit.property) ? `${edit.value}px` : edit.value;
-          result = updateInlineStyle(result, parsed.componentMap, edit.componentId, edit.property, valueWithUnit);
-        }
-      } catch (error) {
-        console.error('[EDITOR] Failed to apply optimistic edit:', error, edit);
-      }
-    }
-    
-    return result;
-  }, [tsxCode, optimisticEdits]);
-
-  // Debug log for new architecture
-  useEffect(() => {
-    console.log('[EDITOR] New architecture initialized:', {
-      tsxCodeLength: tsxCode.length,
-    });
-  }, []);
-
-  // ========================================
-  // 🔄 COMMIT PIPELINE: Debounced commit (simple TSX update)
-  // ========================================
-  const commitEditsRef = useRef(
-    debounce((newTsx: string, description: string = 'Edit') => {
-      console.log('[EDITOR] Committing visual edit:', description, 'TSX length:', newTsx.length);
-      
-      // Simply update the TSX state
-      setTsxCode(newTsx);
-      
-      // Mark as visual edit (so LivePreview skips API re-render)
+  // Visual editing hook
+  const { displayTsx, sendDirectUpdate: sendVisualUpdate } = useVisualEdits({
+    tsxCode,
+    onCommit: (newCode: string) => {
+      setTsxCode(newCode);
       setTsxCodeSource('visual');
-      
-      // Clear optimistic edits (they're now committed)
-      setOptimisticEdits([]);
-    }, 500) // 500ms debounce
-  );
+    },
+  });
 
-  // Cleanup debounced function on unmount
-  useEffect(() => {
-    return () => {
-      // Cancel any pending commits
-      const cancel = (commitEditsRef.current as any).cancel;
-      if (cancel) cancel();
-    };
-  }, []);
+  // Commit logic now handled by useVisualEdits hook
 
   // ========================================
   // 🔧 REFS: Essential refs for editor functionality
   // ========================================
   // ✅ Floating toolbar input ref - for focus management
   const floatingToolbarInputRef = useRef<HTMLInputElement>(null);
-
-  // ✅ Message metadata ref - tracks changes and intent per message
-  const messageMetadataRef = useRef<Map<string, { changes?: CodeChange[]; intent?: 'question' | 'command' }>>(new Map());
 
   // ✅ Sync function ref - for updating iframe selection without useEffect
   const syncSelectionRef = useRef<((id: string | null) => void) | null>(null);
@@ -221,47 +163,33 @@ export function EmailEditorV3({
     syncSelectionRef.current = syncFn;
   }, []);
 
-  // State for manual streaming (hybrid approach)
-  const [messages, setMessages] = useState<Array<{ id: string; role: 'user' | 'assistant'; content: string; createdAt?: Date }>>(initialChatMessages as any);
-  const [input, setInput] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
+  // Brand settings hook
+  const { brandSettings, onBrandSettingsSave } = useBrandSettings();
+
+  // Chat refinement hook
+  const {
+    messages,
+    input,
+    setInput,
+    isGenerating,
+    messageMetadata,
+    handleChatSubmit,
+  } = useChatRefinement({
+    campaignId,
+    initialMessages: initialChatMessages,
+    onCodeUpdate: (newCode: string) => {
+      setTsxCode(newCode);
+      setTsxCodeSource('ai');
+    },
+    getCurrentCode: () => tsxCode,
+    selectedComponentId,
+    componentMap,
+    brandSettings,
+  });
 
   // Set mounted state for Portal
   useEffect(() => {
     setIsMounted(true);
-  }, []);
-
-  // Fetch brand settings on mount
-  useEffect(() => {
-    const fetchBrand = async () => {
-      try {
-        const response = await fetch('/api/brand');
-        if (response.ok) {
-          const data = await response.json();
-          setBrandSettings(data.brand);
-        }
-      } catch (error) {
-        console.error('[EmailEditor] Failed to fetch brand:', error);
-      }
-    };
-    fetchBrand();
-  }, []);
-
-  // Save brand settings handler
-  const handleBrandSettingsSave = useCallback(async (brand: BrandIdentity) => {
-    try {
-      const response = await fetch('/api/brand', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(brand),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setBrandSettings(data.brand);
-      }
-    } catch (error) {
-      console.error('[EmailEditor] Failed to save brand:', error);
-    }
   }, []);
 
   // Show brand prompt after first successful generation
@@ -289,174 +217,37 @@ export function EmailEditorV3({
     }
   }, [selectedComponentId]);
 
-  // Handle chat submission
-  // source: 'chat' for main input, 'toolbar' for floating toolbar (forces command mode)
-  const handleChatSubmit = useCallback(async (customPrompt?: string, source: 'chat' | 'toolbar' = 'chat') => {
-    const promptToUse = customPrompt || input;
-    if (!promptToUse.trim() || isGenerating) return;
-
-    const isToolbar = source === 'toolbar';
-    console.log(`[EDITOR] Submitting: "${promptToUse}" (source: ${source})`);
-
-    // For toolbar: show loading state
-    if (isToolbar) {
-      setToolbarStatus({ type: 'loading' });
-    }
-
-    // Add user message (skip for toolbar to keep chat clean)
-    if (!isToolbar) {
-      const userMsg = {
-        id: Date.now().toString(),
-        role: 'user' as const,
-        content: promptToUse,
-        createdAt: new Date(),
-      };
-      setMessages(prev => [...prev, userMsg]);
-    }
-
-    // Clear input
-    if (!customPrompt) {
-      setInput('');
-    }
-
-    // Create placeholder for assistant (skip for toolbar)
-    const assistantId = (Date.now() + 1).toString();
-    if (!isToolbar) {
-      const assistantMsg = {
-        id: assistantId,
-        role: 'assistant' as const,
-        content: '',
-        createdAt: new Date(),
-      };
-      setMessages(prev => [...prev, assistantMsg]);
-    }
-
-    setIsGenerating(true);
-
+  // Wrapper for toolbar-specific chat submissions
+  const handleToolbarSubmit = useCallback(async (customPrompt: string) => {
+    setToolbarStatus({ type: 'loading' });
+    
     try {
-      const response = await fetch('/api/v3/campaigns/refine', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          campaignId,
-          currentTsxCode: tsxCode,
-          userMessage: promptToUse,
-          selectedComponentId,
-          selectedComponentType: selectedComponentId && componentMap[selectedComponentId]
-            ? componentMap[selectedComponentId].type
-            : null,
-          brandSettings,
-          source, // Pass source to API for intent forcing
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      // Parse response
-      const data = await response.json();
-      console.log(`[EDITOR] Intent: ${data.intent}, Success: ${data.success}`);
-
-      // Handle toolbar response
-      if (isToolbar) {
-        if (data.success) {
-          // Apply code changes
-          if (data.tsxCode) {
-            setTsxCode(data.tsxCode);
-            setTsxCodeSource('ai'); // Mark as AI edit
-          }
-          setToolbarStatus({ type: 'success' });
-          // Auto-clear success after 2s
-          setTimeout(() => setToolbarStatus({ type: 'idle' }), 2000);
-          console.log(`[EDITOR] Toolbar command success - ${data.changes?.length || 0} changes`);
-        } else {
-          // Show error inline
-          setToolbarStatus({ 
-            type: 'error', 
-            message: data.message || "Couldn't make that change" 
-          });
-          console.log(`[EDITOR] Toolbar command failed: ${data.message}`);
-        }
-        return; // Don't update chat for toolbar commands
-      }
-
-      // Handle chat response (non-toolbar)
-      // Apply code changes if command succeeded
-      if (data.intent === 'command' && data.success && data.tsxCode) {
-        setTsxCode(data.tsxCode);
-        setTsxCodeSource('ai'); // Mark as AI edit
-
-        // Store metadata for changelog
-        messageMetadataRef.current.set(assistantId, {
-          changes: data.changes || [],
-          intent: data.intent,
-        });
-        
-        console.log(`[EDITOR] Applied ${data.changes?.length || 0} changes`);
-      }
-
-      // Update assistant message
-      setMessages(prev =>
-        prev.map(m =>
-          m.id === assistantId
-            ? { ...m, content: data.message }
-            : m
-        )
-      );
-    } catch (error) {
-      console.error('[EDITOR] Error:', error);
+      const result = await handleChatSubmit(customPrompt, 'toolbar');
       
-      if (isToolbar) {
+      if (result.success) {
+        setToolbarStatus({ type: 'success' });
+        setTimeout(() => setToolbarStatus({ type: 'idle' }), 2000);
+        console.log(`[TOOLBAR] Command success - ${result.changes?.length || 0} changes`);
+      } else {
         setToolbarStatus({ 
           type: 'error', 
-          message: 'Something went wrong. Try again.' 
+          message: result.message || "Couldn't make that change" 
         });
-      } else {
-        setMessages(prev =>
-          prev.map(m =>
-            m.id === assistantId
-              ? { ...m, content: 'Sorry, something went wrong. Please try again.' }
-              : m
-          )
-        );
+        console.log(`[TOOLBAR] Command failed: ${result.message}`);
       }
-    } finally {
-      setIsGenerating(false);
+    } catch (error: any) {
+      setToolbarStatus({ 
+        type: 'error', 
+        message: 'Something went wrong. Try again.' 
+      });
     }
-  }, [input, isGenerating, campaignId, selectedComponentId, componentMap, brandSettings]);
+  }, [handleChatSubmit]);
 
   // Handle mode toggle
+  // Mode toggle wrapper
   const handleModeToggle = useCallback(() => {
-    const newMode = mode === 'chat' ? 'visual' : 'chat';
-    console.log('[EDITOR] Toggling mode from', mode, 'to', newMode);
-    
-    // Check if there are visual edits (compare current tsx with entry code)
-    const hasVisualModeChanges = mode === 'visual' && visualModeEntryCode && tsxCode !== visualModeEntryCode;
-    
-    // If exiting visual mode with changes, show confirmation
-    if (mode === 'visual' && (hasVisualModeChanges || hasUnsavedChanges)) {
-      console.log('[EDITOR] Unsaved changes detected:', { hasVisualModeChanges, hasUnsavedChanges });
-      setShowExitConfirm(true);
-      return;
-    }
-    
-    // Entering visual mode - snapshot current code
-    if (newMode === 'visual') {
-      setVisualModeEntryCode(tsxCode);
-      setIsEnteringVisualMode(true);
-      setTimeout(() => {
-        setIsEnteringVisualMode(false);
-      }, 600);
-    }
-    
-    setMode(newMode);
-    if (newMode === 'chat') {
-      setSelectedComponentId(null);
-      setHasVisualEdits(false);
-      setVisualModeEntryCode('');
-    }
-  }, [mode, tsxCode, visualModeEntryCode, hasUnsavedChanges]);
+    toggleMode(tsxCode, hasUnsavedChanges);
+  }, [toggleMode, tsxCode, hasUnsavedChanges]);
 
   // Handle component selection
   const handleComponentSelect = useCallback((componentId: string | null, position?: { top: number; left: number }) => {
@@ -474,109 +265,28 @@ export function EmailEditorV3({
     }
   }, [selectedComponentId]);
 
-  // ========================================
-  // 🎨 VISUAL EDITS: New architecture with optimistic updates
-  // ========================================
+  // Visual editing now handled by useVisualEdits hook
+  // Wrap to track hasVisualEdits state
   const sendDirectUpdate = useCallback((componentId: string, property: string, value: string) => {
-    console.log('[EDITOR] Direct update (new architecture):', { componentId, property, value });
-    
-    // 1. Send instant DOM update via postMessage (keep for immediate visual feedback)
-    const livePreviewUpdate = (window as any).__livePreviewSendDirectUpdate;
-    if (livePreviewUpdate) {
-      livePreviewUpdate({
-        type: 'direct-update',
-        componentId,
-        property,
-        value,
-      });
-    }
-    
-    // 2. Add optimistic edit (instant local state update)
-    setOptimisticEdits(prev => {
-      // Remove any existing edit for this component+property
-      const filtered = prev.filter(e => !(e.componentId === componentId && e.property === property));
-      // Add new edit
-      return [...filtered, { componentId, property, value, timestamp: Date.now() }];
-    });
-    
-    // 3. Apply edit to TSX and prepare for commit
-    const currentTsx = tsxCode; // Use new state instead of ref
-    let updatedTsx: string;
-    
-    try {
-      // Parse fresh componentMap from current TSX
-      const parsed = parseAndInjectIds(currentTsx);
-      const freshMap = parsed.componentMap;
-    
-      // Apply edit based on property type
-    if (property === 'text' || property === 'textContent') {
-      updatedTsx = updateComponentText(currentTsx, freshMap, componentId, value);
-      
-    } else if (property === 'imageSrc') {
-      // Parse JSON for atomic image update (url, alt, width, height)
-      try {
-        const { url, alt, width, height } = JSON.parse(value);
-        updatedTsx = updateImageSrc(currentTsx, freshMap, componentId, url, alt, width, height);
-      } catch (error) {
-        console.error('[EDITOR] Failed to parse image data:', error);
-        return;
-      }
-      
-    } else if (property === 'imageAlt') {
-      updatedTsx = updateImageSrc(currentTsx, freshMap, componentId, undefined, value);
-      
-    } else if (property === 'imageWidth') {
-      const numValue = parseInt(value, 10);
-      if (isNaN(numValue)) return;
-      updatedTsx = updateImageSrc(currentTsx, freshMap, componentId, undefined, undefined, numValue, undefined);
-      
-    } else if (property === 'imageHeight') {
-      const numValue = parseInt(value, 10);
-      if (isNaN(numValue)) return;
-      updatedTsx = updateImageSrc(currentTsx, freshMap, componentId, undefined, undefined, undefined, numValue);
-      
-    } else {
-        // Handle spacing properties - add 'px' unit
-        const spacingProps = ['marginTop', 'marginBottom', 'marginLeft', 'marginRight', 
-                              'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'];
-        
-        const valueWithUnit = spacingProps.includes(property) ? `${value}px` : value;
-        updatedTsx = updateInlineStyle(currentTsx, freshMap, componentId, property, valueWithUnit);
-    }
-    
-      // 4. Debounced commit (captures HTML after 500ms)
-      commitEditsRef.current(updatedTsx, `Updated ${property}`);
-      
+    sendVisualUpdate(componentId, property, value);
     setHasVisualEdits(true);
-      
-    } catch (error) {
-      console.error('[EDITOR] Failed to apply edit:', error);
-    }
-  }, [tsxCode]);
+  }, [sendVisualUpdate]);
 
   // Save visual edits and exit (commit to DB)
   const handleSaveVisualEdits = useCallback(async () => {
     console.log('[EDITOR] Saving visual edits and exiting visual mode');
     console.log('🔴 SAVE: Current tsxCode length:', tsxCode.length);
     console.log('🔴 SAVE: First 200 chars:', tsxCode.substring(0, 200));
-    setIsExitingVisualMode(true);
     
     // Use current tsxCode (already committed via debounce)
     const updatedCode = tsxCode;
-    console.log('🔴 SAVE: updatedCode length:', updatedCode.length);
-    console.log('🔴 SAVE: updatedCode === tsxCode?', updatedCode === tsxCode);
     
-    // Exit visual mode and clear state
-    setShowExitConfirm(false);
-    setMode('chat');
+    // Exit visual mode via hook
+    confirmExit();
     setSelectedComponentId(null);
     setHasVisualEdits(false);
-    setVisualModeEntryCode('');
     
-    // Clear loading overlay
-    setTimeout(() => {
-      setIsExitingVisualMode(false);
-    }, 600);
+    // Loading overlay handled by useModeToggle hook
     
     // Persist to database
     setIsSaving(true);
@@ -634,12 +344,9 @@ export function EmailEditorV3({
   // Discard visual edits and exit (reset to entry state)
   const handleDiscardVisualEdits = useCallback(() => {
     console.log('[EDITOR] Discarding visual edits - reloading page');
-    setIsExitingVisualMode(true);
-    
-    // TODO: Restore to visualModeEntryCode state without page reload
-    // For now, just reload the page
+    // TODO: Restore to snapshot state without page reload
     window.location.reload();
-  }, [visualModeEntryCode]);
+  }, []);
 
   // Handle save
   const handleSave = useCallback(async () => {
@@ -701,9 +408,9 @@ export function EmailEditorV3({
 
   // Handle Next button click
   const handleNextClick = useCallback(() => {
-    // If in visual mode with unsaved changes, show save prompt
+    // If in visual mode with unsaved changes, trigger mode toggle (will show save prompt)
     if (mode === 'visual' && hasVisualEdits) {
-      setShowExitConfirm(true);
+      toggleMode(tsxCode, hasUnsavedChanges);
       return;
     }
     
@@ -851,7 +558,7 @@ export function EmailEditorV3({
                     <div className="flex-1 overflow-y-auto chat-history-scroll">
                       <ChatHistory 
                         messages={messages} 
-                        messageMetadata={messageMetadataRef.current}
+                        messageMetadata={messageMetadata}
                         isGenerating={isGenerating} 
                       />
                     </div>
@@ -870,7 +577,7 @@ export function EmailEditorV3({
                         onVisualEditsToggle={handleModeToggle}
                         showDiscardSaveButtons={false}
                         brandSettings={brandSettings}
-                        onBrandSettingsSave={handleBrandSettingsSave}
+                        onBrandSettingsSave={onBrandSettingsSave}
                       />
                     </div>
                   </>
@@ -917,7 +624,7 @@ export function EmailEditorV3({
                         onVisualEditsToggle={handleModeToggle}
                         showDiscardSaveButtons={false}
                         brandSettings={brandSettings}
-                        onBrandSettingsSave={handleBrandSettingsSave}
+                        onBrandSettingsSave={onBrandSettingsSave}
                       />
                     </div>
                   </>
@@ -987,7 +694,7 @@ export function EmailEditorV3({
                   if (e.key === 'Enter' && floatingPrompt.trim() && toolbarStatus.type !== 'loading') {
                     e.preventDefault();
                     e.stopPropagation();
-                    handleChatSubmit(floatingPrompt, 'toolbar'); // ✅ Pass 'toolbar' source
+                    handleToolbarSubmit(floatingPrompt);
                     setFloatingPrompt('');
                     // Re-focus after submit
                     setTimeout(() => floatingToolbarInputRef.current?.focus(), 0);
@@ -1013,7 +720,7 @@ export function EmailEditorV3({
                 disabled={!floatingPrompt.trim() || toolbarStatus.type === 'loading'}
                 onClick={() => {
                   if (floatingPrompt.trim()) {
-                    handleChatSubmit(floatingPrompt, 'toolbar'); // ✅ Pass 'toolbar' source
+                    handleToolbarSubmit(floatingPrompt);
                     setFloatingPrompt('');
                     // Re-focus after submit
                     setTimeout(() => floatingToolbarInputRef.current?.focus(), 0);

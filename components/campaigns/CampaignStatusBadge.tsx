@@ -5,22 +5,18 @@ interface CampaignStatusBadgeProps {
 }
 
 export function CampaignStatusBadge({ status }: CampaignStatusBadgeProps) {
-  const styles = {
+  const styles: Record<CampaignStatus, string> = {
     draft: 'bg-muted text-muted-foreground border-border',
+    ready: 'bg-primary/10 text-primary border-primary',
     scheduled: 'bg-muted text-foreground border-primary',
-    sending: 'bg-primary/10 text-primary border-primary animate-pulse',
     sent: 'bg-muted text-foreground border-border',
-    paused: 'bg-muted text-muted-foreground border-border',
-    cancelled: 'bg-destructive/10 text-destructive border-destructive',
   };
 
-  const labels = {
+  const labels: Record<CampaignStatus, string> = {
     draft: 'Draft',
+    ready: 'Ready',
     scheduled: 'Scheduled',
-    sending: 'Sending',
     sent: 'Sent',
-    paused: 'Paused',
-    cancelled: 'Cancelled',
   };
 
   return (

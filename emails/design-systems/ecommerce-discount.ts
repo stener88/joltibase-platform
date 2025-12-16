@@ -11,7 +11,7 @@
  * - Loyalty program offers
  */
 
-// Type imported from design-system-selector to match interface
+import type { DesignSystem } from '@/emails/lib/design-system-selector';
 
 export const EcommerceDiscountDesignSystem: DesignSystem = {
   id: 'ecommerce-discount',
