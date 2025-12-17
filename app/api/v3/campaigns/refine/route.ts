@@ -15,18 +15,26 @@
 
 import { generateText } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createAnthropic } from '@ai-sdk/anthropic';
 import { createClient } from '@/lib/supabase/server';
 import { detectIntent } from '@/lib/email-v3/intent-detector';
 import { resolveImage, extractImageKeyword } from '@/lib/email-v3/image-resolver';
 import { processCodeChanges } from '@/lib/email-v3/code-processor';
 import { parseAndInjectIds } from '@/lib/email-v3/tsx-parser';
 import { getDesignSystemById } from '@/emails/lib/design-system-selector';
-import { AI_MODEL, GENERATION_TEMPERATURE, CONSULTATION_TEMPERATURE } from '@/lib/ai/config';
+import { AI_MODEL, AI_PROVIDER, GENERATION_TEMPERATURE, CONSULTATION_TEMPERATURE } from '@/lib/ai/config';
+import { logger, logCost } from '@/lib/logger';
 import type { BrandIdentity } from '@/lib/types/brand';
 
 const google = createGoogleGenerativeAI({
   apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
 });
+
+const anthropic = createAnthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+const aiProvider = AI_PROVIDER === 'anthropic' ? anthropic : google;
 
 const CONSULTATION_PROMPT = `You are a helpful email design colleague brainstorming ideas together.
 
@@ -119,12 +127,12 @@ export async function POST(request: Request) {
 
     // Log brand settings if present
     if (brandSettings) {
-      console.log(`🎨 [REFINE-SDK] Using brand: ${brandSettings.companyName}`);
+      logger.info(`🎨 [REFINE-SDK] Using brand: ${brandSettings.companyName}`);
     }
 
-    console.log(`🔄 [REFINE-SDK] User message: "${userMessage}" (source: ${source || 'chat'})`);
+    logger.info(`🔄 [REFINE-SDK] User message: "${userMessage}" (source: ${source || 'chat'})`);
     if (selectedComponentId) {
-      console.log(`🎯 [REFINE-SDK] Target component: ${selectedComponentType} (${selectedComponentId})`);
+      logger.info(`🎯 [REFINE-SDK] Target component: ${selectedComponentType} (${selectedComponentId})`);
     }
 
     // ✅ Parse componentMap ONCE at the start (used by all tiers)
@@ -133,9 +141,9 @@ export async function POST(request: Request) {
     try {
       const parsed = parseAndInjectIds(currentTsxCode);
       componentMap = parsed.componentMap;
-      console.log(`📍 [REFINE-SDK] Parsed ${Object.keys(componentMap).length} components`);
+      logger.debug(`📍 [REFINE-SDK] Parsed ${Object.keys(componentMap).length} components`);
     } catch (error) {
-      console.error('[REFINE-SDK] Failed to parse componentMap:', error);
+      logger.error('[REFINE-SDK] Failed to parse componentMap', error as Error);
       componentMap = undefined;
     }
 
@@ -158,7 +166,7 @@ export async function POST(request: Request) {
     if (selectedComponentId && componentMap && isDeleteRequest) {
       const component = componentMap[selectedComponentId];
       if (component) {
-        console.log(`⚡ [REFINE-SDK] DETERMINISTIC DELETE - Using Babel AST boundaries`);
+        logger.info(`⚡ [REFINE-SDK] DETERMINISTIC DELETE - Using Babel AST boundaries`);
         const before = currentTsxCode.substring(0, component.startChar);
         const after = currentTsxCode.substring(component.endChar);
         const newCode = before + after;
@@ -182,7 +190,7 @@ export async function POST(request: Request) {
     if (selectedComponentId && componentMap && /^duplicate\s+(this|the|it)/i.test(userMessage)) {
       const component = componentMap[selectedComponentId];
       if (component) {
-        console.log(`⚡ [REFINE-SDK] SMART DUPLICATE - Using Babel AST`);
+        logger.info(`⚡ [REFINE-SDK] SMART DUPLICATE - Using Babel AST`);
         
         try {
           // Import Babel tools
@@ -221,7 +229,7 @@ export async function POST(request: Request) {
                       const oldId = attrPath.node.value.value;
                       const newId = `cmp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                       attrPath.node.value.value = newId;
-                      console.log(`  📝 Updated ID: ${oldId} → ${newId}`);
+                      logger.debug(`  📝 Updated ID: ${oldId} → ${newId}`);
                     }
                   }
                 }, path.scope, path);
@@ -229,7 +237,7 @@ export async function POST(request: Request) {
                 // Insert the cloned node right after the original
                 path.insertAfter(clonedNode);
                 
-                console.log(`  ✅ Duplicated ${selectedComponentType || 'component'} with updated IDs`);
+                logger.debug(`  ✅ Duplicated ${selectedComponentType || 'component'} with updated IDs`);
               }
             }
           });
@@ -253,10 +261,10 @@ export async function POST(request: Request) {
           });
           
         } catch (error: any) {
-          console.error('❌ [REFINE-SDK] Smart duplicate failed:', error.message);
+          logger.error('❌ [REFINE-SDK] Smart duplicate failed', error as Error);
           
           // Fallback to simple string duplication
-          console.log('  ⚠️ Falling back to simple duplicate');
+          logger.warn('  ⚠️ Falling back to simple duplicate');
           const componentCode = currentTsxCode.substring(component.startChar, component.endChar);
           const before = currentTsxCode.substring(0, component.endChar);
           const after = currentTsxCode.substring(component.endChar);
@@ -294,7 +302,7 @@ export async function POST(request: Request) {
     if (isSimpleEdit && componentMap) {
       const component = componentMap[selectedComponentId];
       if (component) {
-        console.log(`⚡ [REFINE-SDK] COMPONENT-SCOPED EDIT - Sending only ${selectedComponentType}`);
+        logger.info(`⚡ [REFINE-SDK] COMPONENT-SCOPED EDIT - Sending only ${selectedComponentType}`);
         
         try {
           const componentCode = currentTsxCode.substring(component.startChar, component.endChar);
@@ -311,7 +319,7 @@ ${brandSettings ? `Brand color: ${brandSettings.primaryColor}\n` : ''}
 Return ONLY the modified component code (same structure, just the changes requested).`;
 
           const aiResult = await generateText({
-            model: google(AI_MODEL),
+            model: aiProvider(AI_MODEL),
             system: EXECUTION_PROMPT,
             prompt: scopedPrompt,
             temperature: GENERATION_TEMPERATURE,
@@ -334,26 +342,29 @@ Return ONLY the modified component code (same structure, just the changes reques
           const missingImports = usedComponents.filter(c => !importedComponents.includes(c));
           
           if (missingImports.length > 0) {
-            console.log(`📦 [REFINE-SDK] Adding missing imports: ${missingImports.join(', ')}`);
+            logger.debug(`📦 [REFINE-SDK] Adding missing imports: ${missingImports.join(', ')}`);
             finalCode = finalCode.replace(
               /import\s*{([^}]+)}\s*from\s*['"]@react-email\/components['"]/,
               `import { $1, ${missingImports.join(', ')} } from '@react-email/components'`
             );
           }
           
-          // Log component-scoped cost with actual token counts (Gemini 2.5 Flash pricing: $0.30/$2.50 per 1M tokens)
+          // Log component-scoped cost with actual token counts
           if (usage) {
             const inputTokens = usage.inputTokens || 0;
             const outputTokens = usage.outputTokens || 0;
             const totalTokens = usage.totalTokens || (inputTokens + outputTokens);
             
-            const inputCost = (inputTokens / 1_000_000) * 0.30;
-            const outputCost = (outputTokens / 1_000_000) * 2.50;
+            const pricing = AI_PROVIDER === 'anthropic'
+              ? { input: 0.25, output: 1.25 } // Claude Haiku 4.5
+              : { input: 0.30, output: 2.50 }; // Gemini Flash
+            const inputCost = (inputTokens / 1_000_000) * pricing.input;
+            const outputCost = (outputTokens / 1_000_000) * pricing.output;
             const cost = inputCost + outputCost;
             
-            console.log(`💰 [REFINE-SDK] Component-scoped: ${totalTokens} tokens (in: ${inputTokens}, out: ${outputTokens}) | Cost: $${cost.toFixed(6)}`);
+            logCost(`[REFINE-SDK] Component-scoped: ${totalTokens} tokens (in: ${inputTokens}, out: ${outputTokens})`, cost);
           } else {
-            console.log(`💰 [REFINE-SDK] Component-scoped: unknown tokens`);
+            logCost(`[REFINE-SDK] Component-scoped: unknown tokens`);
           }
           
           // Validate result
@@ -365,7 +376,7 @@ Return ONLY the modified component code (same structure, just the changes reques
           
           // ✅ Check if it worked - fallback if not
           if (processResult.valid && processResult.changes.length > 0) {
-            console.log(`✅ [REFINE-SDK] Component-scoped edit succeeded`);
+            logger.info(`✅ [REFINE-SDK] Component-scoped edit succeeded`);
             return Response.json({
               success: true,
               intent: 'command',
@@ -381,10 +392,10 @@ Return ONLY the modified component code (same structure, just the changes reques
           }
           
           // ⚠️ Component-scoped failed - fall through to full context
-          console.log(`⚠️ [REFINE-SDK] Component-scoped edit failed validation or no changes detected - trying full context fallback`);
+          logger.warn(`⚠️ [REFINE-SDK] Component-scoped edit failed validation or no changes detected - trying full context fallback`);
           
         } catch (error) {
-          console.error(`❌ [REFINE-SDK] Component-scoped error:`, error);
+          logger.error(`❌ [REFINE-SDK] Component-scoped error`, error as Error);
           // Fall through to full context
         }
       }
@@ -394,14 +405,14 @@ Return ONLY the modified component code (same structure, just the changes reques
     // TIER 3: FULL CONTEXT (slow, fallback for complex/failed edits)
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    console.log(`🔄 [REFINE-SDK] FULL CONTEXT EDIT - Sending entire email`);
+    logger.info(`🔄 [REFINE-SDK] FULL CONTEXT EDIT - Sending entire email`);
 
     // Detect intent using existing classifier
     const detectedIntent = detectIntent(userMessage);
     
     // For toolbar: force command mode, but catch obvious questions and fail gracefully
     if (source === 'toolbar' && detectedIntent === 'question') {
-      console.log(`[REFINE-SDK] Toolbar received question - failing gracefully`);
+      logger.info(`[REFINE-SDK] Toolbar received question - failing gracefully`);
       return Response.json({
         success: false,
         intent: 'command',
@@ -413,28 +424,31 @@ Return ONLY the modified component code (same structure, just the changes reques
     
     // Toolbar forces command, chat uses detected intent
     const intent = source === 'toolbar' ? 'command' : detectedIntent;
-    console.log(`[REFINE-SDK] Intent: ${intent}${source === 'toolbar' ? ' (forced by toolbar)' : ''}`);
+    logger.info(`[REFINE-SDK] Intent: ${intent}${source === 'toolbar' ? ' (forced by toolbar)' : ''}`);
 
     // CONSULTATION MODE - Answer questions (only for chat, toolbar forces command)
     if (intent === 'question') {
       const result = await generateText({
-        model: google(AI_MODEL),
+        model: aiProvider(AI_MODEL),
         system: CONSULTATION_PROMPT,
         prompt: `# THE EMAIL CODE\n\n\`\`\`tsx\n${currentTsxCode}\n\`\`\`\n\n# USER'S QUESTION\n\n"${userMessage}"\n\nProvide 2-3 specific, actionable suggestions.`,
         temperature: CONSULTATION_TEMPERATURE,
       });
 
-      // Log consultation cost (Gemini 2.5 Flash pricing: $0.30/$2.50 per 1M tokens)
+      // Log consultation cost
       if (result.usage) {
         const inputTokens = result.usage.inputTokens || 0;
         const outputTokens = result.usage.outputTokens || 0;
         const totalTokens = result.usage.totalTokens || (inputTokens + outputTokens);
         
-        const inputCost = (inputTokens / 1_000_000) * 0.30;
-        const outputCost = (outputTokens / 1_000_000) * 2.50;
+        const pricing = AI_PROVIDER === 'anthropic'
+          ? { input: 0.25, output: 1.25 } // Claude Haiku 4.5
+          : { input: 0.30, output: 2.50 }; // Gemini Flash
+        const inputCost = (inputTokens / 1_000_000) * pricing.input;
+        const outputCost = (outputTokens / 1_000_000) * pricing.output;
         const cost = inputCost + outputCost;
         
-        console.log(`💰 [REFINE-SDK] Consultation: ${totalTokens} tokens (in: ${inputTokens}, out: ${outputTokens}) | Cost: $${cost.toFixed(6)}`);
+        logCost(`[REFINE-SDK] Consultation: ${totalTokens} tokens (in: ${inputTokens}, out: ${outputTokens})`, cost);
       }
 
       return Response.json({
@@ -476,7 +490,7 @@ Return ONLY the modified component code (same structure, just the changes reques
         if (aestheticOptions.length > 0) {
           const randomAesthetic = aestheticOptions[Math.floor(Math.random() * aestheticOptions.length)];
           keyword = `${keyword} ${randomAesthetic}`;
-          console.log(`🎨 [REFINE-SDK] Enhanced image keyword with ${designSystem.name} aesthetic: "${keyword}"`);
+          logger.debug(`🎨 [REFINE-SDK] Enhanced image keyword with ${designSystem.name} aesthetic: "${keyword}"`);
         }
       }
       
@@ -486,7 +500,7 @@ Return ONLY the modified component code (same structure, just the changes reques
         height: 300,
       });
       imageUrl = imageResult.url;
-      console.log(`[REFINE-SDK] Resolved image: ${imageUrl.substring(0, 60)}... (source: ${imageResult.source})`);
+      logger.debug(`[REFINE-SDK] Resolved image: ${imageUrl.substring(0, 60)}... (source: ${imageResult.source})`);
     }
 
     // Build execution prompt
@@ -536,7 +550,7 @@ Return ONLY the modified component code (same structure, just the changes reques
 
     // Generate code (simple, no streaming)
     const aiResult = await generateText({
-      model: google(AI_MODEL),
+      model: aiProvider(AI_MODEL),
       system: EXECUTION_PROMPT,
       prompt: executionPrompt,
       temperature: GENERATION_TEMPERATURE,
@@ -574,7 +588,7 @@ Return ONLY the modified component code (same structure, just the changes reques
 
     // Fetch real images for placeholders (PARALLEL)
     if (imagesToFetch.length > 0) {
-      console.log(`🖼️ [REFINE-SDK] Fetching ${imagesToFetch.length} real images in parallel...`);
+      logger.info(`🖼️ [REFINE-SDK] Fetching ${imagesToFetch.length} real images in parallel...`);
       
       const imagePromises = imagesToFetch.map(async ({ url: placeholderUrl, alt }) => {
         try {
@@ -593,10 +607,10 @@ Return ONLY the modified component code (same structure, just the changes reques
             height: 400,
           });
           
-          console.log(`✅ [REFINE-SDK] Resolved "${keyword}" → ${imageResult.url.substring(0, 60)}...`);
+          logger.debug(`✅ [REFINE-SDK] Resolved "${keyword}" → ${imageResult.url.substring(0, 60)}...`);
           return { placeholderUrl, realUrl: imageResult.url };
         } catch (error) {
-          console.error(`❌ [REFINE-SDK] Failed to fetch image for "${alt}"`);
+          logger.error(`❌ [REFINE-SDK] Failed to fetch image for "${alt}"`, error as Error);
           return null;
         }
       });
@@ -618,27 +632,30 @@ Return ONLY the modified component code (same structure, just the changes reques
       userMessage,
     });
 
-    console.log(`[REFINE-SDK] Validation: ${processResult.valid ? '✅ Valid' : '❌ Invalid'}`);
-    console.log(`[REFINE-SDK] Changes: ${processResult.changes.length}`);
+    logger.info(`[REFINE-SDK] Validation: ${processResult.valid ? '✅ Valid' : '❌ Invalid'}`);
+    logger.info(`[REFINE-SDK] Changes: ${processResult.changes.length}`);
 
-    // Log telemetry with actual token counts (Gemini 2.5 Flash pricing: $0.30/$2.50 per 1M tokens)
+    // Log telemetry with actual token counts
     if (usage) {
       const inputTokens = usage.inputTokens || 0;
       const outputTokens = usage.outputTokens || 0;
       const totalTokens = usage.totalTokens || (inputTokens + outputTokens);
       
-      const inputCost = (inputTokens / 1_000_000) * 0.30;
-      const outputCost = (outputTokens / 1_000_000) * 2.50;
+      const pricing = AI_PROVIDER === 'anthropic'
+        ? { input: 0.25, output: 1.25 } // Claude Haiku 4.5
+        : { input: 0.30, output: 2.50 }; // Gemini Flash
+      const inputCost = (inputTokens / 1_000_000) * pricing.input;
+      const outputCost = (outputTokens / 1_000_000) * pricing.output;
       const cost = inputCost + outputCost;
       
-      console.log(`💰 [REFINE-SDK] Tokens: ${totalTokens} (in: ${inputTokens}, out: ${outputTokens}) | Cost: $${cost.toFixed(6)}`);
+      logCost(`[REFINE-SDK] Tokens: ${totalTokens} (in: ${inputTokens}, out: ${outputTokens})`, cost);
     }
 
     // Handle graceful failures for toolbar commands
     if (source === 'toolbar') {
       // No changes detected - couldn't understand or execute the command
       if (processResult.changes.length === 0) {
-        console.log(`[REFINE-SDK] Toolbar command failed - no changes detected`);
+        logger.warn(`[REFINE-SDK] Toolbar command failed - no changes detected`);
         return Response.json({
           success: false,
           intent: 'command',
@@ -650,7 +667,7 @@ Return ONLY the modified component code (same structure, just the changes reques
       
       // Validation failed - code is broken
       if (!processResult.valid) {
-        console.log(`[REFINE-SDK] Toolbar command failed - validation errors`);
+        logger.warn(`[REFINE-SDK] Toolbar command failed - validation errors`);
         return Response.json({
           success: false,
           intent: 'command',
@@ -676,7 +693,7 @@ Return ONLY the modified component code (same structure, just the changes reques
     });
 
   } catch (error: any) {
-    console.error('[REFINE-SDK] Error:', error);
+    logger.error('[REFINE-SDK] Error', error as Error);
     
     // Graceful error response (still 200 so UI can handle it cleanly)
     return Response.json({

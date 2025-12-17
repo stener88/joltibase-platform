@@ -146,7 +146,7 @@ export function EmailEditorV3({
       setTsxCodeSource('visual');
     },
   });
-
+      
   // Commit logic now handled by useVisualEdits hook
 
   // ========================================
@@ -219,27 +219,27 @@ export function EmailEditorV3({
 
   // Wrapper for toolbar-specific chat submissions
   const handleToolbarSubmit = useCallback(async (customPrompt: string) => {
-    setToolbarStatus({ type: 'loading' });
+      setToolbarStatus({ type: 'loading' });
     
     try {
       const result = await handleChatSubmit(customPrompt, 'toolbar');
-      
+
       if (result.success) {
-        setToolbarStatus({ type: 'success' });
-        setTimeout(() => setToolbarStatus({ type: 'idle' }), 2000);
+          setToolbarStatus({ type: 'success' });
+          setTimeout(() => setToolbarStatus({ type: 'idle' }), 2000);
         console.log(`[TOOLBAR] Command success - ${result.changes?.length || 0} changes`);
-      } else {
-        setToolbarStatus({ 
-          type: 'error', 
+        } else {
+          setToolbarStatus({ 
+            type: 'error', 
           message: result.message || "Couldn't make that change" 
-        });
+          });
         console.log(`[TOOLBAR] Command failed: ${result.message}`);
       }
     } catch (error: any) {
-      setToolbarStatus({ 
-        type: 'error', 
-        message: 'Something went wrong. Try again.' 
-      });
+        setToolbarStatus({ 
+          type: 'error', 
+          message: 'Something went wrong. Try again.' 
+        });
     }
   }, [handleChatSubmit]);
 

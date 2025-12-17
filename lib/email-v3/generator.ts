@@ -1,4 +1,5 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createAnthropic } from '@ai-sdk/anthropic';
 import { generateText } from 'ai';
 import { detectDesignSystem, type DesignSystem } from '@/emails/lib/design-system-selector';
 import { extractCodeFromMarkdown, cleanGeneratedCode } from '@/emails/lib/validator';
@@ -6,17 +7,25 @@ import { validateEmail, generateFixPrompt, getValidationSummary, type Validation
 import { fetchImagesForPrompt, type ImageContext } from './image-service';
 import { validateTsxSyntax } from './code-validator';
 import { ensureAltText } from './alt-text-fixer';
-import { AI_MODEL, MAX_GENERATION_ATTEMPTS, GENERATION_TEMPERATURE } from '@/lib/ai/config';
+import { AI_MODEL, AI_PROVIDER, MAX_GENERATION_ATTEMPTS, GENERATION_TEMPERATURE } from '@/lib/ai/config';
 import type { BrandIdentity } from '@/lib/types/brand';
+import { logger, logCost, logPerformance } from '@/lib/logger';
 import fs from 'fs';
 import path from 'path';
 
 const GENERATED_DIR = path.join(process.cwd(), 'emails/generated');
 
-// Initialize Google AI
+// Initialize AI providers
 const google = createGoogleGenerativeAI({
   apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
 });
+
+const anthropic = createAnthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+// Select provider based on config
+const aiProvider = AI_PROVIDER === 'anthropic' ? anthropic : google;
 
 export interface GeneratedEmail {
   filename: string;
@@ -184,9 +193,9 @@ Generate complete, production-ready code following the design system provided.`;
  */
 export async function generateEmail(prompt: string, brand?: BrandIdentity | null): Promise<GeneratedEmail> {
   const totalStart = Date.now();
-  console.log(`🚀 [V3-GENERATOR] Generating email for: "${prompt}"`);
+  logger.info(`🚀 [V3-GENERATOR] Generating email for: "${prompt}"`);
   if (brand) {
-    console.log(`🎨 [V3-GENERATOR] Using brand: ${brand.companyName} (${brand.primaryColor})`);
+    logger.info(`🎨 [V3-GENERATOR] Using brand: ${brand.companyName} (${brand.primaryColor})`);
   }
   
   // Detect appropriate design system based on keywords
@@ -195,44 +204,51 @@ export async function generateEmail(prompt: string, brand?: BrandIdentity | null
   // Fetch images with design system aesthetic (runs independently)
   const imageStart = Date.now();
   const images = await fetchImagesForPrompt(prompt, designSystem);
-  console.log(`⏱️ [GENERATOR] Image fetch: ${((Date.now() - imageStart) / 1000).toFixed(1)}s`);
+  logPerformance('[GENERATOR] Image fetch', (Date.now() - imageStart) / 1000);
   
   let lastError: Error | null = null;
   let previousIssues: ValidationIssue[] = [];
   
   // Retry loop for generation with auto-correction
   for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
-    console.log(`🔄 [V3-GENERATOR] Attempt ${attempt}/${MAX_GENERATION_ATTEMPTS}`);
+    logger.info(`🔄 [V3-GENERATOR] Attempt ${attempt}/${MAX_GENERATION_ATTEMPTS}`);
     
     try {
       // Build user prompt with design system, images, brand identity, and previous validation issues
       const userPrompt = buildUserPrompt(prompt, designSystem, attempt, images, previousIssues, brand);
       
-      // Generate with Gemini (TIMED)
+      // Generate with AI (TIMED)
       const llmStart = Date.now();
-      console.log(`⏱️ [GENERATOR] Starting LLM call (model: ${AI_MODEL})...`);
+      logger.info(`⏱️ [GENERATOR] Starting LLM call (provider: ${AI_PROVIDER}, model: ${AI_MODEL})...`);
       
       const result = await generateText({
-        model: google(AI_MODEL),
+        model: aiProvider(AI_MODEL),
         system: SYSTEM_INSTRUCTION,
         prompt: userPrompt,
         temperature: GENERATION_TEMPERATURE,
       });
       
       const llmDuration = Date.now() - llmStart;
-      console.log(`⏱️ [GENERATOR] LLM call completed in ${(llmDuration / 1000).toFixed(1)}s`);
+      logPerformance('[GENERATOR] LLM call completed', llmDuration / 1000);
       
-      // Log token usage and cost (Gemini 2.5 Flash pricing: $0.30/$2.50 per 1M tokens)
+      // Log token usage and cost
+      // Claude Sonnet 4.5: $3.00/$15.00 per 1M tokens
+      // Gemini Flash: $0.30/$2.50 per 1M tokens
       if (result.usage) {
         const inputTokens = result.usage.inputTokens || 0;
         const outputTokens = result.usage.outputTokens || 0;
         const totalTokens = result.usage.totalTokens || (inputTokens + outputTokens);
         
-        const inputCost = (inputTokens / 1_000_000) * 0.30;
-        const outputCost = (outputTokens / 1_000_000) * 2.50;
+        // Pricing based on provider
+        const pricing = AI_PROVIDER === 'anthropic' 
+          ? { input: 0.25, output: 1.25 } // Claude Haiku 4.5
+          : { input: 0.30, output: 2.50 }; // Gemini Flash
+        
+        const inputCost = (inputTokens / 1_000_000) * pricing.input;
+        const outputCost = (outputTokens / 1_000_000) * pricing.output;
         const totalCost = inputCost + outputCost;
         
-        console.log(`💰 [GENERATOR] Tokens: ${totalTokens} (in: ${inputTokens}, out: ${outputTokens}) | Cost: $${totalCost.toFixed(6)}`);
+        logCost(`[GENERATOR] Tokens: ${totalTokens} (in: ${inputTokens}, out: ${outputTokens}) | Cost: $${totalCost.toFixed(6)}`);
       }
       
       // Extract and clean code
@@ -245,8 +261,8 @@ export async function generateEmail(prompt: string, brand?: BrandIdentity | null
       // Pre-render syntax validation with esbuild (catches real JSX errors, not apostrophes)
       const syntaxError = await validateTsxSyntax(code);
       if (syntaxError) {
-        console.log(`⚠️ [V3-GENERATOR] Syntax validation failed, retrying...`);
-        console.log(`  ❌ ${syntaxError}`);
+        logger.warn(`⚠️ [V3-GENERATOR] Syntax validation failed, retrying...`);
+        logger.warn(`  ❌ ${syntaxError}`);
         previousIssues = [{ severity: 'error' as const, type: 'syntax' as const, message: syntaxError }];
         continue;
       }
@@ -254,13 +270,13 @@ export async function generateEmail(prompt: string, brand?: BrandIdentity | null
       // Multi-layer validation (context-aware based on design system)
       const validation = validateEmail(code, designSystem.id);
       const summary = getValidationSummary(validation);
-      console.log(`📋 [V3-GENERATOR] Validation: ${summary}`);
+      logger.info(`📋 [V3-GENERATOR] Validation: ${summary}`);
       
       // Log issues for debugging
       if (validation.issues.length > 0) {
         validation.issues.forEach(issue => {
           const emoji = issue.severity === 'error' ? '❌' : '⚠️';
-          console.log(`  ${emoji} [${issue.type}] ${issue.message}`);
+          logger.debug(`  ${emoji} [${issue.type}] ${issue.message}`);
         });
       }
       
@@ -270,13 +286,13 @@ export async function generateEmail(prompt: string, brand?: BrandIdentity | null
         const filename = await saveComponent(code);
         
         const totalDuration = Date.now() - totalStart;
-        console.log(`\n━━━ GENERATION COMPLETE ━━━`);
-        console.log(`⏱️ [TOTAL] ${(totalDuration / 1000).toFixed(1)}s`);
+        logger.info(`\n━━━ GENERATION COMPLETE ━━━`);
+        logPerformance('[TOTAL]', totalDuration / 1000);
         
         if (validation.isValid) {
-          console.log(`✅ [V3-GENERATOR] Successfully generated: ${filename}`);
+          logger.info(`✅ [V3-GENERATOR] Successfully generated: ${filename}`);
         } else {
-          console.warn(`⚠️ [V3-GENERATOR] Generated with errors on final attempt: ${filename}`);
+          logger.warn(`⚠️ [V3-GENERATOR] Generated with errors on final attempt: ${filename}`);
         }
         
         return {
@@ -294,12 +310,12 @@ export async function generateEmail(prompt: string, brand?: BrandIdentity | null
       }
       
       // Not valid and not last attempt - retry with feedback
-      console.log(`🔄 [V3-GENERATOR] Retrying with validation feedback...`);
+      logger.info(`🔄 [V3-GENERATOR] Retrying with validation feedback...`);
       previousIssues = validation.issues;
       continue;
       
     } catch (error: any) {
-      console.error(`❌ [V3-GENERATOR] Attempt ${attempt} failed:`, error.message);
+      logger.error(`❌ [V3-GENERATOR] Attempt ${attempt} failed`, error, { attempt, prompt });
       lastError = error;
       
       if (attempt === MAX_GENERATION_ATTEMPTS) {
@@ -546,7 +562,7 @@ async function saveComponent(code: string): Promise<string> {
   // Save file
   fs.writeFileSync(filepath, code, 'utf-8');
   
-  console.log(`💾 [V3-GENERATOR] Saved to: ${filepath}`);
+  logger.debug(`💾 [V3-GENERATOR] Saved to: ${filepath}`);
   
   return filename;
 }
@@ -559,7 +575,7 @@ export function deleteGeneratedEmail(filename: string): void {
   
   if (fs.existsSync(filepath)) {
     fs.unlinkSync(filepath);
-    console.log(`🗑️ [V3-GENERATOR] Deleted: ${filename}`);
+    logger.debug(`🗑️ [V3-GENERATOR] Deleted: ${filename}`);
   }
 }
 

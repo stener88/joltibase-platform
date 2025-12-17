@@ -106,12 +106,16 @@ export function useChatRefinement({
       const data = await response.json();
       console.log(`[CHAT] Intent: ${data.intent}, Success: ${data.success}`);
 
-      // For toolbar: return result for external handling
+      // For toolbar: Apply changes first, then return result
       if (isToolbar) {
+        if (data.intent === 'command' && data.success && data.tsxCode) {
+          onCodeUpdate(data.tsxCode);
+          console.log(`[TOOLBAR] Applied ${data.changes?.length || 0} changes`);
+        }
         return data;
       }
 
-      // Apply code changes if command succeeded
+      // For chat: Apply changes and update messages
       if (data.intent === 'command' && data.success && data.tsxCode) {
         onCodeUpdate(data.tsxCode);
 

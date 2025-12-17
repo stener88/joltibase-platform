@@ -2,6 +2,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { NextResponse } from 'next/server';
 import { sendEmail, replaceMergeTags, htmlToPlainText } from '@/lib/email-sending/sender';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 // ============================================
 // POST /api/v3/campaigns/[id]/processQueue
@@ -16,12 +17,12 @@ export async function POST(
   try {
     const campaignId = (await params).id;
 
-    console.log(`🔄 [QUEUE-V3] Processing queue for campaign ${campaignId}`);
+    logger.info(`🔄 [QUEUE-V3] Processing queue for campaign ${campaignId}`);
 
     // 🔒 SECURITY: Rate limiting (prevent abuse)
     const rateLimit = checkRateLimit(campaignId, 10); // Max 10 calls per hour
     if (!rateLimit.allowed) {
-      console.warn(`⚠️ [QUEUE-V3] Rate limit exceeded for campaign ${campaignId}`);
+      logger.warn(`⚠️ [QUEUE-V3] Rate limit exceeded for campaign ${campaignId}`);
       return NextResponse.json(
         { success: false, error: 'Rate limit exceeded. Please try again later.' },
         { status: 429 }
@@ -40,7 +41,7 @@ export async function POST(
       .single();
 
     if (campaignError || !campaign) {
-      console.error(`❌ [QUEUE-V3] Invalid campaign or status:`, campaignError);
+      logger.error(`❌ [QUEUE-V3] Invalid campaign or status`, campaignError as Error, { campaignId });
       return NextResponse.json(
         { success: false, error: 'Campaign not found or not in sending status' },
         { status: 404 }
@@ -55,7 +56,7 @@ export async function POST(
       .single();
 
     if (senderError || !sender) {
-      console.error(`❌ [QUEUE-V3] No sender address found for campaign ${campaignId}`);
+      logger.error(`❌ [QUEUE-V3] No sender address found for campaign ${campaignId}`, new Error('No sender address'), { campaignId });
       return NextResponse.json(
         { success: false, error: 'Sender address not found' },
         { status: 400 }
@@ -84,12 +85,12 @@ export async function POST(
       .limit(100);
 
     if (emailsError) {
-      console.error('❌ [QUEUE-V3] Error fetching emails:', emailsError);
+      logger.error('❌ [QUEUE-V3] Error fetching emails', emailsError as Error, { campaignId });
       throw emailsError;
     }
 
     if (!queuedEmails || queuedEmails.length === 0) {
-      console.log(`ℹ️ [QUEUE-V3] No queued emails for campaign ${campaignId}`);
+      logger.info(`ℹ️ [QUEUE-V3] No queued emails for campaign ${campaignId}`);
       
       // Update campaign status to 'sent' if no more queued emails
       await supabase
@@ -104,7 +105,7 @@ export async function POST(
       });
     }
 
-    console.log(`📧 [QUEUE-V3] Processing ${queuedEmails.length} emails`);
+    logger.info(`📧 [QUEUE-V3] Processing ${queuedEmails.length} emails`);
 
     let successCount = 0;
     let failureCount = 0;
@@ -159,7 +160,7 @@ export async function POST(
             .eq('id', emailRecord.id);
 
           successCount++;
-          console.log(`✅ [QUEUE-V3] Sent to ${contact.email}`);
+          logger.debug(`✅ [QUEUE-V3] Sent to ${contact.email}`);
         } else {
           // Mark as bounced/failed
           await supabase
@@ -172,10 +173,10 @@ export async function POST(
             .eq('id', emailRecord.id);
 
           failureCount++;
-          console.error(`❌ [QUEUE-V3] Failed to send to ${contact.email}:`, result.error);
+          logger.error(`❌ [QUEUE-V3] Failed to send to ${contact.email}`, new Error(result.error), { campaignId });
         }
       } catch (error: any) {
-        console.error(`❌ [QUEUE-V3] Error processing email ${emailRecord.id}:`, error);
+        logger.error(`❌ [QUEUE-V3] Error processing email ${emailRecord.id}`, error as Error, { campaignId });
         
         // Mark as bounced
         await supabase
@@ -211,12 +212,12 @@ export async function POST(
         .update({ status: 'sent' })
         .eq('id', campaignId);
       
-      console.log(`✅ [QUEUE-V3] Campaign ${campaignId} completed`);
+      logger.info(`✅ [QUEUE-V3] Campaign ${campaignId} completed`);
     } else {
-      console.log(`🔄 [QUEUE-V3] ${remainingCount} emails still in queue`);
+      logger.info(`🔄 [QUEUE-V3] ${remainingCount} emails still in queue`);
     }
 
-    console.log(`✅ [QUEUE-V3] Processed ${successCount} emails, ${failureCount} failures`);
+    logger.info(`✅ [QUEUE-V3] Processed ${successCount} emails, ${failureCount} failures`);
 
     return NextResponse.json({
       success: true,
@@ -226,7 +227,7 @@ export async function POST(
     });
 
   } catch (error: any) {
-    console.error('❌ [QUEUE-V3] Error processing queue:', error);
+    logger.error('❌ [QUEUE-V3] Error processing queue', error as Error);
     
     // Reset campaign status on critical error
     try {
@@ -236,7 +237,7 @@ export async function POST(
         .update({ status: 'ready' })
         .eq('id', (await params).id);
     } catch (resetError) {
-      console.error('❌ [QUEUE-V3] Failed to reset campaign status:', resetError);
+      logger.error('❌ [QUEUE-V3] Failed to reset campaign status', resetError as Error);
     }
     
     return NextResponse.json(
@@ -278,7 +279,7 @@ export async function GET(
     });
 
   } catch (error: any) {
-    console.error('❌ [QUEUE-V3] Error checking queue:', error);
+    logger.error('❌ [QUEUE-V3] Error checking queue', error as Error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

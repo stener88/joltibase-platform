@@ -208,10 +208,9 @@ function convertZodToGemini(schema: z.ZodType<any, any, any>): any {
                 allProperties[key] = value;
               } else {
                 // If property exists, merge enum constraints if present
-                const valueObj = value as any;
-                if (valueObj.enum && allProperties[key].enum) {
+                if (value.enum && allProperties[key].enum) {
                   // Combine enums (union of all possible values)
-                  const combinedEnum = [...new Set([...allProperties[key].enum, ...valueObj.enum])];
+                  const combinedEnum = [...new Set([...allProperties[key].enum, ...value.enum])];
                   allProperties[key] = {
                     ...allProperties[key],
                     enum: combinedEnum,

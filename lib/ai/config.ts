@@ -10,21 +10,36 @@
 // =============================================================================
 
 /**
+ * AI Provider Selection
+ * 'anthropic' → Claude Sonnet 4.5 (high quality, reliable)
+ * 'google' → Gemini Flash (fast, cost-effective)
+ */
+export const AI_PROVIDER = 'anthropic' as 'anthropic' | 'google';
+
+/**
  * Primary AI model for all generation tasks
  * 
- * Options:
- * - 'gemini-3-pro-preview' → Latest preview, best quality 
- * - 'gemini-2.5-pro'   → Stable, high quality (~5-15s)
- * - 'gemini-2.5-flash' → Balanced speed/quality (~2-5s) - CURRENT
+ * Anthropic Options:
+ * - 'claude-sonnet-4-20250514' → Claude Sonnet 4.5 (highest quality, $3/$15 per M tokens)
+ * - 'claude-haiku-4-5-20251001' → Claude Haiku 4.5 (fast, reliable, $0.25/$1.25 per M tokens) ✨
+ * - 'claude-3-5-sonnet-20241022' → Claude 3.5 Sonnet (previous generation)
+ * 
+ * Google Options:
+ * - 'gemini-2.5-pro' → Stable, high quality (~5-15s)
+ * - 'gemini-2.5-flash' → Balanced speed/quality (~2-5s)
  * - 'gemini-2.5-flash-lite' → Fastest, most cost-effective (~1-3s)
  */
-export const AI_MODEL = 'gemini-2.5-flash';
+export const AI_MODEL = AI_PROVIDER === 'anthropic' 
+  ? 'claude-haiku-4-5-20251001'
+  : 'gemini-2.5-flash';
 
 /**
  * Model for quick tasks (keywords, simple edits)
  * Can use a faster model for latency-sensitive operations
  */
-export const AI_MODEL_FAST = 'gemini-2.5-flash-lite';
+export const AI_MODEL_FAST = AI_PROVIDER === 'anthropic'
+  ? 'claude-haiku-4-5-20251001'
+  : 'gemini-2.5-flash-lite';
 
 // =============================================================================
 // TIMEOUTS & LIMITS

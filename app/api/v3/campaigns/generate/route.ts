@@ -10,6 +10,7 @@ import { requireAuth } from '@/lib/api/auth';
 import { generateEmail } from '@/lib/email-v3/generator';
 import { renderEmail } from '@/lib/email-v3/renderer';
 import { fromDbRow, type BrandIdentity, type BrandKitDbRow } from '@/lib/types/brand';
+import { logger, logPerformance } from '@/lib/logger';
 import { z } from 'zod';
 
 const GenerateRequestSchema = z.object({
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { prompt, name } = GenerateRequestSchema.parse(body);
     
-    console.log(`📧 [GENERATE-V3] User ${user.id}: "${prompt}"`);
+    logger.info(`📧 [GENERATE-V3] User ${user.id}: "${prompt}"`);
     
     // Fetch user's brand settings
     let brand: BrandIdentity | null = null;
@@ -42,22 +43,22 @@ export async function POST(request: NextRequest) {
       
       if (brandData) {
         brand = fromDbRow(brandData as BrandKitDbRow);
-        console.log(`🎨 [GENERATE-V3] Using brand: ${brand.companyName}`);
+        logger.info(`🎨 [GENERATE-V3] Using brand: ${brand.companyName}`);
       }
     } catch (error) {
       // Brand not found is OK - user hasn't set one up yet
-      console.log(`[GENERATE-V3] No brand settings found`);
+      logger.debug(`[GENERATE-V3] No brand settings found`);
     }
     
     // Generate wrapper-free component with RAG and brand (TIMED)
     const genStart = Date.now();
     const generated = await generateEmail(prompt, brand);
-    console.log(`⏱️ [GENERATE-V3] Total generation: ${((Date.now() - genStart) / 1000).toFixed(1)}s`);
+    logPerformance('[GENERATE-V3] Total generation', (Date.now() - genStart) / 1000);
     
     // Render to HTML (applies wrappers at render time) (TIMED)
     const renderStart = Date.now();
     const renderResult = await renderEmail(generated.filename);
-    console.log(`⏱️ [GENERATE-V3] Render: ${((Date.now() - renderStart) / 1000).toFixed(1)}s`);
+    logPerformance('[GENERATE-V3] Render', (Date.now() - renderStart) / 1000);
     
     if (renderResult.error) {
       throw new Error(`Render failed: ${renderResult.error}`);
@@ -89,11 +90,11 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
     
-    console.log(`⏱️ [GENERATE-V3] DB insert: ${((Date.now() - dbStart) / 1000).toFixed(1)}s`);
+    logPerformance('[GENERATE-V3] DB insert', (Date.now() - dbStart) / 1000);
     
     if (dbError) throw dbError;
     
-    console.log(`✅ [GENERATE-V3] Campaign created: ${campaign.id} (${status})`);
+    logger.info(`✅ [GENERATE-V3] Campaign created: ${campaign.id} (${status})`);
     
     return NextResponse.json({
       success: true,
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
     });
     
   } catch (error: any) {
-    console.error('❌ [GENERATE-V3] Error:', error);
+    logger.error('❌ [GENERATE-V3] Error', error);
     
     // Handle validation errors
     if (error.name === 'ZodError') {

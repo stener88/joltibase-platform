@@ -7,13 +7,20 @@
 
 import { generateObject } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createAnthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
 import type { DesignSystem } from '@/emails/lib/design-system-selector';
-import { AI_MODEL_FAST, KEYWORDS_TEMPERATURE, AI_KEYWORDS_TIMEOUT_MS } from '@/lib/ai/config';
+import { AI_MODEL_FAST, AI_PROVIDER, KEYWORDS_TEMPERATURE, AI_KEYWORDS_TIMEOUT_MS } from '@/lib/ai/config';
 
 const google = createGoogleGenerativeAI({
   apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
 });
+
+const anthropic = createAnthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+const aiProvider = AI_PROVIDER === 'anthropic' ? anthropic : google;
 
 /**
  * Schema for AI-generated keywords
@@ -50,7 +57,7 @@ export async function extractKeywordsWithAI(
 ): Promise<ImageKeywords | null> {
   try {
     const result = await generateObject({
-      model: google(AI_MODEL_FAST),
+      model: aiProvider(AI_MODEL_FAST),
       schema: KeywordsSchema,
       prompt: `Extract 3 Unsplash search keywords for this email.
 
