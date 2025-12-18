@@ -232,8 +232,9 @@ export async function generateEmail(prompt: string, brand?: BrandIdentity | null
       logPerformance('[GENERATOR] LLM call completed', llmDuration / 1000);
       
       // Log token usage and cost
-      // Claude Sonnet 4.5: $3.00/$15.00 per 1M tokens
-      // Gemini Flash: $0.30/$2.50 per 1M tokens
+      // Claude Haiku 4.5: $1.00/$5.00 per 1M tokens
+      // Gemini 3 Flash Preview: $0.50/$3.00 per 1M tokens
+      // Gemini 2.5 Flash: $0.30/$2.50 per 1M tokens
       if (result.usage) {
         const inputTokens = result.usage.inputTokens || 0;
         const outputTokens = result.usage.outputTokens || 0;
@@ -241,8 +242,8 @@ export async function generateEmail(prompt: string, brand?: BrandIdentity | null
         
         // Pricing based on provider
         const pricing = AI_PROVIDER === 'anthropic' 
-          ? { input: 0.25, output: 1.25 } // Claude Haiku 4.5
-          : { input: 0.30, output: 2.50 }; // Gemini Flash
+          ? { input: 1.00, output: 5.00 } // Claude Haiku 4.5 pricing
+          : { input: 0.50, output: 3.00 }; // Gemini 3 Flash Preview pricing
         
         const inputCost = (inputTokens / 1_000_000) * pricing.input;
         const outputCost = (outputTokens / 1_000_000) * pricing.output;

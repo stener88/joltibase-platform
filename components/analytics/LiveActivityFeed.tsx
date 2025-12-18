@@ -19,13 +19,6 @@ export function LiveActivityFeed({ pollingInterval = 10000 }: LiveActivityFeedPr
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    loadEvents();
-
-    const interval = setInterval(loadEvents, pollingInterval);
-    return () => clearInterval(interval);
-  }, [pollingInterval]);
-
   const loadEvents = async () => {
     try {
       const response = await fetch('/api/analytics/realtime');
@@ -40,6 +33,17 @@ export function LiveActivityFeed({ pollingInterval = 10000 }: LiveActivityFeedPr
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Initial load
+    loadEvents();
+
+    // Set up polling interval
+    const interval = setInterval(loadEvents, pollingInterval);
+    
+    // Cleanup on unmount
+    return () => clearInterval(interval);
+  }, []); // Empty dependency array - only run once on mount
 
   const getEventIcon = (type: string) => {
     switch (type) {

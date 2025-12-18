@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
     // Get campaigns currently sending
     const { data: sendingCampaigns, error: campaignsError } = await supabase
-      .from('campaigns')
+      .from('campaigns_v3')
       .select('id, name, stats')
       .eq('user_id', user.id)
       .eq('status', 'sending');
@@ -78,7 +78,7 @@ export async function GET(request: Request) {
           first_name,
           last_name
         ),
-        campaigns (
+        campaigns_v3 (
           name
         )
       `)
@@ -93,7 +93,7 @@ export async function GET(request: Request) {
     const recentActivity = (recentEmails || []).flatMap((email: any) => {
       const events: any[] = [];
       const contact = email.contacts;
-      const campaign = email.campaigns;
+      const campaign = email.campaigns_v3;
 
       if (!contact || !campaign) return [];
 

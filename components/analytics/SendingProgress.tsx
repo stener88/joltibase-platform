@@ -19,13 +19,6 @@ export function SendingProgress({ pollingInterval = 10000 }: SendingProgressProp
   const [campaigns, setCampaigns] = useState<SendingCampaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    loadCampaigns();
-
-    const interval = setInterval(loadCampaigns, pollingInterval);
-    return () => clearInterval(interval);
-  }, [pollingInterval]);
-
   const loadCampaigns = async () => {
     try {
       const response = await fetch('/api/analytics/realtime');
@@ -40,6 +33,17 @@ export function SendingProgress({ pollingInterval = 10000 }: SendingProgressProp
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Initial load
+    loadCampaigns();
+
+    // Set up polling interval
+    const interval = setInterval(loadCampaigns, pollingInterval);
+    
+    // Cleanup on unmount
+    return () => clearInterval(interval);
+  }, []); // Empty dependency array - only run once on mount
 
   const calculateProgress = (campaign: SendingCampaign) => {
     if (campaign.total === 0) return 0;

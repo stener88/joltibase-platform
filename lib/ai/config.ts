@@ -14,24 +14,25 @@
  * 'anthropic' → Claude Sonnet 4.5 (high quality, reliable)
  * 'google' → Gemini Flash (fast, cost-effective)
  */
-export const AI_PROVIDER = 'anthropic' as 'anthropic' | 'google';
+export const AI_PROVIDER = 'google' as 'anthropic' | 'google';
 
 /**
  * Primary AI model for all generation tasks
  * 
  * Anthropic Options:
  * - 'claude-sonnet-4-20250514' → Claude Sonnet 4.5 (highest quality, $3/$15 per M tokens)
- * - 'claude-haiku-4-5-20251001' → Claude Haiku 4.5 (fast, reliable, $0.25/$1.25 per M tokens) ✨
+ * - 'claude-haiku-4-5-20251001' → Claude Haiku 4.5 (fast, reliable, $1/$5 per M tokens)
  * - 'claude-3-5-sonnet-20241022' → Claude 3.5 Sonnet (previous generation)
  * 
  * Google Options:
- * - 'gemini-2.5-pro' → Stable, high quality (~5-15s)
- * - 'gemini-2.5-flash' → Balanced speed/quality (~2-5s)
+ * - 'gemini-2.5-pro' → Stable, high quality (~5-15s, $1.25/$5 per M tokens)
+ * - 'gemini-2.5-flash' → Balanced speed/quality (~2-5s, $0.30/$2.50 per M tokens)
  * - 'gemini-2.5-flash-lite' → Fastest, most cost-effective (~1-3s)
+ * - 'gemini-3-flash-preview' → NEW! Latest preview ($0.50/$3 per M tokens, experimental) 🚀
  */
 export const AI_MODEL = AI_PROVIDER === 'anthropic' 
   ? 'claude-haiku-4-5-20251001'
-  : 'gemini-2.5-flash';
+  : 'gemini-3-flash-preview';
 
 /**
  * Model for quick tasks (keywords, simple edits)
@@ -39,7 +40,7 @@ export const AI_MODEL = AI_PROVIDER === 'anthropic'
  */
 export const AI_MODEL_FAST = AI_PROVIDER === 'anthropic'
   ? 'claude-haiku-4-5-20251001'
-  : 'gemini-2.5-flash-lite';
+  : 'gemini-3-flash-preview';
 
 // =============================================================================
 // TIMEOUTS & LIMITS

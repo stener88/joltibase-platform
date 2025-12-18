@@ -78,13 +78,29 @@ export default function HomePage() {
   }, [user]);
 
   const handleGenerate = async () => {
-    if (!prompt.trim()) return;
+    const trimmedPrompt = prompt.trim();
+    
+    // Frontend validation
+    if (!trimmedPrompt) {
+      setError('Please describe what you want to create');
+      return;
+    }
+    
+    if (trimmedPrompt.length < 10) {
+      setError('Please provide more details (at least 10 characters)');
+      return;
+    }
+    
+    if (trimmedPrompt.length > 1000) {
+      setError('Your prompt is too long. Please keep it under 1000 characters.');
+      return;
+    }
     
     // Check if user is authenticated
     if (!user) {
       // Store form data before auth
       const formData = {
-        prompt,
+        prompt: trimmedPrompt,
       };
       sessionStorage.setItem('pending_form_data', JSON.stringify(formData));
       setShowAuthModal(true);
@@ -96,7 +112,7 @@ export default function HomePage() {
 
     try {
       const formData: CampaignFormData = {
-        prompt: prompt.trim(),
+        prompt: trimmedPrompt,
         campaignType: 'one-time',
       };
 
@@ -218,7 +234,10 @@ export default function HomePage() {
               {/* Main Input */}
               <PromptInput
                 value={prompt}
-                onChange={setPrompt}
+                onChange={(value) => {
+                  setPrompt(value);
+                  if (error) setError(null); // Clear error when typing
+                }}
                 onSubmit={handleGenerate}
                 isLoading={isLoading}
                 placeholder="Build SaaS Dashboard..."
@@ -226,8 +245,8 @@ export default function HomePage() {
 
               {/* Error Display */}
               {error && (
-                <div className="mt-4 max-w-3xl mx-auto p-4 bg-red-50/90 backdrop-blur-sm border border-red-200 rounded-xl">
-                  <p className="text-sm text-red-800 text-center">{error}</p>
+                <div className="mt-4 max-w-3xl mx-auto p-4 bg-red-500/10 backdrop-blur-sm border border-red-500/50 rounded-xl">
+                  <p className="text-sm text-red-200 text-center font-medium">{error}</p>
                 </div>
               )}
 

@@ -356,8 +356,8 @@ Return ONLY the modified component code (same structure, just the changes reques
             const totalTokens = usage.totalTokens || (inputTokens + outputTokens);
             
             const pricing = AI_PROVIDER === 'anthropic'
-              ? { input: 0.25, output: 1.25 } // Claude Haiku 4.5
-              : { input: 0.30, output: 2.50 }; // Gemini Flash
+              ? { input: 1.00, output: 5.00 } // Claude Haiku 4.5 pricing
+              : { input: 0.50, output: 3.00 }; // Gemini 3 Flash Preview pricing
             const inputCost = (inputTokens / 1_000_000) * pricing.input;
             const outputCost = (outputTokens / 1_000_000) * pricing.output;
             const cost = inputCost + outputCost;
@@ -442,8 +442,8 @@ Return ONLY the modified component code (same structure, just the changes reques
         const totalTokens = result.usage.totalTokens || (inputTokens + outputTokens);
         
         const pricing = AI_PROVIDER === 'anthropic'
-          ? { input: 0.25, output: 1.25 } // Claude Haiku 4.5
-          : { input: 0.30, output: 2.50 }; // Gemini Flash
+          ? { input: 1.00, output: 5.00 } // Claude Haiku 4.5 pricing
+          : { input: 0.50, output: 3.00 }; // Gemini 3 Flash Preview pricing
         const inputCost = (inputTokens / 1_000_000) * pricing.input;
         const outputCost = (outputTokens / 1_000_000) * pricing.output;
         const cost = inputCost + outputCost;
@@ -642,8 +642,8 @@ Return ONLY the modified component code (same structure, just the changes reques
       const totalTokens = usage.totalTokens || (inputTokens + outputTokens);
       
       const pricing = AI_PROVIDER === 'anthropic'
-        ? { input: 0.25, output: 1.25 } // Claude Haiku 4.5
-        : { input: 0.30, output: 2.50 }; // Gemini Flash
+        ? { input: 1.00, output: 5.00 } // Claude Haiku 4.5 pricing
+        : { input: 0.50, output: 3.00 }; // Gemini 3 Flash Preview pricing
       const inputCost = (inputTokens / 1_000_000) * pricing.input;
       const outputCost = (outputTokens / 1_000_000) * pricing.output;
       const cost = inputCost + outputCost;
