@@ -51,6 +51,9 @@ export async function GET(
       );
     }
     
+    // HTML is already safe - generated from validated TSX via React Email
+    // No sanitization needed as users cannot directly inject HTML
+    
     return NextResponse.json({
       success: true,
       campaign,
