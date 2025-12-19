@@ -8,6 +8,7 @@ import { StatsCard } from '@/components/dashboard/StatsCard';
 import { Mail, Eye, MousePointerClick, XCircle, TrendingUp, Users, Edit3 } from 'lucide-react';
 import type { Campaign } from '@/lib/types/campaign';
 import { format } from 'date-fns';
+import DOMPurify from 'isomorphic-dompurify';
 
 export default function CampaignAnalyticsPage() {
   const router = useRouter();
@@ -244,7 +245,12 @@ export default function CampaignAnalyticsPage() {
             <p className="text-sm text-gray-600 mb-2">Content:</p>
             <div
               className="prose max-w-none text-sm"
-              dangerouslySetInnerHTML={{ __html: campaign.html_content || 'No content' }}
+              dangerouslySetInnerHTML={{ 
+                __html: DOMPurify.sanitize(campaign.html_content || 'No content', {
+                  ALLOWED_TAGS: ['p', 'a', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'br', 'div', 'span', 'img', 'table', 'tr', 'td', 'th', 'tbody', 'thead'],
+                  ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'style', 'width', 'height']
+                })
+              }}
             />
           </div>
         </div>
