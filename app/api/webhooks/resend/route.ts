@@ -177,26 +177,8 @@ async function processWebhookPayload(payload: any) {
     throw updateError;
   }
 
-  // Update campaign stats by calculating from emails table
-  const { data: emailStats } = await supabase
-    .from('emails')
-    .select('status')
-    .eq('campaign_id', email.campaign_id);
-
-  if (emailStats) {
-    const stats = {
-      sent: emailStats.filter(e => ['sent', 'delivered', 'opened', 'clicked'].includes(e.status)).length,
-      delivered: emailStats.filter(e => ['delivered', 'opened', 'clicked'].includes(e.status)).length,
-      opened: emailStats.filter(e => ['opened', 'clicked'].includes(e.status)).length,
-      clicked: emailStats.filter(e => e.status === 'clicked').length,
-      bounced: emailStats.filter(e => e.status === 'bounced').length,
-    };
-
-    await supabase
-      .from('campaigns_v3')
-      .update({ stats })
-      .eq('id', email.campaign_id);
-  }
+  // Update campaign stats using the database function
+  await supabase.rpc('update_campaign_stats', { campaign_uuid: email.campaign_id });
 
   console.log('✅ [WEBHOOK] Processed event:', eventType, 'for email:', email.id);
 

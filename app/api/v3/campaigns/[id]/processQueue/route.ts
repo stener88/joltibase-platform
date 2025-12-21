@@ -37,13 +37,13 @@ export async function POST(
       .from('campaigns_v3')
       .select('*')
       .eq('id', campaignId)
-      .eq('status', 'sent') // Process campaigns that have been sent (status changed from 'sending' to 'sent')
+      .eq('status', 'sending') // Only process campaigns in 'sending' status
       .single();
 
     if (campaignError || !campaign) {
       logger.error(`❌ [QUEUE-V3] Invalid campaign or status`, campaignError as Error, { campaignId });
       return NextResponse.json(
-        { success: false, error: 'Campaign not found or not in sent status' },
+        { success: false, error: 'Campaign not found or not in sending status' },
         { status: 404 }
       );
     }
@@ -195,26 +195,8 @@ export async function POST(
       await new Promise(resolve => setTimeout(resolve, 100));
     }
 
-    // Update campaign stats by calculating from emails table
-    const { data: emailStats } = await supabase
-      .from('emails')
-      .select('status')
-      .eq('campaign_id', campaignId);
-
-    if (emailStats) {
-      const stats = {
-        sent: emailStats.filter(e => ['sent', 'delivered', 'opened', 'clicked'].includes(e.status)).length,
-        delivered: emailStats.filter(e => ['delivered', 'opened', 'clicked'].includes(e.status)).length,
-        opened: emailStats.filter(e => ['opened', 'clicked'].includes(e.status)).length,
-        clicked: emailStats.filter(e => e.status === 'clicked').length,
-        bounced: emailStats.filter(e => e.status === 'bounced').length,
-      };
-
-      await supabase
-        .from('campaigns_v3')
-        .update({ stats })
-        .eq('id', campaignId);
-    }
+    // Update campaign stats
+    await supabase.rpc('update_campaign_stats', { campaign_uuid: campaignId });
 
     // Check if there are more emails in queue
     const { count: remainingCount } = await supabase

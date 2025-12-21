@@ -95,7 +95,7 @@ export async function POST(
       .update({
         sender_address_id: senderAddressId,
         list_ids: listIds,
-        status: 'sent',
+        status: 'sending',
         sent_at: new Date().toISOString(),
       })
       .eq('id', campaignId);

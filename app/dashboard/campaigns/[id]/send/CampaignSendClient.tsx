@@ -143,14 +143,11 @@ export function CampaignSendClient({ campaign, lists, sender: initialSender }: C
       }
 
       // Success!
-      toast.success(`🎉 Campaign sent to ${result.data.recipientCount} contacts!`, {
-        description: 'Emails are being delivered. Check analytics for real-time updates.',
-        duration: 3000,
-      });
+      toast.success(`🎉 Campaign sent to ${result.data.recipientCount} contacts!`);
       
-      // Redirect to analytics to show sending progress
+      // Show success message for a moment, then redirect
       setTimeout(() => {
-        router.push(`/dashboard/campaigns/${campaign.id}/analytics`);
+        router.push(`/dashboard/campaigns/${campaign.id}/preview`);
       }, 1500);
 
     } catch (error: any) {
@@ -354,22 +351,10 @@ export function CampaignSendClient({ campaign, lists, sender: initialSender }: C
                 <Button 
                   onClick={handleSend} 
                   disabled={selectedLists.length === 0 || totalContacts === 0 || isSending}
-                  className="w-full h-12 text-base font-semibold relative"
+                  className="w-full h-12 text-base font-semibold"
                 >
-                  {isSending ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Queueing emails...
-                    </span>
-                  ) : (
-                    `Send to ${totalContacts} ${totalContacts === 1 ? 'Contact' : 'Contacts'}`
-                  )}
+                  {isSending ? 'Sending...' : `Send to ${totalContacts} ${totalContacts === 1 ? 'Contact' : 'Contacts'}`}
                 </Button>
-                {isSending && (
-                  <p className="text-xs text-muted-foreground text-center mt-3">
-                    This may take a few moments. You'll be redirected to analytics once queued.
-                  </p>
-                )}
               </div>
             </div>
           )}

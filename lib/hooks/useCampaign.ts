@@ -5,7 +5,7 @@ export function useCampaign(campaignId: string) {
     queryKey: ['campaign', campaignId],
     queryFn: async () => {
       console.log('[useCampaign] Fetching campaign:', campaignId);
-      const res = await fetch(`/api/v3/campaigns/${campaignId}`);
+      const res = await fetch(`/api/v2/campaigns/${campaignId}`);
       if (!res.ok) throw new Error('Failed to fetch campaign');
       const data = await res.json();
       console.log('[useCampaign] Fetched campaign, html_content length:', data.campaign?.html_content?.length);
