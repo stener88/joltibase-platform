@@ -72,7 +72,7 @@ export function CampaignCard({ campaign, onDelete, onRename }: CampaignCardProps
         await onRename(campaign.id, newName.trim());
       } else {
         // Fallback: call API directly
-        const response = await fetch(`/api/v2/campaigns/${campaign.id}`, {
+        const response = await fetch(`/api/v3/campaigns/${campaign.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: newName.trim() }),

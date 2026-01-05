@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     const subject = extractSubjectFromPrompt(prompt);
     
     // Determine status based on validation
-    const status = !generated.isValid ? 'needs_review' : 'ready';
+    const status = !generated.isValid ? 'draft' : 'ready';
     
     // Save to database with validation metadata (TIMED)
     const dbStart = Date.now();
