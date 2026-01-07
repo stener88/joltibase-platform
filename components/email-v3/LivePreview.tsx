@@ -109,10 +109,6 @@ export function LivePreview({
   isToolbarLoading = false,
   previewMode = 'desktop',
 }: LivePreviewProps) {
-  console.log('🟢 PREVIEW: Received tsxCode length:', tsxCode?.length);
-  console.log('🟢 PREVIEW: First 100 chars:', tsxCode?.substring(0, 100));
-  console.log('🟢 PREVIEW: Source:', tsxCodeSource);
-  
   // Local iframe ref (not passed from parent)
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -505,8 +501,6 @@ export function LivePreview({
 
       const data = await response.json();
       
-      console.log('[LIVE-PREVIEW] Rendered with', Object.keys(data.componentMap || {}).length, 'components');
-      
       // Inject interactive JavaScript into the rendered HTML (mode-aware)
       const interactiveHtml = injectInteractiveScript(data.html, currentMode);
       
@@ -514,12 +508,6 @@ export function LivePreview({
       const enhancedComponentMap: ComponentMap = {};
       Object.keys(data.componentMap || {}).forEach(componentId => {
         const extractedText = extractTextFromHtml(data.html, componentId);
-        const componentType = data.componentMap[componentId].type;
-        
-        // 🔍 DEBUG: Log extracted text for text components
-        if (['Text', 'Heading', 'Button', 'Link'].includes(componentType)) {
-          console.log(`[LIVE-PREVIEW] ${componentId} (${componentType}) textContent:`, JSON.stringify(extractedText));
-        }
         
         enhancedComponentMap[componentId] = {
           ...data.componentMap[componentId],
@@ -552,8 +540,6 @@ export function LivePreview({
 
     // ✅ OPTION 4: Check source to decide rendering strategy
     if (tsxCodeSource === 'visual') {
-      console.log('[LIVE-PREVIEW] Visual edit detected - parsing componentMap locally (no API call)');
-      
       // Parse TSX locally to update componentMap without re-rendering
       try {
         const parsed = parseAndInjectIds(tsxCode);
@@ -573,8 +559,6 @@ export function LivePreview({
         
         // Update componentMap (this syncs PropertiesPanel)
         onComponentMapUpdate(enhancedComponentMap);
-        
-        console.log('[LIVE-PREVIEW] ComponentMap updated locally:', Object.keys(enhancedComponentMap).length, 'components');
       } catch (error) {
         console.error('[LIVE-PREVIEW] Failed to parse TSX locally:', error);
       }
@@ -584,7 +568,6 @@ export function LivePreview({
     }
     
     // For 'ai' or 'initial' sources, do full render with API call
-    console.log('[LIVE-PREVIEW] Rendering due to tsxCode change | Source:', tsxCodeSource, '| TSX length:', tsxCode.length);
     renderPreview(tsxCode, mode);
   }, [tsxCode, tsxCodeSource, mode, renderPreview, onComponentMapUpdate]); 
   // ✅ Note: previewHtml is read but NOT a dependency - we don't want to re-run when it changes

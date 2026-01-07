@@ -74,9 +74,6 @@ export function EmailEditorV3({
 }: EmailEditorV3Props) {
   const router = useRouter();
 
-  console.log('🟡 EDITOR: Received initialTsxCode length:', initialTsxCode?.length);
-  console.log('🟡 EDITOR: First 100 chars of initialTsxCode:', initialTsxCode?.substring(0, 100));
-
   // Initialize chat history with original prompt if available
   const initialChatMessages = generationPrompt ? [
     {
@@ -135,11 +132,8 @@ export function EmailEditorV3({
   const [tsxCode, setTsxCode] = useState(initialTsxCode);
   const [tsxCodeSource, setTsxCodeSource] = useState<'initial' | 'visual' | 'ai'>('initial');
   
-  console.log('🟡 EDITOR: Initial useState - tsxCode length:', tsxCode?.length);
-  console.log('🟡 EDITOR: Are initialTsxCode and tsxCode equal?', initialTsxCode === tsxCode);
-  
   // Visual editing hook
-  const { displayTsx, sendDirectUpdate: sendVisualUpdate } = useVisualEdits({
+  const { displayTsx, sendDirectUpdate: sendVisualUpdate, flushPendingEdits } = useVisualEdits({
     tsxCode,
     onCommit: (newCode: string) => {
       setTsxCode(newCode);
@@ -274,25 +268,20 @@ export function EmailEditorV3({
 
   // Save visual edits and exit (commit to DB)
   const handleSaveVisualEdits = useCallback(async () => {
-    console.log('[EDITOR] Saving visual edits and exiting visual mode');
-    console.log('🔴 SAVE: Current tsxCode length:', tsxCode.length);
-    console.log('🔴 SAVE: First 200 chars:', tsxCode.substring(0, 200));
+    // ✅ CRITICAL: Flush any pending debounced edits
+    flushPendingEdits();
     
-    // Use current tsxCode (already committed via debounce)
-    const updatedCode = tsxCode;
+    // ✅ CRITICAL: Use displayTsx which includes ALL edits (even uncommitted optimistic ones)
+    const updatedCode = displayTsx;
     
     // Exit visual mode via hook
     confirmExit();
     setSelectedComponentId(null);
     setHasVisualEdits(false);
     
-    // Loading overlay handled by useModeToggle hook
-    
     // Persist to database
     setIsSaving(true);
     try {
-      console.log('🔴 SAVE: About to render TSX, length:', updatedCode.length);
-      
       // Render TSX to HTML
       const renderResponse = await fetch('/api/v3/campaigns/render', {
         method: 'POST',
@@ -308,8 +297,6 @@ export function EmailEditorV3({
       const renderData = await renderResponse.json();
 
       // Update campaign in database
-      console.log('🔴 SAVE: About to PATCH database, code length:', updatedCode.length);
-      
       const updateResponse = await fetch(`/api/v3/campaigns/${campaignId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -323,23 +310,20 @@ export function EmailEditorV3({
         const errorText = await updateResponse.text();
         throw new Error(`Update failed: ${errorText}`);
       }
-      
-      console.log('🔴 SAVE: PATCH successful!');
 
-      // Update saved state to reflect successful save
+      // ✅ Update React state to match what we saved
+      setTsxCode(updatedCode);
       setSavedTsxCode(updatedCode);
       
-      // Invalidate Next.js cache to ensure send page loads fresh data
-      router.refresh();
-      
-      console.log('✅ Visual edits saved to database');
+      // ✅ No page reload - user can continue editing!
+      // router.refresh() will be called before navigation instead
     } catch (error: any) {
       console.error('Failed to save visual edits:', error);
       alert(`Failed to save changes: ${error.message}`);
     } finally {
       setIsSaving(false);
     }
-  }, [campaignId, tsxCode, router]);
+  }, [campaignId, displayTsx, flushPendingEdits, router, confirmExit]);
 
   // Discard visual edits and exit (reset to entry state)
   const handleDiscardVisualEdits = useCallback(() => {
@@ -385,10 +369,10 @@ export function EmailEditorV3({
       // Update saved state to reflect successful save
       setSavedTsxCode(tsxCode);
       
-      // Invalidate Next.js cache for fresh data on navigation
-      router.refresh();
+      // ✅ No page reload - user can continue editing!
+      // router.refresh() will be called before navigation instead
       
-      console.log('✅ Campaign saved successfully');
+      console.log('✅ Campaign saved successfully (no page reload)');
     } catch (error: any) {
       console.error('Failed to save:', error);
       alert(`Failed to save changes: ${error.message}`);
@@ -407,7 +391,7 @@ export function EmailEditorV3({
   }, [savedTsxCode]);
 
   // Handle Next button click
-  const handleNextClick = useCallback(() => {
+  const handleNextClick = useCallback(async () => {
     // If in visual mode with unsaved changes, trigger mode toggle (will show save prompt)
     if (mode === 'visual' && hasVisualEdits) {
       toggleMode(tsxCode, hasUnsavedChanges);
@@ -420,9 +404,31 @@ export function EmailEditorV3({
       setSelectedComponentId(null);
     }
     
+    // ✅ Auto-save if there are unsaved changes
+    if (hasUnsavedChanges) {
+      console.log('[EDITOR] Auto-saving before navigation...');
+      setIsSaving(true);
+      
+      try {
+        await handleSave();
+        console.log('✅ Auto-save complete');
+      } catch (error) {
+        console.error('❌ Auto-save failed:', error);
+        alert('Failed to save changes. Please try again.');
+        setIsSaving(false);
+        return; // Don't navigate if save failed
+      }
+      
+      setIsSaving(false);
+    }
+    
+    // ✅ CRITICAL: Refresh to load fresh data on send page
+    console.log('[EDITOR] Refreshing data before navigation...');
+    router.refresh();
+    
     // Navigate to send page
     router.push(`/dashboard/campaigns/${campaignId}/send`);
-  }, [mode, hasVisualEdits, campaignId, router]);
+  }, [mode, hasVisualEdits, hasUnsavedChanges, campaignId, router, tsxCode, toggleMode, handleSave]);
 
   // Editor controls for header
   const editorControls = {

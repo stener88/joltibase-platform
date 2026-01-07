@@ -293,7 +293,8 @@ export async function POST(request: Request) {
     const isComplexEdit = 
       /add|insert|create|new|another|below|above|before|after/i.test(userMessage) ||
       /section|layout|structure|grid|multi|several|multiple/i.test(userMessage) ||
-      /move.*to|rearrange|reorder|swap|switch/i.test(userMessage);
+      /move\s+(this|the|it|section|component|element)\s+(to|below|above)/i.test(userMessage) ||
+      /rearrange|reorder|swap|switch/i.test(userMessage);
 
     // Default to component-scoped if component selected and NOT complex
     // ✅ Deletes now use deterministic logic (no AI needed), so can skip component-scoped

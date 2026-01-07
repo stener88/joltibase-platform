@@ -46,6 +46,16 @@ export function useVisualEdits({ tsxCode, onCommit }: UseVisualEditsOptions) {
     };
   }, []);
 
+  // Flush any pending edits immediately (for save operations)
+  const flushPendingEdits = useCallback(() => {
+    if (commitTimeoutRef.current) {
+      clearTimeout(commitTimeoutRef.current);
+      commitTimeoutRef.current = null;
+      // Note: The last edit is already queued in optimisticEdits
+      // and will be applied via displayTsx when save reads it
+    }
+  }, []);
+
   // Display TSX = committed tsxCode + optimistic edits
   const displayTsx = useMemo(() => {
     if (optimisticEdits.length === 0) {
@@ -159,6 +169,7 @@ export function useVisualEdits({ tsxCode, onCommit }: UseVisualEditsOptions) {
     displayTsx,
     optimisticEdits,
     sendDirectUpdate,
+    flushPendingEdits,
   };
 }
 
