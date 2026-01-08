@@ -24,7 +24,7 @@ export function ContactsTable({ contacts, title, emptyMessage = 'No contacts fou
   return (
     <div className="bg-card rounded-lg border border-border overflow-hidden">
       <div className="px-6 py-4 border-b border-border bg-muted">
-        <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full">
@@ -53,14 +53,14 @@ export function ContactsTable({ contacts, title, emptyMessage = 'No contacts fou
                   className="hover:bg-muted cursor-pointer transition-colors"
                 >
                   <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-foreground">
                       {contact.first_name || contact.last_name 
                         ? `${contact.first_name || ''} ${contact.last_name || ''}`.trim()
                         : contact.email
                       }
                     </div>
                     {(contact.first_name || contact.last_name) && (
-                      <div className="text-sm text-gray-500">{contact.email}</div>
+                      <div className="text-sm text-muted-foreground">{contact.email}</div>
                     )}
                   </td>
                   <td className="px-6 py-4 text-right">

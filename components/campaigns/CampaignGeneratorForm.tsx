@@ -56,7 +56,7 @@ export function CampaignGeneratorForm({ onSubmit, isLoading, error }: CampaignGe
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Main Prompt */}
       <div>
-        <label htmlFor="prompt" className="block text-sm font-medium text-gray-900 mb-2">
+        <label htmlFor="prompt" className="block text-sm font-medium text-foreground mb-2">
           Campaign Prompt <span className="text-red-500">*</span>
         </label>
         <textarea
@@ -75,7 +75,7 @@ export function CampaignGeneratorForm({ onSubmit, isLoading, error }: CampaignGe
 
       {/* Optional Fields - Collapsible */}
       <div className="border-t pt-6">
-        <h3 className="text-sm font-medium text-gray-900 mb-4">
+        <h3 className="text-sm font-medium text-foreground mb-4">
           Additional Context (Optional)
         </h3>
         

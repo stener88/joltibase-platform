@@ -99,8 +99,8 @@ export default function EditContactPage() {
         <div className="max-w-7xl mx-auto px-8 py-8">
           <div className="bg-card rounded-lg border border-border p-12 text-center">
             <div className="text-6xl mb-4">😞</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">{error || 'Contact not found'}</h1>
-            <p className="text-gray-600 mb-6">
+            <h1 className="text-2xl font-bold text-foreground mb-2">{error || 'Contact not found'}</h1>
+            <p className="text-muted-foreground mb-6">
               The contact you're trying to edit doesn't exist or has been deleted.
             </p>
             <button
@@ -122,13 +122,13 @@ export default function EditContactPage() {
         <div className="mb-8">
           <button
             onClick={() => router.push(`/dashboard/contacts/${contactId}`)}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             Back to Contact
           </button>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Edit Contact</h1>
-          <p className="text-gray-600">Update contact information</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Edit Contact</h1>
+          <p className="text-muted-foreground">Update contact information</p>
         </div>
 
         {/* Form Card */}

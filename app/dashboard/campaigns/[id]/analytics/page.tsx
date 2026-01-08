@@ -197,50 +197,50 @@ export default function CampaignAnalyticsPage() {
           </div>
 
           <div className="bg-card rounded-lg border border-border p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Campaign Details</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Campaign Details</h3>
             <dl className="space-y-3">
               <div className="flex justify-between text-sm">
-                <dt className="text-gray-600">Subject Line:</dt>
-                <dd className="font-medium text-gray-900 text-right max-w-xs truncate">{campaign.subject_line}</dd>
+                <dt className="text-muted-foreground">Subject Line:</dt>
+                <dd className="font-medium text-foreground text-right max-w-xs truncate">{campaign.subject_line}</dd>
               </div>
               {campaign.from_name && (
                 <div className="flex justify-between text-sm">
-                  <dt className="text-gray-600">From:</dt>
-                  <dd className="font-medium text-gray-900">{campaign.from_name}</dd>
+                  <dt className="text-muted-foreground">From:</dt>
+                  <dd className="font-medium text-foreground">{campaign.from_name}</dd>
                 </div>
               )}
               {campaign.from_email && (
                 <div className="flex justify-between text-sm">
-                  <dt className="text-gray-600">From Email:</dt>
-                  <dd className="font-medium text-gray-900">{campaign.from_email}</dd>
+                  <dt className="text-muted-foreground">From Email:</dt>
+                  <dd className="font-medium text-foreground">{campaign.from_email}</dd>
                 </div>
               )}
               {campaign.type && (
                 <div className="flex justify-between text-sm">
-                  <dt className="text-gray-600">Type:</dt>
-                  <dd className="font-medium text-gray-900 capitalize">{campaign.type.replace('-', ' ')}</dd>
+                  <dt className="text-muted-foreground">Type:</dt>
+                  <dd className="font-medium text-foreground capitalize">{campaign.type.replace('-', ' ')}</dd>
                 </div>
               )}
               <div className="flex justify-between text-sm">
-                <dt className="text-gray-600">Created:</dt>
-                <dd className="font-medium text-gray-900">{format(new Date(campaign.created_at), 'MMM dd, yyyy')}</dd>
+                <dt className="text-muted-foreground">Created:</dt>
+                <dd className="font-medium text-foreground">{format(new Date(campaign.created_at), 'MMM dd, yyyy')}</dd>
               </div>
             </dl>
           </div>
         </div>
 
         {/* Email Content Preview */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Email Content</h3>
+        <div className="bg-card rounded-lg border border-border p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Email Content</h3>
           <div className="space-y-4">
             <div>
-              <p className="text-sm text-gray-600 mb-2">Subject:</p>
-              <p className="font-medium text-gray-900">{campaign.subject_line}</p>
+              <p className="text-sm text-muted-foreground mb-2">Subject:</p>
+              <p className="font-medium text-foreground">{campaign.subject_line}</p>
             </div>
             {campaign.preview_text && (
               <div>
-                <p className="text-sm text-gray-600 mb-2">Preview Text:</p>
-                <p className="text-sm text-gray-700">{campaign.preview_text}</p>
+                <p className="text-sm text-muted-foreground mb-2">Preview Text:</p>
+                <p className="text-sm text-foreground">{campaign.preview_text}</p>
               </div>
             )}
             <div>

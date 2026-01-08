@@ -39,13 +39,13 @@ export default function NewContactPage() {
         <div className="mb-8">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             Back
           </button>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Add Contact</h1>
-          <p className="text-gray-600">Add a new contact to your list</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Add Contact</h1>
+          <p className="text-muted-foreground">Add a new contact to your list</p>
         </div>
 
         {/* Form Card */}

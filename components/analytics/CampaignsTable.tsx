@@ -33,7 +33,7 @@ export function CampaignsTable({ campaigns, sortBy, sortOrder, onSort }: Campaig
   const SortButton = ({ column, label }: { column: string; label: string }) => (
     <button
       onClick={() => onSort(column)}
-      className="flex items-center gap-1 hover:text-gray-900 transition-colors"
+      className="flex items-center gap-1 hover:text-foreground transition-colors"
     >
       {label}
       <ArrowUpDown className={`w-4 h-4 ${sortBy === column ? 'text-primary' : 'text-muted-foreground'}`} />
@@ -81,21 +81,21 @@ export function CampaignsTable({ campaigns, sortBy, sortOrder, onSort }: Campaig
                   className="hover:bg-muted cursor-pointer transition-colors"
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{campaign.name}</div>
+                    <div className="text-sm font-medium text-foreground">{campaign.name}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {campaign.sent_at 
                       ? format(new Date(campaign.sent_at), 'MMM dd, yyyy')
                       : '-'
                     }
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-foreground">
                     {campaign.metrics.sent.toLocaleString()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-foreground">
                     {campaign.metrics.openRate.toFixed(1)}%
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-foreground">
                     {campaign.metrics.clickRate.toFixed(1)}%
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">

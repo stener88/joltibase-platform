@@ -58,7 +58,7 @@ export function ContactRow({ contact, isSelected, onSelect, onDelete }: ContactR
 
       {/* Name */}
       <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm text-gray-900">{fullName}</div>
+        <div className="text-sm text-foreground">{fullName}</div>
       </td>
 
       {/* Status */}
@@ -89,11 +89,11 @@ export function ContactRow({ contact, isSelected, onSelect, onDelete }: ContactR
 
       {/* Lists */}
       <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm text-gray-900">
+        <div className="text-sm text-foreground">
           {contact.lists && contact.lists.length > 0 ? (
             <span>{contact.lists.length} list{contact.lists.length !== 1 ? 's' : ''}</span>
           ) : (
-            <span className="text-gray-400">-</span>
+            <span className="text-muted-foreground">-</span>
           )}
         </div>
       </td>

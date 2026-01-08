@@ -116,12 +116,12 @@ export async function GET(request: Request) {
     const growthMap = new Map<string, { subscribes: number; unsubscribes: number }>();
     
     // Initialize all days
-    for (let d = new Date(ninetyDaysAgo); d <= now; d.setDate(d.getDate() + 1)) {
+    for (let d = new Date(ninetyDaysAgo); d <= now; d = new Date(d.setDate(d.getDate() + 1))) {
       const dateKey = d.toISOString().split('T')[0];
       growthMap.set(dateKey, { subscribes: 0, unsubscribes: 0 });
     }
 
-    // Count subscribes
+    // Count subscribes and unsubscribes in single loop
     contacts?.forEach(contact => {
       if (contact.subscribed_at) {
         const date = new Date(contact.subscribed_at);
@@ -132,10 +132,7 @@ export async function GET(request: Request) {
           }
         }
       }
-    });
-
-    // Count unsubscribes
-    contacts?.forEach(contact => {
+      
       if (contact.unsubscribed_at) {
         const date = new Date(contact.unsubscribed_at);
         if (date >= ninetyDaysAgo) {
@@ -151,7 +148,7 @@ export async function GET(request: Request) {
     let cumulative = activeContacts;
     const growthTrend = Array.from(growthMap.entries())
       .map(([date, data]) => {
-        cumulative = cumulative - data.subscribes + data.unsubscribes;
+        cumulative = cumulative + data.subscribes - data.unsubscribes;
         return {
           date,
           subscribes: data.subscribes,
@@ -194,7 +191,7 @@ export async function GET(request: Request) {
       },
     });
 
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to fetch contact analytics' },
       { status: 500 }

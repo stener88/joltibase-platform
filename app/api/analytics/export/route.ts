@@ -23,7 +23,6 @@ export async function GET(request: Request) {
     const days = parseInt(searchParams.get('days') || '30');
     
     // Calculate date range
-    const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
@@ -37,8 +36,19 @@ export async function GET(request: Request) {
 
     if (campaignsError) throw campaignsError;
 
+    // Handle empty campaigns case
+    if (!campaigns || campaigns.length === 0) {
+      const emptyCSV = 'Campaign Name,Type,Status,Subject Line,From Name,From Email,Sent,Delivered,Opened,Clicked,Bounced,Open Rate (%),Click Rate (%),Bounce Rate (%),Delivery Rate (%),Sent At,Created At\n';
+      return new NextResponse(emptyCSV, {
+        headers: {
+          'Content-Type': 'text/csv',
+          'Content-Disposition': `attachment; filename="campaigns-export-${new Date().toISOString().split('T')[0]}.csv"`,
+        },
+      });
+    }
+
     // Format data for CSV
-    const csvData = (campaigns || []).map(campaign => {
+    const csvData = campaigns.map(campaign => {
       const stats = campaign.stats || {};
       const sent = stats.sent || 0;
       const delivered = stats.delivered || 0;
@@ -73,7 +83,7 @@ export async function GET(request: Request) {
     });
 
     // Convert to CSV
-    const headers = Object.keys(csvData[0] || {});
+    const headers = Object.keys(csvData[0]);
     const csvRows = [
       headers.join(','),
       ...csvData.map(row =>
@@ -99,7 +109,7 @@ export async function GET(request: Request) {
       },
     });
 
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to export data' },
       { status: 500 }

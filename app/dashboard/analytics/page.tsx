@@ -144,7 +144,7 @@ export default function AnalyticsPage() {
               />
 
               {/* Auto-refresh toggle */}
-              <label className="flex items-center gap-2 text-sm text-gray-600">
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
                 <input
                   type="checkbox"
                   checked={autoRefresh}
@@ -176,15 +176,34 @@ export default function AnalyticsPage() {
               </select>
 
               {/* Last updated */}
-              <p className="text-xs text-gray-500">Last updated: {getTimeSinceUpdate()}</p>
+              <p className="text-xs text-muted-foreground">Last updated: {getTimeSinceUpdate()}</p>
           </div>
         </div>
 
         {isLoading && !overviewData ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <RefreshCw className="w-12 h-12 text-foreground mx-auto mb-4 animate-spin" />
-              <p className="text-gray-600">Loading analytics...</p>
+              <svg
+                className="animate-spin h-12 w-12 text-foreground mx-auto mb-4"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <p className="text-muted-foreground">Loading analytics...</p>
             </div>
           </div>
         ) : overviewData ? (
@@ -218,7 +237,7 @@ export default function AnalyticsPage() {
 
             {/* Performance Chart */}
             <div className="bg-card rounded-lg border border-border p-6 mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              <h2 className="text-lg font-semibold text-foreground mb-4">
                 Performance Over Time
               </h2>
               <PerformanceChart data={overviewData.timeSeries} height={350} />
@@ -227,7 +246,7 @@ export default function AnalyticsPage() {
             {/* Top Campaigns */}
             {overviewData.topCampaigns.length > 0 && (
               <div className="bg-card rounded-lg border border-border p-6 mb-8">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                <h2 className="text-lg font-semibold text-foreground mb-4">
                   Top Performing Campaigns
                 </h2>
                 <TopCampaignsChart data={overviewData.topCampaigns} height={300} />
@@ -236,7 +255,7 @@ export default function AnalyticsPage() {
 
             {/* All Campaigns Table */}
             <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              <h2 className="text-lg font-semibold text-foreground mb-4">
                 All Campaigns ({campaigns.length})
               </h2>
               <CampaignsTable
@@ -250,9 +269,9 @@ export default function AnalyticsPage() {
             {/* Contact Insights Section */}
             {contactData && (
               <>
-                <div className="mb-6 pt-8 border-t border-gray-200">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Contact Insights</h2>
-                  <p className="text-gray-600">Subscriber growth and engagement analysis</p>
+                <div className="mb-6 pt-8 border-t border-border">
+                  <h2 className="text-2xl font-bold text-foreground mb-2">Contact Insights</h2>
+                  <p className="text-muted-foreground">Subscriber growth and engagement analysis</p>
                 </div>
 
                 {/* Contact Metrics */}
@@ -282,7 +301,7 @@ export default function AnalyticsPage() {
 
                 {/* Growth Chart */}
                 <div className="bg-card rounded-lg border border-border p-6 mb-8">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
                     Subscriber Growth (Last 90 Days)
                   </h3>
                   <GrowthChart data={contactData.growthTrend} height={350} />
@@ -290,7 +309,7 @@ export default function AnalyticsPage() {
 
                 {/* Engagement Distribution */}
                 <div className="bg-card rounded-lg border border-border p-6 mb-8">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
                     Engagement Score Distribution
                   </h3>
                   <EngagementDistributionChart data={contactData.engagementDistribution} />
@@ -313,9 +332,9 @@ export default function AnalyticsPage() {
             )}
 
             {/* Real-Time Analytics Section */}
-            <div className="mb-6 pt-8 border-t border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Real-Time Activity</h2>
-              <p className="text-gray-600">Live monitoring of email events and campaign progress</p>
+            <div className="mb-6 pt-8 border-t border-border">
+              <h2 className="text-2xl font-bold text-foreground mb-2">Real-Time Activity</h2>
+              <p className="text-muted-foreground">Live monitoring of email events and campaign progress</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -325,8 +344,8 @@ export default function AnalyticsPage() {
           </>
         ) : (
           <div className="bg-card rounded-lg border border-border p-12 text-center">
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No Data Available</h3>
-            <p className="text-gray-600">
+            <h3 className="text-xl font-semibold text-foreground mb-2">No Data Available</h3>
+            <p className="text-muted-foreground">
               Start sending campaigns to see analytics data
             </p>
           </div>

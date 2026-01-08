@@ -37,10 +37,10 @@ export function ImportProgress({ isImporting, result }: ImportProgressProps) {
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
           ></path>
         </svg>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+        <h3 className="text-xl font-semibold text-foreground mb-2">
           Importing Contacts...
         </h3>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           This may take a moment. Please don't close this page.
         </p>
       </div>
@@ -61,7 +61,7 @@ export function ImportProgress({ isImporting, result }: ImportProgressProps) {
           )}
         </div>
         
-        <h3 className="text-2xl font-bold text-gray-900 mb-4">
+        <h3 className="text-2xl font-bold text-foreground mb-4">
           Import {isSuccess ? 'Complete' : 'Failed'}
         </h3>
 

@@ -147,7 +147,7 @@ export function Header({ onLoginClick, campaignMode }: HeaderProps = {}) {
             <>
               <button
                 onClick={onLoginClick}
-                className="px-6 py-1.5 text-sm font-normal bg-white text-gray-900 rounded-lg hover:bg-gray-50 transition-all"
+                className="px-6 py-1.5 text-sm font-normal bg-white text-foreground rounded-lg hover:bg-gray-50 transition-all"
               >
                 Sign in
               </button>

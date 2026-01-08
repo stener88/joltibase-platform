@@ -17,7 +17,6 @@ export async function GET(request: Request) {
     const days = parseInt(searchParams.get('days') || '30');
     
     // Calculate date range
-    const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
@@ -55,7 +54,8 @@ export async function GET(request: Request) {
     // Generate time-series data (daily aggregates)
     const timeSeriesMap = new Map<string, any>();
     
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+    const endDate = new Date();
+    for (let d = new Date(startDate); d <= endDate; d = new Date(d.setDate(d.getDate() + 1))) {
       const dateKey = d.toISOString().split('T')[0];
       timeSeriesMap.set(dateKey, {
         date: dateKey,
@@ -143,7 +143,7 @@ export async function GET(request: Request) {
       },
     });
 
-  } catch (error) {
+  } catch (error: any) {
     return errorResponse(error.message || 'Failed to fetch analytics');
   }
 }

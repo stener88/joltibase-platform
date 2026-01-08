@@ -93,8 +93,8 @@ export function LiveActivityFeed({ pollingInterval = 10000 }: LiveActivityFeedPr
   if (isLoading) {
     return (
       <div className="bg-card rounded-lg border border-border p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Live Activity</h3>
-        <div className="text-center py-8 text-gray-500">Loading activity...</div>
+        <h3 className="text-lg font-semibold text-foreground mb-4">Live Activity</h3>
+        <div className="text-center py-8 text-muted-foreground">Loading activity...</div>
       </div>
     );
   }
@@ -102,15 +102,15 @@ export function LiveActivityFeed({ pollingInterval = 10000 }: LiveActivityFeedPr
   return (
     <div className="bg-card rounded-lg border border-border p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Live Activity</h3>
-        <span className="flex items-center gap-2 text-xs text-gray-500">
+        <h3 className="text-lg font-semibold text-foreground">Live Activity</h3>
+        <span className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
           Live
         </span>
       </div>
 
       {events.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-muted-foreground">
           No recent activity in the last hour
         </div>
       ) : (
@@ -122,13 +122,13 @@ export function LiveActivityFeed({ pollingInterval = 10000 }: LiveActivityFeedPr
             >
               <div className="mt-0.5">{getEventIcon(event.type)}</div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-gray-900">
+                <p className="text-sm text-foreground">
                   <span className="font-medium">{event.contact_name}</span>
                   {' '}{getEventLabel(event.type)}{' '}
-                  <span className="text-gray-600">from</span>
+                  <span className="text-muted-foreground">from</span>
                   {' '}<span className="font-medium">{event.campaign_name}</span>
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {formatDistanceToNow(new Date(event.timestamp), { addSuffix: true })}
                 </p>
               </div>

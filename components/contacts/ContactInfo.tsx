@@ -23,7 +23,7 @@ export function ContactInfo({ contact, onEdit, onDelete }: ContactInfoProps) {
         <div className="w-20 h-20 rounded-full bg-[#1a1aff] text-white flex items-center justify-center text-3xl font-bold mx-auto mb-4">
           {initial.toUpperCase()}
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-1">{fullName}</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-1">{fullName}</h2>
         <p className="text-muted-foreground mb-3">{contact.email}</p>
         <StatusBadge status={contact.status} />
       </div>
@@ -32,10 +32,10 @@ export function ContactInfo({ contact, onEdit, onDelete }: ContactInfoProps) {
       <div className="space-y-4 mb-6">
         {/* Email */}
         <div className="flex items-start gap-3">
-          <Mail className="w-5 h-5 text-gray-400 mt-0.5" />
+          <Mail className="w-5 h-5 text-muted-foreground mt-0.5" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-500">Email</p>
-            <p className="text-sm text-gray-900 font-medium break-all">{contact.email}</p>
+            <p className="text-sm text-muted-foreground">Email</p>
+            <p className="text-sm text-foreground font-medium break-all">{contact.email}</p>
           </div>
         </div>
 
@@ -53,14 +53,14 @@ export function ContactInfo({ contact, onEdit, onDelete }: ContactInfoProps) {
         {/* Tags */}
         {contact.tags && contact.tags.length > 0 && (
           <div className="flex items-start gap-3">
-            <Tag className="w-5 h-5 text-gray-400 mt-0.5" />
+            <Tag className="w-5 h-5 text-muted-foreground mt-0.5" />
             <div className="flex-1">
-              <p className="text-sm text-gray-500 mb-2">Tags</p>
+              <p className="text-sm text-muted-foreground mb-2">Tags</p>
               <div className="flex flex-wrap gap-1">
                 {contact.tags.map((tag, idx) => (
                   <span
                     key={idx}
-                    className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-foreground"
+                    className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted text-foreground"
                   >
                     {tag}
                   </span>
@@ -73,12 +73,12 @@ export function ContactInfo({ contact, onEdit, onDelete }: ContactInfoProps) {
         {/* Lists */}
         {contact.lists && contact.lists.length > 0 && (
           <div className="flex items-start gap-3">
-            <List className="w-5 h-5 text-gray-400 mt-0.5" />
+            <List className="w-5 h-5 text-muted-foreground mt-0.5" />
             <div className="flex-1">
-              <p className="text-sm text-gray-500 mb-2">Lists</p>
+              <p className="text-sm text-muted-foreground mb-2">Lists</p>
               <div className="space-y-1">
                 {contact.lists.map((list) => (
-                  <p key={list.id} className="text-sm text-gray-900">
+                  <p key={list.id} className="text-sm text-foreground">
                     {list.name}
                   </p>
                 ))}
@@ -89,10 +89,10 @@ export function ContactInfo({ contact, onEdit, onDelete }: ContactInfoProps) {
 
         {/* Dates */}
         <div className="flex items-start gap-3">
-          <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
+          <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm text-gray-500">Created</p>
-            <p className="text-sm text-gray-900 font-medium">
+            <p className="text-sm text-muted-foreground">Created</p>
+            <p className="text-sm text-foreground font-medium">
               {new Date(contact.created_at).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
@@ -104,10 +104,10 @@ export function ContactInfo({ contact, onEdit, onDelete }: ContactInfoProps) {
 
         {contact.subscribed_at && (
           <div className="flex items-start gap-3">
-            <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
+            <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
             <div className="flex-1">
-              <p className="text-sm text-gray-500">Subscribed</p>
-              <p className="text-sm text-gray-900 font-medium">
+              <p className="text-sm text-muted-foreground">Subscribed</p>
+              <p className="text-sm text-foreground font-medium">
                 {new Date(contact.subscribed_at).toLocaleDateString('en-US', {
                   year: 'numeric',
                   month: 'long',
