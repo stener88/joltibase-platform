@@ -92,11 +92,6 @@ export function detectDesignSystem(prompt: string): DesignSystem {
   // Sort by score descending
   scores.sort((a, b) => b.score - a.score);
   
-  // Log detection for debugging
-  if (scores[0].score > 0) {)`);
-    }
-  } else {}
-  
   // Return best match (or first system if no matches)
   return scores[0].system;
 }

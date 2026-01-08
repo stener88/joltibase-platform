@@ -102,7 +102,8 @@ export async function PATCH(request: Request) {
 
     if (error) {
       throw error;
-    }return NextResponse.json({
+    }
+    return NextResponse.json({
       success: true,
       data: data,
     });

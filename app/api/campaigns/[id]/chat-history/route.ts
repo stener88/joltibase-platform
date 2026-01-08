@@ -123,7 +123,8 @@ export async function PUT(
 
     if (updateError) {
       throw updateError;
-    }return NextResponse.json({
+    }
+    return NextResponse.json({
       success: true,
       data: campaign.chat_history,
     });

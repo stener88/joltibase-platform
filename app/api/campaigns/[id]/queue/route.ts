@@ -40,7 +40,8 @@ export async function POST(
       );
     }
 
-    // Process the queueconst result = await processCampaignQueue(campaignId);
+    // Process the queue
+    const result = await processCampaignQueue(campaignId);
 
     if (!result.success) {
       throw new Error(result.error);

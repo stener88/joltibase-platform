@@ -151,7 +151,8 @@ export async function processCampaignQueue(campaignId: string) {
           stats: { sent, bounced, opened, clicked, delivered: sent },
         })
         .eq('id', campaignId);
-    }return { success: true, processed: successCount, failed: failureCount };
+    }
+    return { success: true, processed: successCount, failed: failureCount };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

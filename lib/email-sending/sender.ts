@@ -35,7 +35,8 @@ export async function sendEmail({
 
     if (result.error) {
       throw new Error(result.error.message);
-    }return {
+    }
+    return {
       success: true,
       messageId: result.data?.id,
     };

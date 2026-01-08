@@ -166,7 +166,8 @@ export async function POST(request: Request) {
       if (listError) {
         // Don't fail the whole operation, just log the error
       }
-    }return successResponse(contact);
+    }
+    return successResponse(contact);
 
   } catch (error: any) {
     return errorResponse(error.message || 'Failed to create contact');

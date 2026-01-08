@@ -147,7 +147,8 @@ export async function POST(request: Request) {
 
     if (insertError) {
       throw insertError;
-    }return successResponse(campaign);
+    }
+    return successResponse(campaign);
 
   } catch (error: any) {
     

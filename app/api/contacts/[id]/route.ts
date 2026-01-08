@@ -163,7 +163,8 @@ export async function PUT(
         if (listError) {
         }
       }
-    }return successResponse(contact);
+    }
+    return successResponse(contact);
 
   } catch (error: any) {
     return errorResponse(error.message || 'Failed to update contact');

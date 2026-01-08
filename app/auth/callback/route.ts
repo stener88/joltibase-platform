@@ -70,5 +70,7 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}/login?error=callback_failed`)
     }
   }
-
-  // No code provided
+  
+  // No code provided - redirect to login
+  return NextResponse.redirect(`${origin}/login`)
+}

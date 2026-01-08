@@ -40,7 +40,8 @@ export interface RenderWithIdsResult extends RenderResult {
 export async function renderEmail(
   filename: string,
   options: RenderOptions = {}
-): Promise<RenderResult> {try {
+): Promise<RenderResult> {
+  try {
     const filepath = path.join(GENERATED_DIR, filename);
     
     // Check file exists
@@ -49,7 +50,8 @@ export async function renderEmail(
     }
     
     // Read and transpile TSX to JS
-    const tsxCode = fs.readFileSync(filepath, 'utf-8');const transpiled = transformSync(tsxCode, {
+    const tsxCode = fs.readFileSync(filepath, 'utf-8');
+    const transpiled = transformSync(tsxCode, {
       loader: 'tsx',
       format: 'esm',
       target: 'node20',
@@ -103,10 +105,10 @@ export async function renderEmail(
       }
       throw importError;
     }
-  } catch (error) {
+  } catch (error: any) {
     
     // Enhanced error message for users
-    const userFriendlyError = error.message.includes('Unexpected closing')
+    const userFriendlyError = error.message?.includes('Unexpected closing')
       ? 'Your last change caused a structure error. The component may have mismatched tags. Please try undoing the last change or regenerating the email.'
       : error.message;
     
@@ -191,10 +193,10 @@ export async function renderTsxWithIds(
       }
       throw importError;
     }
-  } catch (error) {
+  } catch (error: any) {
     
     // Enhanced error message for users
-    const userFriendlyError = error.message.includes('Unexpected closing')
+    const userFriendlyError = error.message?.includes('Unexpected closing')
       ? 'Your last change caused a structure error. The component may have mismatched tags. Please try undoing the last change or regenerating the email.'
       : error.message;
     

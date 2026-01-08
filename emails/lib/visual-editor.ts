@@ -95,7 +95,8 @@ export async function handleVisualEdit(
         startTime
       );
     } else {
-      // SLOW PATH: AI regenerationreturn await applyAIEdit(
+      // SLOW PATH: AI regeneration
+      return await applyAIEdit(
         filename,
         currentCode,
         componentContext,
@@ -404,16 +405,20 @@ function applyColorChange(code: string, context: ComponentContext, color: string
       const propertyRegex = new RegExp(`${colorProperty}:\\s*['"]?[^,'"}]*['"]?`, 'g');
       
       if (propertyRegex.test(styleContent)) {
-        // Property exists - update itconst updatedStyle = styleContent.replace(propertyRegex, `${colorProperty}: '${hexColor}'`);
+        // Property exists - update it
+        const updatedStyle = styleContent.replace(propertyRegex, `${colorProperty}: '${hexColor}'`);
         const updatedInlineStyle = `style={{${updatedStyle}}}`;
         const updatedTag = beforeStyle + updatedInlineStyle + afterStyle;
         
         const fullTag = inlineMatch[0];
         code = code.replace(fullTag, updatedTag);
-        changesMade = true;// Return early - inline style takes precedence
+        changesMade = true;
+        
+        // Return early - inline style takes precedence
         return code;
       } else {
-        // Add property to inline styleconst separator = styleContent.trim().endsWith(',') ? ' ' : ', ';
+        // Add property to inline style
+        const separator = styleContent.trim().endsWith(',') ? ' ' : ', ';
         const updatedStyle = styleContent.trim() 
           ? `${styleContent}${separator}${colorProperty}: '${hexColor}'`
           : ` ${colorProperty}: '${hexColor}' `;

@@ -72,7 +72,8 @@ const DESIGN_SYSTEM_IMAGE_COUNTS: Record<string, number> = {
 function getImageCountForPrompt(prompt: string, designSystem?: DesignSystem): number {
   // If we have a design system, use its configured count
   if (designSystem?.id && DESIGN_SYSTEM_IMAGE_COUNTS[designSystem.id]) {
-    const count = DESIGN_SYSTEM_IMAGE_COUNTS[designSystem.id];return count;
+    const count = DESIGN_SYSTEM_IMAGE_COUNTS[designSystem.id];
+    return count;
   }
   
   const lower = prompt.toLowerCase();
@@ -123,14 +124,15 @@ export async function fetchImagesForPrompt(
   prompt: string,
   designSystem?: DesignSystem
 ): Promise<ImageContext> {
-  const imageCount = getImageCountForPrompt(prompt, designSystem);..."`);
-  }
+  const imageCount = getImageCountForPrompt(prompt, designSystem);
   
-  if (!designSystem) {return getFallbackImages();
+  if (!designSystem) {
+    return getFallbackImages();
   }
   
   try {
-    // Try AI keyword extraction with configured timeoutconst aiKeywords = await extractKeywordsWithTimeout(prompt, designSystem);
+    // Try AI keyword extraction with configured timeout
+    const aiKeywords = await extractKeywordsWithTimeout(prompt, designSystem);
     
     // Build final keywords with fallback chain
     const keywords = aiKeywords 
@@ -139,7 +141,9 @@ export async function fetchImagesForPrompt(
         || extractTopicsFromPrompt(prompt) 
         || getCategoryFallback(prompt);
     
-    const source = aiKeywords ? 'AI' : 'fallback';// Fetch images in parallel based on image count
+    const source = aiKeywords ? 'AI' : 'fallback';
+    
+    // Fetch images in parallel based on image count
     // 3 images: hero + feature + accent
     // 4 images: hero + feature + secondary + accent  
     // 5 images: hero + feature + secondary + tertiary + accent
@@ -207,9 +211,12 @@ export async function fetchImagesForPrompt(
       imageCount >= 3 ? context.feature2 : null,
       imageCount >= 4 ? context.feature3 : null,
       imageCount >= 5 ? context.accent : null,
-    ].filter(Boolean).length;return context;
+    ].filter(Boolean).length;
     
-  } catch (error) {return getFallbackImages();
+    return context;
+    
+  } catch (error) {
+    return getFallbackImages();
   }
 }
 
@@ -219,7 +226,9 @@ export async function fetchImagesForPrompt(
 function getDesignSystemKeywords(designSystem: DesignSystem): ImageKeywords | null {
   if (!designSystem.imageKeywords) return null;
   
-  const ds = designSystem.imageKeywords;// Pick first keyword from each array (consistent, not random)
+  const ds = designSystem.imageKeywords;
+  
+  // Pick first keyword from each array (consistent, not random)
   // Then take only first 2 words for better Unsplash results
   return {
     hero: truncateToWords(ds.hero?.[0] || 'business', 2),
@@ -243,10 +252,9 @@ function extractTopicsFromPrompt(prompt: string): ImageKeywords | null {
   
   const found = topicKeywords.filter(topic => lower.includes(topic));
   
-  if (found.length === 0) return null;`);
-  }
+  if (found.length === 0) return null;
   
-    return {
+  return {
     hero: found[0],
     feature: found[1] || found[0],
     accent: found[2] || 'abstract',
@@ -268,7 +276,9 @@ function getCategoryFallback(prompt: string): ImageKeywords {
   else if (lower.includes('fashion') || lower.includes('style')) category = 'fashion';
   else if (lower.includes('event') || lower.includes('conference')) category = 'conference';
   else if (lower.includes('education') || lower.includes('learning')) category = 'education';
-  else if (lower.includes('health') || lower.includes('medical')) category = 'healthcare';return {
+  else if (lower.includes('health') || lower.includes('medical')) category = 'healthcare';
+  
+  return {
     hero: category,
     feature: category,
     accent: 'abstract',
@@ -301,7 +311,8 @@ function mapToEmailImage(result: ImageResult, width: number, height: number): Em
  * Fallback images when everything else fails
  * Uses high-quality, pre-selected Unsplash images
  */
-function getFallbackImages(): ImageContext {return {
+function getFallbackImages(): ImageContext {
+  return {
     hero: {
       url: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&h=400&fit=crop',
       alt: 'Professional workspace with laptop',

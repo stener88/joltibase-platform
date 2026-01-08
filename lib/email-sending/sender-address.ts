@@ -65,7 +65,8 @@ export async function ensureDefaultSender(
 
   if (insertError) {
     throw new Error('Failed to create sender address');
-  }return newSender as SenderAddress;
+  }
+    return newSender as SenderAddress;
 }
 
 /**

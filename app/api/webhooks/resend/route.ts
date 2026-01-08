@@ -186,6 +186,7 @@ async function processWebhookPayload(payload: any) {// Get the Resend message ID
       .from('campaigns_v3')
       .update({ stats })
       .eq('id', email.campaign_id);
-  }return NextResponse.json({ received: true });
+  }
+    return NextResponse.json({ received: true });
 }
 

@@ -103,7 +103,8 @@ export async function PATCH(
         },
         { status: 404 }
       );
-    }return NextResponse.json({
+    }
+    return NextResponse.json({
       success: true,
       campaign,
     });
@@ -178,7 +179,8 @@ export async function DELETE(
     try {
       deleteGeneratedEmail(campaign.component_filename);
     } catch (fileError) {// Continue - database deletion succeeded
-    }return NextResponse.json({
+    }
+    return NextResponse.json({
       success: true,
       message: 'Campaign deleted successfully',
     });

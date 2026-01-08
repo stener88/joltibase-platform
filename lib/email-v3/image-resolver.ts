@@ -34,7 +34,9 @@ export async function resolveImage(
   options: ImageOptions = {},
   originalUrl?: string
 ): Promise<ImageResolutionResult> {
-  const { orientation = 'landscape', width = 600, height = 300 } = options;// Try Unsplash first
+  const { orientation = 'landscape', width = 600, height = 300 } = options;
+  
+  // Try Unsplash first
   try {
     const unsplashResult = await fetchUnsplashImage({
       query,
@@ -43,17 +45,19 @@ export async function resolveImage(
       height,
     });
     
-    if (unsplashResult && unsplashResult.url) {...`);
-      }
+    if (unsplashResult && unsplashResult.url) {
       return {
         url: unsplashResult.url,
         source: 'unsplash',
         alt: unsplashResult.alt,
       };
     }
-  } catch (error) {}
+  } catch (error) {
+    // Continue to fallback
+  }
   
-  // Fallback to Picsumconst picsumUrl = getPicsumFallback(query, width, height);
+  // Fallback to Picsum
+  const picsumUrl = getPicsumFallback(query, width, height);
   
   if (picsumUrl) {
     return {
@@ -64,7 +68,8 @@ export async function resolveImage(
   }
   
   // Last resort - keep original if provided
-  if (originalUrl) {return {
+  if (originalUrl) {
+    return {
       url: originalUrl,
       source: 'original',
       alt: query,
@@ -72,7 +77,9 @@ export async function resolveImage(
   }
   
   // Absolute fallback - generic placeholder
-  const fallbackUrl = `https://picsum.photos/${width}/${height}`;return {
+  const fallbackUrl = `https://picsum.photos/${width}/${height}`;
+  
+  return {
     url: fallbackUrl,
     source: 'picsum',
     alt: 'Image placeholder',
@@ -85,11 +92,14 @@ export async function resolveImage(
  */
 export async function resolveImages(
   queries: Array<{ query: string; options?: ImageOptions }>,
-): Promise<ImageResolutionResult[]> {const results = await Promise.all(
+): Promise<ImageResolutionResult[]> {
+  const results = await Promise.all(
     queries.map(({ query, options }) => resolveImage(query, options))
   );
   
-  const successCount = results.filter(r => r.source !== 'picsum').length;return results;
+  const successCount = results.filter(r => r.source !== 'picsum').length;
+  
+  return results;
 }
 
 /**

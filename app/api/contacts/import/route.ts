@@ -149,7 +149,8 @@ export async function POST(request: Request) {
       } catch (err: any) {
         errors.push(`Error processing ${email}: ${err.message}`);
       }
-    }return NextResponse.json({
+    }
+    return NextResponse.json({
       success: true,
       data: {
         imported,

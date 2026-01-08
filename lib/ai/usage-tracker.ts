@@ -67,10 +67,12 @@ export interface AIGenerationRecord {
 /**
  * Save AI generation to database
  */
-export async function saveAIGeneration(input: SaveGenerationInput): Promise<string> {const supabase = await createClient();
+export async function saveAIGeneration(input: SaveGenerationInput): Promise<string> {
+  const supabase = await createClient();
   
   try {
-    // Save to ai_generations tableconst { data, error } = await supabase
+    // Save to ai_generations table
+    const { data, error } = await supabase
       .from('ai_generations')
       .insert({
         user_id: input.userId,
@@ -94,7 +96,12 @@ export async function saveAIGeneration(input: SaveGenerationInput): Promise<stri
     
     if (error) {
       throw new Error('Failed to save generation to database');
-    }// Also track in ai_usage table for rate limitingawait trackUsage(input.userId, input.tokensUsed, input.costUsd);return data.id;
+    }
+    
+    // Also track in ai_usage table for rate limiting
+    await trackUsage(input.userId, input.tokensUsed, input.costUsd);
+    
+    return data.id;
   } catch (error) {
     throw error;
   }
