@@ -1,5 +1,4 @@
 import { requireAuth } from '@/lib/api/auth';
-import { successResponse, errorResponse } from '@/lib/api/responses';
 import { NextResponse } from 'next/server';
 
 // ============================================
@@ -22,7 +21,6 @@ export async function GET(request: Request) {
     const type = searchParams.get('type');
     
     // Calculate date range
-    const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
@@ -83,12 +81,13 @@ export async function GET(request: Request) {
 
     // Sort campaigns
     const sortedCampaigns = enrichedCampaigns.sort((a, b) => {
-      let aVal, bVal;
+      let aVal: string | number;
+      let bVal: string | number;
 
       switch (sortBy) {
         case 'name':
-          aVal = a.name;
-          bVal = b.name;
+          aVal = a.name || '';
+          bVal = b.name || '';
           break;
         case 'sent':
           aVal = a.metrics.sent;
@@ -108,8 +107,9 @@ export async function GET(request: Request) {
           break;
         case 'sent_at':
         default:
-          aVal = a.sent_at || a.created_at;
-          bVal = b.sent_at || b.created_at;
+          // Convert dates to timestamps for proper comparison
+          aVal = new Date(a.sent_at || a.created_at).getTime();
+          bVal = new Date(b.sent_at || b.created_at).getTime();
           break;
       }
 
@@ -125,7 +125,7 @@ export async function GET(request: Request) {
       data: sortedCampaigns,
     });
 
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to fetch campaign analytics' },
       { status: 500 }
