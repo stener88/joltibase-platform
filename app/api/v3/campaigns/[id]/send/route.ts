@@ -26,8 +26,10 @@ export async function POST(
     const body = await request.json();
     const { senderName, senderAddressId, listIds } = body;
 
-    console.log(`📧 [SEND-V3] Starting send for campaign ${campaignId}`);
-    console.log(`📧 [SEND-V3] Lists: ${listIds?.length || 0}, Sender: ${senderAddressId}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📧 [SEND-V3] Starting send for campaign ${campaignId}`);
+      console.log(`📧 [SEND-V3] Lists: ${listIds?.length || 0}, Sender: ${senderAddressId}`);
+    }
 
     // Validate required fields
     if (!listIds || listIds.length === 0) {
@@ -101,7 +103,6 @@ export async function POST(
       .eq('id', campaignId);
 
     if (updateError) {
-      console.error('❌ [SEND-V3] Failed to update campaign:', updateError);
       throw updateError;
     }
 
@@ -122,7 +123,6 @@ export async function POST(
       .in('list_id', listIds);
 
     if (contactsError) {
-      console.error('❌ [SEND-V3] Failed to fetch contacts:', contactsError);
       throw contactsError;
     }
 
@@ -148,11 +148,7 @@ export async function POST(
         { success: false, error: 'No subscribed contacts found in selected lists' },
         { status: 400 }
       );
-    }
-
-    console.log(`📧 [SEND-V3] Queueing ${contacts.length} emails for campaign ${campaignId}`);
-
-    // Queue emails for all contacts
+    }// Queue emails for all contacts
     const emailRecords = contacts.map((contact: any) => ({
       campaign_id: campaignId,
       contact_id: contact.id,
@@ -165,13 +161,8 @@ export async function POST(
       .insert(emailRecords);
 
     if (queueError) {
-      console.error('❌ [SEND-V3] Failed to queue emails:', queueError);
       throw queueError;
-    }
-
-    console.log(`✅ [SEND-V3] Queued ${contacts.length} emails successfully`);
-
-    // Trigger background processing
+    }// Trigger background processing
     // For now, we'll call the processor directly
     // In production, this would be a background job/queue system
     try {
@@ -194,7 +185,6 @@ export async function POST(
     });
 
   } catch (error: any) {
-    console.error('❌ [SEND-V3] Error:', error);
     
     // Reset campaign status on error
     try {

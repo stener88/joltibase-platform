@@ -59,11 +59,7 @@ export async function POST(request: NextRequest) {
       orientation,
     });
     
-    const url = `https://api.unsplash.com/search/photos?${params}`;
-    
-    console.log(`[Unsplash Search] Query: "${query}", Count: ${count}`);
-    
-    const response = await fetch(url, {
+    const url = `https://api.unsplash.com/search/photos?${params}`;const response = await fetch(url, {
       headers: {
         'Authorization': `Client-ID ${apiKey}`,
         'Accept-Version': 'v1',
@@ -100,17 +96,13 @@ export async function POST(request: NextRequest) {
       alt: photo.alt_description || photo.description || query,
       width: photo.width,
       height: photo.height,
-    }));
-    
-    console.log(`[Unsplash Search] Found ${images.length} images`);
-    
-    return NextResponse.json({
+    }));return NextResponse.json({
       images,
       total: data.total,
     });
     
   } catch (error: any) {
-    console.error('[Unsplash Search] Error:', error);
+    
     return NextResponse.json(
       { error: error.message || 'Search failed' },
       { status: 500 }

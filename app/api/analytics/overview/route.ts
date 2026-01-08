@@ -143,8 +143,7 @@ export async function GET(request: Request) {
       },
     });
 
-  } catch (error: any) {
-    console.error('❌ [ANALYTICS-OVERVIEW] Error:', error);
+  } catch (error) {
     return errorResponse(error.message || 'Failed to fetch analytics');
   }
 }

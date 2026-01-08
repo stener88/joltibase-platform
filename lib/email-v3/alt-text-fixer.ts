@@ -69,9 +69,7 @@ export function ensureAltText(code: string): string {
     }
   );
   
-  if (fixCount > 0) {
-    console.log(`🔧 [ALT-FIX] Auto-fixed ${fixCount} image(s) missing alt text`);
-  }
+  if (fixCount > 0) {}
   
   return result;
 }

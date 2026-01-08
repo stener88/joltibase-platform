@@ -111,8 +111,7 @@ export async function GET(request: Request) {
       },
     });
 
-  } catch (error: any) {
-    console.error('❌ [ANALYTICS-CONTACTS-EXPORT] Error:', error);
+  } catch (error) {
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to export contacts' },
       { status: 500 }

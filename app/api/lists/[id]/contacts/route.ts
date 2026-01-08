@@ -73,10 +73,7 @@ export async function POST(
       .upsert(records, { onConflict: 'contact_id,list_id', ignoreDuplicates: true })
       .select();
 
-    if (insertError) {
-      console.error('Error adding contacts to list:', insertError);
-      throw insertError;
-    }
+    if (insertError) throw insertError;
 
     // Update list contact count
     const { error: rpcError } = await supabase.rpc('update_list_contact_count', { list_uuid: listId });
@@ -107,8 +104,7 @@ export async function POST(
       },
     });
 
-  } catch (error: any) {
-    console.error('Error in POST /api/lists/[id]/contacts:', error);
+  } catch (error) {
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
@@ -170,10 +166,7 @@ export async function DELETE(
       .eq('list_id', listId)
       .in('contact_id', contactIds);
 
-    if (deleteError) {
-      console.error('Error removing contacts from list:', deleteError);
-      throw deleteError;
-    }
+    if (deleteError) throw deleteError;
 
     // Update list contact count
     const { error: rpcError } = await supabase.rpc('update_list_contact_count', { list_uuid: listId });
@@ -201,8 +194,7 @@ export async function DELETE(
       message: `${contactIds.length} contact(s) removed from list`,
     });
 
-  } catch (error: any) {
-    console.error('Error in DELETE /api/lists/[id]/contacts:', error);
+  } catch (error) {
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

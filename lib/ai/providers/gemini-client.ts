@@ -432,20 +432,12 @@ export async function generateTextWithGemini(
   }
 
   if (candidate.finishReason && candidate.finishReason !== 'STOP') {
-    console.error('[Gemini] Generation blocked:', {
-      finishReason: candidate.finishReason,
-      safetyRatings: candidate.safetyRatings,
-    });
     throw new Error(`Gemini blocked response: ${candidate.finishReason}`);
   }
 
   const text = response.text();
 
   if (!text) {
-    console.error('[Gemini] Empty response despite STOP finish reason:', {
-      candidate,
-      usageMetadata: response.usageMetadata,
-    });
     throw new Error('No response text from Gemini');
   }
 

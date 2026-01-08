@@ -27,12 +27,8 @@ export async function queueEmail({ campaignId, contactId, userId }: QueueEmailPa
       .select()
       .single();
 
-    if (insertError) throw insertError;
-
-    console.log(`✅ [QUEUE] Email queued: ${email.id}`);
-    return { success: true, emailId: email.id };
+    if (insertError) throw insertError;return { success: true, emailId: email.id };
   } catch (error: any) {
-    console.error('❌ [QUEUE] Error queuing email:', error);
     return { success: false, error: error.message };
   }
 }
@@ -56,7 +52,6 @@ export async function processCampaignQueue(campaignId: string) {
     // Get user's sender address
     const sender = await getDefaultSender(campaign.user_id);
     if (!sender) {
-      console.error(`❌ [QUEUE] No sender address found for user ${campaign.user_id}`);
       throw new Error('No sender address configured');
     }
 
@@ -74,14 +69,8 @@ export async function processCampaignQueue(campaignId: string) {
 
     if (emailsError) throw emailsError;
 
-    if (!queuedEmails || queuedEmails.length === 0) {
-      console.log(`ℹ️ [QUEUE] No queued emails for campaign ${campaignId}`);
-      return { success: true, processed: 0 };
-    }
-
-    console.log(`📧 [QUEUE] Processing ${queuedEmails.length} emails for campaign ${campaignId}`);
-
-    let successCount = 0;
+    if (!queuedEmails || queuedEmails.length === 0) {return { success: true, processed: 0 };
+    }let successCount = 0;
     let failureCount = 0;
 
     // Process each email
@@ -162,12 +151,8 @@ export async function processCampaignQueue(campaignId: string) {
           stats: { sent, bounced, opened, clicked, delivered: sent },
         })
         .eq('id', campaignId);
-    }
-
-    console.log(`✅ [QUEUE] Processed ${successCount} emails, ${failureCount} failures`);
-    return { success: true, processed: successCount, failed: failureCount };
+    }return { success: true, processed: successCount, failed: failureCount };
   } catch (error: any) {
-    console.error('❌ [QUEUE] Error processing queue:', error);
     return { success: false, error: error.message };
   }
 }

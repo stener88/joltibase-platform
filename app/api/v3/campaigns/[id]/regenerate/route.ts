@@ -47,11 +47,7 @@ export async function POST(
     
     // Parse and validate request
     const body = await request.json();
-    const { prompt, preserveProps } = RegenerateRequestSchema.parse(body);
-    
-    console.log(`🔄 [REGENERATE-V3] Campaign ${id}: "${prompt}"`);
-    
-    // Build context-aware prompt
+    const { prompt, preserveProps } = RegenerateRequestSchema.parse(body);// Build context-aware prompt
     let fullPrompt = prompt;
     if (existingCampaign.generation_prompt) {
       fullPrompt = `Original request: ${existingCampaign.generation_prompt}\n\nRefinement: ${prompt}`;
@@ -84,11 +80,7 @@ export async function POST(
       .select()
       .single();
     
-    if (updateError) throw updateError;
-    
-    console.log(`✅ [REGENERATE-V3] Campaign regenerated: ${campaign.id} (v${campaign.version})`);
-    
-    return NextResponse.json({
+    if (updateError) throw updateError;return NextResponse.json({
       success: true,
       campaign: {
         id: campaign.id,
@@ -102,7 +94,6 @@ export async function POST(
     });
     
   } catch (error: any) {
-    console.error('❌ [REGENERATE-V3] Error:', error);
     
     if (error.name === 'ZodError') {
       return NextResponse.json(

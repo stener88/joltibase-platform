@@ -93,11 +93,9 @@ export function detectDesignSystem(prompt: string): DesignSystem {
   scores.sort((a, b) => b.score - a.score);
   
   // Log detection for debugging
-  if (scores[0].score > 0) {
-    console.log(`✨ [DESIGN-SYSTEM] Detected: ${scores[0].system.name} (${scores[0].score} keyword matches: ${scores[0].matchedKeywords.join(', ')})`);
-  } else {
-    console.log(`✨ [DESIGN-SYSTEM] No keywords matched, using default: ${scores[0].system.name}`);
-  }
+  if (scores[0].score > 0) {)`);
+    }
+  } else {}
   
   // Return best match (or first system if no matches)
   return scores[0].system;

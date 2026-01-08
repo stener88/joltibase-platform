@@ -40,9 +40,7 @@ export async function POST(
       );
     }
 
-    // Process the queue
-    console.log(`🔄 [QUEUE-API] Processing queue for campaign ${campaignId}`);
-    const result = await processCampaignQueue(campaignId);
+    // Process the queueconst result = await processCampaignQueue(campaignId);
 
     if (!result.success) {
       throw new Error(result.error);
@@ -58,7 +56,7 @@ export async function POST(
     });
 
   } catch (error: any) {
-    console.error('❌ [QUEUE-API] Error:', error);
+    
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to process queue' },
       { status: 500 }

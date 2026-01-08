@@ -26,18 +26,14 @@ export async function GET() {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
-    if (listsError) {
-      console.error('Error fetching lists:', listsError);
-      throw listsError;
-    }
+    if (listsError) throw listsError;
 
     return NextResponse.json({
       success: true,
       data: lists || [],
     });
 
-  } catch (error: any) {
-    console.error('Error in GET /api/lists:', error);
+  } catch (error) {
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
@@ -85,18 +81,14 @@ export async function POST(request: Request) {
       .select()
       .single();
 
-    if (createError) {
-      console.error('Error creating list:', createError);
-      throw createError;
-    }
+    if (createError) throw createError;
 
     return NextResponse.json({
       success: true,
       data: list,
     });
 
-  } catch (error: any) {
-    console.error('Error in POST /api/lists:', error);
+  } catch (error) {
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

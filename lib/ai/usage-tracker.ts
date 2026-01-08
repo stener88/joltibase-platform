@@ -67,14 +67,10 @@ export interface AIGenerationRecord {
 /**
  * Save AI generation to database
  */
-export async function saveAIGeneration(input: SaveGenerationInput): Promise<string> {
-  console.log('💾 [USAGE] Saving AI generation to database...');
-  const supabase = await createClient();
+export async function saveAIGeneration(input: SaveGenerationInput): Promise<string> {const supabase = await createClient();
   
   try {
-    // Save to ai_generations table
-    console.log('📝 [USAGE] Inserting into ai_generations table...', { userId: input.userId });
-    const { data, error } = await supabase
+    // Save to ai_generations tableconst { data, error } = await supabase
       .from('ai_generations')
       .insert({
         user_id: input.userId,
@@ -97,21 +93,9 @@ export async function saveAIGeneration(input: SaveGenerationInput): Promise<stri
       .single();
     
     if (error) {
-      console.error('❌ [USAGE] Error saving AI generation:', error);
-      console.error('📍 [USAGE] Error details:', { code: error.code, message: error.message, details: error.details });
       throw new Error('Failed to save generation to database');
-    }
-    
-    console.log('✅ [USAGE] AI generation saved successfully:', { id: data.id });
-    
-    // Also track in ai_usage table for rate limiting
-    console.log('📊 [USAGE] Tracking usage for rate limiting...');
-    await trackUsage(input.userId, input.tokensUsed, input.costUsd);
-    
-    console.log('✅ [USAGE] saveAIGeneration complete, returning ID:', data.id);
-    return data.id;
+    }// Also track in ai_usage table for rate limitingawait trackUsage(input.userId, input.tokensUsed, input.costUsd);return data.id;
   } catch (error) {
-    console.error('Error in saveAIGeneration:', error);
     throw error;
   }
 }
@@ -119,13 +103,9 @@ export async function saveAIGeneration(input: SaveGenerationInput): Promise<stri
 /**
  * Track usage for rate limiting
  */
-async function trackUsage(userId: string, tokensUsed: number, costUsd: number): Promise<void> {
-  console.log('📊 [USAGE] trackUsage called:', { userId, tokensUsed, costUsd });
-  const supabase = await createClient();
+async function trackUsage(userId: string, tokensUsed: number, costUsd: number): Promise<void> {const supabase = await createClient();
   
-  try {
-    console.log('📝 [USAGE] Inserting into ai_usage table with feature: campaign_generator');
-    const { error } = await supabase
+  try {const { error } = await supabase
       .from('ai_usage')
       .insert({
         user_id: userId,
@@ -135,14 +115,9 @@ async function trackUsage(userId: string, tokensUsed: number, costUsd: number): 
       });
     
     if (error) {
-      console.error('❌ [USAGE] Error tracking usage:', error);
-      console.error('📍 [USAGE] Error details:', { code: error.code, message: error.message, details: error.details, hint: error.hint });
-      // Don't throw - tracking failure shouldn't block generation
-    } else {
-      console.log('✅ [USAGE] Usage tracked successfully');
-    }
+            // Don't throw - tracking failure shouldn't block generation
+    } else {}
   } catch (error) {
-    console.error('❌ [USAGE] Unexpected error in trackUsage:', error);
     // Don't throw - tracking failure shouldn't block generation
   }
 }
@@ -165,7 +140,6 @@ export async function getGenerationHistory(
       .limit(limit);
     
     if (error) {
-      console.error('Error fetching generation history:', error);
       throw new Error('Failed to fetch generation history');
     }
     
@@ -180,7 +154,6 @@ export async function getGenerationHistory(
       createdAt: new Date(record.created_at),
     }));
   } catch (error) {
-    console.error('Error in getGenerationHistory:', error);
     throw error;
   }
 }
@@ -206,7 +179,6 @@ export async function getGenerationById(
       if (error.code === 'PGRST116') {
         return null; // Not found
       }
-      console.error('Error fetching generation:', error);
       throw new Error('Failed to fetch generation');
     }
     
@@ -221,7 +193,6 @@ export async function getGenerationById(
       createdAt: new Date(data.created_at),
     };
   } catch (error) {
-    console.error('Error in getGenerationById:', error);
     throw error;
   }
 }
@@ -246,7 +217,6 @@ export async function getUsageStatistics(userId: string): Promise<{
       .eq('user_id', userId);
     
     if (allTimeError) {
-      console.error('Error fetching usage statistics:', allTimeError);
       throw new Error('Failed to fetch usage statistics');
     }
     
@@ -262,7 +232,6 @@ export async function getUsageStatistics(userId: string): Promise<{
       .gte('created_at', firstDayOfMonth.toISOString());
     
     if (monthError) {
-      console.error('Error fetching monthly statistics:', monthError);
       throw new Error('Failed to fetch monthly statistics');
     }
     
@@ -281,7 +250,6 @@ export async function getUsageStatistics(userId: string): Promise<{
       thisMonthCost,
     };
   } catch (error) {
-    console.error('Error in getUsageStatistics:', error);
     throw error;
   }
 }

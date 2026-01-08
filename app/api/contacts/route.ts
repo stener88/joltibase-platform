@@ -68,10 +68,7 @@ export async function GET(request: Request) {
     // Execute query
     const { data: contacts, error: fetchError, count } = await query;
 
-    if (fetchError) {
-      console.error('❌ [CONTACTS-API] Fetch error:', fetchError);
-      throw fetchError;
-    }
+    if (fetchError) throw fetchError;
 
     // Transform data to include list info
     const transformedContacts = contacts?.map(contact => ({
@@ -93,7 +90,6 @@ export async function GET(request: Request) {
     });
 
   } catch (error: any) {
-    console.error('❌ [CONTACTS-API] Error:', error);
     return errorResponse(error.message || 'Failed to fetch contacts');
   }
 }
@@ -129,7 +125,6 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (checkError) {
-      console.error('❌ [CONTACTS-API] Duplicate check error:', checkError);
       throw checkError;
     }
 
@@ -155,10 +150,7 @@ export async function POST(request: Request) {
       .select()
       .single();
 
-    if (insertError) {
-      console.error('❌ [CONTACTS-API] Insert error:', insertError);
-      throw insertError;
-    }
+    if (insertError) throw insertError;
 
     // Add to lists if specified
     if (listIds && listIds.length > 0) {
@@ -172,17 +164,11 @@ export async function POST(request: Request) {
         .insert(listMemberships);
 
       if (listError) {
-        console.error('❌ [CONTACTS-API] List membership error:', listError);
         // Don't fail the whole operation, just log the error
       }
-    }
-
-    console.log('✅ [CONTACTS-API] Contact created:', contact.id);
-
-    return successResponse(contact);
+    }return successResponse(contact);
 
   } catch (error: any) {
-    console.error('❌ [CONTACTS-API] Error:', error);
     return errorResponse(error.message || 'Failed to create contact');
   }
 }

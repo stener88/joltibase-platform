@@ -62,8 +62,7 @@ export async function GET(request: NextRequest) {
       },
     });
     
-  } catch (error: any) {
-    console.error('❌ [LIST-CAMPAIGNS-V3] Error:', error);
+  } catch (error) {
     
     return NextResponse.json(
       {

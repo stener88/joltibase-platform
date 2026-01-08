@@ -7,8 +7,6 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code')
   const origin = requestUrl.origin
 
-  console.log('🔍 Callback received:', { code: code?.substring(0, 10) + '...', origin })
-
   if (code) {
     try {
       const supabase = await createClient()
@@ -18,8 +16,6 @@ export async function GET(request: Request) {
         console.error('❌ Auth exchange error:', error)
         return NextResponse.redirect(`${origin}/login?error=${error.message}`)
       }
-
-      console.log('✅ Auth successful, user:', data.user?.email)
       
       // Create default sender address for new users
       try {
@@ -76,6 +72,3 @@ export async function GET(request: Request) {
   }
 
   // No code provided
-  console.log('⚠️ No code in callback')
-  return NextResponse.redirect(`${origin}/login`)
-}

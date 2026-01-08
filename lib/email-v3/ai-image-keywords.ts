@@ -86,15 +86,9 @@ Return exactly 3 keywords:
       hero: enforceWordLimit(result.object.hero),
       feature: enforceWordLimit(result.object.feature),
       accent: enforceWordLimit(result.object.accent),
-    };
+    };return keywords;
     
-    console.log(`🤖 [AI-KEYWORDS] Generated: hero="${keywords.hero}", feature="${keywords.feature}", accent="${keywords.accent}"`);
-    
-    return keywords;
-    
-  } catch (error) {
-    console.warn('[AI-KEYWORDS] Extraction failed:', error);
-    return null;
+  } catch (error) {return null;
   }
 }
 
@@ -111,15 +105,11 @@ export async function extractKeywordsWithTimeout(
   
   const aiPromise = extractKeywordsWithAI(prompt, designSystem)
     .then(result => {
-      const duration = Date.now() - startTime;
-      console.log(`⚡ [AI-KEYWORDS] Completed in ${duration}ms`);
-      return result;
+      const duration = Date.now() - startTime;return result;
     });
     
   const timeoutPromise = new Promise<null>(resolve => 
-    setTimeout(() => {
-      console.log(`⏱️ [AI-KEYWORDS] Timeout after ${timeoutMs}ms, using fallback`);
-      resolve(null);
+    setTimeout(() => {resolve(null);
     }, timeoutMs)
   );
   

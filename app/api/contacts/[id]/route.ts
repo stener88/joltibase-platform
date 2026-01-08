@@ -31,10 +31,7 @@ export async function GET(
     
     const { user, supabase } = authResult;
 
-    const contactId = (await params).id;
-    console.log(`📥 [CONTACTS-API] Fetching contact: ${contactId} for user: ${user.id}`);
-
-    // Get contact with list memberships
+    const contactId = (await params).id;// Get contact with list memberships
     const { data: contact, error: contactError } = await supabase
       .from('contacts')
       .select('*, contact_lists(list_id, lists(id, name))')
@@ -43,7 +40,6 @@ export async function GET(
       .single();
 
     if (contactError) {
-      console.error('❌ [CONTACTS-API] Fetch error:', contactError);
       return CommonErrors.notFound('Contact');
     }
 
@@ -63,7 +59,6 @@ export async function GET(
       .limit(50);
 
     if (activityError) {
-      console.error('❌ [CONTACTS-API] Activity fetch error:', activityError);
       // Don't fail the request, just return empty activities
     }
 
@@ -73,7 +68,6 @@ export async function GET(
     });
 
   } catch (error: any) {
-    console.error('❌ [CONTACTS-API] Error:', error);
     return errorResponse(error.message || 'Failed to fetch contact');
   }
 }
@@ -145,10 +139,7 @@ export async function PUT(
       .select()
       .single();
 
-    if (updateError) {
-      console.error('❌ [CONTACTS-API] Update error:', updateError);
-      throw updateError;
-    }
+    if (updateError) throw updateError;
 
     // Update list memberships if provided
     if (listIds !== undefined) {
@@ -170,16 +161,11 @@ export async function PUT(
           .insert(memberships);
 
         if (listError) {
-          console.error('❌ [CONTACTS-API] List membership error:', listError);
         }
       }
-    }
-
-    console.log('✅ [CONTACTS-API] Contact updated:', contact.id);
-    return successResponse(contact);
+    }return successResponse(contact);
 
   } catch (error: any) {
-    console.error('❌ [CONTACTS-API] Error:', error);
     return errorResponse(error.message || 'Failed to update contact');
   }
 }
@@ -208,16 +194,11 @@ export async function DELETE(
       .eq('id', contactId)
       .eq('user_id', user.id);
 
-    if (deleteError) {
-      console.error('❌ [CONTACTS-API] Delete error:', deleteError);
-      throw deleteError;
-    }
-
-    console.log('✅ [CONTACTS-API] Contact deleted:', contactId);
+    if (deleteError) throw deleteError;
+    
     return successResponse({ message: 'Contact deleted successfully' });
 
   } catch (error: any) {
-    console.error('❌ [CONTACTS-API] Error:', error);
     return errorResponse(error.message || 'Failed to delete contact');
   }
 }

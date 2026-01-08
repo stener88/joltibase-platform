@@ -121,8 +121,7 @@ export function CampaignSendClient({ campaign, lists, sender: initialSender }: C
         .eq('id', campaign.id);
 
       if (updateError) {
-        console.error('Failed to update campaign:', updateError);
-        throw new Error('Failed to update campaign details');
+          throw new Error('Failed to update campaign details');
       }
 
       // Send campaign via API

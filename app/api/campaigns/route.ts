@@ -71,7 +71,6 @@ export async function GET(request: Request) {
     const { data: campaigns, error: fetchError, count } = await query;
 
     if (fetchError) {
-      console.error('❌ [CAMPAIGNS-API] Fetch error:', fetchError);
       throw fetchError;
     }
 
@@ -88,7 +87,7 @@ export async function GET(request: Request) {
     });
 
   } catch (error: any) {
-    console.error('❌ [CAMPAIGNS-API] Error:', error);
+    
     return errorResponse(error.message || 'Failed to fetch campaigns');
   }
 }
@@ -147,16 +146,11 @@ export async function POST(request: Request) {
       .single();
 
     if (insertError) {
-      console.error('❌ [CAMPAIGNS-API] Insert error:', insertError);
       throw insertError;
-    }
-
-    console.log('✅ [CAMPAIGNS-API] Campaign created:', campaign.id);
-
-    return successResponse(campaign);
+    }return successResponse(campaign);
 
   } catch (error: any) {
-    console.error('❌ [CAMPAIGNS-API] Error:', error);
+    
     return errorResponse(error.message || 'Failed to create campaign');
   }
 }

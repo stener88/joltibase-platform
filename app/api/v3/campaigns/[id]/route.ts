@@ -57,7 +57,6 @@ export async function GET(
     });
     
   } catch (error: any) {
-    console.error('❌ [GET-CAMPAIGN-V3] Error:', error);
     
     return NextResponse.json(
       {
@@ -104,17 +103,12 @@ export async function PATCH(
         },
         { status: 404 }
       );
-    }
-    
-    console.log(`✅ [UPDATE-CAMPAIGN-V3] Updated: ${campaign.id}`);
-    
-    return NextResponse.json({
+    }return NextResponse.json({
       success: true,
       campaign,
     });
     
   } catch (error: any) {
-    console.error('❌ [UPDATE-CAMPAIGN-V3] Error:', error);
     
     if (error.name === 'ZodError') {
       return NextResponse.json(
@@ -183,20 +177,13 @@ export async function DELETE(
     // Delete component file
     try {
       deleteGeneratedEmail(campaign.component_filename);
-    } catch (fileError) {
-      console.warn('⚠️ [DELETE-CAMPAIGN-V3] Could not delete component file:', fileError);
-      // Continue - database deletion succeeded
-    }
-    
-    console.log(`✅ [DELETE-CAMPAIGN-V3] Deleted: ${id}`);
-    
-    return NextResponse.json({
+    } catch (fileError) {// Continue - database deletion succeeded
+    }return NextResponse.json({
       success: true,
       message: 'Campaign deleted successfully',
     });
     
   } catch (error: any) {
-    console.error('❌ [DELETE-CAMPAIGN-V3] Error:', error);
     
     return NextResponse.json(
       {

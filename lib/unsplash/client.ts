@@ -72,10 +72,7 @@ export async function fetchUnsplashImage(
   const cacheKey = `${query}-${orientation}`;
   if (imageCache.has(cacheKey)) {
     const cachedResults = imageCache.get(cacheKey)!;
-    const photo = cachedResults[0]; // Always pick best (most relevant) from cache
-    console.log(`[Unsplash] 💾 Using cached top result for: "${query}" (1 of ${cachedResults.length})`);
-    
-    // Build image URL with dimensions (same as below)
+    const photo = cachedResults[0]; // Always pick best (most relevant) from cache// Build image URL with dimensions (same as below)
     let imageUrl = photo.urls.regular;
     if (width || height) {
       const params = new URLSearchParams();
@@ -107,11 +104,7 @@ export async function fetchUnsplashImage(
       content_filter: 'high',  // Quality filter
     });
     
-    const url = `https://api.unsplash.com/search/photos?${params}`;
-    
-    console.log(`[Unsplash] Searching for: "${query}"`);
-    
-    // Fetch with timeout
+    const url = `https://api.unsplash.com/search/photos?${params}`;// Fetch with timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
     
@@ -140,16 +133,10 @@ export async function fetchUnsplashImage(
     
     // Cache the results for future use
     if (responseData.results.length > 0 && imageCache.size < CACHE_MAX_SIZE) {
-      imageCache.set(cacheKey, responseData.results);
-      console.log(`[Unsplash] 💾 Cached ${responseData.results.length} results for: "${query}"`);
-    }
+      imageCache.set(cacheKey, responseData.results);}
     
     // Always pick #1 most relevant result (sorted by relevance)
-    const photo = responseData.results[0] as UnsplashPhoto;
-    
-    console.log(`[Unsplash] ✅ Using top result of ${responseData.results.length}`);
-    
-    // Validate response structure
+    const photo = responseData.results[0] as UnsplashPhoto;// Validate response structure
     if (!photo || !photo.urls || !photo.urls.regular) {
       console.error('[Unsplash] Invalid response structure - missing urls');
       return null;
@@ -184,11 +171,7 @@ export async function fetchUnsplashImage(
       },
       downloadLocation: photo.links.download_location,
       alt: photo.alt_description || photo.description || query,
-    };
-    
-    console.log(`[Unsplash] ✅ Fetched image by ${result.credit.photographerName}`);
-    
-    return result;
+    };return result;
     
   } catch (error) {
     if (error instanceof Error) {

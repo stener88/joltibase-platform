@@ -121,11 +121,7 @@ export function parseAndInjectIds(tsxCode: string): ParseResult {
     const output = generate(ast, {
       retainLines: true,  // Preserve line numbers for debugging
       compact: false,     // Keep formatting readable
-    });
-
-    console.log(`[TSX-PARSER] Injected ${idCounter} component IDs (Babel AST)`);
-
-    return {
+    });return {
       modifiedTsx: output.code,
       componentMap,
     };
@@ -234,10 +230,12 @@ export function findParentComponent(
     }
   }
   
-  if (parent) {
-    console.log(`[TSX-PARSER] Found parent of ${componentId}: ${parent.id}`);
-  } else {
-    console.log(`[TSX-PARSER] No parent found for ${componentId} (root component)`);
+  if (process.env.NODE_ENV === 'development') {
+    if (parent) {
+      console.log(`[TSX-PARSER] Found parent of ${componentId}: ${parent.id}`);
+    } else {
+      console.log(`[TSX-PARSER] No parent found for ${componentId} (root component)`);
+    }
   }
   
   return parent?.id || null;

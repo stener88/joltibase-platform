@@ -33,11 +33,13 @@ export const logger = {
   },
 
   /**
-   * Info logs - Shown in console only (NOT sent to Sentry)
+   * Info logs - Development only by default (or when ENABLE_INFO_LOGS=true)
    * Use for important milestones, performance logs, cost logs
    */
   info: (message: string, context?: LogContext) => {
-    console.log(`[INFO] ${message}`, context || '');
+    if (process.env.NODE_ENV === 'development' || process.env.ENABLE_INFO_LOGS === 'true') {
+      console.log(`[INFO] ${message}`, context || '');
+    }
   },
 
   /**
@@ -80,8 +82,8 @@ export const logger = {
 };
 
 /**
- * Cost and performance logs - Console only, NOT sent to Sentry
- * These are operational logs that don't need error tracking
+ * Cost and performance logs - Always shown (important for monitoring)
+ * These are operational logs that help track AI costs and performance
  */
 export const logCost = (message: string, cost?: number, tokens?: { input: number; output: number }) => {
   console.log(`💰 ${message}`, { cost, tokens });

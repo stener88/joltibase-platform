@@ -293,3 +293,4 @@ The "mystery render" and multiple remounts are **Fast Refresh + React Compiler**
 ---
 
 **✅ Mystery solved! The "remounting" is just Fast Refresh doing its job during development.**
+

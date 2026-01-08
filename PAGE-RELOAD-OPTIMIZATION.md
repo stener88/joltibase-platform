@@ -189,3 +189,4 @@ SAVINGS: 0.9 seconds (4.5% faster)
 **Toolbar edits are now 0.9 seconds faster and provide a much smoother editing experience!**
 
 No more jarring page reloads during editing, while still ensuring fresh data when navigating to send/preview pages. 🚀
+

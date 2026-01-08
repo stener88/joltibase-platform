@@ -28,9 +28,6 @@ export default async function CampaignEditPage({ params }: EditPageProps) {
     redirect('/dashboard/campaigns');
   }
 
-  console.log('[EDIT-PAGE] Campaign loaded:', campaign.name);
-  console.log('[EDIT-PAGE] component_code length:', campaign.component_code?.length);
-
   return (
     <EmailEditorV3
       campaignId={campaign.id}

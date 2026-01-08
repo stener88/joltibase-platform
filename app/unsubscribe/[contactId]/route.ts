@@ -14,8 +14,6 @@ export async function GET(
     const supabase = await createClient();
     const contactId = (await params).contactId;
 
-    console.log(`🔕 [UNSUBSCRIBE] Processing unsubscribe for contact ${contactId}`);
-
     // Get contact
     const { data: contact, error: contactError } = await supabase
       .from('contacts')
@@ -30,7 +28,6 @@ export async function GET(
 
     // Check if already unsubscribed
     if (contact.status === 'unsubscribed') {
-      console.log(`ℹ️ [UNSUBSCRIBE] Contact ${contactId} already unsubscribed`);
       return NextResponse.redirect(new URL('/unsubscribe/success', request.url));
     }
 
@@ -44,17 +41,13 @@ export async function GET(
       .eq('id', contactId);
 
     if (updateError) {
-      console.error('❌ [UNSUBSCRIBE] Error updating contact:', updateError);
       throw updateError;
     }
-
-    console.log(`✅ [UNSUBSCRIBE] Successfully unsubscribed contact ${contactId}`);
 
     // Redirect to success page
     return NextResponse.redirect(new URL('/unsubscribe/success', request.url));
 
   } catch (error: any) {
-    console.error('❌ [UNSUBSCRIBE] Error:', error);
     // Still redirect to success to avoid revealing system information
     return NextResponse.redirect(new URL('/unsubscribe/success', new URL(request.url).origin));
   }

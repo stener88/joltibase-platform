@@ -16,10 +16,7 @@ export async function GET(
     
     const { user, supabase } = authResult;
 
-    const campaignId = (await params).id;
-    console.log(`📥 [CAMPAIGNS-API] Fetching campaign: ${campaignId} for user: ${user.id}`);
-
-    // Get campaign
+    const campaignId = (await params).id;// Get campaign
     const { data: campaign, error: campaignError } = await supabase
       .from('campaigns')
       .select('*')
@@ -28,14 +25,13 @@ export async function GET(
       .single();
 
     if (campaignError) {
-      console.error('❌ [CAMPAIGNS-API] Fetch error:', campaignError);
       return CommonErrors.notFound('Campaign');
     }
 
     return successResponse(campaign);
 
   } catch (error: any) {
-    console.error('❌ [CAMPAIGNS-API] Error:', error);
+    
     return errorResponse(error.message || 'Failed to fetch campaign');
   }
 }
@@ -71,14 +67,13 @@ export async function PUT(
       .single();
 
     if (updateError) {
-      console.error('❌ [CAMPAIGNS-API] Update error:', updateError);
       throw updateError;
     }
 
     return successResponse(campaign);
 
   } catch (error: any) {
-    console.error('❌ [CAMPAIGNS-API] Error:', error);
+    
     return errorResponse(error.message || 'Failed to update campaign');
   }
 }
@@ -108,14 +103,13 @@ export async function DELETE(
       .eq('user_id', user.id);
 
     if (deleteError) {
-      console.error('❌ [CAMPAIGNS-API] Delete error:', deleteError);
       throw deleteError;
     }
 
     return successResponse({ message: 'Campaign deleted' });
 
   } catch (error: any) {
-    console.error('❌ [CAMPAIGNS-API] Error:', error);
+    
     return errorResponse(error.message || 'Failed to delete campaign');
   }
 }

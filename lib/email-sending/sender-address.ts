@@ -41,23 +41,16 @@ export async function ensureDefaultSender(
     .maybeSingle();
 
   if (fetchError) {
-    console.error('❌ [SENDER] Error checking existing sender:', fetchError);
     throw new Error('Failed to check sender address');
   }
 
-  if (existing) {
-    console.log(`✅ [SENDER] User ${userId} already has default sender: ${existing.email}`);
-    return existing as SenderAddress;
+  if (existing) {return existing as SenderAddress;
   }
 
   // Generate sender email: username@mail.joltibase.com
   const username = userEmail.split('@')[0]; // "stener88" from "stener88@gmail.com"
   const senderEmail = `${username}@mail.joltibase.com`;
-  const senderName = fullName || username;
-
-  console.log(`📧 [SENDER] Creating default sender for ${userId}: ${senderEmail}`);
-
-  // Create new sender address
+  const senderName = fullName || username;// Create new sender address
   const { data: newSender, error: insertError } = await supabaseAdmin
     .from('sender_addresses')
     .insert({
@@ -71,12 +64,8 @@ export async function ensureDefaultSender(
     .single();
 
   if (insertError) {
-    console.error('❌ [SENDER] Error creating sender:', insertError);
     throw new Error('Failed to create sender address');
-  }
-
-  console.log(`✅ [SENDER] Created default sender: ${newSender.email}`);
-  return newSender as SenderAddress;
+  }return newSender as SenderAddress;
 }
 
 /**
@@ -93,7 +82,6 @@ export async function getDefaultSender(userId: string): Promise<SenderAddress | 
     .maybeSingle();
 
   if (error) {
-    console.error('❌ [SENDER] Error fetching default sender:', error);
     return null;
   }
 
@@ -140,7 +128,6 @@ export async function updateSenderName(
     .single();
 
   if (error) {
-    console.error('❌ [SENDER] Error updating sender:', error);
     return null;
   }
 

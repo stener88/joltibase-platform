@@ -34,17 +34,12 @@ export async function sendEmail({
     });
 
     if (result.error) {
-      console.error('❌ [RESEND] Send error:', result.error);
       throw new Error(result.error.message);
-    }
-
-    console.log('✅ [RESEND] Email sent:', result.data?.id);
-    return {
+    }return {
       success: true,
       messageId: result.data?.id,
     };
   } catch (error: any) {
-    console.error('❌ [RESEND] Error:', error);
     return {
       success: false,
       error: error.message,

@@ -34,11 +34,7 @@ export async function resolveImage(
   options: ImageOptions = {},
   originalUrl?: string
 ): Promise<ImageResolutionResult> {
-  const { orientation = 'landscape', width = 600, height = 300 } = options;
-  
-  console.log(`[IMAGE-RESOLVER] Resolving image for: "${query}"`);
-  
-  // Try Unsplash first
+  const { orientation = 'landscape', width = 600, height = 300 } = options;// Try Unsplash first
   try {
     const unsplashResult = await fetchUnsplashImage({
       query,
@@ -47,21 +43,17 @@ export async function resolveImage(
       height,
     });
     
-    if (unsplashResult && unsplashResult.url) {
-      console.log(`✅ [IMAGE-RESOLVER] Unsplash success: ${unsplashResult.url.substring(0, 60)}...`);
+    if (unsplashResult && unsplashResult.url) {...`);
+      }
       return {
         url: unsplashResult.url,
         source: 'unsplash',
         alt: unsplashResult.alt,
       };
     }
-  } catch (error) {
-    console.warn('[IMAGE-RESOLVER] Unsplash failed:', error instanceof Error ? error.message : 'Unknown error');
-  }
+  } catch (error) {}
   
-  // Fallback to Picsum
-  console.log('[IMAGE-RESOLVER] Falling back to Picsum');
-  const picsumUrl = getPicsumFallback(query, width, height);
+  // Fallback to Picsumconst picsumUrl = getPicsumFallback(query, width, height);
   
   if (picsumUrl) {
     return {
@@ -72,9 +64,7 @@ export async function resolveImage(
   }
   
   // Last resort - keep original if provided
-  if (originalUrl) {
-    console.log('[IMAGE-RESOLVER] Keeping original URL');
-    return {
+  if (originalUrl) {return {
       url: originalUrl,
       source: 'original',
       alt: query,
@@ -82,9 +72,7 @@ export async function resolveImage(
   }
   
   // Absolute fallback - generic placeholder
-  const fallbackUrl = `https://picsum.photos/${width}/${height}`;
-  console.warn('[IMAGE-RESOLVER] Using generic placeholder');
-  return {
+  const fallbackUrl = `https://picsum.photos/${width}/${height}`;return {
     url: fallbackUrl,
     source: 'picsum',
     alt: 'Image placeholder',
@@ -97,17 +85,11 @@ export async function resolveImage(
  */
 export async function resolveImages(
   queries: Array<{ query: string; options?: ImageOptions }>,
-): Promise<ImageResolutionResult[]> {
-  console.log(`[IMAGE-RESOLVER] Batch resolving ${queries.length} images`);
-  
-  const results = await Promise.all(
+): Promise<ImageResolutionResult[]> {const results = await Promise.all(
     queries.map(({ query, options }) => resolveImage(query, options))
   );
   
-  const successCount = results.filter(r => r.source !== 'picsum').length;
-  console.log(`✅ [IMAGE-RESOLVER] Batch complete: ${successCount}/${queries.length} from Unsplash`);
-  
-  return results;
+  const successCount = results.filter(r => r.source !== 'picsum').length;return results;
 }
 
 /**

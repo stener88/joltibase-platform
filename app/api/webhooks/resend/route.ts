@@ -36,16 +36,12 @@ export async function POST(request: Request) {
           'svix-id': svixId,
           'svix-timestamp': svixTimestamp,
           'svix-signature': svixSignature,
-        }) as any;
-        
-        console.log('✅ [WEBHOOK] Signature verified successfully');
-        
-        // Process the verified payload
+        }) as any;// Process the verified payload
         return await processWebhookPayload(payload);
         
       } catch (err: any) {
-        console.error('❌ [WEBHOOK] Signature verification failed:', err.message);
-        return NextResponse.json(
+        
+    return NextResponse.json(
           { error: 'Invalid webhook signature' },
           { status: 401 }
         );
@@ -67,10 +63,7 @@ export async function POST(request: Request) {
 /**
  * Process the webhook payload after verification
  */
-async function processWebhookPayload(payload: any) {
-  console.log('📥 [WEBHOOK] Received Resend event:', payload.type);
-
-  // Get the Resend message ID from the webhook
+async function processWebhookPayload(payload: any) {// Get the Resend message ID from the webhook
   const messageId = payload.data?.email_id;
   
   if (!messageId) {
@@ -161,9 +154,7 @@ async function processWebhookPayload(payload: any) {
         .eq('id', email.contact_id);
       break;
 
-    default:
-      console.log('ℹ️ [WEBHOOK] Unhandled event type:', eventType);
-      return NextResponse.json({ received: true });
+    default:return NextResponse.json({ received: true });
   }
 
   // Update email record
@@ -173,7 +164,6 @@ async function processWebhookPayload(payload: any) {
     .eq('id', email.id);
 
   if (updateError) {
-    console.error('❌ [WEBHOOK] Error updating email:', updateError);
     throw updateError;
   }
 
@@ -196,10 +186,6 @@ async function processWebhookPayload(payload: any) {
       .from('campaigns_v3')
       .update({ stats })
       .eq('id', email.campaign_id);
-  }
-
-  console.log('✅ [WEBHOOK] Processed event:', eventType, 'for email:', email.id);
-
-  return NextResponse.json({ received: true });
+  }return NextResponse.json({ received: true });
 }
 

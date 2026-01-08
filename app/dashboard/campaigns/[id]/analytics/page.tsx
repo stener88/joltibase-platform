@@ -232,23 +232,33 @@ export default function CampaignAnalyticsPage() {
         {/* Email Content Preview */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Email Content</h3>
-          <div className="p-4 bg-muted rounded-lg">
-            <p className="text-sm text-gray-600 mb-2">Subject:</p>
-            <p className="font-medium text-gray-900 mb-4">{campaign.subject_line}</p>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Subject:</p>
+              <p className="font-medium text-gray-900">{campaign.subject_line}</p>
+            </div>
             {campaign.preview_text && (
-              <>
+              <div>
                 <p className="text-sm text-gray-600 mb-2">Preview Text:</p>
-                <p className="text-sm text-gray-700 mb-4">{campaign.preview_text}</p>
-              </>
+                <p className="text-sm text-gray-700">{campaign.preview_text}</p>
+              </div>
             )}
-            <p className="text-sm text-gray-600 mb-2">Content:</p>
-            {/* HTML is architecturally safe - generated from validated TSX via React Email */}
-            <div
-              className="prose max-w-none text-sm"
-              dangerouslySetInnerHTML={{ 
-                __html: campaign.html_content || 'No content'
-              }}
-            />
+            <div>
+              <p className="text-sm text-gray-600 mb-3">Preview:</p>
+              {/* Email Preview - Iframe approach matches send flow */}
+              <div className="bg-muted/30 p-6 rounded-lg flex items-center justify-center">
+                <div className="w-full max-w-2xl">
+                  <div className="bg-white rounded-xl shadow-lg overflow-hidden border">
+                    <iframe 
+                      srcDoc={campaign.html_content || '<p>No content</p>'}
+                      className="w-full h-[500px] border-0"
+                      title="Email Preview"
+                      sandbox="allow-same-origin"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         </div>

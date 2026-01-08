@@ -72,9 +72,7 @@ const DESIGN_SYSTEM_IMAGE_COUNTS: Record<string, number> = {
 function getImageCountForPrompt(prompt: string, designSystem?: DesignSystem): number {
   // If we have a design system, use its configured count
   if (designSystem?.id && DESIGN_SYSTEM_IMAGE_COUNTS[designSystem.id]) {
-    const count = DESIGN_SYSTEM_IMAGE_COUNTS[designSystem.id];
-    console.log(`🎯 [IMAGE-SERVICE] Using ${count} images for ${designSystem.name}`);
-    return count;
+    const count = DESIGN_SYSTEM_IMAGE_COUNTS[designSystem.id];return count;
   }
   
   const lower = prompt.toLowerCase();
@@ -125,18 +123,14 @@ export async function fetchImagesForPrompt(
   prompt: string,
   designSystem?: DesignSystem
 ): Promise<ImageContext> {
-  const imageCount = getImageCountForPrompt(prompt, designSystem);
-  console.log(`🖼️ [IMAGE-SERVICE] Fetching ${imageCount} images for: "${prompt.substring(0, 80)}..."`);
+  const imageCount = getImageCountForPrompt(prompt, designSystem);..."`);
+  }
   
-  if (!designSystem) {
-    console.warn('[IMAGE-SERVICE] No design system provided, using fallback');
-    return getFallbackImages();
+  if (!designSystem) {return getFallbackImages();
   }
   
   try {
-    // Try AI keyword extraction with configured timeout
-    console.log(`🤖 [IMAGE-SERVICE] Extracting keywords with AI...`);
-    const aiKeywords = await extractKeywordsWithTimeout(prompt, designSystem);
+    // Try AI keyword extraction with configured timeoutconst aiKeywords = await extractKeywordsWithTimeout(prompt, designSystem);
     
     // Build final keywords with fallback chain
     const keywords = aiKeywords 
@@ -145,10 +139,7 @@ export async function fetchImagesForPrompt(
         || extractTopicsFromPrompt(prompt) 
         || getCategoryFallback(prompt);
     
-    const source = aiKeywords ? 'AI' : 'fallback';
-    console.log(`🎯 [IMAGE-SERVICE] Keywords (${source}): hero="${keywords.hero}", feature="${keywords.feature}", accent="${keywords.accent}"`);
-    
-    // Fetch images in parallel based on image count
+    const source = aiKeywords ? 'AI' : 'fallback';// Fetch images in parallel based on image count
     // 3 images: hero + feature + accent
     // 4 images: hero + feature + secondary + accent  
     // 5 images: hero + feature + secondary + tertiary + accent
@@ -216,15 +207,9 @@ export async function fetchImagesForPrompt(
       imageCount >= 3 ? context.feature2 : null,
       imageCount >= 4 ? context.feature3 : null,
       imageCount >= 5 ? context.accent : null,
-    ].filter(Boolean).length;
+    ].filter(Boolean).length;return context;
     
-    console.log(`✅ [IMAGE-SERVICE] Fetched ${fetchedCount}/${requestedCount} images`);
-    
-    return context;
-    
-  } catch (error) {
-    console.warn('[IMAGE-SERVICE] Error fetching images, using fallback:', error);
-    return getFallbackImages();
+  } catch (error) {return getFallbackImages();
   }
 }
 
@@ -234,10 +219,7 @@ export async function fetchImagesForPrompt(
 function getDesignSystemKeywords(designSystem: DesignSystem): ImageKeywords | null {
   if (!designSystem.imageKeywords) return null;
   
-  const ds = designSystem.imageKeywords;
-  console.log(`🎨 [IMAGE-SERVICE] Using ${designSystem.name} design system keywords`);
-  
-  // Pick first keyword from each array (consistent, not random)
+  const ds = designSystem.imageKeywords;// Pick first keyword from each array (consistent, not random)
   // Then take only first 2 words for better Unsplash results
   return {
     hero: truncateToWords(ds.hero?.[0] || 'business', 2),
@@ -261,9 +243,8 @@ function extractTopicsFromPrompt(prompt: string): ImageKeywords | null {
   
   const found = topicKeywords.filter(topic => lower.includes(topic));
   
-  if (found.length === 0) return null;
-  
-  console.log(`📝 [IMAGE-SERVICE] Extracted topics: ${found.join(', ')}`);
+  if (found.length === 0) return null;`);
+  }
   
     return {
     hero: found[0],
@@ -287,11 +268,7 @@ function getCategoryFallback(prompt: string): ImageKeywords {
   else if (lower.includes('fashion') || lower.includes('style')) category = 'fashion';
   else if (lower.includes('event') || lower.includes('conference')) category = 'conference';
   else if (lower.includes('education') || lower.includes('learning')) category = 'education';
-  else if (lower.includes('health') || lower.includes('medical')) category = 'healthcare';
-  
-  console.log(`📂 [IMAGE-SERVICE] Using category fallback: ${category}`);
-  
-  return {
+  else if (lower.includes('health') || lower.includes('medical')) category = 'healthcare';return {
     hero: category,
     feature: category,
     accent: 'abstract',
@@ -324,10 +301,7 @@ function mapToEmailImage(result: ImageResult, width: number, height: number): Em
  * Fallback images when everything else fails
  * Uses high-quality, pre-selected Unsplash images
  */
-function getFallbackImages(): ImageContext {
-  console.log('📦 [IMAGE-SERVICE] Using static fallback images');
-  
-  return {
+function getFallbackImages(): ImageContext {return {
     hero: {
       url: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&h=400&fit=crop',
       alt: 'Professional workspace with laptop',

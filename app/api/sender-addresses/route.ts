@@ -24,9 +24,7 @@ export async function GET(request: Request) {
     const senders = await getUserSenders(user.id);
     
     // If no senders exist, create default one
-    if (senders.length === 0) {
-      console.log(`📧 [SENDER-API] No senders found, creating default for ${user.email}`);
-      const fullName = user.user_metadata?.full_name || 
+    if (senders.length === 0) {const fullName = user.user_metadata?.full_name || 
                       user.user_metadata?.name ||
                       null;
       
@@ -57,7 +55,7 @@ export async function GET(request: Request) {
     });
 
   } catch (error: any) {
-    console.error('❌ [SENDER-API] Error:', error);
+    
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to fetch sender addresses' },
       { status: 500 }
@@ -103,19 +101,14 @@ export async function PATCH(request: Request) {
       .single();
 
     if (error) {
-      console.error('❌ [SENDER-API] Update error:', error);
       throw error;
-    }
-
-    console.log(`✅ [SENDER-API] Updated sender ${senderId} name to: ${name}`);
-
-    return NextResponse.json({
+    }return NextResponse.json({
       success: true,
       data: data,
     });
 
   } catch (error: any) {
-    console.error('❌ [SENDER-API] Error:', error);
+    
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to update sender address' },
       { status: 500 }

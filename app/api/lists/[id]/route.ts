@@ -56,10 +56,7 @@ export async function GET(
       `)
       .eq('list_id', listId);
 
-    if (contactsError) {
-      console.error('Error fetching list contacts:', contactsError);
-      throw contactsError;
-    }
+    if (contactsError) throw contactsError;
 
     // Format response
     const contacts = contactListRecords?.map((record: any) => ({
@@ -76,8 +73,7 @@ export async function GET(
       },
     });
 
-  } catch (error: any) {
-    console.error('Error in GET /api/lists/[id]:', error);
+  } catch (error) {
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
@@ -130,18 +126,14 @@ export async function PATCH(
       .select()
       .single();
 
-    if (updateError) {
-      console.error('Error updating list:', updateError);
-      throw updateError;
-    }
+    if (updateError) throw updateError;
 
     return NextResponse.json({
       success: true,
       data: list,
     });
 
-  } catch (error: any) {
-    console.error('Error in PATCH /api/lists/[id]:', error);
+  } catch (error) {
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
@@ -178,18 +170,14 @@ export async function DELETE(
       .eq('id', listId)
       .eq('user_id', user.id);
 
-    if (deleteError) {
-      console.error('Error deleting list:', deleteError);
-      throw deleteError;
-    }
+    if (deleteError) throw deleteError;
 
     return NextResponse.json({
       success: true,
       message: 'List deleted successfully',
     });
 
-  } catch (error: any) {
-    console.error('Error in DELETE /api/lists/[id]:', error);
+  } catch (error) {
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

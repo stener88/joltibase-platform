@@ -62,7 +62,6 @@ export async function POST(request: Request) {
       .in('email', emails);
 
     if (fetchError) {
-      console.error('❌ [IMPORT-API] Fetch existing error:', fetchError);
       throw fetchError;
     }
 
@@ -103,7 +102,6 @@ export async function POST(request: Request) {
               .eq('user_id', user.id);
 
             if (updateError) {
-              console.error('❌ [IMPORT-API] Update error:', updateError);
               errors.push(`Failed to update ${email}: ${updateError.message}`);
               continue;
             }
@@ -130,7 +128,6 @@ export async function POST(request: Request) {
             .single();
 
           if (insertError) {
-            console.error('❌ [IMPORT-API] Insert error:', insertError);
             errors.push(`Failed to import ${email}: ${insertError.message}`);
             continue;
           }
@@ -150,14 +147,9 @@ export async function POST(request: Request) {
           imported++;
         }
       } catch (err: any) {
-        console.error('❌ [IMPORT-API] Processing error:', err);
         errors.push(`Error processing ${email}: ${err.message}`);
       }
-    }
-
-    console.log('✅ [IMPORT-API] Import complete:', { imported, updated, skipped, errors: errors.length });
-
-    return NextResponse.json({
+    }return NextResponse.json({
       success: true,
       data: {
         imported,
@@ -169,7 +161,6 @@ export async function POST(request: Request) {
     });
 
   } catch (error: any) {
-    console.error('❌ [IMPORT-API] Error:', error);
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to import contacts' },
       { status: 500 }

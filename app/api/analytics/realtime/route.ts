@@ -172,7 +172,6 @@ export async function GET(request: Request) {
     });
 
   } catch (error: any) {
-    console.error('❌ [ANALYTICS-REALTIME] Error:', error);
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to fetch real-time analytics' },
       { status: 500 }

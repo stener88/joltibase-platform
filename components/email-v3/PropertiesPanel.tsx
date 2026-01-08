@@ -109,25 +109,21 @@ export function PropertiesPanel({
 }: PropertiesPanelProps) {
   // Extract properties from selected component
   const componentProperties = useMemo<ComponentProperties | null>(() => {
-    if (!selectedComponentId) {
-      console.log('[PROPERTIES-PANEL] No component selected');
-      return null;
+    if (!selectedComponentId) {return null;
     }
 
     // ✅ Guard: Check if tsxCode is available
-    if (!tsxCode) {
-      console.log('[PROPERTIES-PANEL] TSX code not available yet');
-      return null;
+    if (!tsxCode) {return null;
     }
 
-    console.log('[PROPERTIES-PANEL] Component selected:', selectedComponentId);
-    console.log('[PROPERTIES-PANEL] Component map:', componentMap);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[PROPERTIES-PANEL] Component selected:', selectedComponentId);
+      console.log('[PROPERTIES-PANEL] Component map:', componentMap);
+    }
 
     // Get component info from map
     const componentInfo = componentMap[selectedComponentId];
-    if (!componentInfo) {
-      console.warn('[PROPERTIES-PANEL] Component not found in map:', selectedComponentId);
-      return {
+    if (!componentInfo) {return {
         type: 'Unknown',
         text: '',
         textColor: '#0a0a0a',
@@ -144,11 +140,7 @@ export function PropertiesPanel({
         canEditLink: false,
         canEditImage: false,
       };
-    }
-
-    console.log('[PROPERTIES-PANEL] Component info:', componentInfo);
-
-    // Determine component capabilities based on type
+    }// Determine component capabilities based on type
     const componentType = componentInfo.type;
     const isTextComponent = ['Text', 'Heading', 'Button', 'Link'].includes(componentType);
     const isImageComponent = componentType === 'Img';
@@ -540,9 +532,7 @@ export function PropertiesPanel({
             onClick={() => {
               if (onSelectParent) {
                 onSelectParent();
-              } else {
-                console.log('[PROPERTIES] Select parent - no callback provided');
-              }
+              } else {}
             }}
             disabled={!onSelectParent}
             className="flex items-center gap-1 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

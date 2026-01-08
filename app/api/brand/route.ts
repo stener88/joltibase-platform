@@ -26,14 +26,12 @@ export async function GET() {
       if (error.code === 'PGRST116') {
         return NextResponse.json({ brand: null });
       }
-      console.error('[Brand API] GET error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     const brand = fromDbRow(data as BrandKitDbRow);
     return NextResponse.json({ brand });
   } catch (error) {
-    console.error('[Brand API] Unexpected error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -75,14 +73,12 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[Brand API] POST error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     const brand = fromDbRow(data as BrandKitDbRow);
     return NextResponse.json({ brand });
   } catch (error) {
-    console.error('[Brand API] Unexpected error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -106,13 +102,11 @@ export async function DELETE() {
       .eq('user_id', user.id);
 
     if (error) {
-      console.error('[Brand API] DELETE error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('[Brand API] Unexpected error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

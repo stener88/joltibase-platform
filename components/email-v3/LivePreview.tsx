@@ -206,8 +206,6 @@ export function LivePreview({
         ` : ''}
       </style>
       <script>
-        console.log('[IFRAME] Interactive script loaded');
-        
         // Handle direct updates from parent
         window.addEventListener('message', (event) => {
           if (event.data.type === 'direct-update') {
@@ -215,11 +213,8 @@ export function LivePreview({
             const element = document.querySelector('[data-component-id="' + componentId + '"]');
             
             if (!element) {
-              console.warn('[IFRAME] Element not found:', componentId);
               return;
             }
-            
-            console.log('[IFRAME] Direct update:', property, '=', value);
             
             switch (property) {
               case 'text':
@@ -332,7 +327,7 @@ export function LivePreview({
                 }
                 break;
               default:
-                console.warn('[IFRAME] Unknown property:', property);
+                // Unknown property - silently ignore
             }
           }
         });
@@ -353,7 +348,6 @@ export function LivePreview({
             if (element) {
               element.classList.add('selected');
               selectedComponentId = componentId;
-              console.log('[IFRAME] Applied selected class to', componentId);
             }
           } else {
             selectedComponentId = null;
@@ -369,7 +363,6 @@ export function LivePreview({
         
         // Handle clicks
         document.addEventListener('click', (e) => {
-          console.log('[IFRAME] Click detected', e.target);
           const target = e.target.closest('[data-component-id]');
           
           if (target && window.parent) {
@@ -377,8 +370,6 @@ export function LivePreview({
             e.preventDefault();
             const componentId = target.getAttribute('data-component-id');
             const rect = target.getBoundingClientRect();
-            
-            console.log('[IFRAME] Sending component-select for', componentId);
             
             // Update visual selection
             updateSelectedClass(componentId);
@@ -398,7 +389,6 @@ export function LivePreview({
             }, '*');
           } else if (window.parent) {
             // Clicked on empty space - deselect
-            console.log('[IFRAME] Clicked empty space, deselecting');
             updateSelectedClass(null);
             
             window.parent.postMessage({ 
@@ -447,8 +437,6 @@ export function LivePreview({
             
             const rect = element.getBoundingClientRect();
             
-            console.log('[IFRAME] Scroll update for', selectedComponentId);
-            
             window.parent.postMessage({
               type: 'component-position-update',
               componentId: selectedComponentId,
@@ -467,7 +455,6 @@ export function LivePreview({
         // Handle keyboard - Escape to deselect
         document.addEventListener('keydown', (e) => {
           if (e.key === 'Escape' && selectedComponentId && window.parent) {
-            console.log('[IFRAME] Escape pressed, deselecting');
             updateSelectedClass(null);
             window.parent.postMessage({ 
               type: 'component-select', 
@@ -475,8 +462,6 @@ export function LivePreview({
             }, '*');
           }
         });
-        
-        console.log('[IFRAME] Event listeners registered (click, hover, scroll, keyboard)');
       </script>
     `;
     
@@ -522,7 +507,9 @@ export function LivePreview({
       // Notify parent of enhanced component map (with computed styles)
       onComponentMapUpdate(enhancedComponentMap);
     } catch (error) {
-      console.error('[LIVE-PREVIEW] Render error:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[LIVE-PREVIEW] Render error:', error);
+      }
       setPreviewHtml(generateErrorHtml(error));
     } finally {
       setIsRendering(false);
@@ -533,9 +520,7 @@ export function LivePreview({
   // ✅ NEW: Render when tsxCode changes (React handles this automatically!)
   // ========================================
   useEffect(() => {
-    if (!tsxCode) {
-      console.warn('[LIVE-PREVIEW] No TSX code provided');
-      return;
+    if (!tsxCode) {return;
     }
 
     // ✅ OPTION 4: Check source to decide rendering strategy
@@ -560,7 +545,7 @@ export function LivePreview({
         // Update componentMap (this syncs PropertiesPanel)
         onComponentMapUpdate(enhancedComponentMap);
       } catch (error) {
-        console.error('[LIVE-PREVIEW] Failed to parse TSX locally:', error);
+        // Failed to parse - ignore
       }
       
       // Skip API call and full re-render for visual edits
@@ -575,8 +560,6 @@ export function LivePreview({
   // Send direct update to iframe (instant, no re-render)
   const sendDirectUpdate = useCallback((update: DirectUpdate) => {
     if (!iframeRef.current?.contentWindow) return;
-    
-    console.log('[LIVE-PREVIEW] Sending direct update:', update);
     
     iframeRef.current.contentWindow.postMessage(update, '*');
   }, []);
@@ -666,11 +649,8 @@ export function LivePreview({
                 const element = document.querySelector('[data-component-id="' + componentId + '"]');
                 
                 if (!element) {
-                  console.warn('[IFRAME] Element not found:', componentId);
                   return;
                 }
-                
-                console.log('[IFRAME] Direct update:', property, '=', value);
                 
                 // Apply update based on property type
                 switch (property) {
@@ -781,7 +761,7 @@ export function LivePreview({
                     }
                     break;
                   default:
-                    console.warn('[IFRAME] Unknown property:', property);
+                    // Unknown property - silently ignore
                 }
               }
             });
@@ -863,11 +843,8 @@ export function LivePreview({
 
   // Handle postMessage from iframe
   const handleMessage = useCallback((event: MessageEvent) => {
-    console.log('[LIVE-PREVIEW] Received message:', event.data);
-    
     if (event.data.type === 'component-select') {
       const { componentId, elementRect } = event.data;
-      console.log('[LIVE-PREVIEW] Component selected:', componentId);
       
       if (componentId && elementRect && iframeRef.current) {
         // Get iframe position in parent viewport
@@ -892,10 +869,7 @@ export function LivePreview({
             right: iframeRect.right,
             bottom: iframeRect.bottom,
           }
-        );
-        
-        console.log('[LIVE-PREVIEW] Smart position:', smartPosition.placement, smartPosition);
-        onComponentSelect(componentId, { top: smartPosition.top, left: smartPosition.left });
+        );onComponentSelect(componentId, { top: smartPosition.top, left: smartPosition.left });
       } else {
         onComponentSelect(null);
       }
@@ -929,19 +903,13 @@ export function LivePreview({
         
         onComponentSelect(componentId, { top: smartPosition.top, left: smartPosition.left });
       }
-    } else if (event.data.type === 'component-hover') {
-      console.log('[LIVE-PREVIEW] Component hovered:', event.data.componentId);
-      onComponentHover(event.data.componentId);
+    } else if (event.data.type === 'component-hover') {onComponentHover(event.data.componentId);
     }
   }, [onComponentSelect, onComponentHover, selectedComponentId]);
 
   // Set up message listener
-  useEffect(() => {
-    console.log('[LIVE-PREVIEW] Setting up message listener');
-    window.addEventListener('message', handleMessage);
-    return () => {
-      console.log('[LIVE-PREVIEW] Removing message listener');
-      window.removeEventListener('message', handleMessage);
+  useEffect(() => {window.addEventListener('message', handleMessage);
+    return () => {window.removeEventListener('message', handleMessage);
     };
   }, [handleMessage]);
 

@@ -147,7 +147,6 @@ export function generateDiff(oldCode: string, newCode: string): CodeChange[] {
     return prioritizedChanges;
     
   } catch (error) {
-    console.error('[DIFF-GENERATOR] Error generating diff:', error);
     return [{
       type: 'modified',
       componentType: 'Email',

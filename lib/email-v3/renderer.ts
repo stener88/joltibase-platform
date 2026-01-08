@@ -40,10 +40,7 @@ export interface RenderWithIdsResult extends RenderResult {
 export async function renderEmail(
   filename: string,
   options: RenderOptions = {}
-): Promise<RenderResult> {
-  console.log(`🎨 [V3-RENDERER] Rendering: ${filename}`);
-  
-  try {
+): Promise<RenderResult> {try {
     const filepath = path.join(GENERATED_DIR, filename);
     
     // Check file exists
@@ -52,10 +49,7 @@ export async function renderEmail(
     }
     
     // Read and transpile TSX to JS
-    const tsxCode = fs.readFileSync(filepath, 'utf-8');
-    
-    console.log(`🔄 [V3-RENDERER] Transpiling TSX to JS...`);
-    const transpiled = transformSync(tsxCode, {
+    const tsxCode = fs.readFileSync(filepath, 'utf-8');const transpiled = transformSync(tsxCode, {
       loader: 'tsx',
       format: 'esm',
       target: 'node20',
@@ -92,17 +86,11 @@ export async function renderEmail(
       
       // Replace [APP_URL] placeholder with actual base URL
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-      const finalHtml = html.replace(/\[APP_URL\]/g, baseUrl);
-      
-      console.log(`✅ [V3-RENDERER] Rendered successfully (${finalHtml.length} bytes)`);
-      
-      // Optionally render plain text
+      const finalHtml = html.replace(/\[APP_URL\]/g, baseUrl);// Optionally render plain text
       let plainText: string | undefined;
       if (options.plainText) {
         const plainTextRaw = await render(React.createElement(Component, componentProps), { plainText: true });
-        plainText = plainTextRaw.replace(/\[APP_URL\]/g, baseUrl);
-        console.log(`✅ [V3-RENDERER] Plain text rendered (${plainText.length} bytes)`);
-      }
+        plainText = plainTextRaw.replace(/\[APP_URL\]/g, baseUrl);}
       
       return {
         html: finalHtml,
@@ -115,8 +103,7 @@ export async function renderEmail(
       }
       throw importError;
     }
-  } catch (error: any) {
-    console.error('❌ [V3-RENDERER] Render error:', error);
+  } catch (error) {
     
     // Enhanced error message for users
     const userFriendlyError = error.message.includes('Unexpected closing')
@@ -137,10 +124,7 @@ export async function renderEmail(
 export async function renderTsxWithIds(
   tsxCode: string,
   options: RenderOptions = {}
-): Promise<RenderWithIdsResult> {
-  console.log(`🎨 [V3-RENDERER] Rendering TSX with IDs...`);
-  
-  try {
+): Promise<RenderWithIdsResult> {try {
     // Step 1: Parse and inject component IDs
     const { modifiedTsx, componentMap } = parseAndInjectIds(tsxCode);
     console.log(`✅ [V3-RENDERER] Injected ${Object.keys(componentMap).length} component IDs`);
@@ -207,8 +191,7 @@ export async function renderTsxWithIds(
       }
       throw importError;
     }
-  } catch (error: any) {
-    console.error('❌ [V3-RENDERER] Render error:', error);
+  } catch (error) {
     
     // Enhanced error message for users
     const userFriendlyError = error.message.includes('Unexpected closing')

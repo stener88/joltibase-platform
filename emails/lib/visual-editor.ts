@@ -58,9 +58,11 @@ export async function handleVisualEdit(
   message: string
 ): Promise<EditResult> {
   const startTime = Date.now();
-  console.log(`🎯 [VISUAL-EDIT] Starting edit for ${filename}`);
-  console.log(`📝 [VISUAL-EDIT] Message: "${message}"`);
-  console.log(`🎨 [VISUAL-EDIT] Context:`, componentContext);
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`🎯 [VISUAL-EDIT] Starting edit for ${filename}`);
+    console.log(`📝 [VISUAL-EDIT] Message: "${message}"`);
+    console.log(`🎨 [VISUAL-EDIT] Context:`, componentContext);
+  }
 
   try {
     // Step 1: Read current file
@@ -75,8 +77,10 @@ export async function handleVisualEdit(
     const intent = analyzeEditIntent(message);
     const complexity = determineComplexity(intent, componentContext);
 
-    console.log(`🔍 [VISUAL-EDIT] Intent:`, intent);
-    console.log(`📊 [VISUAL-EDIT] Complexity: ${complexity}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔍 [VISUAL-EDIT] Intent:`, intent);
+      console.log(`📊 [VISUAL-EDIT] Complexity: ${complexity}`);
+    }
 
     // Step 3: Choose path based on complexity
     if (complexity === 'SIMPLE' && intent.confidence >= 0.6) {
@@ -91,9 +95,7 @@ export async function handleVisualEdit(
         startTime
       );
     } else {
-      // SLOW PATH: AI regeneration
-      console.log(`🤖 [VISUAL-EDIT] Using SLOW PATH (AI regeneration) - complexity: ${complexity}, confidence: ${intent.confidence}`);
-      return await applyAIEdit(
+      // SLOW PATH: AI regenerationreturn await applyAIEdit(
         filename,
         currentCode,
         componentContext,
@@ -102,7 +104,6 @@ export async function handleVisualEdit(
       );
     }
   } catch (error) {
-    console.error('❌ [VISUAL-EDIT] Error:', error);
     return {
       success: false,
       method: 'failed',
@@ -250,11 +251,7 @@ async function applySimpleEdit(
     let changesMade = false;
 
     // Extract what to change based on intent
-    const changes = extractSimpleChanges(message, intent, context);
-    
-    console.log('🔧 [SIMPLE] Extracted changes:', changes);
-
-    // Apply changes based on type
+    const changes = extractSimpleChanges(message, intent, context);// Apply changes based on type
     switch (intent.type) {
       case 'color':
         newCode = applyColorChange(currentCode, context, changes.color!, message);
@@ -284,19 +281,21 @@ async function applySimpleEdit(
       throw new Error('Generated code has syntax errors');
     }
 
-    console.log(`💾 [SIMPLE] Original code length: ${currentCode.length} chars`);
-    console.log(`💾 [SIMPLE] New code length: ${newCode.length} chars`);
-    console.log(`💾 [SIMPLE] Code actually changed? ${currentCode !== newCode}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`💾 [SIMPLE] Original code length: ${currentCode.length} chars`);
+      console.log(`💾 [SIMPLE] New code length: ${newCode.length} chars`);
+      console.log(`💾 [SIMPLE] Code actually changed? ${currentCode !== newCode}`);
+    }
 
     // Save the file
-    const filepath = path.join(GENERATED_DIR, filename);
-    console.log(`💾 [SIMPLE] Saving to: ${filepath}`);
-    fs.writeFileSync(filepath, newCode, 'utf-8');
+    const filepath = path.join(GENERATED_DIR, filename);fs.writeFileSync(filepath, newCode, 'utf-8');
     
     // Verify the file was written
     const savedCode = fs.readFileSync(filepath, 'utf-8');
-    console.log(`💾 [SIMPLE] Saved code length: ${savedCode.length} chars`);
-    console.log(`💾 [SIMPLE] Save successful? ${savedCode === newCode}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`💾 [SIMPLE] Saved code length: ${savedCode.length} chars`);
+      console.log(`💾 [SIMPLE] Save successful? ${savedCode === newCode}`);
+    }
 
     return {
       success: true,
@@ -306,7 +305,6 @@ async function applySimpleEdit(
       duration: Date.now() - startTime
     };
   } catch (error) {
-    console.error('⚠️ [SIMPLE] Failed, falling back to AI:', error);
     // Fallback to AI if simple edit fails
     return await applyAIEdit(filename, currentCode, context, message, startTime);
   }
@@ -379,19 +377,12 @@ function applyColorChange(code: string, context: ComponentContext, color: string
   } else {
     // Ambiguous - default to text color (most common case)
     colorProperty = 'color';
-  }
-  
-  console.log('🎨 [COLOR] Settings:', { hexColor, colorProperty, isTextColor, isBackgroundColor });
-
-  let changesMade = false;
+  }let changesMade = false;
   const originalCode = code;
 
   // PRIORITY 1: Check if element has INLINE style={{...}} and update that FIRST
   // This is critical because inline styles override style object references
-  if (context.editId) {
-    console.log(`🎨 [COLOR] Priority check: Looking for inline styles on ${context.editId}`);
-    
-    // Match multiline style objects with 's' flag
+  if (context.editId) {// Match multiline style objects with 's' flag
     const editIdPattern = new RegExp(
       `(<\\w+[^>]*data-edit-id="${context.editId}"[^>]*)(style=\\{\\{[\\s\\S]*?\\}\\})([^>]*>)`,
       'is'
@@ -413,23 +404,16 @@ function applyColorChange(code: string, context: ComponentContext, color: string
       const propertyRegex = new RegExp(`${colorProperty}:\\s*['"]?[^,'"}]*['"]?`, 'g');
       
       if (propertyRegex.test(styleContent)) {
-        // Property exists - update it
-        console.log(`🎨 [COLOR] Updating existing ${colorProperty} property in inline style`);
-        const updatedStyle = styleContent.replace(propertyRegex, `${colorProperty}: '${hexColor}'`);
+        // Property exists - update itconst updatedStyle = styleContent.replace(propertyRegex, `${colorProperty}: '${hexColor}'`);
         const updatedInlineStyle = `style={{${updatedStyle}}}`;
         const updatedTag = beforeStyle + updatedInlineStyle + afterStyle;
         
         const fullTag = inlineMatch[0];
         code = code.replace(fullTag, updatedTag);
-        changesMade = true;
-        console.log('✅ [COLOR] Updated inline style successfully');
-        
-        // Return early - inline style takes precedence
+        changesMade = true;// Return early - inline style takes precedence
         return code;
       } else {
-        // Add property to inline style
-        console.log(`🎨 [COLOR] Adding ${colorProperty} property to inline style`);
-        const separator = styleContent.trim().endsWith(',') ? ' ' : ', ';
+        // Add property to inline styleconst separator = styleContent.trim().endsWith(',') ? ' ' : ', ';
         const updatedStyle = styleContent.trim() 
           ? `${styleContent}${separator}${colorProperty}: '${hexColor}'`
           : ` ${colorProperty}: '${hexColor}' `;
@@ -438,10 +422,7 @@ function applyColorChange(code: string, context: ComponentContext, color: string
         
         const fullTag = inlineMatch[0];
         code = code.replace(fullTag, updatedTag);
-        changesMade = true;
-        console.log('✅ [COLOR] Added property to inline style');
-        
-        // Return early
+        changesMade = true;// Return early
         return code;
       }
     } else {
@@ -465,10 +446,7 @@ function applyColorChange(code: string, context: ComponentContext, color: string
     const jsxMatch = code.match(jsxPattern);
     
     if (jsxMatch) {
-      const styleVarName = jsxMatch[1];
-      console.log(`🎨 [COLOR] Found style variable: ${styleVarName}`);
-      
-      // Find the style object definition: const h1 = { ... };
+      const styleVarName = jsxMatch[1];// Find the style object definition: const h1 = { ... };
       const styleObjPattern = new RegExp(
         `(const\\s+${styleVarName}\\s*=\\s*\\{[^}]*${colorProperty}:\\s*['"][^'"]*['"][^}]*\\})`,
         's'
@@ -502,10 +480,7 @@ function applyColorChange(code: string, context: ComponentContext, color: string
   }
 
   // Strategy 2: Find style object by tagName (e.g., const h1 = { ... })
-  if (!changesMade && context.tagName) {
-    console.log(`🎨 [COLOR] Strategy 2: Looking for style object named "${context.tagName}"`);
-    
-    // Try to find a style object with the tag name
+  if (!changesMade && context.tagName) {// Try to find a style object with the tag name
     const stylePattern = new RegExp(
       `(const\\s+${context.tagName}\\s*=\\s*\\{[^}]*${colorProperty}:\\s*['"][^'"]*['"][^}]*\\})`,
       's'
@@ -521,16 +496,11 @@ function applyColorChange(code: string, context: ComponentContext, color: string
       );
       
       code = code.replace(styleBlock, updatedBlock);
-      changesMade = true;
-      console.log('✅ [COLOR] Strategy 2 succeeded');
-    }
+      changesMade = true;}
   }
 
   // Strategy 3: Find ANY style object with the color property (last resort)
-  if (!changesMade) {
-    console.log(`🎨 [COLOR] Strategy 3: Searching all style objects for ${colorProperty}`);
-    
-    // Find all style object definitions
+  if (!changesMade) {// Find all style object definitions
     const allStylesPattern = new RegExp(
       `(const\\s+\\w+\\s*=\\s*\\{[^}]*${colorProperty}:\\s*['"][^'"]*['"][^}]*\\})`,
       'gs'
@@ -663,7 +633,6 @@ async function applyAIEdit(
       duration: Date.now() - startTime
     };
   } catch (error) {
-    console.error('❌ [AI] Edit failed:', error);
     return {
       success: false,
       method: 'failed',

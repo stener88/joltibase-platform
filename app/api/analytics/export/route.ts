@@ -99,8 +99,7 @@ export async function GET(request: Request) {
       },
     });
 
-  } catch (error: any) {
-    console.error('❌ [ANALYTICS-EXPORT] Error:', error);
+  } catch (error) {
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to export data' },
       { status: 500 }

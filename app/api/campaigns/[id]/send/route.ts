@@ -67,11 +67,7 @@ export async function POST(
 
     const contacts = contactLists
       ?.map(cl => cl.contacts)
-      .filter((contact: any) => contact && contact.status === 'subscribed') || [];
-
-    console.log(`📧 [SEND-CAMPAIGN] Queueing ${contacts.length} emails for campaign ${campaignId}`);
-
-    // Queue emails for all contacts
+      .filter((contact: any) => contact && contact.status === 'subscribed') || [];// Queue emails for all contacts
     const queuePromises = contacts.map((contact: any) =>
       queueEmail({
         campaignId,
@@ -102,7 +98,7 @@ export async function POST(
     });
 
   } catch (error: any) {
-    console.error('❌ [SEND-CAMPAIGN] Error:', error);
+    
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to send campaign' },
       { status: 500 }

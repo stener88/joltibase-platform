@@ -46,7 +46,6 @@ export async function GET(
       .single();
 
     if (campaignError) {
-      console.error('❌ [CHAT-HISTORY-API] Fetch error:', campaignError);
       return NextResponse.json(
         { success: false, error: 'Campaign not found' },
         { status: 404 }
@@ -62,7 +61,7 @@ export async function GET(
     });
 
   } catch (error: any) {
-    console.error('❌ [CHAT-HISTORY-API] Error:', error);
+    
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to fetch chat history' },
       { status: 500 }
@@ -123,19 +122,14 @@ export async function PUT(
       .single();
 
     if (updateError) {
-      console.error('❌ [CHAT-HISTORY-API] Update error:', updateError);
       throw updateError;
-    }
-
-    console.log(`✅ [CHAT-HISTORY-API] Chat history saved for campaign: ${campaignId}`);
-
-    return NextResponse.json({
+    }return NextResponse.json({
       success: true,
       data: campaign.chat_history,
     });
 
   } catch (error: any) {
-    console.error('❌ [CHAT-HISTORY-API] Error:', error);
+    
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to save chat history' },
       { status: 500 }

@@ -36,11 +36,7 @@ export async function POST(
         },
         { status: 404 }
       );
-    }
-    
-    console.log(`🎯 [FINALIZE-V3] Finalizing campaign: ${id}`);
-    
-    // Re-render to ensure latest HTML
+    }// Re-render to ensure latest HTML
     const renderResult = await renderEmail(
       campaign.component_filename,
       { props: campaign.default_props || {} }
@@ -62,17 +58,12 @@ export async function POST(
       .select()
       .single();
     
-    if (updateError) throw updateError;
-    
-    console.log(`✅ [FINALIZE-V3] Campaign finalized: ${id}`);
-    
-    return NextResponse.json({
+    if (updateError) throw updateError;return NextResponse.json({
       success: true,
       campaign: finalizedCampaign,
     });
     
   } catch (error: any) {
-    console.error('❌ [FINALIZE-V3] Error:', error);
     
     return NextResponse.json(
       {

@@ -74,7 +74,6 @@ async function getGenerationCounts(userId: string): Promise<{ daily: number; mon
       .rpc('get_daily_ai_generation_count', { p_user_id: userId });
     
     if (dailyError) {
-      console.error('Error fetching daily count:', dailyError);
       throw new Error('Failed to check daily limit');
     }
     
@@ -83,7 +82,6 @@ async function getGenerationCounts(userId: string): Promise<{ daily: number; mon
       .rpc('get_monthly_ai_generation_count', { p_user_id: userId });
     
     if (monthlyError) {
-      console.error('Error fetching monthly count:', monthlyError);
       throw new Error('Failed to check monthly limit');
     }
     
@@ -92,7 +90,6 @@ async function getGenerationCounts(userId: string): Promise<{ daily: number; mon
       monthly: monthlyData || 0,
     };
   } catch (error) {
-    console.error('Error in getGenerationCounts:', error);
     // Return 0s on error to fail open (allow generation)
     return { daily: 0, monthly: 0 };
   }

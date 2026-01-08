@@ -221,13 +221,11 @@ export function EmailEditorV3({
       if (result.success) {
           setToolbarStatus({ type: 'success' });
           setTimeout(() => setToolbarStatus({ type: 'idle' }), 2000);
-        console.log(`[TOOLBAR] Command success - ${result.changes?.length || 0} changes`);
         } else {
           setToolbarStatus({ 
-            type: 'error', 
+            type: 'error',
           message: result.message || "Couldn't make that change" 
           });
-        console.log(`[TOOLBAR] Command failed: ${result.message}`);
       }
     } catch (error: any) {
         setToolbarStatus({ 
@@ -247,12 +245,10 @@ export function EmailEditorV3({
   const handleComponentSelect = useCallback((componentId: string | null, position?: { top: number; left: number }) => {
     if (componentId !== selectedComponentId) {
       // Selecting a different component
-      console.log('[EDITOR] Selecting new component:', componentId);
       setSelectedComponentId(componentId);
       setComponentPosition(position || null);
     } else if (componentId) {
       // Same component clicked - manually refocus the input
-      console.log('[EDITOR] Same component clicked, refocusing input');
       setTimeout(() => {
         floatingToolbarInputRef.current?.focus();
       }, 0);
@@ -327,7 +323,6 @@ export function EmailEditorV3({
 
   // Discard visual edits and exit (reset to entry state)
   const handleDiscardVisualEdits = useCallback(() => {
-    console.log('[EDITOR] Discarding visual edits - reloading page');
     // TODO: Restore to snapshot state without page reload
     window.location.reload();
   }, []);
@@ -371,8 +366,6 @@ export function EmailEditorV3({
       
       // ✅ No page reload - user can continue editing!
       // router.refresh() will be called before navigation instead
-      
-      console.log('✅ Campaign saved successfully (no page reload)');
     } catch (error: any) {
       console.error('Failed to save:', error);
       alert(`Failed to save changes: ${error.message}`);
@@ -406,12 +399,10 @@ export function EmailEditorV3({
     
     // ✅ Auto-save if there are unsaved changes
     if (hasUnsavedChanges) {
-      console.log('[EDITOR] Auto-saving before navigation...');
       setIsSaving(true);
       
       try {
         await handleSave();
-        console.log('✅ Auto-save complete');
       } catch (error) {
         console.error('❌ Auto-save failed:', error);
         alert('Failed to save changes. Please try again.');
@@ -423,7 +414,6 @@ export function EmailEditorV3({
     }
     
     // ✅ CRITICAL: Refresh to load fresh data on send page
-    console.log('[EDITOR] Refreshing data before navigation...');
     router.refresh();
     
     // Navigate to send page
@@ -606,11 +596,8 @@ export function EmailEditorV3({
                           const parentId = findParentComponent(selectedComponentId, freshMap);
                           
                           if (parentId) {
-                            console.log('[EDITOR] Selecting parent:', parentId);
                             setSelectedComponentId(parentId);
                             syncSelectionRef.current?.(parentId); // Direct sync to iframe
-                          } else {
-                            console.log('[EDITOR] Already at root component - no parent');
                           }
                         }}
                       />

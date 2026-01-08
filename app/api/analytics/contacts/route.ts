@@ -194,8 +194,7 @@ export async function GET(request: Request) {
       },
     });
 
-  } catch (error: any) {
-    console.error('❌ [ANALYTICS-CONTACTS] Error:', error);
+  } catch (error) {
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to fetch contact analytics' },
       { status: 500 }

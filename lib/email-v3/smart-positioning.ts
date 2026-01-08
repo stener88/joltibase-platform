@@ -127,7 +127,6 @@ export function calculateSmartToolbarPosition(
   }
 
   // Fallback: Center in viewport (when element is too large or no valid positions)
-  console.log('[SMART-POSITION] No valid positions, using centered fallback');
   const centerTop = viewport.top + ((viewport.bottom - viewport.top) / 2) - (toolbar.height / 2);
   const centerLeft = viewport.left + ((viewport.right - viewport.left) / 2) - (toolbar.width / 2);
   
