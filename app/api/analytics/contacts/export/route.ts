@@ -35,8 +35,19 @@ export async function GET(request: Request) {
 
     if (contactsError) throw contactsError;
 
+    // Handle empty contacts case
+    if (!contacts || contacts.length === 0) {
+      const emptyCSV = 'Email,First Name,Last Name,Status,Engagement Score,Source,Lists,Tags,Last Opened,Subscribed At,Unsubscribed At,Created At\n';
+      return new NextResponse(emptyCSV, {
+        headers: {
+          'Content-Type': 'text/csv',
+          'Content-Disposition': `attachment; filename="contacts-export-${new Date().toISOString().split('T')[0]}.csv"`,
+        },
+      });
+    }
+
     // Get email activity for each contact (last opened)
-    const contactIds = contacts?.map(c => c.id) || [];
+    const contactIds = contacts.map(c => c.id);
     const { data: emails, error: emailsError } = await supabase
       .from('emails')
       .select('contact_id, opened_at')
@@ -55,12 +66,12 @@ export async function GET(request: Request) {
     });
 
     // Format data for CSV
-    const csvData = (contacts || []).map((contact: any) => {
+    const csvData = contacts.map((contact) => {
       // Extract list names
       const lists = contact.contact_lists?.map((cl: any) => cl.lists?.name).filter(Boolean).join('; ') || '';
       
       // Get tags
-      const tags = contact.tags?.join('; ') || '';
+      const tags = Array.isArray(contact.tags) ? contact.tags.join('; ') : '';
       
       // Get last opened
       const lastOpened = lastOpenedMap.get(contact.id);
@@ -85,7 +96,7 @@ export async function GET(request: Request) {
     });
 
     // Convert to CSV
-    const headers = Object.keys(csvData[0] || {});
+    const headers = Object.keys(csvData[0]);
     const csvRows = [
       headers.join(','),
       ...csvData.map(row =>
@@ -111,7 +122,7 @@ export async function GET(request: Request) {
       },
     });
 
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to export contacts' },
       { status: 500 }
